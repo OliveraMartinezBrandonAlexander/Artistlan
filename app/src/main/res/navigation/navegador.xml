@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navegador"
+    app:startDestination="@id/fragMain">
+
+    <fragment
+        android:id="@+id/fragMain"
+        android:name="com.example.artistlan.Fragments.FragMain"
+        android:label="fragment_frag_main"
+        tools:layout="@layout/fragment_frag_main" >
+        <action
+            android:id="@+id/action_fragMain_to_fragServicios"
+            app:destination="@id/fragServicios" />
+        <action
+            android:id="@+id/action_fragMain_to_fragFavoritos"
+            app:destination="@id/fragFavoritos" />
+        <action
+            android:id="@+id/action_fragMain_to_fragArte"
+            app:destination="@id/fragArte" />
+        <action
+            android:id="@+id/action_fragMain_to_fragArtistas"
+            app:destination="@id/fragArtistas" />
+        <action
+            android:id="@+id/action_fragMain_self"
+            app:destination="@id/fragMain" />
+        <action
+            android:id="@+id/action_fragMain_to_fragVerPerfil"
+            app:destination="@id/fragVerPerfil" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragArte"
+        android:name="com.example.artistlan.Fragments.FragArte"
+        android:label="fragment_frag_arte"
+        tools:layout="@layout/fragment_frag_arte" >
+        <action
+            android:id="@+id/action_fragArte_self"
+            app:destination="@id/fragArte" />
+        <action
+            android:id="@+id/action_fragArte_to_fragFavoritos"
+            app:destination="@id/fragFavoritos" />
+        <action
+            android:id="@+id/action_fragArte_to_fragArtistas"
+            app:destination="@id/fragArtistas" />
+        <action
+            android:id="@+id/action_fragArte_to_fragServicios"
+            app:destination="@id/fragServicios" />
+        <action
+            android:id="@+id/action_fragArte_to_fragVerPerfil"
+            app:destination="@id/fragVerPerfil" />
+        <action
+            android:id="@+id/action_fragArte_to_fragMain"
+            app:destination="@id/fragMain" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragArtistas"
+        android:name="com.example.artistlan.Fragments.FragArtistas"
+        android:label="fragment_frag_artistas"
+        tools:layout="@layout/fragment_frag_artistas" >
+        <action
+            android:id="@+id/action_fragArtistas_to_fragMain"
+            app:destination="@id/fragMain" />
+        <action
+            android:id="@+id/action_fragArtistas_self"
+            app:destination="@id/fragArtistas" />
+        <action
+            android:id="@+id/action_fragArtistas_to_fragServicios"
+            app:destination="@id/fragServicios" />
+        <action
+            android:id="@+id/action_fragArtistas_to_fragVerPerfil"
+            app:destination="@id/fragVerPerfil" />
+        <action
+            android:id="@+id/action_fragArtistas_to_fragFavoritos"
+            app:destination="@id/fragFavoritos" />
+        <action
+            android:id="@+id/action_fragArtistas_to_fragArte"
+            app:destination="@id/fragArte" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragFavoritos"
+        android:name="com.example.artistlan.Fragments.FragFavoritos"
+        android:label="fragment_frag_favoritos"
+        tools:layout="@layout/fragment_frag_favoritos" >
+        <action
+            android:id="@+id/action_fragFavoritos_self"
+            app:destination="@id/fragFavoritos" />
+        <action
+            android:id="@+id/action_fragFavoritos_to_fragVerPerfil"
+            app:destination="@id/fragVerPerfil" />
+        <action
+            android:id="@+id/action_fragFavoritos_to_fragServicios"
+            app:destination="@id/fragServicios" />
+        <action
+            android:id="@+id/action_fragFavoritos_to_fragArtistas"
+            app:destination="@id/fragArtistas" />
+        <action
+            android:id="@+id/action_fragFavoritos_to_fragArte"
+            app:destination="@id/fragArte" />
+        <action
+            android:id="@+id/action_fragFavoritos_to_fragMain"
+            app:destination="@id/fragMain" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragServicios"
+        android:name="com.example.artistlan.Fragments.FragServicios"
+        android:label="fragment_frag_servicios"
+        tools:layout="@layout/fragment_frag_servicios" >
+        <action
+            android:id="@+id/action_fragServicios_self"
+            app:destination="@id/fragServicios" />
+        <action
+            android:id="@+id/action_fragServicios_to_fragArtistas"
+            app:destination="@id/fragArtistas" />
+        <action
+            android:id="@+id/action_fragServicios_to_fragVerPerfil"
+            app:destination="@id/fragVerPerfil" />
+        <action
+            android:id="@+id/action_fragServicios_to_fragFavoritos"
+            app:destination="@id/fragFavoritos" />
+        <action
+            android:id="@+id/action_fragServicios_to_fragArte"
+            app:destination="@id/fragArte" />
+        <action
+            android:id="@+id/action_fragServicios_to_fragMain"
+            app:destination="@id/fragMain" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragVerPerfil"
+        android:name="com.example.artistlan.Fragments.FragVerPerfil"
+        android:label="fragment_frag_ver_perfil"
+        tools:layout="@layout/fragment_frag_ver_perfil" >
+        <action
+            android:id="@+id/action_fragVerPerfil_self"
+            app:destination="@id/fragVerPerfil" />
+        <action
+            android:id="@+id/action_fragVerPerfil_to_fragServicios"
+            app:destination="@id/fragServicios" />
+        <action
+            android:id="@+id/action_fragVerPerfil_to_fragArtistas"
+            app:destination="@id/fragArtistas" />
+        <action
+            android:id="@+id/action_fragVerPerfil_to_fragFavoritos"
+            app:destination="@id/fragFavoritos" />
+        <action
+            android:id="@+id/action_fragVerPerfil_to_fragArte"
+            app:destination="@id/fragArte" />
+        <action
+            android:id="@+id/action_fragVerPerfil_to_fragMain"
+            app:destination="@id/fragMain" />
+    </fragment>
+</navigation>

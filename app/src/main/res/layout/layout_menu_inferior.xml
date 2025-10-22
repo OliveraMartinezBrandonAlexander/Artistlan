@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/MenuInferior"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="10dp"
+    android:layout_marginBottom="15dp"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:padding="8dp">
+        <Spinner
+            android:id="@+id/SpinnerMenu"
+            android:layout_width="50dp"
+            android:layout_height="40dp"
+            android:backgroundTint="#AF7373"
+            android:spinnerMode="dropdown" />
+    </LinearLayout>
+
+    <!-- Contenedor de fragmentos -->
+    <FrameLayout
+        android:id="@+id/contenedorFragmentos"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Menú inferior -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+        <Button
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#AF7373"
+            android:text="Inicio"
+            android:textSize="7.5dp"
+            android:textColor="@color/white"
+            android:id="@+id/btnInicio"/>
+        <Button
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#AF7373"
+            android:text="Servicios"
+            android:textSize="7.5dp"
+            android:textColor="@color/white"
+            android:id="@+id/btnServicios"/>
+        <Button
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#AF7373"
+            android:text="Artistas"
+            android:textSize="7.5dp"
+            android:textColor="@color/white"
+            android:id="@+id/btnArtistas"/>
+        <Button
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#AF7373"
+            android:text="Arte"
+            android:textSize="7.5dp"
+            android:textColor="@color/white"
+            android:id="@+id/btnArte"/>
+        <Button
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#AF7373"
+            android:text="Perfil"
+            android:textSize="7.5dp"
+            android:textColor="@color/white"
+            android:id="@+id/btnPerfil"/>
+    </LinearLayout>
+</LinearLayout>

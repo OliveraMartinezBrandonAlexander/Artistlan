@@ -6,28 +6,73 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".Activitys.MainActivity">
-
+    tools:context=".Activitys.MainActivity"
+    android:background="@drawable/panmain"
+    android:padding="50dp"
+    >
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center"
-        android:layout_margin="45dp">
+        android:padding="40dp"
+
+        >
+
+        <TextView
+            android:id="@+id/titulomain"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:text="ARTISTLAN"
+            android:gravity="center_horizontal"
+            android:fontFamily="sans-serif-black"
+            android:textSize="40dp"
+            android:layout_marginBottom="40dp"
+            >
+        </TextView>
+        <TextView
+            android:id="@+id/texto1"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="“DONDE EL ARTE Y EL ARTISTA CONVERGEN”"
+            android:gravity="center_horizontal"
+            android:fontFamily="sans-serif-black"
+            android:textSize="15dp"
+            >
+        </TextView>
+
         <Button
-            android:layout_width="200dp"
+            android:id="@+id/btnInicioSesion"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="230dp"
-            android:backgroundTint="#AF7373"
-            android:text="Inicio de sesión"
-            android:id="@+id/btnInicioSesion"/>
+            android:text="INICIAR SESION"
+            android:padding="15dp"
+            android:layout_marginBottom="80dp"
+            android:backgroundTint="#b3b3b3"
+            android:textColor="#000000"
+            />
+        <TextView
+            android:id="@+id/texto2"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="Aun no tienes cuenta? Crea una "
+            android:gravity="center_horizontal"
+            android:fontFamily="sans-serif-black"
+            android:padding="15dp"
+            >
+        </TextView>
         <Button
-            android:layout_width="200dp"
+            android:id="@+id/btnCrearCuenta"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
-            android:backgroundTint="#AF7373"
-            android:text="Crear cuenta"
-            android:id="@+id/btnCrearCuenta"/>
+            android:text="Crear Cuenta"
+            android:layout_marginBottom="15dp"
+            android:backgroundTint="#b3b3b3"
+            android:textColor="@color/black"
+            />
+
     </LinearLayout>
+
+
 
 </LinearLayout>

@@ -23,25 +23,24 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         setContentView(R.layout.activity_act_crear_cuenta);
 
         btnCrear = findViewById(R.id.btnCrear);
-        btnXCrear = findViewById(R.id.btnXCrear);
+        //btnXCrear = findViewById(R.id.btnXCrear);
 
-        btnCrear.setOnClickListener(this);
-        btnXCrear.setOnClickListener(this);
+       btnCrear.setOnClickListener(this);
+      //  btnXCrear.setOnClickListener(this);
     }
 
-    @Override
-    public void onClick(View v) {
-        int idClick = v.getId();
-        Intent irActivity = null;
 
-        if(idClick == R.id.btnXCrear){
-            irActivity = new Intent(this, MainActivity.class);
-        }
-        else if(idClick == R.id.btnCrear){
-            Toast.makeText(this, "Cuenta Creada", Toast.LENGTH_SHORT).show();
-        }
-        if (irActivity != null) {
-            startActivity(irActivity);
-        }
+    //  @Override
+    public void onClick(View v) {
+       int idClick = v.getId();
+       Intent irActivity = null;
+
+       // if(idClick == R.id.btnXCrear){
+        //    irActivity = new Intent(this, MainActivity.class);
+      //  }
+       if(idClick == R.id.btnCrear){Toast.makeText(this, "Cuenta Creada", Toast.LENGTH_SHORT).show();
+       }
+       if (irActivity != null) {startActivity(irActivity);
+      }
     }
 }

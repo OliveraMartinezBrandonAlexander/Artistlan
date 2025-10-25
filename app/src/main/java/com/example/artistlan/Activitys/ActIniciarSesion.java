@@ -23,10 +23,10 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         setContentView(R.layout.activity_act_iniciar_sesion);
 
         btnIniciarSesion = findViewById(R.id.btnIniciarSesion);
-        btnXIniciar = findViewById(R.id.btnXIniciar);
+       // btnXIniciar = findViewById(R.id.btnXIniciar);
 
         btnIniciarSesion.setOnClickListener(this);
-        btnXIniciar.setOnClickListener(this);
+       // btnXIniciar.setOnClickListener(this);
     }
 
     @Override
@@ -34,10 +34,10 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         int idClick = v.getId();
         Intent irActivity = null;
 
-        if(idClick == R.id.btnXIniciar){
+       // if(idClick == R.id.btnXIniciar){
             irActivity = new Intent(this, MainActivity.class);
-        }
-        else if(idClick == R.id.btnIniciarSesion){
+      //  }
+       if(idClick == R.id.btnIniciarSesion){
             irActivity = new Intent(this, ActFragmentoPrincipal.class);
         }
         if (irActivity != null) {

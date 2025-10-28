@@ -11,11 +11,12 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.artistlan.Fragments.FragMain;
 import com.example.artistlan.R;
 
 public class ActIniciarSesion extends AppCompatActivity implements View.OnClickListener {
 
-    Button btnIniciarSesion, btnXIniciar;
+    Button btnIniciarSesion;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,9 +35,6 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         int idClick = v.getId();
         Intent irActivity = null;
 
-       // if(idClick == R.id.btnXIniciar){
-            irActivity = new Intent(this, MainActivity.class);
-      //  }
        if(idClick == R.id.btnIniciarSesion){
             irActivity = new Intent(this, ActFragmentoPrincipal.class);
         }

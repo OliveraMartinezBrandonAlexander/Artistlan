@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+    android:id="@+id/CrcLayMain"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -10,8 +9,8 @@
     android:background="@drawable/fondocrearcuenta"
     tools:context=".Activitys.ActCrearCuenta">
 
-
     <LinearLayout
+        android:id="@+id/CrcLayCard"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -19,186 +18,249 @@
         android:background="@drawable/bordes_redondeados"
         android:backgroundTint="#A6A1BBCE">
 
+        <!-- Título -->
         <TextView
-            android:id="@+id/texto1"
+            android:id="@+id/CrcTxtTitulo"
             android:layout_width="match_parent"
-            android:layout_height="30dp"
+            android:layout_height="wrap_content"
             android:text="Completa los datos que se solicitan"
             android:gravity="center"
             android:fontFamily="sans-serif-black"
-            android:padding="5dp"/>
+            android:textSize="16sp"
+            android:padding="5dp" />
 
         <TextView
-            android:id="@+id/texto2"
+            android:id="@+id/CrcTxtSeparador"
             android:layout_width="match_parent"
-            android:layout_height="17dp"
+            android:layout_height="wrap_content"
             android:text="--------------------------------------"
             android:gravity="center"
             android:fontFamily="sans-serif-black"
-           />
+            android:textSize="14sp" />
+
+        <!-- Correo -->
         <TextView
-            android:id="@+id/texto3"
+            android:id="@+id/CrcTxtEmailLbl"
             android:layout_width="match_parent"
-            android:layout_height="20dp"
+            android:layout_height="wrap_content"
             android:text="Correo Electrónico"
-            android:layout_marginTop="5dp"
+            android:layout_marginTop="10dp"
             android:fontFamily="sans-serif-black"
-            />
-        <EditText
+            android:textSize="14sp" />
 
-            android:id="@+id/email"
+        <EditText
+            android:id="@+id/CrcEdtEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/editredondo"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="12dp"
             android:hint="ejemplo@gmail.com"
-            android:paddingStart="20dp"
+            android:paddingStart="25dp"
             android:paddingEnd="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textColor="#202020"
+            android:inputType="textEmailAddress" />
 
-            ></EditText>
+        <!-- Nombre -->
         <TextView
-            android:id="@+id/texto4"
+            android:id="@+id/CrcTxtNombreLbl"
             android:layout_width="match_parent"
-            android:layout_height="20dp"
+            android:layout_height="wrap_content"
             android:text="Nombre"
-
             android:fontFamily="sans-serif-black"
-            />
-        <EditText
+            android:textSize="14sp" />
 
-            android:id="@+id/nombre"
+        <EditText
+            android:id="@+id/CrcEdtNombre"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/editredondo"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="12dp"
             android:hint="ejemplo"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textColor="#202020"
+            android:inputType="textPersonName" />
 
-            ></EditText>
+        <!-- Teléfono -->
         <TextView
-            android:id="@+id/texto5"
+            android:id="@+id/CrcTxtTelLbl"
             android:layout_width="match_parent"
-            android:layout_height="20dp"
+            android:layout_height="wrap_content"
             android:text="Teléfono"
-
             android:fontFamily="sans-serif-black"
-            />
-        <EditText
+            android:textSize="14sp" />
 
-            android:id="@+id/Nombre"
+        <EditText
+            android:id="@+id/CrcEdtTel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/editredondo"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="12dp"
             android:hint="55XXXXXXXXX"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textColor="#202020"
+            android:inputType="phone"
+            android:maxLength="10" />
 
-            ></EditText>
+        <!-- Fecha de nacimiento -->
         <TextView
-        android:id="@+id/texto6"
-        android:layout_width="match_parent"
-        android:layout_height="20dp"
-        android:text="Fecha de Nacimiento"
-
-        android:fontFamily="sans-serif-black"
-        />
-
-        <TextView
-            android:layout_gravity="center_horizontal"
-            android:id="@+id/Fecha"
-            android:layout_width="150dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
-            android:background="@drawable/editredondo"
-            android:clickable="true"
-            android:hint="DIA/MES/AÑO"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"></TextView>
-        <TextView
-            android:id="@+id/texto7"
+            android:id="@+id/CrcTxtFechaLbl"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:text="Usuario (este será el nombre que todos podrán visualizar, puedes modificarlo más adelante)"
-
+            android:layout_height="wrap_content"
+            android:text="Fecha de Nacimiento"
             android:fontFamily="sans-serif-black"
-            />
-        <EditText
+            android:textSize="14sp" />
 
-            android:id="@+id/usuario"
+        <!-- Campo toque-para-abrir-calendario -->
+        <EditText
+            android:id="@+id/CrcEdtFecha"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="12dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/editredondo"
+            android:hint="DÍA / MES / AÑO"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textColor="#202020"
+            android:focusable="false"
+            android:clickable="true"
+            android:inputType="none"
+            android:textCursorDrawable="@null" />
+
+        <!-- Usuario -->
+
+        <TextView
+            android:id="@+id/CrcTxtUsuarioMainLbl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:text="Usuario "
+            android:textSize="16sp" />
+
+        <LinearLayout
+            android:id="@+id/CrcLayUsuarioLblGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/editredondo"
+            android:orientation="horizontal"
+            android:layout_marginTop="5dp">
+
+            <TextView
+                android:id="@+id/CrcTxtUsuarioDescLbl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:text="(este será el nombre que todos podrán visualizar, puedes modificarlo más adelante)"
+                android:textColor="@android:color/black"
+                android:textSize="10sp" />
+
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/CrcEdtUsuario"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/editredondo"
             android:hint="SuperMariposonejemplo"
             android:paddingStart="20dp"
-            android:paddingEnd="20dp">
+            android:paddingEnd="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textColor="#202020"
+            android:inputType="textPersonName" />
 
-        </EditText>
-        <TextView
-            android:id="@+id/texto8"
+        <!-- Contraseña -->
+        <LinearLayout
+            android:id="@+id/CrcLayPassLblGroup"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="Genera una contraseña segura.(está debe de tener al menos 8 caracteres, una mayúscula, una minúscula, un numero y un carácter especial)"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="5dp">
 
-            android:fontFamily="sans-serif-black"
-            />
+            <TextView
+                android:id="@+id/CrcTxtPassMainLbl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Genera una contraseña segura."
+                android:fontFamily="sans-serif-black"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/CrcTxtPassDescLbl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="(esta debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial)"
+                android:fontFamily="sans-serif"
+                android:textSize="10sp"
+                android:textColor="@android:color/black" />
+        </LinearLayout>
+
         <EditText
-
-            android:id="@+id/contrasena"
+            android:id="@+id/CrcEdtPass"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/editredondo"
-
-            android:layout_marginBottom="10dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="12dp"
             android:hint="Ejemplo2_!"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textColor="#202020"
+            android:inputType="textPassword" />
 
-            ></EditText>
         <TextView
-            android:id="@+id/texto9"
+            android:id="@+id/CrcTxtPassConfLbl"
             android:layout_width="match_parent"
-            android:layout_height="20dp"
+            android:layout_height="wrap_content"
             android:text="Confirmar Contraseña"
-
             android:fontFamily="sans-serif-black"
-            />
-        <EditText
+            android:textSize="14sp" />
 
-            android:id="@+id/Confirma"
+        <EditText
+            android:id="@+id/CrcEdtPassConf"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/editredondo"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="6dp"
             android:layout_marginBottom="20dp"
             android:hint="Ejemplo2_!"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textColor="#202020"
+            android:inputType="textPassword" />
 
-            ></EditText>
+        <!-- Botón Crear Cuenta -->
         <Button
-            android:id="@+id/btnCrear"
+            android:id="@+id/CrcBtnCrc"
             android:layout_width="150dp"
             android:layout_height="50dp"
             android:text="CREAR CUENTA"
             android:padding="10dp"
-            android:layout_marginBottom="80dp"
+            android:layout_marginBottom="24dp"
             android:backgroundTint="#6C6C6C"
             android:textColor="#000000"
-
-            android:layout_gravity="center_horizontal"
-            />
-
-
+            android:layout_gravity="center_horizontal" />
 
     </LinearLayout>
 
-
 </LinearLayout>
+

@@ -5,22 +5,26 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".Fragments.FragMain">
-    <TextView
+
+    <include layout="@layout/layout_menu_superior" />
+
+    <!-- Contenido scrollable / dinámico del fragment -->
+    <LinearLayout
+        android:id="@+id/contenedorPrincipal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:layout_marginTop="40dp"
-        android:text="Fragmento Principal"
-        android:textSize="30dp"/>
-    <Button
-        android:layout_width="70dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:backgroundTint="#AF7373"
-        android:text="Cerrar sesión"
-        android:textSize="7dp"
-        android:id="@+id/btnCerrarSesion"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:padding="16dp">
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="40dp"
+            android:text="Fragmento Principal"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+    </LinearLayout>
     <include layout="@layout/layout_menu_inferior"/>
-
 </LinearLayout>

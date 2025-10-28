@@ -8,11 +8,19 @@
     android:orientation="vertical"
     tools:context=".Activitys.ActFragmentoPrincipal">
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/black" />
+
+    <!-- Contenedor de Fragmentos (ocupa el resto del espacio) -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView"
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         app:defaultNavHost="true"
         app:navGraph="@navigation/navegador" />
+
 </LinearLayout>

@@ -6,13 +6,25 @@
     android:orientation="vertical"
     tools:context=".Fragments.FragArtistas">
 
-    <TextView
+    <include layout="@layout/layout_menu_superior" />
+
+    <LinearLayout
+        android:id="@+id/contenedorPrincipal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:gravity="center"
-        android:text="Fragmento de artistas"
-        android:textSize="30dp"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:gravity="center"
+            android:text="Fragmento de artistas"
+            android:textSize="30dp"/>
+    </LinearLayout>
+
     <include layout="@layout/layout_menu_inferior"/>
 
 </LinearLayout>

@@ -1,5 +1,6 @@
 package com.example.artistlan.Activitys;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -15,14 +16,15 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.artistlan.R;
 
 public class ActCrearCuenta extends AppCompatActivity implements View.OnClickListener {
-    Button btnCrear,btnXCrear;
+    Button btnCrear;
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_act_crear_cuenta);
 
-        btnCrear = findViewById(R.id.btnCrear);
+        btnCrear = findViewById(R.id.CrcBtnCrc);
         //btnXCrear = findViewById(R.id.btnXCrear);
 
        btnCrear.setOnClickListener(this);
@@ -38,7 +40,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
        // if(idClick == R.id.btnXCrear){
         //    irActivity = new Intent(this, MainActivity.class);
       //  }
-       if(idClick == R.id.btnCrear){Toast.makeText(this, "Cuenta Creada", Toast.LENGTH_SHORT).show();
+       if(idClick == R.id.CrcBtnCrc){Toast.makeText(this, "Cuenta Creada", Toast.LENGTH_SHORT).show();
        }
        if (irActivity != null) {startActivity(irActivity);
       }

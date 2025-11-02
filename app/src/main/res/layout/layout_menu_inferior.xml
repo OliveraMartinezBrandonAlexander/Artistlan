@@ -1,64 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/MenuInferior"
     android:layout_width="match_parent"
-    android:layout_height="56dp"
-    android:background="#a1bbce"
-    android:orientation="horizontal"
-    android:gravity="center">
+    android:layout_height="75dp">
 
-    <ImageButton
-        android:id="@+id/btnInicio"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/navCard"
         android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="@android:color/transparent"
-        android:src="@drawable/inicio"
-        android:scaleType="fitCenter"
-        android:padding="4dp"
-        android:contentDescription="Inicio" />
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="5dp"
+        app:cardCornerRadius="15dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="#81B7D5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-    <ImageButton
-        android:id="@+id/btnServicios"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="@android:color/transparent"
-        android:src="@drawable/servicios"
-        android:scaleType="fitCenter"
-        android:padding="4dp"
-        android:contentDescription="Servicios" />
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            app:itemIconTint="@color/seleccionado"
+            app:itemTextColor="#2A272A"
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/menu_inferior" />
+    </com.google.android.material.card.MaterialCardView>
 
-    <ImageButton
-        android:id="@+id/btnArtistas"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="@android:color/transparent"
-        android:src="@drawable/artista"
-        android:scaleType="fitCenter"
-        android:padding="4dp"
-        android:contentDescription="Artistas" />
-
-    <ImageButton
-        android:id="@+id/btnArte"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="@android:color/transparent"
-        android:src="@drawable/arte"
-        android:scaleType="fitCenter"
-        android:padding="4dp"
-        android:contentDescription="Arte" />
-
-    <ImageButton
-        android:id="@+id/btnPerfil"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="@android:color/transparent"
-        android:src="@drawable/cuenta"
-        android:scaleType="fitCenter"
-        android:padding="4dp"
-        android:contentDescription="Perfil" />
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

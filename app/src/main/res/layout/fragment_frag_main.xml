@@ -26,5 +26,5 @@
             android:textSize="30sp"
             android:textStyle="bold" />
     </LinearLayout>
-    <include layout="@layout/layout_menu_inferior"/>
+
 </LinearLayout>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/fragMain"
+        android:title="Inicio"
+        android:icon="@drawable/inicio"/>
+    <item
+        android:id="@+id/fragServicios"
+        android:title="Servicios"
+        android:icon="@drawable/servicios"/>
+    <item
+        android:title="Artistas"
+        android:id="@+id/fragArtistas"
+        android:icon="@drawable/artista"/>
+    <item
+        android:title="Arte"
+        android:id="@+id/fragArte"
+        android:icon="@drawable/arte"/>
+    <item
+        android:title="Mi perfil"
+        android:id="@+id/fragVerPerfil"
+        android:icon="@drawable/cuenta"/>
+</menu>

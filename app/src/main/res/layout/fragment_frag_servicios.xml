@@ -26,6 +26,4 @@
     </LinearLayout>
 
 
-    <include layout="@layout/layout_menu_inferior"/>
-
 </LinearLayout>

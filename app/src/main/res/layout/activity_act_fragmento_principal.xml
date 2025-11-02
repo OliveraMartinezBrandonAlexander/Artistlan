@@ -23,4 +23,5 @@
         app:defaultNavHost="true"
         app:navGraph="@navigation/navegador" />
 
+    <include layout="@layout/layout_menu_inferior" />
 </LinearLayout>

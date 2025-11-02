@@ -4,31 +4,31 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/MenuInferior"
     android:layout_width="match_parent"
-    android:layout_height="75dp">
+    android:layout_height="wrap_content">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/navCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="5dp"
-        app:cardCornerRadius="15dp"
-        app:cardElevation="8dp"
-        app:cardBackgroundColor="#81B7D5"
-        app:layout_constraintStart_toStartOf="parent"
+        android:clipToPadding="false"
+        app:cardBackgroundColor="#A1BBCE"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottomBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@android:color/transparent"
+            android:fitsSystemWindows="true"
+            android:paddingBottom="16dp"
             app:itemIconTint="@color/seleccionado"
             app:itemTextColor="#2A272A"
             app:labelVisibilityMode="labeled"
             app:menu="@menu/menu_inferior" />
+
     </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

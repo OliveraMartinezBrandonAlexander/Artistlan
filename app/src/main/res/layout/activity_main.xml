@@ -21,15 +21,13 @@
 
         <TextView
             android:id="@+id/titulomain"
-            android:layout_width="match_parent"
+            android:layout_width="287dp"
             android:layout_height="80dp"
-            android:text="ARTISTLAN"
-            android:gravity="center_horizontal"
-            android:fontFamily="sans-serif-black"
-            android:textSize="40dp"
             android:layout_marginBottom="40dp"
-            >
-        </TextView>
+            android:fontFamily="sans-serif-black"
+            android:gravity="center_horizontal"
+            android:text="ARTISTLAN"
+            android:textSize="40dp"></TextView>
         <TextView
             android:id="@+id/texto1"
             android:layout_width="match_parent"

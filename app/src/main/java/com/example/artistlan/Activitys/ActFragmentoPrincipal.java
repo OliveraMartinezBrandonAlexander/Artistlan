@@ -10,13 +10,13 @@ import com.example.artistlan.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class ActFragmentoPrincipal extends AppCompatActivity {
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // EdgeToEdge.enable(this); comentado para que no oculte el menu
         setContentView(R.layout.activity_act_fragmento_principal);
 
-        //Conexion con el navHostFragment y la barra inferior
+        // Conexion con el navHostFragment y la barra inferior
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragmentContainerView);
         if (navHostFragment != null) {

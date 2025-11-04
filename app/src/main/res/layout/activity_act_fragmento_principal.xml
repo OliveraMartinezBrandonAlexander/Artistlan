@@ -8,12 +8,7 @@
     android:orientation="vertical"
     tools:context=".Activitys.ActFragmentoPrincipal">
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@android:color/black" />
-
-    <!-- Contenedor de Fragmentos (ocupa el resto del espacio) -->
+    <!-- Contenedor de Fragmentos -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView"
         android:name="androidx.navigation.fragment.NavHostFragment"
@@ -23,5 +18,7 @@
         app:defaultNavHost="true"
         app:navGraph="@navigation/navegador" />
 
+    <!-- MENÚ INFERIOR FIJO -->
     <include layout="@layout/layout_menu_inferior" />
+
 </LinearLayout>

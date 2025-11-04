@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:background="@android:color/transparent"
             android:fitsSystemWindows="true"
-            android:paddingBottom="16dp"
+            android:paddingBottom="0dp"
             app:itemIconTint="@color/seleccionado"
             app:itemTextColor="#2A272A"
             app:labelVisibilityMode="labeled"

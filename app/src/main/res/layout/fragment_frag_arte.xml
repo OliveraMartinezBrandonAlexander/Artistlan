@@ -6,23 +6,167 @@
     android:orientation="vertical"
     tools:context=".Fragments.FragArte">
 
-    <include layout="@layout/layout_menu_superior" />
-    <LinearLayout
-        android:id="@+id/contenedorPrincipal"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:padding="16dp">
+<!--    <include layout="@layout/layout_menu_superior" />-->
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:gravity="center"
-            android:text="Fragmento de arte"
-            android:textSize="30dp"/>
-    </LinearLayout>
+<!--    <LinearLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:orientation="vertical"-->
+<!--        android:paddingTop="16dp"-->
+<!--        android:paddingBottom="8dp">-->
 
+<!--        <TextView-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:gravity="center"-->
+<!--            android:textSize="24sp"-->
+<!--            android:textStyle="bold"-->
+<!--            android:text="Arte" />-->
+
+<!--        <RelativeLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:gravity="center_vertical"-->
+<!--            android:paddingStart="8dp"-->
+<!--            android:paddingEnd="8dp">-->
+
+<!--            <ImageButton-->
+<!--                android:id="@+id/artecarruselizq"-->
+<!--                android:layout_width="36dp"-->
+<!--                android:layout_height="36dp"-->
+<!--                android:layout_alignParentStart="true"-->
+<!--                android:layout_centerVertical="true"-->
+<!--                android:background="@android:color/transparent"-->
+<!--                android:src="@drawable/botonizquierdoprincipal"-->
+<!--                android:scaleType="fitCenter"-->
+<!--                android:contentDescription="Anterior" />-->
+
+<!--&lt;!&ndash;            <HorizontalScrollView&ndash;&gt;-->
+<!--&lt;!&ndash;                android:id="@+id/scrollViewCategorias"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_toEndOf="@id/botonizquierdoprincipal"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_toStartOf="@id/botonderechoprincipal"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:scrollbars="none"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:paddingStart="4dp"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:paddingEnd="4dp">&ndash;&gt;-->
+
+<!--&lt;!&ndash;                <LinearLayout&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/contenedorCategorias"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:orientation="horizontal"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center_vertical">&ndash;&gt;-->
+
+<!--&lt;!&ndash;                    <Button&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:layout_marginEnd="8dp"&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:text="Poesia"&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:background="@drawable/background_categoria_inactive" />&ndash;&gt;-->
+
+<!--&lt;!&ndash;                    <Button&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:layout_marginEnd="8dp"&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:text="Pintura al Oleo"&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:background="@drawable/background_categoria_active" /> <Button&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_marginEnd="8dp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="Fotografía"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:background="@drawable/background_categoria_inactive" />&ndash;&gt;-->
+
+<!--&lt;!&ndash;                    <Button&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:layout_marginEnd="8dp"&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:text="Escultura"&ndash;&gt;-->
+<!--&lt;!&ndash;                        android:background="@drawable/background_categoria_inactive" />&ndash;&gt;-->
+<!--&lt;!&ndash;                </LinearLayout>&ndash;&gt;-->
+<!--&lt;!&ndash;            </HorizontalScrollView>&ndash;&gt;-->
+
+<!--&lt;!&ndash;            <ImageButton&ndash;&gt;-->
+<!--&lt;!&ndash;                android:id="@+id/botonderechoprincipal"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="36dp"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="36dp"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_alignParentEnd="true"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_centerVertical="true"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:background="@android:color/transparent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:src="@drawable/ic_arrow_forward"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:scaleType="fitCenter"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:contentDescription="Siguiente" />&ndash;&gt;-->
+
+<!--&lt;!&ndash;        </RelativeLayout>&ndash;&gt;-->
+
+<!--        <Button-->
+<!--            android:id="@+id/btnAplicar"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_gravity="center_horizontal"-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:paddingStart="32dp"-->
+<!--            android:paddingEnd="32dp"-->
+<!--            android:text="Aplicar" />-->
+
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:orientation="horizontal"-->
+<!--            android:layout_marginTop="16dp"-->
+<!--            android:paddingStart="16dp"-->
+<!--            android:paddingEnd="16dp"-->
+<!--            android:gravity="center_vertical">-->
+
+<!--&lt;!&ndash;            <ImageView&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="24dp"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="24dp"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:src="@drawable/ic_filter"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:contentDescription="Filtro" />&ndash;&gt;-->
+
+<!--            <TextView-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginStart="8dp"-->
+<!--                android:textStyle="bold"-->
+<!--                android:text="Buscar por:" />-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/tvSeleccionarOpcion"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_weight="1"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginStart="8dp"-->
+<!--                android:padding="8dp"-->
+<!--                android:text="V Selecciona una opción" />-->
+<!--        </LinearLayout>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:background="@android:color/darker_gray"-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:layout_marginBottom="8dp"-->
+<!--            android:layout_marginStart="16dp"-->
+<!--            android:layout_marginEnd="16dp"/>-->
+
+<!--    </LinearLayout>-->
+<!--    <LinearLayout-->
+<!--        android:id="@+id/contenedorPrincipal"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="0dp"-->
+<!--        android:layout_weight="1"-->
+<!--        android:orientation="vertical"-->
+<!--        android:padding="16dp">-->
+
+<!--        <TextView-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="40dp"-->
+<!--            android:gravity="center"-->
+<!--            android:text="Fragmento de arte"-->
+<!--            android:textSize="30dp"/>-->
+<!--    </LinearLayout>-->
 
 </LinearLayout>

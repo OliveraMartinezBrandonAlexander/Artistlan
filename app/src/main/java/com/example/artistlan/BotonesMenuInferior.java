@@ -26,7 +26,7 @@ public class BotonesMenuInferior implements AdapterView.OnItemSelectedListener {
     private void inicializarSpinner(View ruta) {
         SpinnerMenu = ruta.findViewById(R.id.SpinnerMenu);
         if (SpinnerMenu != null) {
-            String[] opciones = {"Menu ≡", "Favoritos", "(Próximamente)", "(Próximamente)", "Cerrar Sesión"};
+            String[] opciones = {"Menu ≡", "(Próximamente)", "(Próximamente)", "Cerrar Sesión"};
 
             ArrayAdapter<String> adapter = new ArrayAdapter<>(
                     fragmento.getContext(),
@@ -41,11 +41,9 @@ public class BotonesMenuInferior implements AdapterView.OnItemSelectedListener {
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         try {
-            if (position == 1) {
-                Navigation.findNavController(fragmento.requireView()).navigate(R.id.fragFavoritos);
-            } else if (position == 2 || position == 3) {
+            if (position == 1 || position == 2) {
                 Toast.makeText(fragmento.getContext(), "Próximamente...", Toast.LENGTH_SHORT).show();
-            } else if (position == 4) {
+            } else if (position == 3) {
                 Intent irActivity = new Intent(fragmento.requireContext(), MainActivity.class);
                 fragmento.startActivity(irActivity);
             }

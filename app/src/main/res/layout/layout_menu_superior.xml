@@ -32,6 +32,13 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="36dp"
+        android:src="@drawable/favoritos"
+        android:id="@+id/btnFavoritos"
+        android:visibility="gone"/>
+
     <Spinner
         android:id="@+id/SpinnerMenu"
         android:layout_width="90dp"

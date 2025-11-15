@@ -3,14 +3,17 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import com.example.artistlan.BotonesMenuInferior;
 import com.example.artistlan.R;
 
-public class FragVerPerfil extends Fragment {
+public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -24,5 +27,19 @@ public class FragVerPerfil extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         new BotonesMenuInferior(this, view);
+        ImageView btnFavoritos = view.findViewById(R.id.btnFavoritos);
+        btnFavoritos.setVisibility(View.VISIBLE);
+
+        btnFavoritos.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+
+        if(v.getId() == R.id.btnFavoritos)
+        {
+            Navigation.findNavController(v).navigate(R.id.fragFavoritos);
+        }
+
     }
 }

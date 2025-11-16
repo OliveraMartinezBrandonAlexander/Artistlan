@@ -1,29 +1,70 @@
 package com.example.artistlan.Fragments;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import com.example.artistlan.BotonesMenuInferior;
+import android.widget.ImageButton;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.viewpager2.widget.ViewPager2;
+
 import com.example.artistlan.R;
+import com.example.artistlan.adapter.CarruselAdapter;
+import com.example.artistlan.model.Obra;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FragMain extends Fragment {
 
+    private ViewPager2 viewPager;
+    private ImageButton btnIzq, btnDer;
+
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_frag_main,container,false);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.fragment_frag_main, container, false);
+
+        viewPager = root.findViewById(R.id.viewPagerCarrusel);
+        btnIzq = root.findViewById(R.id.btnCarruselIzquierdo);
+        btnDer = root.findViewById(R.id.btnCarruselDerecho);
+
+        List<Obra> obras = new ArrayList<>();
+        obras.add(new Obra(R.drawable.pin1, "Obra 1", "Descripción 1", "Superman", "135K"));
+        obras.add(new Obra(R.drawable.pin2, "Obra 2", "Descripción 2", "Batman", "80K"));
+        obras.add(new Obra(R.drawable.pin3, "Obra 3", "Descripción 3", "Wonder Woman", "95K"));
+
+        CarruselAdapter adapter = new CarruselAdapter(obras, getContext());
+        viewPager.setAdapter(adapter);
+
+        btnDer.setOnClickListener(v -> {
+            if (viewPager.getCurrentItem() < obras.size() - 1) {
+                viewPager.setCurrentItem(viewPager.getCurrentItem() + 1, true);
+                animarBoton(v);
+            }
+        });
+
+        btnIzq.setOnClickListener(v -> {
+            if (viewPager.getCurrentItem() > 0) {
+                viewPager.setCurrentItem(viewPager.getCurrentItem() - 1, true);
+                animarBoton(v);
+            }
+        });
+
+        return root;
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-
-        new BotonesMenuInferior(this, view);
+    private void animarBoton(View v) {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(v, "scaleX", 1f, 1.2f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(v, "scaleY", 1f, 1.2f, 1f);
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(scaleX, scaleY);
+        set.setDuration(300);
+        set.start();
     }
 }

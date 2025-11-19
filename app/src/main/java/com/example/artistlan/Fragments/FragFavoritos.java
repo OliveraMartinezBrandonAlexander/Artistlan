@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import com.example.artistlan.Activitys.ActFragmentoPrincipal;
+import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
 
 public class FragFavoritos extends Fragment implements View.OnClickListener {
@@ -27,6 +28,7 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
 
         btnRegresar = view.findViewById(R.id.btnRegresar);
         btnRegresar.setOnClickListener(this);
+        new BotonesMenuSuperior(this, view);
     }
     @Override
     public void onDestroyView() {

@@ -16,7 +16,6 @@ import com.example.artistlan.model.Obra;
 import java.util.List;
 
 public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.CarruselViewHolder> {
-
     private List<Obra> obras;
     private Context context;
 

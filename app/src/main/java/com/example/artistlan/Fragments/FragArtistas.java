@@ -8,7 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.artistlan.BotonesMenuInferior;
+import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
 
 public class FragArtistas extends Fragment {
@@ -25,6 +25,6 @@ public class FragArtistas extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        new BotonesMenuInferior(this, view);
+        new BotonesMenuSuperior(this, view);
     }
 }

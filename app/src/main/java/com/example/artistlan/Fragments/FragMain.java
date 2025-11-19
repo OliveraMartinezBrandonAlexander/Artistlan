@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
 import com.example.artistlan.adapter.CarruselAdapter;
 import com.example.artistlan.model.Obra;
@@ -29,7 +30,7 @@ public class FragMain extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_frag_main, container, false);
-
+        new BotonesMenuSuperior(this, root);
         viewPager = root.findViewById(R.id.viewPagerCarrusel);
         btnIzq = root.findViewById(R.id.btnCarruselIzquierdo);
         btnDer = root.findViewById(R.id.btnCarruselDerecho);

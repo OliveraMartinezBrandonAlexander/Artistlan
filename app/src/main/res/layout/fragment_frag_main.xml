@@ -8,11 +8,7 @@
     tools:context=".Fragments.FragMain">
 
     <!-- MENÚ SUPERIOR DENTRO DEL FRAGMENT -->
-    <include
-        android:id="@+id/menuSuperior"
-        layout="@layout/layout_menu_superior"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+    <include layout="@layout/layout_menu_superior" />
 
     <View
         android:layout_width="match_parent"

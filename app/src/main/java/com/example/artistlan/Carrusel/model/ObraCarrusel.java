@@ -1,13 +1,13 @@
-package com.example.artistlan.model;
+package com.example.artistlan.Carrusel.model;
 
-public class Obra {
+public class ObraCarrusel {
     private int imagen;
     private String titulo;
     private String descripcion;
     private String autor;
     private String likes;
 
-    public Obra(int imagen, String titulo, String descripcion, String autor, String likes) {
+    public ObraCarrusel(int imagen, String titulo, String descripcion, String autor, String likes) {
         this.imagen = imagen;
         this.titulo = titulo;
         this.descripcion = descripcion;

@@ -1,4 +1,4 @@
-package com.example.artistlan.adapter;
+package com.example.artistlan.Carrusel.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -11,15 +11,15 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.artistlan.R;
-import com.example.artistlan.model.Obra;
+import com.example.artistlan.Carrusel.model.ObraCarrusel;
 
 import java.util.List;
 
 public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.CarruselViewHolder> {
-    private List<Obra> obras;
+    private List<ObraCarrusel> obras;
     private Context context;
 
-    public CarruselAdapter(List<Obra> obras, Context context) {
+    public CarruselAdapter(List<ObraCarrusel> obras, Context context) {
         this.obras = obras;
         this.context = context;
     }
@@ -33,7 +33,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
 
     @Override
     public void onBindViewHolder(@NonNull CarruselViewHolder holder, int position) {
-        Obra obra = obras.get(position);
+        ObraCarrusel obra = obras.get(position);
         holder.imgObra.setImageResource(obra.getImagen());
         holder.tvTitulo.setText(obra.getTitulo());
         holder.tvDescripcion.setText(obra.getDescripcion());
@@ -56,7 +56,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
             tvTitulo = itemView.findViewById(R.id.tvTitulo);
             tvDescripcion = itemView.findViewById(R.id.tvDescripcion);
             tvAutor = itemView.findViewById(R.id.tvAutor);
-            tvLikes = itemView.findViewById(R.id.tvLikes); // <-- corregido
+            tvLikes = itemView.findViewById(R.id.tvLikes);
         }
     }
 }

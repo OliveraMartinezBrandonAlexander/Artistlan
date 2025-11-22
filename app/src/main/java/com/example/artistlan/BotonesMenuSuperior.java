@@ -49,7 +49,7 @@ public class BotonesMenuSuperior {
                     Toast.makeText(fragmento.getContext(), "Historia del Arte...", Toast.LENGTH_SHORT).show();
                     return true;
                 } else if (itemId == R.id.frag_historia_artistlan) {
-                    Toast.makeText(fragmento.getContext(), "Historia de Artislan...", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(fragmento.getContext(), "Historia de Artislan", Toast.LENGTH_SHORT).show();
                     return true;
                 } else if (itemId == R.id.frag_cerrar_sesion) {
                     Intent irActivity = new Intent(fragmento.requireContext(), MainActivity.class);

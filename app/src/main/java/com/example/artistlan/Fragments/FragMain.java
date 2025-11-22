@@ -15,8 +15,8 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
-import com.example.artistlan.adapter.CarruselAdapter;
-import com.example.artistlan.model.Obra;
+import com.example.artistlan.Carrusel.adapter.CarruselAdapter;
+import com.example.artistlan.Carrusel.model.ObraCarrusel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,10 +35,10 @@ public class FragMain extends Fragment {
         btnIzq = root.findViewById(R.id.btnCarruselIzquierdo);
         btnDer = root.findViewById(R.id.btnCarruselDerecho);
 
-        List<Obra> obras = new ArrayList<>();
-        obras.add(new Obra(R.drawable.pin1, "Obra 1", "Descripción 1", "Superman", "135K"));
-        obras.add(new Obra(R.drawable.pin2, "Obra 2", "Descripción 2", "Batman", "80K"));
-        obras.add(new Obra(R.drawable.pin3, "Obra 3", "Descripción 3", "Wonder Woman", "95K"));
+        List<ObraCarrusel> obras = new ArrayList<>();
+        obras.add(new ObraCarrusel(R.drawable.pin1, "Obra 1", "Descripción 1", "Superman", "135K"));
+        obras.add(new ObraCarrusel(R.drawable.pin2, "Obra 2", "Descripción 2", "Batman", "80K"));
+        obras.add(new ObraCarrusel(R.drawable.pin3, "Obra 3", "Descripción 3", "Wonder Woman", "95K"));
 
         CarruselAdapter adapter = new CarruselAdapter(obras, getContext());
         viewPager.setAdapter(adapter);

@@ -1,6 +1,6 @@
-package com.example.artistlan.api;
+package com.example.artistlan.Conector.api;
 
-import com.example.artistlan.api.model.UsuariosDTO;
+import com.example.artistlan.Conector.model.UsuariosDTO;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.Body;

@@ -1,4 +1,4 @@
-package com.example.artistlan.api;
+package com.example.artistlan.Conector;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;

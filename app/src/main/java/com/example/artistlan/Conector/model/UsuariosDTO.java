@@ -1,4 +1,4 @@
-package com.example.artistlan.api.model;
+package com.example.artistlan.Conector.model;
 
 public class UsuariosDTO
 {

@@ -1,4 +1,4 @@
-package com.example.artistlan.model;
+package com.example.artistlan.Carrusel.model;
 
 public class CarruselItem {
     private String title;

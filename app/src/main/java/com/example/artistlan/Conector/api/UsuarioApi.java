@@ -8,6 +8,8 @@ import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface UsuarioApi
 {
@@ -17,10 +19,14 @@ public interface UsuarioApi
     @POST("usuarios")
     Call<List<UsuariosDTO>> crearUsuarios(@Body List<UsuariosDTO> usuarios);
 
-    @PUT("usuarios")
-    Call<List<UsuariosDTO>> actualizarUsuarios(@Body List<UsuariosDTO> usuarios);
 
-    @DELETE("usuarios")
-    Call<Void> eliminarTodos();
+    @GET("usuarios/login")
+    Call<UsuariosDTO> login(
+            @Query("usuario") String usuario,
+            @Query("correo") String correo,
+            @Query("contrasena") String contrasena
+    );
 
+    @GET("api/usuarios/{id}")
+    Call<UsuariosDTO> obtenerUsuarioPorId(@Path("id") int id);
 }

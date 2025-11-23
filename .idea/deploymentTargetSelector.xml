@@ -13,6 +13,8 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
+
+      <!-- Configuración local de MainActivity -->
       <SelectionState runConfigName="MainActivity">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2025-11-23T00:28:09.759311300Z">
@@ -24,6 +26,8 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
+
+      <!-- Configuración adicional de MainActivity (1) -->
       <SelectionState runConfigName="MainActivity (1)">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>

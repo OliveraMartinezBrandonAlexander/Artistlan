@@ -11,15 +11,15 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.artistlan.R;
-import com.example.artistlan.Carrusel.model.ObraCarrusel;
+import com.example.artistlan.Carrusel.model.ObraCarruselItem;
 
 import java.util.List;
 
 public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.CarruselViewHolder> {
-    private List<ObraCarrusel> obras;
+    private List<ObraCarruselItem> obras;
     private Context context;
 
-    public CarruselAdapter(List<ObraCarrusel> obras, Context context) {
+    public CarruselAdapter(List<ObraCarruselItem> obras, Context context) {
         this.obras = obras;
         this.context = context;
     }
@@ -33,7 +33,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
 
     @Override
     public void onBindViewHolder(@NonNull CarruselViewHolder holder, int position) {
-        ObraCarrusel obra = obras.get(position);
+        ObraCarruselItem obra = obras.get(position);
         holder.imgObra.setImageResource(obra.getImagen());
         holder.tvTitulo.setText(obra.getTitulo());
         holder.tvDescripcion.setText(obra.getDescripcion());

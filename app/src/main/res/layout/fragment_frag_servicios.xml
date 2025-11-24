@@ -8,22 +8,10 @@
 
     <include layout="@layout/layout_menu_superior" />
 
-    <LinearLayout
-        android:id="@+id/contenedorPrincipal"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerServicios"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:gravity="center"
-            android:text="Fragmento de servicios"
-            android:textSize="30dp"/>
-    </LinearLayout>
-
+        android:layout_height="match_parent"
+        android:padding="0dp"/>
 
 </LinearLayout>

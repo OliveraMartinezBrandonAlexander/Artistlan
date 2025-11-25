@@ -78,4 +78,9 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             likes = itemView.findViewById(R.id.likes);
         }
     }
+
+    public void actualizarLista(List<TarjetaTextoObraItem> nuevaLista) {
+        this.listaObras = nuevaLista;
+        notifyDataSetChanged();
+    }
 }

@@ -1,0 +1,21 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/tvTituloMisServicios"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Mis servicios"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:padding="4dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerMisServicios"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"  android:nestedScrollingEnabled="false" android:paddingTop="10dp"/>
+
+</LinearLayout>

@@ -48,7 +48,6 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         return listaServicios.size();
     }
 
-    // MÉTODO QUE FALTABA - AGREGAR ESTO:
     public void actualizarLista(List<TarjetaTextoServicioItem> nuevaLista) {
         this.listaServicios = nuevaLista;
         notifyDataSetChanged();

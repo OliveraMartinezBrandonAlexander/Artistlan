@@ -15,9 +15,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center"
-        android:padding="40dp"
-
-        >
+        android:padding="40dp">
 
         <TextView
             android:id="@+id/titulomain"

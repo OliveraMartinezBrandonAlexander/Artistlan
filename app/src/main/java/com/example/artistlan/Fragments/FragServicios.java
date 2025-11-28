@@ -8,14 +8,15 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
-
 import com.example.artistlan.BotonesMenuSuperior;
+import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.api.ServicioApi;
+import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Carrusel.adapter.PalabraCarruselAdapter;
 import com.example.artistlan.Carrusel.layout.CenterZoomLayoutManager;
@@ -25,6 +26,10 @@ import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class FragServicios extends Fragment implements PalabraCarruselAdapter.OnCategoriaClickListener {
 
@@ -59,6 +64,8 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
 
         // Configurar botón de aplicar filtro
         configurarBotonFiltro(view);
+
+        cargarTodosLosServicios();
     }
 
     private void configurarCarrusel(View view) {
@@ -289,5 +296,40 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         }
 
         System.out.println("Filtro de servicios limpiado");
+    }
+    private List<TarjetaTextoServicioItem> convertir(List<ServicioDTO> dtoList) {
+        List<TarjetaTextoServicioItem> lista = new ArrayList<>();
+
+        for (ServicioDTO dto : dtoList) {
+            lista.add(new TarjetaTextoServicioItem(
+                    dto.getTitulo(),
+                    dto.getDescripcion(),
+                    dto.getContacto(),
+                    dto.getTecnicas(),
+                    dto.getNombreUsuario()
+            ));
+        }
+        return lista;
+    }
+
+    private void cargarTodosLosServicios() {
+        ServicioApi api = RetrofitClient.getClient().create(ServicioApi.class);
+        Call<List<ServicioDTO>> call = api.obtenerTodos();
+
+        call.enqueue(new Callback<List<ServicioDTO>>() {
+            @Override
+            public void onResponse(Call<List<ServicioDTO>> call, Response<List<ServicioDTO>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<TarjetaTextoServicioItem> items = convertir(response.body());
+                    adapter = new TarjetaTextoServicioAdapter(items, requireContext());
+                    recyclerServicios.setAdapter(adapter);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<ServicioDTO>> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
     }
 }

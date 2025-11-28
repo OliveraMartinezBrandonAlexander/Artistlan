@@ -8,6 +8,7 @@ public class ServicioDTO
     private String contacto;
     private String tecnicas;
     private Integer idUsuario;
+    private String nombreUsuario;
 
     public Integer getIdServicio() {
         return idServicio;
@@ -55,5 +56,13 @@ public class ServicioDTO
 
     public void setIdUsuario(Integer idUsuario) {
         this.idUsuario = idUsuario;
+    }
+
+    public String getNombreUsuario() {
+        return nombreUsuario;
+    }
+
+    public void setNombreUsuario(String nombreUsuario) {
+        this.nombreUsuario = nombreUsuario;
     }
 }

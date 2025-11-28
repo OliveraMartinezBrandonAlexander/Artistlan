@@ -83,4 +83,5 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         this.listaObras = nuevaLista;
         notifyDataSetChanged();
     }
+
 }

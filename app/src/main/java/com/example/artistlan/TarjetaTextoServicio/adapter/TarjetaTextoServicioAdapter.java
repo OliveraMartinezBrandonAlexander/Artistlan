@@ -14,7 +14,7 @@ import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem
 
 import java.util.List;
 
-public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTextoServicioAdapter.ViewHolder> {
+public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTextoServicioAdapter.TarjetaTextoServicioViewHolder> {
 
     private List<TarjetaTextoServicioItem> listaServicios;
     private Context context;
@@ -26,14 +26,14 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public TarjetaTextoServicioViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_tarjetatextoservicio, parent, false);
-        return new ViewHolder(view);
+        return new TarjetaTextoServicioViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull TarjetaTextoServicioViewHolder holder, int position) {
         TarjetaTextoServicioItem servicio = listaServicios.get(position);
 
         holder.titulo.setText(servicio.getTitulo());
@@ -48,11 +48,17 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         return listaServicios.size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    // MÉTODO QUE FALTABA - AGREGAR ESTO:
+    public void actualizarLista(List<TarjetaTextoServicioItem> nuevaLista) {
+        this.listaServicios = nuevaLista;
+        notifyDataSetChanged();
+    }
+
+    public static class TarjetaTextoServicioViewHolder extends RecyclerView.ViewHolder {
 
         TextView titulo, descripcion, contacto, tecnicas, autor;
 
-        public ViewHolder(@NonNull View itemView) {
+        public TarjetaTextoServicioViewHolder(@NonNull View itemView) {
             super(itemView);
 
             titulo = itemView.findViewById(R.id.titulo);

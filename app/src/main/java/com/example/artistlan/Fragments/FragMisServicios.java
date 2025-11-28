@@ -60,7 +60,8 @@ public class FragMisServicios extends Fragment {
                     dto.getDescripcion(),
                     dto.getContacto(),
                     dto.getTecnicas(),
-                    dto.getNombreUsuario()   // Autor
+                    dto.getNombreUsuario(),
+                    dto.getCategoria()
             ));
         }
 

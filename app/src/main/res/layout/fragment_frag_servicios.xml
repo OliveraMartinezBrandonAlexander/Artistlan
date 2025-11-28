@@ -9,7 +9,6 @@
 
     <include layout="@layout/layout_menu_superior" />
 
-    <!-- Carrusel de tipos de servicios -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -38,14 +37,19 @@
                 android:layout_centerVertical="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_media_previous"
-                android:layout_marginRight="8dp" />
+                android:contentDescription="Scroll Izquierda"
+                android:layout_marginEnd="8dp" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerCarruselServicios"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_toLeftOf="@+id/btnCarruselDerechoServicios"
-                android:layout_toRightOf="@+id/btnCarruselIzquierdoServicios" />
+                android:layout_toStartOf="@+id/btnCarruselDerechoServicios"
+                android:layout_toEndOf="@+id/btnCarruselIzquierdoServicios"
+                android:clipToPadding="false"
+                android:paddingStart="40dp"
+                android:paddingEnd="40dp"
+                android:orientation="horizontal" />
 
             <ImageButton
                 android:id="@+id/btnCarruselDerechoServicios"
@@ -55,7 +59,8 @@
                 android:layout_centerVertical="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_media_next"
-                android:layout_marginLeft="8dp" />
+                android:contentDescription="Scroll Derecha"
+                android:layout_marginStart="8dp" />
 
         </RelativeLayout>
 
@@ -72,7 +77,6 @@
 
     </LinearLayout>
 
-    <!-- Lista de servicios -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerServicios"
         android:layout_width="match_parent"

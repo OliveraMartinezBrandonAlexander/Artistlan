@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.Toast;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.ServicioApi;
@@ -40,7 +41,8 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
     private ImageButton btnIzq, btnDer;
     private Button btnAplicarFiltro;
     private List<PalabraCarruselItem> tiposServicios;
-    private List<TarjetaTextoServicioItem> listaServicios;
+    // INICIALIZACIÓN CRÍTICA para evitar NullPointerException al inicio
+    private List<TarjetaTextoServicioItem> listaServicios = new ArrayList<>();
     private String tipoServicioFiltroActual = "";
     private CenterZoomLayoutManager layoutManager;
 
@@ -56,28 +58,31 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
 
         new BotonesMenuSuperior(this, view);
 
-        // Configurar el carrusel de tipos de servicios
-        configurarCarrusel(view);
-
-        // Configurar el RecyclerView de servicios
+        // 1. Configurar el RecyclerView de servicios (con lista inicial vacía)
         configurarServicios(view);
 
-        // Configurar botón de aplicar filtro
+        // 2. Configurar el carrusel de tipos de servicios
+        configurarCarrusel(view);
+
+        // 3. Configurar botón de aplicar filtro
         configurarBotonFiltro(view);
 
+        // 4. Cargar datos de la red
         cargarTodosLosServicios();
     }
+
+    // -------------------------------------------------------------------------
+    // --- LÓGICA DEL CARRUSEL (CORREGIDA) ---
+    // -------------------------------------------------------------------------
 
     private void configurarCarrusel(View view) {
         recyclerViewCarrusel = view.findViewById(R.id.recyclerCarruselServicios);
         btnIzq = view.findViewById(R.id.btnCarruselIzquierdoServicios);
         btnDer = view.findViewById(R.id.btnCarruselDerechoServicios);
 
-        // Configurar LayoutManager personalizado
         layoutManager = new CenterZoomLayoutManager(getContext());
         recyclerViewCarrusel.setLayoutManager(layoutManager);
 
-        // Crear lista de tipos de servicios para el carrusel
         tiposServicios = obtenerTiposServiciosDeBD();
 
         carruselAdapter = new PalabraCarruselAdapter(tiposServicios, requireContext(), this);
@@ -94,7 +99,7 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
             }
         });
 
-        // Configurar botones de navegación
+        // Configurar botones de navegación: Usando getItemSeleccionado para scroll
         btnDer.setOnClickListener(v -> {
             int currentPosition = carruselAdapter.getItemSeleccionado();
             if (currentPosition < carruselAdapter.getItemCount() - 2) {
@@ -114,12 +119,12 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         // Establecer posición inicial (primer item real)
         recyclerViewCarrusel.post(() -> {
             recyclerViewCarrusel.smoothScrollToPosition(1);
-            recyclerViewCarrusel.postDelayed(() -> {
-                carruselAdapter.setItemSeleccionado(1);
-            }, 100);
         });
     }
 
+    /**
+     * RESTAURADA LA LÓGICA ORIGINAL Y CORRECTA: Busca la vista bajo el punto central.
+     */
     private void encontrarItemCentral() {
         int centerX = recyclerViewCarrusel.getWidth() / 2;
         float centerY = recyclerViewCarrusel.getHeight() / 2.0f;
@@ -137,24 +142,12 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         }
     }
 
-    private void configurarBotonFiltro(View view) {
-        btnAplicarFiltro = view.findViewById(R.id.btnAplicarFiltroServicios);
-        btnAplicarFiltro.setVisibility(View.GONE);
-
-        btnAplicarFiltro.setOnClickListener(v -> {
-            PalabraCarruselItem tipoServicioSeleccionado = carruselAdapter.getCategoriaSeleccionada();
-            if (tipoServicioSeleccionado != null) {
-                aplicarFiltro(tipoServicioSeleccionado.getIdCategoria());
-                animarBoton(v);
-            }
-        });
-    }
-
     private List<PalabraCarruselItem> obtenerTiposServiciosDeBD() {
-        // TODO: CONECTAR CON BASE DE DATOS - Reemplazar con tu lógica real
         List<PalabraCarruselItem> tipos = new ArrayList<>();
 
-        // Ejemplo de tipos de servicios - reemplaza con datos reales de BD
+        // ITEMS DE RELLENO OBLIGATORIOS para el centrado
+        tipos.add(new PalabraCarruselItem("", "empty_start", 0, 0));
+
         String[] tiposArray = {
                 "Retratos", "Murales", "Ilustración", "Diseño", "Fotografía",
                 "Escultura", "Pintura", "Digital", "Acuarela", "Óleo",
@@ -169,103 +162,9 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
             tipos.add(new PalabraCarruselItem(tipo, "serv_" + tipo.toLowerCase(), colorNormal, colorSeleccionado));
         }
 
+        tipos.add(new PalabraCarruselItem("", "empty_end", 0, 0));
+
         return tipos;
-    }
-
-    private void aplicarFiltro(String idTipoServicio) {
-        tipoServicioFiltroActual = idTipoServicio;
-
-        PalabraCarruselItem tipoServicio = carruselAdapter.getCategoriaSeleccionada();
-        if (tipoServicio != null) {
-            System.out.println("Aplicando filtro para tipo de servicio: " + tipoServicio.getPalabra());
-
-            // TODO: CONECTAR CON BASE DE DATOS - Implementar filtrado real
-            // Por ahora, filtramos localmente los datos de prueba
-            filtrarServiciosLocalmente(tipoServicio.getPalabra());
-        }
-    }
-
-    private void filtrarServiciosLocalmente(String tipoServicio) {
-        List<TarjetaTextoServicioItem> serviciosFiltrados = new ArrayList<>();
-
-        for (TarjetaTextoServicioItem servicio : listaServicios) {
-            // Verificar si las técnicas del servicio contienen el tipo seleccionado
-            if (servicio.getTecnicas() != null &&
-                    servicio.getTecnicas().toLowerCase().contains(tipoServicio.toLowerCase())) {
-                serviciosFiltrados.add(servicio);
-            }
-        }
-
-        // Si no hay coincidencias, mostrar todos
-        if (serviciosFiltrados.isEmpty()) {
-            serviciosFiltrados = new ArrayList<>(listaServicios);
-            System.out.println("No se encontraron servicios para: " + tipoServicio + ". Mostrando todos.");
-        }
-
-        // Actualizar el adapter con la lista filtrada
-        adapter.actualizarLista(serviciosFiltrados);
-    }
-
-    private void configurarServicios(View view) {
-        recyclerServicios = view.findViewById(R.id.recyclerServicios);
-        recyclerServicios.setLayoutManager(new LinearLayoutManager(requireContext()));
-
-        // Datos de prueba - TODO: CONECTAR CON BASE DE DATOS
-        listaServicios = new ArrayList<>();
-        listaServicios.add(new TarjetaTextoServicioItem(
-                "Retratos digitales",
-                "Hago ilustraciones personalizadas en estilo digital",
-                "55-555-555",
-                "Digital",
-                "Art By Lua"
-        ));
-        listaServicios.add(new TarjetaTextoServicioItem(
-                "Murales personalizados",
-                "Murales en pared y negocios con acrílico y spray",
-                "44-444-444",
-                "Acrílico / Spray",
-                "MurArt Studio"
-        ));
-        listaServicios.add(new TarjetaTextoServicioItem(
-                "Pintura al óleo",
-                "Retratos y paisajes en técnica de óleo tradicional",
-                "33-333-333",
-                "Óleo",
-                "Estudio Clásico"
-        ));
-        listaServicios.add(new TarjetaTextoServicioItem(
-                "Fotografía artística",
-                "Sesiones de fotografía conceptual y artística",
-                "66-666-666",
-                "Fotografía",
-                "Lens Art"
-        ));
-        listaServicios.add(new TarjetaTextoServicioItem(
-                "Clases de acuarela",
-                "Enseño técnicas de acuarela para principiantes",
-                "77-777-777",
-                "Clases",
-                "Acuarela Studio"
-        ));
-        listaServicios.add(new TarjetaTextoServicioItem(
-                "Retratos al óleo",
-                "Retratos realistas en óleo sobre lienzo",
-                "88-888-888",
-                "Óleo",
-                "Retratos Clásicos"
-        ));
-
-        adapter = new TarjetaTextoServicioAdapter(listaServicios, requireContext());
-        recyclerServicios.setAdapter(adapter);
-    }
-
-    private void animarBoton(View v) {
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(v, "scaleX", 1f, 1.2f, 1f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(v, "scaleY", 1f, 1.2f, 1f);
-        AnimatorSet set = new AnimatorSet();
-        set.playTogether(scaleX, scaleY);
-        set.setDuration(300);
-        set.start();
     }
 
     @Override
@@ -277,39 +176,25 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
 
     @Override
     public void onCategoriaCentrada(int position, PalabraCarruselItem categoria) {
-        btnAplicarFiltro.setVisibility(View.VISIBLE);
-        btnAplicarFiltro.setText("Aplicar Filtro: " + categoria.getPalabra());
-    }
-
-    // Métodos para futura implementación con base de datos
-    public String getTipoServicioFiltroActual() {
-        return tipoServicioFiltroActual;
-    }
-
-    public void limpiarFiltro() {
-        tipoServicioFiltroActual = "";
-        btnAplicarFiltro.setVisibility(View.GONE);
-
-        // Recargar todos los servicios sin filtro
-        if (adapter != null && listaServicios != null) {
-            adapter.actualizarLista(listaServicios);
+        if (position > 0 && position < carruselAdapter.getItemCount() - 1) {
+            btnAplicarFiltro.setVisibility(View.VISIBLE);
+            btnAplicarFiltro.setText("Aplicar Filtro: " + categoria.getPalabra());
+        } else {
+            btnAplicarFiltro.setVisibility(View.GONE);
         }
-
-        System.out.println("Filtro de servicios limpiado");
     }
-    private List<TarjetaTextoServicioItem> convertir(List<ServicioDTO> dtoList) {
-        List<TarjetaTextoServicioItem> lista = new ArrayList<>();
 
-        for (ServicioDTO dto : dtoList) {
-            lista.add(new TarjetaTextoServicioItem(
-                    dto.getTitulo(),
-                    dto.getDescripcion(),
-                    dto.getContacto(),
-                    dto.getTecnicas(),
-                    dto.getNombreUsuario()
-            ));
-        }
-        return lista;
+
+    // -------------------------------------------------------------------------
+    // --- LÓGICA DE SERVICIOS (SIN CAMBIOS DE ESTABILIDAD) ---
+    // -------------------------------------------------------------------------
+
+    private void configurarServicios(View view) {
+        recyclerServicios = view.findViewById(R.id.recyclerServicios);
+        recyclerServicios.setLayoutManager(new LinearLayoutManager(requireContext()));
+
+        adapter = new TarjetaTextoServicioAdapter(listaServicios, requireContext());
+        recyclerServicios.setAdapter(adapter);
     }
 
     private void cargarTodosLosServicios() {
@@ -321,15 +206,111 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
             public void onResponse(Call<List<ServicioDTO>> call, Response<List<ServicioDTO>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<TarjetaTextoServicioItem> items = convertir(response.body());
-                    adapter = new TarjetaTextoServicioAdapter(items, requireContext());
-                    recyclerServicios.setAdapter(adapter);
+
+                    listaServicios.clear();
+                    listaServicios.addAll(items);
+                    adapter.actualizarLista(listaServicios);
+
+                } else {
+                    Toast.makeText(requireContext(), "Error al obtener servicios: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<List<ServicioDTO>> call, Throwable t) {
+                Toast.makeText(requireContext(), "Error de red al cargar servicios.", Toast.LENGTH_LONG).show();
                 t.printStackTrace();
             }
         });
+    }
+
+    private List<TarjetaTextoServicioItem> convertir(List<ServicioDTO> dtoList) {
+        List<TarjetaTextoServicioItem> lista = new ArrayList<>();
+
+        for (ServicioDTO dto : dtoList) {
+            lista.add(new TarjetaTextoServicioItem(
+                    dto.getTitulo(),
+                    dto.getDescripcion(),
+                    dto.getContacto(),
+                    dto.getTecnicas(),
+                    dto.getNombreUsuario(),
+                    dto.getCategoria()
+            ));
+        }
+        return lista;
+    }
+
+    private void aplicarFiltro(String idTipoServicio) {
+        tipoServicioFiltroActual = idTipoServicio;
+
+        PalabraCarruselItem tipoServicio = carruselAdapter.getCategoriaSeleccionada();
+        if (tipoServicio != null) {
+            System.out.println("Aplicando filtro para tipo de servicio: " + tipoServicio.getPalabra());
+            filtrarServiciosLocalmente(tipoServicio.getPalabra());
+        }
+    }
+
+    private void filtrarServiciosLocalmente(String tipoServicio) {
+        List<TarjetaTextoServicioItem> serviciosFiltrados = new ArrayList<>();
+
+        if (listaServicios.isEmpty()) {
+            Toast.makeText(requireContext(), "No hay datos para filtrar.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        for (TarjetaTextoServicioItem servicio : listaServicios) {
+            if (servicio.getTecnicas() != null &&
+                    servicio.getTecnicas().toLowerCase().contains(tipoServicio.toLowerCase())) {
+                serviciosFiltrados.add(servicio);
+            }
+        }
+
+        if (serviciosFiltrados.isEmpty()) {
+            Toast.makeText(requireContext(), "No se encontraron servicios para: " + tipoServicio, Toast.LENGTH_SHORT).show();
+            adapter.actualizarLista(new ArrayList<>(listaServicios));
+        } else {
+            adapter.actualizarLista(serviciosFiltrados);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // --- MISCELÁNEA ---
+    // -------------------------------------------------------------------------
+
+    private void configurarBotonFiltro(View view) {
+        btnAplicarFiltro = view.findViewById(R.id.btnAplicarFiltroServicios);
+        btnAplicarFiltro.setVisibility(View.GONE);
+
+        btnAplicarFiltro.setOnClickListener(v -> {
+            PalabraCarruselItem tipoServicioSeleccionado = carruselAdapter.getCategoriaSeleccionada();
+            if (tipoServicioSeleccionado != null) {
+                aplicarFiltro(tipoServicioSeleccionado.getIdCategoria());
+                animarBoton(v);
+            }
+        });
+    }
+
+    private void animarBoton(View v) {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(v, "scaleX", 1f, 1.2f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(v, "scaleY", 1f, 1.2f, 1f);
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(scaleX, scaleY);
+        set.setDuration(300);
+        set.start();
+    }
+
+    public String getTipoServicioFiltroActual() {
+        return tipoServicioFiltroActual;
+    }
+
+    public void limpiarFiltro() {
+        tipoServicioFiltroActual = "";
+        btnAplicarFiltro.setVisibility(View.GONE);
+
+        if (adapter != null && listaServicios != null) {
+            adapter.actualizarLista(new ArrayList<>(listaServicios));
+        }
+
+        System.out.println("Filtro de servicios limpiado");
     }
 }

@@ -9,6 +9,7 @@ public class ServicioDTO
     private String tecnicas;
     private Integer idUsuario;
     private String nombreUsuario;
+    private String categoria;
 
     public Integer getIdServicio() {
         return idServicio;
@@ -64,5 +65,13 @@ public class ServicioDTO
 
     public void setNombreUsuario(String nombreUsuario) {
         this.nombreUsuario = nombreUsuario;
+    }
+
+    public String getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(String categoria) {
+        this.categoria = categoria;
     }
 }

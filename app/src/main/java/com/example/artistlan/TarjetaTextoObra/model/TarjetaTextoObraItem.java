@@ -14,6 +14,8 @@ public class TarjetaTextoObraItem {
     private String categoria;
     private int likes;
     private int autor;
+    private boolean liked = false;
+    private boolean expandido = false;
 
 
 
@@ -78,5 +80,15 @@ public class TarjetaTextoObraItem {
 
     public int getAutor() {
         return autor;
+    }
+
+    public boolean isLiked() { return liked; }
+    public void setLiked(boolean liked) { this.liked = liked; }
+
+    public boolean isExpandido() { return expandido; }
+    public void setExpandido(boolean expandido) { this.expandido = expandido; }
+
+    public void setLikes(int likes) {
+        this.likes = likes;
     }
 }

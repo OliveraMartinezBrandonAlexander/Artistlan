@@ -150,7 +150,7 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
                 "Pintura", "Dibujo", "Escultura", "Fotografía", "Digital",
                 "Acuarela", "Óleo", "Acrílico", "Grabado", "Cerámica",
                 "Arte textil", "Collage", "Ilustración", "Mural",
-                "Arte abstracto", "Retrato", "Paisaje", "Arte conceptual"
+                "Arte abstracto", "Retrato", "Paisaje", "Arte conceptual", "Otro"
         };
 
         int colorNormal = 0xFF4B2056;

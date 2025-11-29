@@ -34,5 +34,9 @@
         android:id="@+id/fragVerPerfil"
         android:name="com.example.artistlan.Fragments.FragVerPerfil"
         tools:layout="@layout/fragment_frag_ver_perfil" />
+    <fragment
+        android:id="@+id/fragSubirObra"
+        android:name="com.example.artistlan.Fragments.FragSubirObra"
+        tools:layout="@layout/fragment_frag_subir_obra" />
 
 </navigation>

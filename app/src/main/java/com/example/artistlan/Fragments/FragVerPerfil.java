@@ -9,7 +9,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,7 +22,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     private TextView tvNombre, tvUsuario, tvCorreo, tvDescripcion, tvTelefono, tvRedes, tvFecNac;
     private ImageView imgFotoPerfil, btnFavoritos;
-    private Button btnMisServicios, btnMiArte;
+    private Button btnMisServicios, btnMiArte, btnSubirObra;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -38,8 +37,10 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         new BotonesMenuSuperior(this, view);
 
         btnFavoritos = view.findViewById(R.id.btnFavoritos);
+        btnSubirObra = view.findViewById(R.id.btnSubirObra);
         btnFavoritos.setVisibility(View.VISIBLE);
         btnFavoritos.setOnClickListener(this);
+        btnSubirObra.setOnClickListener(this);
 
         tvNombre = view.findViewById(R.id.VrpTxvNombre);
         tvUsuario = view.findViewById(R.id.VrpTxvUsuario);
@@ -93,6 +94,9 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     public void onClick(View v) {
         if (v.getId() == R.id.btnFavoritos) {
             Navigation.findNavController(v).navigate(R.id.fragFavoritos);
+        }
+        if (v.getId() == R.id.btnSubirObra) {
+            Navigation.findNavController(v).navigate(R.id.fragSubirObra);
         }
     }
 }

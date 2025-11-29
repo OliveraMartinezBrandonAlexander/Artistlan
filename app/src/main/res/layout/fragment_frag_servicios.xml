@@ -9,6 +9,7 @@
 
     <include layout="@layout/layout_menu_superior" />
 
+    <!-- Carrusel de tipos de servicios -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -47,9 +48,8 @@
                 android:layout_toStartOf="@+id/btnCarruselDerechoServicios"
                 android:layout_toEndOf="@+id/btnCarruselIzquierdoServicios"
                 android:clipToPadding="false"
-                android:paddingStart="40dp"
-                android:paddingEnd="40dp"
-                android:orientation="horizontal" />
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp" />
 
             <ImageButton
                 android:id="@+id/btnCarruselDerechoServicios"
@@ -77,6 +77,7 @@
 
     </LinearLayout>
 
+    <!-- Lista de servicios -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerServicios"
         android:layout_width="match_parent"

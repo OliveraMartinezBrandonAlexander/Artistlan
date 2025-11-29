@@ -41,7 +41,6 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
     private ImageButton btnIzq, btnDer;
     private Button btnAplicarFiltro;
     private List<PalabraCarruselItem> tiposServicios;
-    // INICIALIZACIÓN CRÍTICA para evitar NullPointerException al inicio
     private List<TarjetaTextoServicioItem> listaServicios = new ArrayList<>();
     private String tipoServicioFiltroActual = "";
     private CenterZoomLayoutManager layoutManager;
@@ -58,37 +57,38 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
 
         new BotonesMenuSuperior(this, view);
 
-        // 1. Configurar el RecyclerView de servicios (con lista inicial vacía)
-        configurarServicios(view);
-
-        // 2. Configurar el carrusel de tipos de servicios
+        // Configurar el carrusel de tipos de servicios
         configurarCarrusel(view);
 
-        // 3. Configurar botón de aplicar filtro
+        // Configurar el RecyclerView de servicios
+        configurarServicios(view);
+
+        // Configurar botón de aplicar filtro
         configurarBotonFiltro(view);
 
-        // 4. Cargar datos de la red
+        // Cargar datos de la red
         cargarTodosLosServicios();
     }
-
-    // -------------------------------------------------------------------------
-    // --- LÓGICA DEL CARRUSEL (CORREGIDA) ---
-    // -------------------------------------------------------------------------
 
     private void configurarCarrusel(View view) {
         recyclerViewCarrusel = view.findViewById(R.id.recyclerCarruselServicios);
         btnIzq = view.findViewById(R.id.btnCarruselIzquierdoServicios);
         btnDer = view.findViewById(R.id.btnCarruselDerechoServicios);
 
+        // Configurar LayoutManager personalizado
         layoutManager = new CenterZoomLayoutManager(getContext());
         recyclerViewCarrusel.setLayoutManager(layoutManager);
 
-        tiposServicios = obtenerTiposServiciosDeBD();
+        // HABILITAR SCROLL HORIZONTAL
+        recyclerViewCarrusel.setHasFixedSize(false);
+        recyclerViewCarrusel.setNestedScrollingEnabled(true);
+
+        tiposServicios = obtenerProfesionesDeBD();
 
         carruselAdapter = new PalabraCarruselAdapter(tiposServicios, requireContext(), this);
         recyclerViewCarrusel.setAdapter(carruselAdapter);
 
-        // Scroll listener para detectar el item central
+        // AGREGAR SCROLL LISTENER PARA DETECTAR ITEM CENTRAL - ESTO ES LO QUE FALTABA
         recyclerViewCarrusel.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -99,7 +99,14 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
             }
         });
 
-        // Configurar botones de navegación: Usando getItemSeleccionado para scroll
+        // AGREGAR ESTO PARA SCROLL TÁCTIL
+        recyclerViewCarrusel.setOnTouchListener((v, event) -> {
+            // Permitir que el RecyclerView maneje el scroll táctil
+            v.getParent().requestDisallowInterceptTouchEvent(true);
+            return false;
+        });
+
+        // Configurar botones de navegación
         btnDer.setOnClickListener(v -> {
             int currentPosition = carruselAdapter.getItemSeleccionado();
             if (currentPosition < carruselAdapter.getItemCount() - 2) {
@@ -116,15 +123,15 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
             }
         });
 
-        // Establecer posición inicial (primer item real)
+        // Establecer posición inicial (primer item real) - IDÉNTICO AL DE ARTISTAS
         recyclerViewCarrusel.post(() -> {
             recyclerViewCarrusel.smoothScrollToPosition(1);
+            recyclerViewCarrusel.postDelayed(() -> {
+                carruselAdapter.setItemSeleccionado(1);
+            }, 100);
         });
     }
 
-    /**
-     * RESTAURADA LA LÓGICA ORIGINAL Y CORRECTA: Busca la vista bajo el punto central.
-     */
     private void encontrarItemCentral() {
         int centerX = recyclerViewCarrusel.getWidth() / 2;
         float centerY = recyclerViewCarrusel.getHeight() / 2.0f;
@@ -142,52 +149,72 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         }
     }
 
-    private List<PalabraCarruselItem> obtenerTiposServiciosDeBD() {
-        List<PalabraCarruselItem> tipos = new ArrayList<>();
+    private void configurarBotonFiltro(View view) {
+        btnAplicarFiltro = view.findViewById(R.id.btnAplicarFiltroServicios);
+        btnAplicarFiltro.setVisibility(View.GONE);
 
-        // ITEMS DE RELLENO OBLIGATORIOS para el centrado
-        tipos.add(new PalabraCarruselItem("", "empty_start", 0, 0));
+        btnAplicarFiltro.setOnClickListener(v -> {
+            PalabraCarruselItem tipoServicioSeleccionado = carruselAdapter.getCategoriaSeleccionada();
+            if (tipoServicioSeleccionado != null) {
+                aplicarFiltro(tipoServicioSeleccionado.getIdCategoria());
+                animarBoton(v);
+            }
+        });
+    }
 
-        String[] tiposArray = {
-                "Retratos", "Murales", "Ilustración", "Diseño", "Fotografía",
-                "Escultura", "Pintura", "Digital", "Acuarela", "Óleo",
-                "Acrílico", "Grabado", "Cerámica", "Textil", "Collage",
-                "Restauración", "Clases", "Personalizado"
+    private List<PalabraCarruselItem> obtenerProfesionesDeBD() {
+        // TODO: CONECTAR CON BASE DE DATOS - Reemplazar con tu lógica real
+        List<PalabraCarruselItem> profesiones = new ArrayList<>();
+
+        // Ejemplo de profesiones - reemplaza con datos reales de BD
+        String[] profesionesArray = {
+                "Pintor", "Escultor", "Fotógrafo", "Ilustrador", "Dibujante",
+                "Grabador", "Ceramista", "Muralista", "Digital", "Acuarelista",
+                "Retratista", "Paisajista", "Abstracto", "Conceptual",
+                "Collagista", "Textil", "Mixta", "Profesional"
         };
 
         int colorNormal = 0xFF4B2056;
         int colorSeleccionado = 0xFF6A2D7A;
 
-        for (String tipo : tiposArray) {
-            tipos.add(new PalabraCarruselItem(tipo, "serv_" + tipo.toLowerCase(), colorNormal, colorSeleccionado));
+        for (String profesion : profesionesArray) {
+            profesiones.add(new PalabraCarruselItem(profesion, "prof_" + profesion.toLowerCase(), colorNormal, colorSeleccionado));
         }
 
-        tipos.add(new PalabraCarruselItem("", "empty_end", 0, 0));
-
-        return tipos;
+        return profesiones;
     }
+    private void aplicarFiltro(String idTipoServicio) {
+        tipoServicioFiltroActual = idTipoServicio;
 
-    @Override
-    public void onCategoriaClick(int position, PalabraCarruselItem categoria) {
-        if (position > 0 && position < carruselAdapter.getItemCount() - 1) {
-            recyclerViewCarrusel.smoothScrollToPosition(position);
+        PalabraCarruselItem tipoServicio = carruselAdapter.getCategoriaSeleccionada();
+        if (tipoServicio != null) {
+            System.out.println("Aplicando filtro para tipo de servicio: " + tipoServicio.getPalabra());
+            filtrarServiciosLocalmente(tipoServicio.getPalabra());
         }
     }
 
-    @Override
-    public void onCategoriaCentrada(int position, PalabraCarruselItem categoria) {
-        if (position > 0 && position < carruselAdapter.getItemCount() - 1) {
-            btnAplicarFiltro.setVisibility(View.VISIBLE);
-            btnAplicarFiltro.setText("Aplicar Filtro: " + categoria.getPalabra());
+    private void filtrarServiciosLocalmente(String tipoServicio) {
+        List<TarjetaTextoServicioItem> serviciosFiltrados = new ArrayList<>();
+
+        if (listaServicios.isEmpty()) {
+            Toast.makeText(requireContext(), "No hay datos para filtrar.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        for (TarjetaTextoServicioItem servicio : listaServicios) {
+            if (servicio.getTecnicas() != null &&
+                    servicio.getTecnicas().toLowerCase().contains(tipoServicio.toLowerCase())) {
+                serviciosFiltrados.add(servicio);
+            }
+        }
+
+        if (serviciosFiltrados.isEmpty()) {
+            Toast.makeText(requireContext(), "No se encontraron servicios para: " + tipoServicio, Toast.LENGTH_SHORT).show();
+            adapter.actualizarLista(new ArrayList<>(listaServicios));
         } else {
-            btnAplicarFiltro.setVisibility(View.GONE);
+            adapter.actualizarLista(serviciosFiltrados);
         }
     }
-
-
-    // -------------------------------------------------------------------------
-    // --- LÓGICA DE SERVICIOS (SIN CAMBIOS DE ESTABILIDAD) ---
-    // -------------------------------------------------------------------------
 
     private void configurarServicios(View view) {
         recyclerServicios = view.findViewById(R.id.recyclerServicios);
@@ -240,56 +267,6 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         return lista;
     }
 
-    private void aplicarFiltro(String idTipoServicio) {
-        tipoServicioFiltroActual = idTipoServicio;
-
-        PalabraCarruselItem tipoServicio = carruselAdapter.getCategoriaSeleccionada();
-        if (tipoServicio != null) {
-            System.out.println("Aplicando filtro para tipo de servicio: " + tipoServicio.getPalabra());
-            filtrarServiciosLocalmente(tipoServicio.getPalabra());
-        }
-    }
-
-    private void filtrarServiciosLocalmente(String tipoServicio) {
-        List<TarjetaTextoServicioItem> serviciosFiltrados = new ArrayList<>();
-
-        if (listaServicios.isEmpty()) {
-            Toast.makeText(requireContext(), "No hay datos para filtrar.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        for (TarjetaTextoServicioItem servicio : listaServicios) {
-            if (servicio.getTecnicas() != null &&
-                    servicio.getTecnicas().toLowerCase().contains(tipoServicio.toLowerCase())) {
-                serviciosFiltrados.add(servicio);
-            }
-        }
-
-        if (serviciosFiltrados.isEmpty()) {
-            Toast.makeText(requireContext(), "No se encontraron servicios para: " + tipoServicio, Toast.LENGTH_SHORT).show();
-            adapter.actualizarLista(new ArrayList<>(listaServicios));
-        } else {
-            adapter.actualizarLista(serviciosFiltrados);
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // --- MISCELÁNEA ---
-    // -------------------------------------------------------------------------
-
-    private void configurarBotonFiltro(View view) {
-        btnAplicarFiltro = view.findViewById(R.id.btnAplicarFiltroServicios);
-        btnAplicarFiltro.setVisibility(View.GONE);
-
-        btnAplicarFiltro.setOnClickListener(v -> {
-            PalabraCarruselItem tipoServicioSeleccionado = carruselAdapter.getCategoriaSeleccionada();
-            if (tipoServicioSeleccionado != null) {
-                aplicarFiltro(tipoServicioSeleccionado.getIdCategoria());
-                animarBoton(v);
-            }
-        });
-    }
-
     private void animarBoton(View v) {
         ObjectAnimator scaleX = ObjectAnimator.ofFloat(v, "scaleX", 1f, 1.2f, 1f);
         ObjectAnimator scaleY = ObjectAnimator.ofFloat(v, "scaleY", 1f, 1.2f, 1f);
@@ -299,6 +276,20 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         set.start();
     }
 
+    @Override
+    public void onCategoriaClick(int position, PalabraCarruselItem categoria) {
+        if (position > 0 && position < carruselAdapter.getItemCount() - 1) {
+            recyclerViewCarrusel.smoothScrollToPosition(position);
+        }
+    }
+
+    @Override
+    public void onCategoriaCentrada(int position, PalabraCarruselItem categoria) {
+        btnAplicarFiltro.setVisibility(View.VISIBLE);
+        btnAplicarFiltro.setText("Aplicar Filtro: " + categoria.getPalabra());
+    }
+
+    // Métodos para futura implementación con base de datos
     public String getTipoServicioFiltroActual() {
         return tipoServicioFiltroActual;
     }

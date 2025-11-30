@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "308021864888",
+    "project_id": "artistlan-f786b",
+    "storage_bucket": "artistlan-f786b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:308021864888:android:d25bb4f57e10a82564474d",
+        "android_client_info": {
+          "package_name": "com.example.artistlan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTJA3Gtc8GxuX9Jb98S8-4NZvdaeOmZws"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

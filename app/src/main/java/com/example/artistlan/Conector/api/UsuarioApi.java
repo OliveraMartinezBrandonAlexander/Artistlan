@@ -1,5 +1,6 @@
 package com.example.artistlan.Conector.api;
 
+import com.example.artistlan.Conector.model.ActualizarFotoPerfilRequestDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import java.util.List;
 import retrofit2.Call;
@@ -29,4 +30,11 @@ public interface UsuarioApi
 
     @GET("api/usuarios/{id}")
     Call<UsuariosDTO> obtenerUsuarioPorId(@Path("id") int id);
+
+    @PUT("usuarios/{id}/foto-perfil")
+    Call<UsuariosDTO> actualizarFotoPerfil(
+            @Path("id") int idUsuario,
+            @Body ActualizarFotoPerfilRequestDTO body
+    );
+
 }

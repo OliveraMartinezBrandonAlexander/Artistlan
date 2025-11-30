@@ -206,6 +206,15 @@
                     android:padding="10dp"
                     android:background="@drawable/editredondo" />
 
+                <ImageView
+                    android:id="@+id/imgPreviewObra"
+                    android:layout_width="200dp"
+                    android:layout_height="200dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="10dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_launcher_background" />
+
                 <Button
                     android:id="@+id/btnSubirImg"
                     android:layout_width="150dp"

@@ -31,6 +31,9 @@ public interface UsuarioApi
     @GET("api/usuarios/{id}")
     Call<UsuariosDTO> obtenerUsuarioPorId(@Path("id") int id);
 
+    @GET("usuarios/existe")
+    Call<String> existeUsuario(@Query("usuario") String usuario, @Query("correo") String correo);
+
     @PUT("usuarios/{id}/foto-perfil")
     Call<UsuariosDTO> actualizarFotoPerfil(
             @Path("id") int idUsuario,

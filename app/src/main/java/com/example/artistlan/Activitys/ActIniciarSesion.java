@@ -1,5 +1,4 @@
 package com.example.artistlan.Activitys;
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -56,12 +55,19 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         String usuario = etUsuario.getText().toString().trim();
         String contrasena = etContrasena.getText().toString().trim();
 
-        if (correo.isEmpty() || usuario.isEmpty() || contrasena.isEmpty()) {
-            Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show();
+        if (correo.isEmpty() && usuario.isEmpty()) {
+            Toast.makeText(this, "Debes ingresar tu Usuario O tu Correo", Toast.LENGTH_SHORT).show();
+            etUsuario.requestFocus();
+            return;
+        }
+        if (contrasena.isEmpty()) {
+            Toast.makeText(this, "La contraseña es obligatoria", Toast.LENGTH_SHORT).show();
+            etContrasena.requestFocus();
             return;
         }
 
         Call<UsuariosDTO> call = api.login(usuario, correo, contrasena);
+
         call.enqueue(new Callback<UsuariosDTO>() {
             @Override
             public void onResponse(Call<UsuariosDTO> call, Response<UsuariosDTO> response) {
@@ -70,15 +76,13 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
                     UsuariosDTO user = response.body();
 
-                    // GUARDAR TODA LA INFO DEL USUARIO
                     guardarUsuarioLogeado(user);
-
-                    Toast.makeText(ActIniciarSesion.this,
-                            "Bienvenido " + user.getUsuario(),
-                            Toast.LENGTH_SHORT).show();
 
                     Intent ir = new Intent(ActIniciarSesion.this, ActFragmentoPrincipal.class);
                     startActivity(ir);
+                    Toast.makeText(ActIniciarSesion.this,
+                            "Bienvenido " + user.getUsuario(),
+                            Toast.LENGTH_SHORT).show();
                     finish();
                 }
                 else {

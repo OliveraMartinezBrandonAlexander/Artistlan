@@ -71,7 +71,7 @@
                     android:layout_width="22dp"
                     android:layout_height="22dp"
                     android:background="@android:color/transparent"
-                    android:src="@drawable/ic_heart_red"/>
+                    android:src="@drawable/ic_heart_purple"/>
             </LinearLayout>
 
             <!-- IMAGEN PRINCIPAL -->
@@ -96,9 +96,6 @@
                 android:textStyle="bold"/>
         </LinearLayout>
 
-        <!-- ==================================== -->
-        <!-- SECCIÓN EXPANDIDA (OCULTA INICIAL)  -->
-        <!-- ==================================== -->
         <LinearLayout
             android:id="@+id/expanded_section"
             android:layout_width="match_parent"

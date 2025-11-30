@@ -2,6 +2,7 @@ package com.example.artistlan.TarjetaTextoObra.model;
 
 public class TarjetaTextoObraItem {
 
+    private int idObra;
     private String titulo;
     private String descripcion;
     private String estado;
@@ -11,15 +12,15 @@ public class TarjetaTextoObraItem {
     private String imagen3;
     private String tecnicas;
     private String medidas;
-    private String categoria;
     private int likes;
-    private int autor;
+    private String nombreAutor;
+    private String nombreCategoria;
     private boolean liked = false;
     private boolean expandido = false;
 
 
-
-    public TarjetaTextoObraItem(String titulo, String descripcion, String estado, Double precio, String imagen1, String imagen2, String imagen3, String tecnicas, String medidas, String categoria, int likes, int autor) {
+    public TarjetaTextoObraItem(int idObra, String titulo, String descripcion, String estado, Double precio, String imagen1, String imagen2, String imagen3, String tecnicas, String medidas, int likes, String nombreAutor, String nombreCategoria, boolean liked, boolean expandido) {
+        this.idObra = idObra;
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.estado = estado;
@@ -29,9 +30,12 @@ public class TarjetaTextoObraItem {
         this.imagen3 = imagen3;
         this.tecnicas = tecnicas;
         this.medidas = medidas;
-        this.categoria= categoria;
         this.likes = likes;
-        this.autor = autor;
+        this.nombreAutor = nombreAutor;
+        this.nombreCategoria = nombreCategoria;
+        this.liked = liked;
+        this.expandido = expandido;
+
     }
 
     public String getTitulo() {
@@ -70,16 +74,16 @@ public class TarjetaTextoObraItem {
         return medidas;
     }
 
-    public String getCategoria() {
-        return categoria;
-    }
-
     public int getLikes() {
         return likes;
     }
 
-    public int getAutor() {
-        return autor;
+    public String getNombreCategoria() {
+        return nombreCategoria;
+    }
+
+    public String getNombreAutor() {
+        return nombreAutor;
     }
 
     public boolean isLiked() { return liked; }
@@ -90,5 +94,13 @@ public class TarjetaTextoObraItem {
 
     public void setLikes(int likes) {
         this.likes = likes;
+    }
+
+    public int getIdObra() {
+        return idObra;
+    }
+
+    public void setIdObra(int idObra) {
+        this.idObra = idObra;
     }
 }

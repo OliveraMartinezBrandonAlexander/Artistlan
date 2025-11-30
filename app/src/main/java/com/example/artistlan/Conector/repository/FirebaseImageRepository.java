@@ -40,7 +40,6 @@ public class FirebaseImageRepository {
         obraApi = retrofit.create(ObraApi.class);
     }
 
-    // ------- FOTO DE PERFIL -------
     public void subirFotoPerfilYGuardarEnBD(
             int idUsuario,
             Uri imagenLocal,
@@ -91,7 +90,7 @@ public class FirebaseImageRepository {
                 );
     }
 
-    // ------- IMAGEN1 DE OBRA (OBRA YA EXISTENTE) -------
+    // OBRA YA EXISTENTE
     public void subirImagenObraYActualizarEnBD(
             int idObra,
             Uri imagenLocal,
@@ -133,6 +132,35 @@ public class FirebaseImageRepository {
                                             listener.onError("Fallo en la petición: " + t.getMessage());
                                         }
                                     });
+                        }).addOnFailureListener(e ->
+                                listener.onError("Error al obtener URL de descarga: " + e.getMessage())
+                        )
+                )
+                .addOnFailureListener(e ->
+                        listener.onError("Error al subir a Firebase: " + e.getMessage())
+                );
+    }
+    public void subirImagenSolo(
+            int idUsuario,
+            Uri imagenLocal,
+            ImagenListener listener
+    ) {
+        if (imagenLocal == null) {
+            listener.onError("Uri de imagen nula");
+            return;
+        }
+
+        // Ruta: obras/ID_USUARIO/nombre_unico_timestamp.jpg
+        String ruta = "obras/" + idUsuario + "/temp_" + System.currentTimeMillis() + ".jpg";
+        StorageReference ref = storageRef.child(ruta);
+
+        UploadTask uploadTask = ref.putFile(imagenLocal);
+
+        uploadTask
+                .addOnSuccessListener(taskSnapshot ->
+                        ref.getDownloadUrl().addOnSuccessListener(uri -> {
+                            // Devuelve el URL final al Fragmento
+                            listener.onSuccess(uri.toString());
                         }).addOnFailureListener(e ->
                                 listener.onError("Error al obtener URL de descarga: " + e.getMessage())
                         )

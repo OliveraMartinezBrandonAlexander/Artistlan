@@ -12,6 +12,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.example.artistlan.Fragments.FragArte;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 
@@ -42,37 +44,34 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
         // ---------- DATOS ----------
         holder.titulo.setText(obra.getTitulo());
+        holder.autor.setText(obra.getNombreAutor());
         holder.descripcion.setText(obra.getDescripcion());
-        holder.estado.setText(obra.getEstado());
-        holder.tecnica.setText(obra.getTecnicas());
-        holder.medidas.setText(obra.getMedidas());
-        holder.precio.setText("$ " + obra.getPrecio());
-        holder.categoria.setText(obra.getCategoria());
+        holder.estado.setText("Estado: " + obra.getEstado());
+        holder.tecnica.setText("Técnica: " + obra.getTecnicas());
+        holder.medidas.setText("Medidas: " + obra.getMedidas());
+        holder.precio.setText("Precio: $ " + String.format("%,.2f", obra.getPrecio()));
         holder.likes.setText("" + obra.getLikes());
+        holder.categoria.setText("Categoría: " + obra.getNombreCategoria());
 
         holder.imgAutor.setImageResource(R.drawable.fotoperfilprueba);
-        holder.imgObra.setImageResource(R.drawable.ic_launcher_background);
+        Glide.with(context)
+                .load(obra.getImagen1())
+                .placeholder(R.drawable.imagencargaobras)
+                .error(R.drawable.imagencargaobras)
+                .into(holder.imgObra);
 
-        // ---------- CORAZÓN ----------
-        holder.btnLike.setImageResource(
-                obra.isLiked() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple
-        );
 
         holder.btnLike.setOnClickListener(v -> {
-            animarLike(holder.btnLike);
-
-            if (obra.isLiked()) {
-                obra.setLiked(false);
-                obra.setLikes(obra.getLikes() - 1);
-                holder.btnLike.setImageResource(R.drawable.ic_heart_purple);
-            } else {
-                obra.setLiked(true);
-                obra.setLikes(obra.getLikes() + 1);
-                holder.btnLike.setImageResource(R.drawable.ic_heart_red);
+            if (listener != null) {
+                listener.onLikeClick(
+                        obra.getIdObra(),
+                        holder.btnLike,
+                        holder.likes
+                );
             }
-
-            holder.likes.setText("" + obra.getLikes());
+            animarLike(holder.btnLike); // si quieres animación
         });
+
 
         // ---------- ACORDEÓN: determinar si esta tarjeta está abierta ----------
         boolean expandido = (position == tarjetaExpandida);
@@ -156,7 +155,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     // ===========================================================
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView titulo, descripcion, estado, tecnica, medidas, precio, categoria, likes;
+        TextView titulo, descripcion, estado, tecnica, medidas, precio, categoria, likes,autor;
         ImageView imgAutor, imgObra;
         ImageButton btnLike;
         View expandedSection;
@@ -172,6 +171,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             tecnica = itemView.findViewById(R.id.tecnica);
             medidas = itemView.findViewById(R.id.medidas);
             precio = itemView.findViewById(R.id.precio);
+            autor = itemView.findViewById(R.id.autor);
             categoria = itemView.findViewById(R.id.categoria);
             likes = itemView.findViewById(R.id.likes);
 
@@ -184,5 +184,18 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     public void actualizarLista(List<TarjetaTextoObraItem> nuevaLista) {
         this.listaObras = nuevaLista;
         notifyDataSetChanged();
+    }
+
+
+    public interface OnLikeClickListener {
+        void onLikeClick(int idObra, ImageButton btnLike, TextView txtLikes);
+
+    }
+
+    private OnLikeClickListener listener;
+
+    public void setOnLikeClickListener(OnLikeClickListener listener) {
+        this.listener = listener;
+
     }
 }

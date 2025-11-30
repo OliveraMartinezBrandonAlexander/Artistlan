@@ -65,13 +65,28 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                     .commit();
         });
 
-        /*btnMiArte.setOnClickListener(v -> {
+
+        btnMiArte.setOnClickListener(v -> {
             getChildFragmentManager()
                     .beginTransaction()
-                    .replace(R.id.contenedorFragmentsPerfil, new FragMiArte()) // Asumiendo que FragMiArte existe
+                    .replace(R.id.contenedorFragmentsPerfil, new FragMiArte())
                     .addToBackStack(null)
                     .commit();
-        });*/
+        });
+    }
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        Fragment fragmentoActual = getChildFragmentManager()
+                .findFragmentById(R.id.contenedorFragmentsPerfil);
+
+        if (fragmentoActual != null) {
+            getChildFragmentManager()
+                    .beginTransaction()
+                    .remove(fragmentoActual)
+                    .commitAllowingStateLoss();
+        }
     }
 
     private void cargarDatosUsuario() {

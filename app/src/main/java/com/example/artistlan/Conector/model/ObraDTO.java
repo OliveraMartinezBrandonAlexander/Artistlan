@@ -1,21 +1,57 @@
 package com.example.artistlan.Conector.model;
 
-import javax.xml.transform.sax.SAXResult;
-
 public class ObraDTO
 {
-
     private Integer idObra;
     private String titulo;
     private String descripcion;
     private String estado;
-    private String precio;
+    private Double precio;
     private String imagen1;
     private String imagen2;
     private String imagen3;
     private String tecnicas;
     private String medidas;
     private Integer idUsuario;
+    private Integer likes;
+    private Integer idCategoria;
+    private String nombreCategoria;
+    private String nombreAutor;
+    private String fotoUsuario;
+
+
+
+    public String getNombreCategoria() {
+        return nombreCategoria;
+    }
+
+    public void setNombreCategoria(String nombreCategoria) {
+        this.nombreCategoria = nombreCategoria;
+    }
+
+    public String getFotoUsuario() {
+        return fotoUsuario;
+    }
+
+    public void setFotoUsuario(String fotoUsuario) {
+        this.fotoUsuario = fotoUsuario;
+    }
+
+    public String getNombreAutor() {
+        return nombreAutor;
+    }
+
+    public void setNombreAutor(String nombreAutor) {
+        this.nombreAutor = nombreAutor;
+    }
+
+    public Integer getIdCategoria() {
+        return idCategoria;
+    }
+
+    public void setIdCategoria(Integer idCategoria) {
+        this.idCategoria = idCategoria;
+    }
 
     public Integer getIdObra() {
         return idObra;
@@ -49,11 +85,11 @@ public class ObraDTO
         this.estado = estado;
     }
 
-    public String getPrecio() {
+    public Double getPrecio() {
         return precio;
     }
 
-    public void setPrecio(String precio) {
+    public void setPrecio(Double precio) {
         this.precio = precio;
     }
 
@@ -103,5 +139,13 @@ public class ObraDTO
 
     public void setIdUsuario(Integer idUsuario) {
         this.idUsuario = idUsuario;
+    }
+
+    public Integer getLikes() {
+        return likes;
+    }
+
+    public void setLikes(Integer likes) {
+        this.likes = likes;
     }
 }

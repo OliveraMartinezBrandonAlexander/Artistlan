@@ -43,7 +43,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         edtContraConf = findViewById(R.id.CrcEdtPassConf);
 
         btnCrear.setOnClickListener(this);
-        edtFecha.setOnClickListener(v -> mostrarDatePicker()); // muestra calendario
+        edtFecha.setOnClickListener(v -> mostrarDatePicker());
 
         api = RetrofitClient.getClient().create(UsuarioApi.class); //conexion con la api
     }
@@ -52,7 +52,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
     public void onClick(View v) {
         if (v.getId() == R.id.CrcBtnCrc) {
             if (validarCampos()) {
-                enviarCrearCuenta();
+                verificarNombreUsuario();
             }
         }
     }
@@ -116,7 +116,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
             return false;
         }
         if (!validarContrasena(contra)) {
-            edtContra.setError("Contraseña débil (mínimo 8 caracteres,1 mayúscula,1 minúsc,1 número y 1especial)");
+            edtContra.setError("Contraseña débil (mínimo 8 caracteres, 1 mayúscula, 1 minúscula y 1 número)");
             edtContra.requestFocus();
             return false;
         }
@@ -125,16 +125,74 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
             edtContraConf.requestFocus();
             return false;
         }
+
         return true;
     }
 
+    //VALIDACIÓN DE CONTRASEÑA
     private boolean validarContrasena(String pass) {
         if (pass == null) return false;
+        // Mínimo 8 caracteres
         if (pass.length() < 8) return false;
-        //validacion de mayuscula + minuscula +  numero + caracter especial
-        Pattern p = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^\\w\\s]).+$");
+        // Validacion de mayuscula + minuscula +  numero
+        Pattern p = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$");
         return p.matcher(pass).find();
     }
+    private void verificarNombreUsuario() {
+        btnCrear.setEnabled(false);
+        edtUsuario.setError(null);
+        edtEmail.setError(null);
+
+        String correo = edtEmail.getText().toString().trim();
+        String usuario = edtUsuario.getText().toString().trim();
+
+        Call<String> call = api.existeUsuario(usuario, correo);
+
+        call.enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(Call<String> call, Response<String> response) {
+                btnCrear.setEnabled(true);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    String resultado = response.body();
+
+                    switch (resultado) {
+                        case "USUARIO_DUPLICADO":
+                            Toast.makeText(ActCrearCuenta.this, "El nombre de usuario ya está registrado", Toast.LENGTH_LONG).show();
+                            edtUsuario.setError("Usuario ya existe");
+                            edtUsuario.requestFocus();
+                            break;
+                        case "CORREO_DUPLICADO":
+                            Toast.makeText(ActCrearCuenta.this, "El correo electrónico ya está registrado", Toast.LENGTH_LONG).show();
+                            edtEmail.setError("Correo ya existe");
+                            edtEmail.requestFocus();
+                            break;
+                        case "AMBOS_DUPLICADOS":
+                            Toast.makeText(ActCrearCuenta.this, "Usuario y correo ya están registrados", Toast.LENGTH_LONG).show();
+                            edtUsuario.setError("Usuario ya existe");
+                            edtEmail.setError("Correo ya existe");
+                            edtUsuario.requestFocus();
+                            break;
+                        case "OK":
+                            enviarCrearCuenta();
+                            break;
+                        default:
+                            Toast.makeText(ActCrearCuenta.this, "Error de respuesta del servidor: " + resultado, Toast.LENGTH_LONG).show();
+                            break;
+                    }
+                } else {
+                    Toast.makeText(ActCrearCuenta.this, "Error al verificar: " + response.code(), Toast.LENGTH_LONG).show();
+                }
+            }
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                btnCrear.setEnabled(true);
+                t.printStackTrace();
+                Toast.makeText(ActCrearCuenta.this, "Fallo de red al verificar: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+        }
+
 
     private void enviarCrearCuenta() {
         btnCrear.setEnabled(false);

@@ -78,7 +78,7 @@
                 <androidx.viewpager2.widget.ViewPager2
                     android:id="@+id/viewPagerCarrusel"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="300dp"
                     android:layout_toEndOf="@id/btnCarruselIzquierdo"
                     android:layout_toStartOf="@id/btnCarruselDerecho"
                     android:layout_marginStart="8dp"

@@ -7,6 +7,11 @@
     tools:context=".Fragments.FragFavoritos">
 
     <include layout="@layout/layout_menu_superior" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/black" />
+
 
     <LinearLayout
         android:id="@+id/contenedorPrincipal"
@@ -16,13 +21,36 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
             android:gravity="center"
-            android:text="Fragmento de favoritos"
-            android:textSize="30dp"/>
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnArte"
+                android:layout_width="140dp"
+                android:layout_height="55dp"
+                android:layout_margin="8dp"
+                android:backgroundTint="#C0A898"
+                android:text="ARTE" />
+
+            <Button
+                android:id="@+id/btnArtista"
+                android:layout_width="140dp"
+                android:layout_height="55dp"
+                android:layout_margin="8dp"
+                android:backgroundTint="#C0A898"
+                android:text="ARTISTA" />
+        </LinearLayout>
+        <FrameLayout
+            android:id="@+id/contenedorFragmentsFavoritos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:minHeight="400dp" />
+
+
 
         <Button
             android:layout_width="wrap_content"

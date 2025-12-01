@@ -111,7 +111,9 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         editor.putInt("id", usuario.getIdUsuario());
         editor.putString("usuario", usuario.getUsuario());
         editor.putString("correo", usuario.getCorreo());
-        editor.putString("nombre", usuario.getNombreCompleto());
+
+        editor.putString("nombreCompleto", usuario.getNombreCompleto());
+        editor.putString("contrasena", usuario.getContrasena());
         editor.putString("telefono", usuario.getTelefono());
         editor.putString("descripcion", usuario.getDescripcion());
         editor.putString("redes", usuario.getRedesSociales());

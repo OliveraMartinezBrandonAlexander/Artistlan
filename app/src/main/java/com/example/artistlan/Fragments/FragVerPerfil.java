@@ -1,6 +1,7 @@
 package com.example.artistlan.Fragments;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -15,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.example.artistlan.Activitys.ActActualizarDatos;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
 
@@ -22,7 +24,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     private TextView tvNombre, tvUsuario, tvCorreo, tvDescripcion, tvTelefono, tvRedes, tvFecNac;
     private ImageView imgFotoPerfil, btnFavoritos;
-    private Button btnMisServicios, btnMiArte, btnSubirObra;
+    private Button btnMisServicios, btnMiArte, btnSubirObra, btnEditarPefil;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -38,9 +40,11 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
         btnFavoritos = view.findViewById(R.id.btnFavoritos);
         btnSubirObra = view.findViewById(R.id.btnSubirObra);
+        btnEditarPefil= view.findViewById(R.id.btnEditarPefil);
         btnFavoritos.setVisibility(View.VISIBLE);
         btnFavoritos.setOnClickListener(this);
         btnSubirObra.setOnClickListener(this);
+        btnEditarPefil.setOnClickListener(this);
 
         tvNombre = view.findViewById(R.id.VrpTxvNombre);
         tvUsuario = view.findViewById(R.id.VrpTxvUsuario);
@@ -112,6 +116,11 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         }
         if (v.getId() == R.id.btnSubirObra) {
             Navigation.findNavController(v).navigate(R.id.fragSubirObra);
+        }
+        if (v.getId() == R.id.btnEditarPefil) {
+            Intent intent = new Intent(v.getContext(), ActActualizarDatos.class);
+
+            v.getContext().startActivity(intent);
         }
     }
 }

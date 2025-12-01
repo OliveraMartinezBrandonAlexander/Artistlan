@@ -204,7 +204,7 @@
                 android:id="@+id/CrcTxtPassDescLbl"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="(esta debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial)"
+                android:text="(esta debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número)"
                 android:fontFamily="sans-serif"
                 android:textSize="10sp"
                 android:textColor="@android:color/black" />

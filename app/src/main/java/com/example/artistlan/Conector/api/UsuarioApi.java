@@ -39,5 +39,8 @@ public interface UsuarioApi
             @Path("id") int idUsuario,
             @Body ActualizarFotoPerfilRequestDTO body
     );
+    @PUT("usuariosusuario/{id}")
+    Call<Void> actualizarUsuario(@Path("id") Integer id, @Body UsuariosDTO usuario);
+
 
 }

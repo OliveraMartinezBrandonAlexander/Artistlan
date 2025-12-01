@@ -1,16 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/main"
     android:orientation="vertical"
     tools:context=".Fragments.FragSubirObra">
 
     <include layout="@layout/layout_menu_superior" />
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@android:color/black" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -42,7 +44,7 @@
                     android:fontFamily="sans-serif-black"
                     android:gravity="center"
                     android:padding="5dp"
-                    android:text="Subir Obra"
+                    android:text="Actualizar Datos"
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
@@ -64,70 +66,60 @@
                     android:textSize="16sp" />
 
                 <TextView
-                    android:id="@+id/IsTxtTituloObra"
+                    android:id="@+id/tvCorreo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:text="Correo Electrónico"
                     android:layout_marginTop="10dp"
                     android:fontFamily="sans-serif-black"
-                    android:text="Título de la Obra"
                     android:textSize="14sp" />
 
                 <EditText
-                    android:id="@+id/tituloObra"
+                    android:id="@+id/correo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/editredondo"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
-                    android:hint="Titulo de la obra"
-                    android:inputType="textCapWords"
-                    android:paddingStart="20dp"
-                    android:paddingTop="10dp"
+                    android:hint="ejemplo@gmail.com"
+                    android:paddingStart="25dp"
                     android:paddingEnd="20dp"
-                    android:paddingBottom="10dp"
-                    android:textColor="#202020" />
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="#202020"
+                    android:inputType="textEmailAddress"
+                    android:enabled="false"
+                    android:focusable="false"
+                    android:clickable="false" />
 
                 <TextView
-                    android:id="@+id/IsTxtEstado"
+                    android:id="@+id/tvNombre"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
-                    android:text="Estado"
+                    android:text="Nombre"
                     android:textSize="14sp" />
 
-                <RadioGroup
-                    android:id="@+id/radioGroupOpciones"
-                    android:layout_width="wrap_content"
+                <EditText
+                    android:id="@+id/nombre"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/editredondo"
+                    android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:orientation="vertical">
-
-                    <RadioButton
-                        android:id="@+id/rbdisponible"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Disponible" />
-
-                    <RadioButton
-                        android:id="@+id/rbdventa"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="En venta" />
-
-                    <RadioButton
-                        android:id="@+id/rbexhibicion"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="En exhibición" />
-
-                </RadioGroup>
-
+                    android:hint="ejemplo"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="#202020"
+                    android:inputType="textPersonName" />
                 <TextView
-                    android:id="@+id/IsTxtDescripcion"
+                    android:id="@+id/tvDescripcion"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
-                    android:text="Descripción"
+                    android:text="Descripcion"
                     android:textSize="14sp" />
 
                 <EditText
@@ -138,129 +130,142 @@
                     android:layout_marginBottom="12dp"
                     android:background="@drawable/editredondo"
                     android:gravity="top|start"
-                    android:hint="Descripción detallada de la obra"
+                    android:hint="Descripción Personal"
                     android:inputType="textMultiLine"
                     android:minLines="3"
                     android:padding="10dp"
                     android:textColor="#202020" />
 
                 <TextView
-                    android:id="@+id/IsTxtPrecio"
+                    android:id="@+id/tvRedes"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
-                    android:text="Precio"
+                    android:text="Redes Sociales"
                     android:textSize="14sp" />
 
                 <EditText
-                    android:id="@+id/precio"
+                    android:id="@+id/redes"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
                     android:background="@drawable/editredondo"
-                    android:hint="Precio (ej. 1500.00)"
-                    android:inputType="numberDecimal"
-                    android:paddingStart="20dp"
-                    android:paddingTop="10dp"
-                    android:paddingEnd="20dp"
-                    android:paddingBottom="10dp"
+                    android:gravity="top|start"
+                    android:hint="ejemplo"
+                    android:inputType="textMultiLine"
+                    android:minLines="3"
+                    android:padding="10dp"
                     android:textColor="#202020" />
 
                 <TextView
-                    android:id="@+id/IsTxtMedidas"
+                    android:id="@+id/tvTelefono"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:text="Teléfono"
                     android:fontFamily="sans-serif-black"
-                    android:text="Medidas"
                     android:textSize="14sp" />
 
                 <EditText
-                    android:id="@+id/medidas"
+                    android:id="@+id/telefono"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/editredondo"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
-                    android:hint="Ej. 50cm x 70cm"
-                    android:inputType="text"
+                    android:hint="55XXXXXXXXX"
                     android:paddingStart="20dp"
-                    android:paddingTop="10dp"
                     android:paddingEnd="20dp"
-                    android:paddingBottom="10dp"
-                    android:textColor="#202020" />
-                <TextView
-                    android:id="@+id/IsTxtTecnica"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-black"
-                    android:text="Técnica"
-                    android:textSize="14sp"/>
-                <EditText
-                    android:id="@+id/edit_text_tecnica"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
-                    android:hint="Técnica de la obra "
-                    android:inputType="textCapSentences"
-                    android:paddingStart="20dp"
-                    android:paddingTop="10dp"
-                    android:paddingEnd="20dp"
-                    android:paddingBottom="10dp"
-                    android:textColor="#202020"/>
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="#202020"
+                    android:inputType="phone"
+                    android:maxLength="10" />
 
                 <TextView
-                    android:id="@+id/IsTxtCategoria"
+                    android:id="@+id/tvFecha"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:text="Fecha de Nacimiento"
                     android:fontFamily="sans-serif-black"
-                    android:text="Categoría"
                     android:textSize="14sp" />
 
-                <Spinner
-                    android:id="@+id/categoria"
+                <EditText
+                    android:id="@+id/CrcEdtFecha"
+                    android:layout_width="250dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="12dp"
+                    android:layout_gravity="center_horizontal"
+                    android:background="@drawable/editredondo"
+                    android:hint="DÍA / MES / AÑO"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="#202020"
+                    android:focusable="false"
+                    android:clickable="true"
+                    android:inputType="none"
+                    android:textCursorDrawable="@null" />
+
+                <TextView
+                    android:id="@+id/tvUsuario"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Usuario "
+                    android:textSize="16sp" />
+
+                <EditText
+                    android:id="@+id/usuario"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/editredondo"
+                    android:hint="SuperMariposonejemplo"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="#202020"
+                    android:inputType="textPersonName"
+                    android:enabled="false"
+                    android:focusable="false"
+                    android:clickable="false" />
+
+                <TextView
+                    android:id="@+id/tvContra"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Contraseña"
+                    android:textSize="16sp" />
+
+                <EditText
+                    android:id="@+id/contra"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/editredondo"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="12dp"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="#202020"
+                    android:inputType="text" />
+                <Button
+                    android:id="@+id/btnActualizarDatos"
+                    android:layout_width="150dp"
+                    android:layout_height="50dp"
+                    android:text="Actualizar"
+                    android:padding="10dp"
                     android:layout_marginBottom="24dp"
-                    android:background="@drawable/editredondo"
-                    android:padding="10dp" />
-
-                <ImageView
-                    android:id="@+id/imgPreviewObra"
-                    android:layout_width="200dp"
-                    android:layout_height="200dp"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="10dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/imagensubirobra" />
-
-                <Button
-                    android:id="@+id/btnSubirImg"
-                    android:layout_width="150dp"
-                    android:layout_height="50dp"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp"
                     android:backgroundTint="#6C6C6C"
-                    android:padding="10dp"
-                    android:text="SUBIR IMAGEN"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold" />
-
-                <Button
-                    android:id="@+id/btnSubirObra"
-                    android:layout_width="150dp"
-                    android:layout_height="50dp"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:backgroundTint="#6C6C6C"
-                    android:padding="10dp"
-                    android:text="SUBIR OBRA"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold" />
+                    android:textColor="#000000"
+                    android:layout_gravity="center_horizontal" />
 
                 <Button
                     android:id="@+id/btnRegresar"
@@ -270,8 +275,8 @@
                     android:layout_marginTop="40dp"
                     android:backgroundTint="#C0A898"
                     android:text="Regresar" />
+
             </LinearLayout>
         </ScrollView>
     </LinearLayout>
-
 </LinearLayout>

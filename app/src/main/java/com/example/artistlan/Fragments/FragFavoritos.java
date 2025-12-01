@@ -13,7 +13,8 @@ import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
 
 public class FragFavoritos extends Fragment implements View.OnClickListener {
-    Button btnRegresar;
+    Button btnRegresar, btnArte,btnArtista;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -28,6 +29,10 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
 
         btnRegresar = view.findViewById(R.id.btnRegresar);
         btnRegresar.setOnClickListener(this);
+        btnArte = view.findViewById(R.id.btnArte);
+        btnArte.setOnClickListener(this);
+        btnArtista= view.findViewById(R.id.btnArtista);
+        btnArtista.setOnClickListener(this);
         new BotonesMenuSuperior(this, view);
     }
     @Override

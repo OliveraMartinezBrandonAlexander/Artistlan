@@ -16,6 +16,10 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".Activitys.ActActualizarDatos"
+            android:exported="false"
+            android:theme="@style/Theme.Artistlan" />
+        <activity
             android:name=".Activitys.SubirObra"
             android:exported="false" />
         <activity

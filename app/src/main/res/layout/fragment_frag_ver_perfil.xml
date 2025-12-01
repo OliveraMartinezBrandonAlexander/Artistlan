@@ -9,6 +9,10 @@
 
     <include layout="@layout/layout_menu_superior" />
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/black" />
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -71,6 +75,16 @@
                             android:layout_marginTop="10dp"
                             android:backgroundTint="#A1BBCE"
                             android:text="Subir Obra" />
+
+                        <TextView
+                            android:id="@+id/VrpTxvTelefono"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:background="@drawable/editredondo"
+                            android:backgroundTint="#A1BBCE"
+                            android:hint="Teléfono"
+                            android:padding="12dp" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -83,16 +97,6 @@
                     android:backgroundTint="#A1BBCE"
                     android:padding="12dp"
                     android:hint="Descripción" />
-
-                <TextView
-                    android:id="@+id/VrpTxvTelefono"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/editredondo"
-                    android:backgroundTint="#A1BBCE"
-                    android:padding="12dp"
-                    android:hint="Teléfono" />
 
                 <TextView
                     android:id="@+id/VrpTxvCorreo"
@@ -169,8 +173,10 @@
             <FrameLayout
                 android:id="@+id/contenedorFragmentsPerfil"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"    android:layout_marginTop="16dp"
-                android:minHeight="400dp" /> </LinearLayout>
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:minHeight="400dp" />
+        </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
 </LinearLayout>

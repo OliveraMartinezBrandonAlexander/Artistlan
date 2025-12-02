@@ -5,24 +5,47 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/FirstFragment">
 
+    <!-- Ejemplo: fragments que ya tenías -->
     <fragment
         android:id="@+id/FirstFragment"
         android:name="com.example.artistlan.Activitys.FirstFragment"
         android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first" >
+        tools:layout="@layout/fragment_first">
 
         <action
             android:id="@+id/action_FirstFragment_to_SecondFragment"
             app:destination="@id/SecondFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/SecondFragment"
         android:name="com.example.artistlan.Activitys.SecondFragment"
         android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second" >
+        tools:layout="@layout/fragment_second">
 
         <action
             android:id="@+id/action_SecondFragment_to_FirstFragment"
             app:destination="@id/FirstFragment" />
     </fragment>
+
+    <!-- TU PERFIL -->
+    <fragment
+        android:id="@+id/fragVerPerfil"
+        android:name="com.example.artistlan.Fragments.FragVerPerfil"
+        android:label="Perfil"
+        tools:layout="@layout/fragment_frag_ver_perfil">
+
+        <!-- Acción desde PERFIL hacia SUBIR SERVICIO -->
+        <action
+            android:id="@+id/action_fragVerPerfil_to_fragSubirServicio"
+            app:destination="@id/fragSubirServicio" />
+    </fragment>
+
+    <!-- SUBIR SERVICIO -->
+    <fragment
+        android:id="@+id/fragSubirServicio"
+        android:name="com.example.artistlan.Fragments.FragSubirServicio"
+        android:label="Subir Servicio"
+        tools:layout="@layout/fragment_subir_servicio" />
+
 </navigation>

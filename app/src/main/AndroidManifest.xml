@@ -20,7 +20,7 @@
             android:exported="false"
             android:theme="@style/Theme.Artistlan" />
         <activity
-            android:name=".Activitys.SubirObra"
+            android:name=".Activitys.SubirObras"
             android:exported="false" />
         <activity
             android:name=".Activitys.ActFragmentoPrincipal"

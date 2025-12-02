@@ -1,7 +1,7 @@
 package com.example.artistlan.Conector.model;
 
-public class ServicioDTO
-{
+public class ServicioDTO {
+
     private Integer idServicio;
     private String titulo;
     private String descripcion;
@@ -9,7 +9,8 @@ public class ServicioDTO
     private String tecnicas;
     private Integer idUsuario;
     private String nombreUsuario;
-    private String categoria;
+    private String categoria;    // nombre de la categoría/profesión
+    private Integer idCategoria; // ID real de la categoría en la BD
 
     public Integer getIdServicio() {
         return idServicio;
@@ -73,5 +74,13 @@ public class ServicioDTO
 
     public void setCategoria(String categoria) {
         this.categoria = categoria;
+    }
+
+    public Integer getIdCategoria() {
+        return idCategoria;
+    }
+
+    public void setIdCategoria(Integer idCategoria) {
+        this.idCategoria = idCategoria;
     }
 }

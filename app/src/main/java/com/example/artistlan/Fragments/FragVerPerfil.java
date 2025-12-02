@@ -24,7 +24,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     private TextView tvNombre, tvUsuario, tvCorreo, tvDescripcion, tvTelefono, tvRedes, tvFecNac;
     private ImageView imgFotoPerfil, btnFavoritos;
-    private Button btnMisServicios, btnMiArte, btnSubirObra, btnEditarPefil;
+    private Button btnMisServicios, btnMiArte, btnSubirObra, btnEditarPefil, btnSubirServicio;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -38,37 +38,39 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
         new BotonesMenuSuperior(this, view);
 
-        btnFavoritos = view.findViewById(R.id.btnFavoritos);
-        btnSubirObra = view.findViewById(R.id.btnSubirObra);
-        btnEditarPefil= view.findViewById(R.id.btnEditarPefil);
+        btnFavoritos     = view.findViewById(R.id.btnFavoritos);
+        btnSubirObra     = view.findViewById(R.id.btnSubirObra);
+        btnEditarPefil   = view.findViewById(R.id.btnEditarPefil);
+        btnSubirServicio = view.findViewById(R.id.btnSubirServicio);
+
         btnFavoritos.setVisibility(View.VISIBLE);
+
         btnFavoritos.setOnClickListener(this);
         btnSubirObra.setOnClickListener(this);
         btnEditarPefil.setOnClickListener(this);
+        btnSubirServicio.setOnClickListener(this);
 
-        tvNombre = view.findViewById(R.id.VrpTxvNombre);
-        tvUsuario = view.findViewById(R.id.VrpTxvUsuario);
-        tvCorreo = view.findViewById(R.id.VrpTxvCorreo);
+        tvNombre      = view.findViewById(R.id.VrpTxvNombre);
+        tvUsuario     = view.findViewById(R.id.VrpTxvUsuario);
+        tvCorreo      = view.findViewById(R.id.VrpTxvCorreo);
         tvDescripcion = view.findViewById(R.id.VrpTxvDescripcion);
-        tvTelefono = view.findViewById(R.id.VrpTxvTelefono);
-        tvRedes = view.findViewById(R.id.VrpTxvRedes);
-        tvFecNac = view.findViewById(R.id.VrpTxvFecNac);
+        tvTelefono    = view.findViewById(R.id.VrpTxvTelefono);
+        tvRedes       = view.findViewById(R.id.VrpTxvRedes);
+        tvFecNac      = view.findViewById(R.id.VrpTxvFecNac);
 
         imgFotoPerfil = view.findViewById(R.id.imgPerfil);
 
         btnMisServicios = view.findViewById(R.id.btnMisServicios);
-        btnMiArte = view.findViewById(R.id.btnMiArte);
+        btnMiArte       = view.findViewById(R.id.btnMiArte);
 
         cargarDatosUsuario();
 
         btnMisServicios.setOnClickListener(v -> {
-
             getChildFragmentManager()
                     .beginTransaction()
                     .replace(R.id.contenedorFragmentsPerfil, new FragMisServicios())
                     .commit();
         });
-
 
         btnMiArte.setOnClickListener(v -> {
             getChildFragmentManager()
@@ -78,6 +80,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                     .commit();
         });
     }
+
     @Override
     public void onStop() {
         super.onStop();
@@ -105,21 +108,22 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tvRedes.setText(prefs.getString("redes", "Sin redes"));
         tvFecNac.setText(prefs.getString("fechaNac", "Sin fecha"));
 
-        // Si luego usas Glide:
+        // Glide para foto si luego lo usas
         // Glide.with(this).load(prefs.getString("fotoPerfil", null)).into(imgFotoPerfil);
     }
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.btnFavoritos) {
-            Navigation.findNavController(v).navigate(R.id.fragFavoritos);
-        }
-        if (v.getId() == R.id.btnSubirObra) {
-            Navigation.findNavController(v).navigate(R.id.fragSubirObra);
-        }
-        if (v.getId() == R.id.btnEditarPefil) {
-            Intent intent = new Intent(v.getContext(), ActActualizarDatos.class);
+        int id = v.getId();
 
+        if (id == R.id.btnFavoritos) {
+            Navigation.findNavController(v).navigate(R.id.fragFavoritos);
+        } else if (id == R.id.btnSubirObra) {
+            Navigation.findNavController(v).navigate(R.id.fragSubirObra);
+        } else if (id == R.id.btnSubirServicio) {
+                Navigation.findNavController(v).navigate(R.id.fragSubirServicio);
+        } else if (id == R.id.btnEditarPefil) {
+            Intent intent = new Intent(v.getContext(), ActActualizarDatos.class);
             v.getContext().startActivity(intent);
         }
     }

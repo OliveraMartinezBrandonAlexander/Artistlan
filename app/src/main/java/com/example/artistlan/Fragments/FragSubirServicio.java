@@ -1,7 +1,13 @@
 package com.example.artistlan.Fragments;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.text.TextUtils;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,238 +17,188 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-
+import com.example.artistlan.BotonesMenuSuperior;
+import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.api.CategoriaApi;
+import com.example.artistlan.Conector.api.ServicioApi;
+import com.example.artistlan.Conector.model.CategoriaDTO;
+import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.R;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class FragSubirServicio extends Fragment {
 
+    private EditText etTituloServicio, etDescripcionServicio, etTecnicaServicio, etContactoServicio;
     private Spinner spinnerCategoriaServicio;
-    private EditText etTituloServicio;
-    private EditText etDescripcionServicio;
-    private EditText etTecnicaServicio;
-    private EditText etContactoServicio;
-    private Button btnPublicarServicio;
-    private Button btnRegresarServicio;
+    private Button btnPublicarServicio, btnRegresarServicio;
 
-    // Lista de categorías que llega de la BD
-    private List<CategoriaServicio> listaCategorias = new ArrayList<>();
-    private ArrayAdapter<String> categoriasAdapter;
+    private List<CategoriaDTO> listaCategoriasProfesiones = new ArrayList<>();
 
     public FragSubirServicio() {
         // Required empty public constructor
     }
 
-    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_subir_servicio, container, false);
+    }
 
-        View view = inflater.inflate(R.layout.fragment_subirservicios, container, false);
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-        // Referencias a la UI
+        new BotonesMenuSuperior(this, view);
+
+        etTituloServicio      = view.findViewById(R.id.etTituloServicio);
+        etDescripcionServicio = view.findViewById(R.id.etDescripcionServicio);
+        etTecnicaServicio     = view.findViewById(R.id.etTecnicaServicio);
+        etContactoServicio    = view.findViewById(R.id.etContactoServicio);
+
         spinnerCategoriaServicio = view.findViewById(R.id.spinnerCategoriaServicio);
-        etTituloServicio        = view.findViewById(R.id.etTituloServicio);
-        etDescripcionServicio   = view.findViewById(R.id.etDescripcionServicio);
-        etTecnicaServicio       = view.findViewById(R.id.etTecnicaServicio);
-        etContactoServicio      = view.findViewById(R.id.etContactoServicio);
-        btnPublicarServicio     = view.findViewById(R.id.btnPublicarServicio);
-        btnRegresarServicio     = view.findViewById(R.id.btnRegresarServicio);
 
-        // Inicializar adapter del spinner (de momento vacío)
-        categoriasAdapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                new ArrayList<>()
+        btnPublicarServicio   = view.findViewById(R.id.btnPublicarServicio);
+        btnRegresarServicio   = view.findViewById(R.id.btnRegresarServicio);
+
+        btnPublicarServicio.setOnClickListener(v -> subirServicio());
+        btnRegresarServicio.setOnClickListener(v ->
+                requireActivity().getSupportFragmentManager().popBackStack()
         );
-        categoriasAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerCategoriaServicio.setAdapter(categoriasAdapter);
 
-        // Cargar categorías desde la BD / API
-        cargarCategoriasDesdeBD();
+        cargarCategoriasProfesiones();
+    }
 
-        // Click en Publicar
-        btnPublicarServicio.setOnClickListener(v -> validarYPublicarServicio());
+    private void cargarCategoriasProfesiones() {
+        CategoriaApi api = RetrofitClient.getClient().create(CategoriaApi.class);
 
-        // Click en Regresar (ejemplo: popBackStack)
-        btnRegresarServicio.setOnClickListener(v -> {
-            if (getParentFragmentManager() != null) {
-                getParentFragmentManager().popBackStack();
+        api.obtenerCategorias().enqueue(new Callback<List<CategoriaDTO>>() {
+            @Override
+            public void onResponse(Call<List<CategoriaDTO>> call, Response<List<CategoriaDTO>> response) {
+                if (!response.isSuccessful() || response.body() == null) {
+                    Toast.makeText(getContext(), "No se pudieron obtener las categorías", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                List<CategoriaDTO> todas = response.body();
+
+                List<String> profesiones = Arrays.asList(
+                        "pintor", "escultor", "fotógrafo", "ilustrador",
+                        "diseñador gráfico", "diseñador industrial", "diseñador de moda",
+                        "caricaturista", "animador", "artesano", "ceramista", "grabador",
+                        "artista digital", "artista plástico", "maquetador", "decorador",
+                        "restaurador de arte", "graffitero", "modelador 3d"
+                );
+
+                listaCategoriasProfesiones = new ArrayList<>();
+
+                for (CategoriaDTO c : todas) {
+                    String nombre = c.getNombreCategoria().trim().toLowerCase();
+                    if (profesiones.contains(nombre)) {
+                        listaCategoriasProfesiones.add(c);
+                    }
+                }
+
+                List<String> nombres = new ArrayList<>();
+                nombres.add("Seleccione una categoría");
+                for (CategoriaDTO c : listaCategoriasProfesiones) {
+                    nombres.add(c.getNombreCategoria());
+                }
+
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                        getContext(),
+                        android.R.layout.simple_spinner_item,
+                        nombres
+                );
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerCategoriaServicio.setAdapter(adapter);
+            }
+
+            @Override
+            public void onFailure(Call<List<CategoriaDTO>> call, Throwable t) {
+                Toast.makeText(getContext(), "Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
-
-        return view;
     }
 
-    // ==============================
-    // 1. CARGAR CATEGORÍAS (SPINNER)
-    // ==============================
-    /**
-     * Aquí haces la llamada a tu BD (Firebase, API REST, MySQL vía backend, etc.)
-     * y cuando obtengas la lista de categorías, llamas a actualizarSpinnerCategorias().
-     */
-    private void cargarCategoriasDesdeBD() {
-        // TODO: Reemplaza esto por tu lógica real
-        // Ejemplo MOCK para que veas la idea:
+    private void subirServicio() {
+        SharedPreferences prefs = requireActivity()
+                .getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        int idUsuario = prefs.getInt("id", -1);
 
-        listaCategorias.clear();
-        listaCategorias.add(new CategoriaServicio(1, "Retratos"));
-        listaCategorias.add(new CategoriaServicio(2, "Ilustración Digital"));
-        listaCategorias.add(new CategoriaServicio(3, "Fotografía"));
-        listaCategorias.add(new CategoriaServicio(4, "Diseño de portadas"));
-
-        actualizarSpinnerCategorias();
-    }
-
-    private void actualizarSpinnerCategorias() {
-        List<String> nombres = new ArrayList<>();
-        for (CategoriaServicio cat : listaCategorias) {
-            nombres.add(cat.getNombre());
-        }
-
-        categoriasAdapter.clear();
-        categoriasAdapter.addAll(nombres);
-        categoriasAdapter.notifyDataSetChanged();
-    }
-
-    // ==============================
-    // 2. VALIDAR FORMULARIO Y PUBLICAR
-    // ==============================
-    private void validarYPublicarServicio() {
-        String titulo     = etTituloServicio.getText().toString().trim();
-        String descripcion= etDescripcionServicio.getText().toString().trim();
-        String tecnica    = etTecnicaServicio.getText().toString().trim();
-        String contacto   = etContactoServicio.getText().toString().trim();
-
-        // Validaciones básicas
-        if (listaCategorias.isEmpty()) {
-            Toast.makeText(requireContext(), "Primero carga las categorías", Toast.LENGTH_SHORT).show();
+        if (idUsuario == -1) {
+            Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
             return;
         }
 
-        if (TextUtils.isEmpty(titulo)) {
-            etTituloServicio.setError("Ingresa un título");
-            etTituloServicio.requestFocus();
+        String titulo      = etTituloServicio.getText().toString().trim();
+        String descripcion = etDescripcionServicio.getText().toString().trim();
+        String tecnica     = etTecnicaServicio.getText().toString().trim();
+        String contacto    = etContactoServicio.getText().toString().trim();
+
+        int pos = spinnerCategoriaServicio.getSelectedItemPosition();
+
+        if (pos == 0) {
+            Toast.makeText(getContext(), "Selecciona una categoría válida.", Toast.LENGTH_LONG).show();
             return;
         }
 
-        if (TextUtils.isEmpty(descripcion)) {
-            etDescripcionServicio.setError("Ingresa una descripción");
-            etDescripcionServicio.requestFocus();
+        if (titulo.isEmpty() || descripcion.isEmpty() || tecnica.isEmpty() || contacto.isEmpty()) {
+            Toast.makeText(getContext(), "Completa todos los campos.", Toast.LENGTH_LONG).show();
             return;
         }
 
-        if (TextUtils.isEmpty(tecnica)) {
-            etTecnicaServicio.setError("Indica la técnica que manejas");
-            etTecnicaServicio.requestFocus();
-            return;
-        }
+        CategoriaDTO categoriaSeleccionada = listaCategoriasProfesiones.get(pos - 1);
+        int idCategoria = categoriaSeleccionada.getIdCategoria();
+        String nombreCategoria = categoriaSeleccionada.getNombreCategoria();
 
-        if (TextUtils.isEmpty(contacto)) {
-            etContactoServicio.setError("Ingresa un medio de contacto");
-            etContactoServicio.requestFocus();
-            return;
-        }
+        ServicioDTO nuevoServicio = new ServicioDTO();
+        nuevoServicio.setTitulo(titulo);
+        nuevoServicio.setDescripcion(descripcion);
+        nuevoServicio.setTecnicas(tecnica);
+        nuevoServicio.setContacto(contacto);
+        nuevoServicio.setIdUsuario(idUsuario);
+        nuevoServicio.setIdCategoria(idCategoria);
+        nuevoServicio.setCategoria(nombreCategoria);
 
-        int posicionSeleccionada = spinnerCategoriaServicio.getSelectedItemPosition();
-        if (posicionSeleccionada < 0 || posicionSeleccionada >= listaCategorias.size()) {
-            Toast.makeText(requireContext(), "Selecciona una categoría válida", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        CategoriaServicio categoriaSeleccionada = listaCategorias.get(posicionSeleccionada);
-
-        // Armar el objeto Servicio listo para enviar a tu backend
-        ServicioRequest servicio = new ServicioRequest();
-        servicio.setIdCategoria(categoriaSeleccionada.getIdCategoria());
-        servicio.setTitulo(titulo);
-        servicio.setDescripcion(descripcion);
-        servicio.setTecnica(tecnica);
-        servicio.setContacto(contacto);
-
-        // Aquí mandas a guardar (API / Firebase / lo que uses)
-        guardarServicioEnBD(servicio);
+        insertarServicioEnBD(idUsuario, nuevoServicio);
     }
 
-    // ==============================
-    // 3. GUARDAR EN BD / API
-    // ==============================
-    /**
-     * Implementa aquí la lógica real para guardar el servicio:
-     * - Llamada a Retrofit (Spring Boot)
-     * - Inserción en Firebase Firestore / Realtime Database
-     * - etc.
-     */
-    private void guardarServicioEnBD(ServicioRequest servicio) {
-        // TODO: Reemplazar por tu implementación real
+    private void insertarServicioEnBD(int idUsuario, ServicioDTO servicio) {
+        ServicioApi api = RetrofitClient.getClient().create(ServicioApi.class);
 
-        // EJEMPLO de "éxito simulado"
-        Toast.makeText(requireContext(), "Servicio publicado correctamente", Toast.LENGTH_SHORT).show();
+        Call<ServicioDTO> call = api.crearServicioDeUsuario(idUsuario, servicio);
 
-        // Opcional: limpiar campos
-        limpiarFormulario();
-    }
+        call.enqueue(new Callback<ServicioDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<ServicioDTO> call,
+                                   @NonNull Response<ServicioDTO> response) {
 
-    private void limpiarFormulario() {
-        etTituloServicio.setText("");
-        etDescripcionServicio.setText("");
-        etTecnicaServicio.setText("");
-        etContactoServicio.setText("");
+                if (response.isSuccessful() && response.body() != null) {
+                    Toast.makeText(getContext(),
+                            "¡Servicio publicado con éxito! ID: " + response.body().getIdServicio(),
+                            Toast.LENGTH_LONG).show();
+                    requireActivity().getSupportFragmentManager().popBackStack();
+                } else {
+                    Toast.makeText(getContext(),
+                            "Error al insertar servicio. Código " + response.code(),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
 
-        if (!listaCategorias.isEmpty()) {
-            spinnerCategoriaServicio.setSelection(0);
-        }
-    }
-
-    // ==============================
-    // 4. CLASES DE APOYO
-    // ==============================
-    // Representa una categoría que viene de la BD
-    public static class CategoriaServicio {
-        private int idCategoria;
-        private String nombre;
-
-        public CategoriaServicio(int idCategoria, String nombre) {
-            this.idCategoria = idCategoria;
-            this.nombre = nombre;
-        }
-
-        public int getIdCategoria() {
-            return idCategoria;
-        }
-
-        public String getNombre() {
-            return nombre;
-        }
-    }
-
-    // DTO para mandar al backend
-    public static class ServicioRequest {
-        private int idCategoria;
-        private String titulo;
-        private String descripcion;
-        private String tecnica;
-        private String contacto;
-
-        public int getIdCategoria() { return idCategoria; }
-        public void setIdCategoria(int idCategoria) { this.idCategoria = idCategoria; }
-
-        public String getTitulo() { return titulo; }
-        public void setTitulo(String titulo) { this.titulo = titulo; }
-
-        public String getDescripcion() { return descripcion; }
-        public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-
-        public String getTecnica() { return tecnica; }
-        public void setTecnica(String tecnica) { this.tecnica = tecnica; }
-
-        public String getContacto() { return contacto; }
-        public void setContacto(String contacto) { this.contacto = contacto; }
+            @Override
+            public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) {
+                Toast.makeText(getContext(),
+                        "Error de red: " + t.getMessage(),
+                        Toast.LENGTH_LONG).show();
+                t.printStackTrace();
+            }
+        });
     }
 }

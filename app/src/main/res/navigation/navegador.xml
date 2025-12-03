@@ -34,9 +34,16 @@
         android:id="@+id/fragVerPerfil"
         android:name="com.example.artistlan.Fragments.FragVerPerfil"
         tools:layout="@layout/fragment_frag_ver_perfil" />
+
     <fragment
         android:id="@+id/fragSubirObra"
         android:name="com.example.artistlan.Fragments.FragSubirObra"
         tools:layout="@layout/fragment_frag_subir_obra" />
+
+    <!-- NUEVO: fragSubirServicio registrado en este graph -->
+    <fragment
+        android:id="@+id/fragSubirServicio"
+        android:name="com.example.artistlan.Fragments.FragSubirServicio"
+        tools:layout="@layout/fragment_frag_subir_servicio" />
 
 </navigation>

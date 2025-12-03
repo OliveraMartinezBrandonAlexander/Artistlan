@@ -4,13 +4,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".Fragments.FragSubirObra">
+    android:background="@drawable/fon_ser"
+    tools:context=".Fragments.FragSubirServicio">
 
     <include layout="@layout/layout_menu_superior" />
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@android:color/black" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -27,7 +30,7 @@
             android:fillViewport="true">
 
             <LinearLayout
-                android:id="@+id/IsLayCard"
+                android:id="@+id/lsLayCardServicio"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bordes_redondeados"
@@ -36,13 +39,13 @@
                 android:padding="15dp">
 
                 <TextView
-                    android:id="@+id/IsTxtTitulo"
+                    android:id="@+id/lsTxtTitulo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
                     android:gravity="center"
                     android:padding="5dp"
-                    android:text="Subir Obra"
+                    android:text="Subir Servicio"
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
@@ -54,33 +57,50 @@
                     android:background="@android:color/darker_gray" />
 
                 <TextView
-                    android:id="@+id/IsTxtDesc"
+                    android:id="@+id/lsTxtDesc"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="10dp"
                     android:gravity="center"
                     android:padding="5dp"
-                    android:text="Ingresa la siguiente información:"
+                    android:text="Ingresa la siguiente información de tu servicio:"
                     android:textSize="16sp" />
 
                 <TextView
-                    android:id="@+id/IsTxtTituloObra"
+                    android:id="@+id/lsTxtCategoria"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:fontFamily="sans-serif-black"
-                    android:text="Título de la Obra"
+                    android:text="Categoría"
                     android:textSize="14sp" />
 
-                <EditText
-                    android:id="@+id/tituloObra"
+                <Spinner
+                    android:id="@+id/spinnerCategoriaServicio"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
                     android:background="@drawable/editredondo"
-                    android:hint="Titulo de la obra"
-                    android:inputType="textCapWords"
+                    android:padding="10dp" />
+
+                <TextView
+                    android:id="@+id/lsTxtTituloServicio"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Título del servicio"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etTituloServicio"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/editredondo"
+                    android:hint="Ej. Retrato digital, sesión de fotos, etc."
+                    android:inputType="textCapSentences"
                     android:paddingStart="20dp"
                     android:paddingTop="10dp"
                     android:paddingEnd="20dp"
@@ -88,42 +108,7 @@
                     android:textColor="#202020" />
 
                 <TextView
-                    android:id="@+id/IsTxtEstado"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-black"
-                    android:text="Estado"
-                    android:textSize="14sp" />
-
-                <RadioGroup
-                    android:id="@+id/radioGroupOpciones"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:orientation="vertical">
-
-                    <RadioButton
-                        android:id="@+id/rbdisponible"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Disponible" />
-
-                    <RadioButton
-                        android:id="@+id/rbdventa"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="En venta" />
-
-                    <RadioButton
-                        android:id="@+id/rbexhibicion"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="En exhibición" />
-
-                </RadioGroup>
-
-                <TextView
-                    android:id="@+id/IsTxtDescripcion"
+                    android:id="@+id/lsTxtDescripcion"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
@@ -131,147 +116,90 @@
                     android:textSize="14sp" />
 
                 <EditText
-                    android:id="@+id/descripcion"
+                    android:id="@+id/etDescripcionServicio"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
                     android:background="@drawable/editredondo"
                     android:gravity="top|start"
-                    android:hint="Descripción detallada de la obra"
+                    android:hint="Describe qué incluye tu servicio, tiempos de entrega, etc."
                     android:inputType="textMultiLine"
                     android:minLines="3"
                     android:padding="10dp"
                     android:textColor="#202020" />
 
                 <TextView
-                    android:id="@+id/IsTxtPrecio"
+                    android:id="@+id/lsTxtTecnica"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
-                    android:text="Precio"
+                    android:text="Técnica que manejo"
                     android:textSize="14sp" />
 
                 <EditText
-                    android:id="@+id/precio"
+                    android:id="@+id/etTecnicaServicio"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
                     android:background="@drawable/editredondo"
-                    android:hint="Precio (ej. 1500.00)"
-                    android:inputType="numberDecimal"
-                    android:paddingStart="20dp"
-                    android:paddingTop="10dp"
-                    android:paddingEnd="20dp"
-                    android:paddingBottom="10dp"
-                    android:textColor="#202020" />
-
-                <TextView
-                    android:id="@+id/IsTxtMedidas"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-black"
-                    android:text="Medidas"
-                    android:textSize="14sp" />
-
-                <EditText
-                    android:id="@+id/medidas"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
-                    android:hint="Ej. 50cm x 70cm"
-                    android:inputType="text"
-                    android:paddingStart="20dp"
-                    android:paddingTop="10dp"
-                    android:paddingEnd="20dp"
-                    android:paddingBottom="10dp"
-                    android:textColor="#202020" />
-                <TextView
-                    android:id="@+id/IsTxtTecnica"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-black"
-                    android:text="Técnica"
-                    android:textSize="14sp"/>
-                <EditText
-                    android:id="@+id/edit_text_tecnica"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
-                    android:hint="Técnica de la obra "
+                    android:hint="Ej. Ilustración digital, óleo, acrílico, fotografía, etc."
                     android:inputType="textCapSentences"
                     android:paddingStart="20dp"
                     android:paddingTop="10dp"
                     android:paddingEnd="20dp"
                     android:paddingBottom="10dp"
-                    android:textColor="#202020"/>
+                    android:textColor="#202020" />
 
                 <TextView
-                    android:id="@+id/IsTxtCategoria"
+                    android:id="@+id/lsTxtContacto"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
-                    android:text="Categoría"
+                    android:text="Contacto"
                     android:textSize="14sp" />
 
-                <Spinner
-                    android:id="@+id/categoria"
+                <EditText
+                    android:id="@+id/etContactoServicio"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="20dp"
                     android:background="@drawable/editredondo"
-                    android:padding="10dp" />
-
-                <ImageView
-                    android:id="@+id/imgPreviewObra"
-                    android:layout_width="200dp"
-                    android:layout_height="200dp"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="10dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/imagensubirobra" />
+                    android:hint="Correo, teléfono o @usuario para que te contacten"
+                    android:inputType="textEmailAddress|textPersonName|textVisiblePassword"
+                    android:paddingStart="20dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="10dp"
+                    android:textColor="#202020" />
 
                 <Button
-                    android:id="@+id/btnSubirImg"
-                    android:layout_width="150dp"
-                    android:layout_height="50dp"
+                    android:id="@+id/btnPublicarServicio"
+                    android:layout_width="180dp"
+                    android:layout_height="55dp"
                     android:layout_gravity="center_horizontal"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
-                    android:backgroundTint="#6C6C6C"
                     android:padding="10dp"
-                    android:text="SUBIR IMAGEN"
+                    android:text="PUBLICAR"
+                    android:textAllCaps="true"
                     android:textColor="@android:color/white"
                     android:textStyle="bold" />
 
                 <Button
-                    android:id="@+id/btnSubirObra"
-                    android:layout_width="150dp"
-                    android:layout_height="50dp"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:backgroundTint="#6C6C6C"
-                    android:padding="10dp"
-                    android:text="SUBIR OBRA"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold" />
-
-                <Button
-                    android:id="@+id/btnRegresar"
+                    android:id="@+id/btnRegresarServicio"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_marginTop="40dp"
+                    android:layout_marginTop="30dp"
                     android:backgroundTint="#C0A898"
                     android:text="Regresar" />
+
             </LinearLayout>
         </ScrollView>
     </LinearLayout>
 
 </LinearLayout>
+

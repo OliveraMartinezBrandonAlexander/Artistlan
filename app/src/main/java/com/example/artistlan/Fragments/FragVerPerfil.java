@@ -108,7 +108,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tvRedes.setText(prefs.getString("redes", "Sin redes"));
         tvFecNac.setText(prefs.getString("fechaNac", "Sin fecha"));
 
-        // Glide para foto si luego lo usas
+        // Glide para foto si luego lo usas:
         // Glide.with(this).load(prefs.getString("fotoPerfil", null)).into(imgFotoPerfil);
     }
 
@@ -121,7 +121,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         } else if (id == R.id.btnSubirObra) {
             Navigation.findNavController(v).navigate(R.id.fragSubirObra);
         } else if (id == R.id.btnSubirServicio) {
-                Navigation.findNavController(v).navigate(R.id.fragSubirServicio);
+            Navigation.findNavController(v).navigate(R.id.fragSubirServicio);
         } else if (id == R.id.btnEditarPefil) {
             Intent intent = new Intent(v.getContext(), ActActualizarDatos.class);
             v.getContext().startActivity(intent);

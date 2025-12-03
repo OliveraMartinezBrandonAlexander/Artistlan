@@ -46,6 +46,6 @@
         android:id="@+id/fragSubirServicio"
         android:name="com.example.artistlan.Fragments.FragSubirServicio"
         android:label="Subir Servicio"
-        tools:layout="@layout/fragment_subir_servicio" />
+        tools:layout="@layout/fragment_frag_subir_servicio" />
 
 </navigation>

@@ -53,25 +53,31 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
         // 2. Lógica de expansión/colapso
         boolean expandido = (tarjetaExpandida == position);
-        holder.expandedSection.setVisibility(expandido ? View.VISIBLE : View.GONE);
+
+        if (expandido) {
+            holder.expandedSection.setVisibility(View.VISIBLE);
+
+        } else {
+            animarVista(holder.expandedSection, false);
+        }
 
         // 3. Listener para el clic en el elemento
         holder.itemView.setOnClickListener(v -> {
             int previous = tarjetaExpandida;
+            int currentPosition = holder.getAdapterPosition();
 
-            if (expandido) {
+            if (previous == currentPosition) {
+
                 tarjetaExpandida = -1;
-                animarVista(holder.expandedSection, false);
             } else {
-                tarjetaExpandida = position;
+                tarjetaExpandida = currentPosition;
 
-                if (previous != -1)
-                    notifyItemChanged(previous); // Colapsa la tarjeta anterior si existe
-
-                animarVista(holder.expandedSection, true);
+                if (previous != -1) {
+                    notifyItemChanged(previous);
+                }
             }
 
-            notifyItemChanged(position); // Actualiza la vista actual
+            notifyItemChanged(currentPosition);
         });
 
         // 4. Listener para el botón Visitar
@@ -93,9 +99,10 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         notifyDataSetChanged();
     }
 
-    // Método para manejar la animación de expansión/colapso
     private void animarVista(View view, boolean expandir) {
         if (expandir) {
+            if (view.getVisibility() == View.VISIBLE) return;
+
             view.setVisibility(View.VISIBLE);
             view.setScaleY(0f);
             view.setAlpha(0f);
@@ -103,19 +110,20 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             view.animate()
                     .alpha(1f)
                     .scaleY(1f)
-                    .setDuration(250)
+                    .setDuration(100)
                     .start();
         } else {
+            if (view.getVisibility() == View.GONE) return;
+
             view.animate()
                     .alpha(0f)
                     .scaleY(0f)
-                    .setDuration(200)
+                    .setDuration(150)
                     .withEndAction(() -> view.setVisibility(View.GONE))
                     .start();
         }
     }
 
-    // VIEW HOLDER ACTUALIZADO
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         TextView titulo, descripcion, contacto, tecnicas, autor, categoria;

@@ -100,25 +100,22 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    android:orientation="vertical">
+                    android:orientation="horizontal">
 
-                    <RadioButton
-                        android:id="@+id/rbdisponible"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Disponible" />
 
                     <RadioButton
                         android:id="@+id/rbdventa"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="En venta" />
+                        android:text="En venta"
+                        android:layout_marginLeft="30dp"/>
 
                     <RadioButton
                         android:id="@+id/rbexhibicion"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="En exhibición" />
+                        android:text="En exhibición"
+                        android:layout_marginLeft="40dp"/>
 
                 </RadioGroup>
 
@@ -183,7 +180,7 @@
                     android:layout_marginBottom="12dp"
                     android:background="@drawable/editredondo"
                     android:hint="Ej. 50cm x 70cm"
-                    android:inputType="text"
+                    android:inputType="number"
                     android:paddingStart="20dp"
                     android:paddingTop="10dp"
                     android:paddingEnd="20dp"

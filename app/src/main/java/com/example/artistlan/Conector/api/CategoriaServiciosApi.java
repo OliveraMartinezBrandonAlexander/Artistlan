@@ -11,19 +11,19 @@ import retrofit2.http.Query;
 
 public interface CategoriaServiciosApi {
 
-    @GET("categorias-servicios")
+    @GET("categoriaServicios")
     Call<List<CategoriaServiciosDTO>> obtenerTodos();
 
-    @POST("categorias-servicios")
+    @POST("categoriaServicios")
     Call<CategoriaServiciosDTO> crear(@Body CategoriaServiciosDTO dto);
 
-    @GET("categorias-servicios/buscar")
+    @GET("categoriaServicios/buscar")
     Call<CategoriaServiciosDTO> buscar(
             @Query("idServicio") Integer idServicio,
             @Query("idCategoria") Integer idCategoria
     );
 
-    @DELETE("categorias-servicios")
+    @DELETE("categoriaServicios")
     Call<Void> eliminar(
             @Query("idServicio") Integer idServicio,
             @Query("idCategoria") Integer idCategoria

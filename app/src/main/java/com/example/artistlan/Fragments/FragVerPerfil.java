@@ -82,6 +82,12 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        cargarDatosUsuario();
+    }
+
+    @Override
     public void onStop() {
         super.onStop();
 
@@ -100,13 +106,25 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         SharedPreferences prefs = requireActivity()
                 .getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
 
-        tvNombre.setText(prefs.getString("nombreCompleto", "Nombre no disponible"));
-        tvUsuario.setText(prefs.getString("usuario", "usuario"));
-        tvCorreo.setText(prefs.getString("correo", "correo no disponible"));
-        tvDescripcion.setText(prefs.getString("descripcion", "Sin descripción"));
-        tvTelefono.setText(prefs.getString("telefono", "No disponible"));
-        tvRedes.setText(prefs.getString("redes", "Sin redes"));
-        tvFecNac.setText(prefs.getString("fechaNac", "Sin fecha"));
+        // Obtener los datos como cadenas
+        String nombre = prefs.getString("nombreCompleto", "Nombre no disponible");
+        String usuario = prefs.getString("usuario", "usuario");
+        String correo = prefs.getString("correo", "correo no disponible");
+        String descripcion = prefs.getString("descripcion", ""); // Obtener la descripción, pero el default es ""
+        String telefono = prefs.getString("telefono", "");
+        String redes = prefs.getString("redes", "");
+        String fechaNac = prefs.getString("fechaNac", "");
+
+        // Aplicar los valores a los TextViews, usando el valor por defecto si la cadena está vacía
+        tvNombre.setText(nombre.isEmpty() ? "Nombre no disponible" : nombre);
+        tvUsuario.setText(usuario.isEmpty() ? "usuario" : usuario);
+        tvCorreo.setText(correo.isEmpty() ? "correo no disponible" : correo);
+
+
+        tvDescripcion.setText(descripcion.isEmpty() ? "Sin descripción" : descripcion);
+        tvTelefono.setText(telefono.isEmpty() ? "No disponible" : telefono);
+        tvRedes.setText(redes.isEmpty() ? "Sin redes" : redes);
+        tvFecNac.setText(fechaNac.isEmpty() ? "Sin fecha" : fechaNac);
 
         // Glide para foto si luego lo usas:
         // Glide.with(this).load(prefs.getString("fotoPerfil", null)).into(imgFotoPerfil);

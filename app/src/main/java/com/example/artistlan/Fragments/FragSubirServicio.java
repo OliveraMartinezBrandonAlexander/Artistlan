@@ -44,7 +44,6 @@ public class FragSubirServicio extends Fragment {
     private Button btnPublicarServicio;
     private Button btnRegresarServicio;
 
-    // Lista de categorías (profesiones) que viene de la BD
     private final List<CategoriaDTO> listaCategoriasProfesiones = new ArrayList<>();
     private ArrayAdapter<String> categoriasAdapter;
 
@@ -58,11 +57,8 @@ public class FragSubirServicio extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        // ⚠️ IMPORTANTE: el nombre del layout debe ser EXACTO al XML que pegaste
-        // Si tu XML se llama fragment_subirservicios.xml, cámbialo aquí:
+
         View view = inflater.inflate(R.layout.fragment_frag_subir_servicio, container, false);
-        // Si en realidad se llama fragment_frag_subir_servicio.xml, sería:
-        // View view = inflater.inflate(R.layout.fragment_frag_subir_servicio, container, false);
 
         spinnerCategoriaServicio = view.findViewById(R.id.spinnerCategoriaServicio);
         etTituloServicio        = view.findViewById(R.id.etTituloServicio);
@@ -80,7 +76,6 @@ public class FragSubirServicio extends Fragment {
         categoriasAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCategoriaServicio.setAdapter(categoriasAdapter);
 
-        // Por si acaso estuviera deshabilitado por estilo/tema:
         spinnerCategoriaServicio.setEnabled(true);
         spinnerCategoriaServicio.setClickable(true);
         spinnerCategoriaServicio.setFocusable(true);
@@ -101,7 +96,6 @@ public class FragSubirServicio extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Ocultar bottom nav si existe
         View bottomBar = requireActivity().findViewById(R.id.bottomBar);
         if (bottomBar != null) {
             bottomBar.setVisibility(View.GONE);
@@ -112,16 +106,12 @@ public class FragSubirServicio extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
 
-        // Mostrar nuevamente el bottom nav
         View bottomBar = requireActivity().findViewById(R.id.bottomBar);
         if (bottomBar != null) {
             bottomBar.setVisibility(View.VISIBLE);
         }
     }
 
-    // ==============================
-    // 1. CARGAR CATEGORÍAS (SPINNER)
-    // ==============================
     private void cargarCategoriasDesdeBD() {
         CategoriaApi api = RetrofitClient.getClient().create(CategoriaApi.class);
 
@@ -136,7 +126,6 @@ public class FragSubirServicio extends Fragment {
 
                 List<CategoriaDTO> todas = response.body();
 
-                // Lista de profesiones que SÍ queremos para servicios
                 List<String> profesiones = Arrays.asList(
                         "pintor", "escultor", "fotógrafo", "ilustrador",
                         "diseñador gráfico", "diseñador industrial", "diseñador de moda",
@@ -178,18 +167,8 @@ public class FragSubirServicio extends Fragment {
         categoriasAdapter.clear();
         categoriasAdapter.addAll(nombres);
         categoriasAdapter.notifyDataSetChanged();
-
-        // 🔍 Diagnóstico: ver cuántas categorías se cargaron
-        Toast.makeText(
-                getContext(),
-                "Categorías cargadas: " + listaCategoriasProfesiones.size(),
-                Toast.LENGTH_SHORT
-        ).show();
     }
 
-    // ==============================
-    // 2. VALIDAR FORMULARIO Y PUBLICAR
-    // ==============================
     private void validarYPublicarServicio() {
         SharedPreferences prefs = requireActivity()
                 .getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
@@ -253,9 +232,7 @@ public class FragSubirServicio extends Fragment {
         guardarServicioEnBD(idUsuario, categoriaSeleccionada.getIdCategoria(), servicio);
     }
 
-    // ==============================
-    // 3. GUARDAR EN BD / API
-    // ==============================
+
     private void guardarServicioEnBD(int idUsuario, int idCategoria, ServicioDTO servicio) {
         ServicioApi servicioApi = RetrofitClient.getClient().create(ServicioApi.class);
 
@@ -275,7 +252,7 @@ public class FragSubirServicio extends Fragment {
                     crearRelacionCategoriaServicio(creado.getIdServicio(), idCategoria);
                 } else {
                     Toast.makeText(getContext(),
-                            "Error al insertar servicio. Código " + response.code(),
+                            "Error al insertar servicio " + response.code(),
                             Toast.LENGTH_LONG).show();
                 }
             }
@@ -301,7 +278,6 @@ public class FragSubirServicio extends Fragment {
             @Override
             public void onResponse(@NonNull Call<CategoriaServiciosDTO> call,
                                    @NonNull Response<CategoriaServiciosDTO> response) {
-
                 if (response.isSuccessful()) {
                     Toast.makeText(getContext(),
                             "Relación servicio-categoría guardada.",

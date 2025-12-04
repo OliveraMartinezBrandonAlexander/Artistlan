@@ -56,7 +56,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
         // 3. DESHABILITACIÓN FINAL
         // Deshabilitar campos que deben mostrar su valor pero no ser editables
-        etNombre.setEnabled(false);
+        etNombre.setEnabled(true);
         etCorreo.setEnabled(false);
         etUsuario.setEnabled(false);
         etContra.setEnabled(false);
@@ -96,7 +96,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btnRegresar) {
-            Navigation.findNavController(v).navigate(R.id.fragVerPerfil);
+            finish();
         } else if (v.getId() == R.id.btnActualizarDatos) {
             actualizarUsuario();
         }
@@ -111,32 +111,34 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             return;
         }
 
-        // Recuperar todos los campos (incluyendo los deshabilitados para evitar el error 500)
         String nombre = etNombre.getText().toString().trim();
-        String correo = etCorreo.getText().toString().trim();
-        String usuario = etUsuario.getText().toString().trim();
-        String contrasena = etContra.getText().toString().trim(); // Valor antiguo
-
-        // Recuperar campos editables
         String descripcion = etDescripcion.getText().toString().trim();
         String redes = etRedes.getText().toString().trim();
         String telefono = etTelefono.getText().toString().trim();
         String fechaNac = etFecha.getText().toString().trim();
 
-        if (descripcion.isEmpty() || redes.isEmpty() || telefono.isEmpty() || fechaNac.isEmpty()) {
-            Toast.makeText(this, "Por favor, llena los campos obligatorios", Toast.LENGTH_SHORT).show();
+        String correo = etCorreo.getText().toString().trim();
+        String usuario = etUsuario.getText().toString().trim();
+        String contrasena = etContra.getText().toString().trim();
+
+
+        if (nombre.isEmpty()) {
+            Toast.makeText(this, "El campo Nombre Completo no puede estar vacío.", Toast.LENGTH_SHORT).show();
+            etNombre.requestFocus();
             return;
         }
 
+        if (fechaNac.isEmpty()) {
+            Toast.makeText(this, "Por favor, llena los campos obligatorios: Teléfono y Fecha de Nacimiento.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         UsuariosDTO usuarioActualizado = new UsuariosDTO();
 
-        // Incluir todos los datos necesarios para la API (incluyendo los deshabilitados)
         usuarioActualizado.setNombreCompleto(nombre);
         usuarioActualizado.setCorreo(correo);
         usuarioActualizado.setUsuario(usuario);
         usuarioActualizado.setContrasena(contrasena);
 
-        // Campos editables
         usuarioActualizado.setDescripcion(descripcion);
         usuarioActualizado.setRedesSociales(redes);
         usuarioActualizado.setTelefono(telefono);
@@ -149,6 +151,16 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(ActActualizarDatos.this, "Datos actualizados correctamente", Toast.LENGTH_SHORT).show();
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putString("nombreCompleto", nombre);
+                    editor.putString("descripcion", descripcion);
+                    editor.putString("redes", redes);
+                    editor.putString("telefono", telefono);
+                    editor.putString("fechaNac", fechaNac);
+                    editor.apply();
+
+                    finish();
+
                 } else {
                     Toast.makeText(ActActualizarDatos.this, "Error al actualizar (Código: " + response.code() + ")", Toast.LENGTH_LONG).show();
                 }

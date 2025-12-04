@@ -99,14 +99,12 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
             }
         });
 
-        // AGREGAR ESTO PARA SCROLL TÁCTIL
         recyclerViewCarrusel.setOnTouchListener((v, event) -> {
             // Permitir que el RecyclerView maneje el scroll táctil
             v.getParent().requestDisallowInterceptTouchEvent(true);
             return false;
         });
 
-        // Configurar botones de navegación
         btnDer.setOnClickListener(v -> {
             int currentPosition = carruselAdapter.getItemSeleccionado();
             if (currentPosition < carruselAdapter.getItemCount() - 2) {
@@ -123,7 +121,6 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
             }
         });
 
-        // Establecer posición inicial (primer item real) - IDÉNTICO AL DE ARTISTAS
         recyclerViewCarrusel.post(() -> {
             recyclerViewCarrusel.smoothScrollToPosition(1);
             recyclerViewCarrusel.postDelayed(() -> {
@@ -141,7 +138,7 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         if (centerView != null) {
             int position = recyclerViewCarrusel.getChildAdapterPosition(centerView);
             if (position != RecyclerView.NO_POSITION) {
-                // Solo permitir selección de items reales (no vacíos)
+
                 if (position > 0 && position < carruselAdapter.getItemCount() - 1) {
                     carruselAdapter.setItemSeleccionado(position);
                 }
@@ -163,10 +160,8 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
     }
 
     private List<PalabraCarruselItem> obtenerProfesionesDeBD() {
-        // TODO: CONECTAR CON BASE DE DATOS - Reemplazar con tu lógica real
         List<PalabraCarruselItem> profesiones = new ArrayList<>();
 
-        // Ejemplo de profesiones - reemplaza con datos reales de BD
         String[] profesionesArray = {
                 "Pintor", "Escultor", "Fotógrafo", "Ilustrador", "Dibujante",
                 "Grabador", "Ceramista", "Muralista", "Digital", "Acuarelista",

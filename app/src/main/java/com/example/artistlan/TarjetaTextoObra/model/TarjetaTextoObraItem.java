@@ -15,11 +15,11 @@ public class TarjetaTextoObraItem {
     private int likes;
     private String nombreAutor;
     private String nombreCategoria;
-    private boolean liked = false;
+    private boolean userLiked;
     private boolean expandido = false;
 
 
-    public TarjetaTextoObraItem(int idObra, String titulo, String descripcion, String estado, Double precio, String imagen1, String imagen2, String imagen3, String tecnicas, String medidas, int likes, String nombreAutor, String nombreCategoria, boolean liked, boolean expandido) {
+    public TarjetaTextoObraItem(int idObra, String titulo, String descripcion, String estado, Double precio, String imagen1, String imagen2, String imagen3, String tecnicas, String medidas, int likes, String nombreAutor, String nombreCategoria, boolean userLiked, boolean expandido) {
         this.idObra = idObra;
         this.titulo = titulo;
         this.descripcion = descripcion;
@@ -33,7 +33,7 @@ public class TarjetaTextoObraItem {
         this.likes = likes;
         this.nombreAutor = nombreAutor;
         this.nombreCategoria = nombreCategoria;
-        this.liked = liked;
+        this.userLiked = userLiked;
         this.expandido = expandido;
 
     }
@@ -86,8 +86,13 @@ public class TarjetaTextoObraItem {
         return nombreAutor;
     }
 
-    public boolean isLiked() { return liked; }
-    public void setLiked(boolean liked) { this.liked = liked; }
+    public boolean isUserLiked() {
+        return userLiked;
+    }
+
+    public void setUserLiked(boolean userLiked) {
+        this.userLiked = userLiked;
+    }
 
     public boolean isExpandido() { return expandido; }
     public void setExpandido(boolean expandido) { this.expandido = expandido; }

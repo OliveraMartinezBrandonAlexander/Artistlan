@@ -60,57 +60,89 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
                 .error(R.drawable.imagencargaobras)
                 .into(holder.imgObra);
 
+        if (obra.isUserLiked()) {
+            holder.btnLike.setImageResource(R.drawable.ic_heart_red);
+        } else {
+            holder.btnLike.setImageResource(R.drawable.ic_heart_purple);
+        }
 
         holder.btnLike.setOnClickListener(v -> {
+
+            int currentPosition = holder.getAdapterPosition();
+            if (currentPosition == RecyclerView.NO_POSITION) return;
+            TarjetaTextoObraItem currentObra = listaObras.get(currentPosition);
+
+            boolean currentlyLiked = currentObra.isUserLiked();
+            int newLikesCount = currentObra.getLikes();
+
+            if (currentlyLiked) {
+
+                currentObra.setUserLiked(false);
+                newLikesCount--;
+
+                holder.btnLike.setImageResource(R.drawable.ic_heart_purple);
+            } else {
+
+                currentObra.setUserLiked(true);
+                newLikesCount++;
+
+                holder.btnLike.setImageResource(R.drawable.ic_heart_red);
+            }
+
+            currentObra.setLikes(newLikesCount);
+            holder.likes.setText("" + newLikesCount);
+
+            animarLike(holder.btnLike);
+
             if (listener != null) {
                 listener.onLikeClick(
-                        obra.getIdObra(),
-                        holder.btnLike,
-                        holder.likes
+                        currentObra.getIdObra(),
+                        currentObra.isUserLiked()
                 );
+
             }
-            animarLike(holder.btnLike); // si quieres animación
+
+            notifyItemChanged(currentPosition);
         });
 
 
-        // ---------- ACORDEÓN: determinar si esta tarjeta está abierta ----------
         boolean expandido = (position == tarjetaExpandida);
-        holder.expandedSection.setVisibility(expandido ? View.VISIBLE : View.GONE);
-        obra.setExpandido(expandido);
+        if (expandido) {
+            animarVista(holder.expandedSection, true);
+        } else {
+            animarVista(holder.expandedSection, false);
+        }
+        obra.setExpandido(expandido);;
 
         // ---------- CLICK EN LA TARJETA ----------
         holder.itemView.setOnClickListener(v -> {
 
             int previousExpanded = tarjetaExpandida;
+            int currentPosition = holder.getAdapterPosition();
 
-            if (tarjetaExpandida == position) {
-                // Si vuelve a tocar la misma → cerrar
+            if (previousExpanded == currentPosition) {
+
                 tarjetaExpandida = -1;
-                animarVista(holder.expandedSection, false);
             } else {
-                // Abrir nueva tarjeta
-                tarjetaExpandida = position;
-                animarVista(holder.expandedSection, true);
 
-                // Cerrar la anterior tarjeta
+                tarjetaExpandida = currentPosition;
+
                 if (previousExpanded != -1) {
+
                     notifyItemChanged(previousExpanded);
                 }
             }
+            notifyItemChanged(currentPosition);
 
-            notifyItemChanged(position);
         });
     }
+
 
     @Override
     public int getItemCount() {
         return listaObras.size();
     }
 
-
-    // ===========================================================
-    // ANIMACIÓN SUAVE (ESCALA + OPACIDAD)
-    // ===========================================================
     private void animarVista(View view, boolean expandir) {
         if (expandir) {
             view.setVisibility(View.VISIBLE);
@@ -120,21 +152,18 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             view.animate()
                     .alpha(1f)
                     .scaleY(1f)
-                    .setDuration(250)
+                    .setDuration(100)
                     .start();
         } else {
             view.animate()
                     .alpha(0f)
                     .scaleY(0f)
-                    .setDuration(200)
+                    .setDuration(150)
                     .withEndAction(() -> view.setVisibility(View.GONE))
                     .start();
         }
     }
 
-    // ===========================================================
-    // ANIMACIÓN DE POP EN EL BOTÓN LIKE
-    // ===========================================================
     private void animarLike(ImageButton btn) {
         btn.animate()
                 .scaleX(0.7f)
@@ -150,9 +179,6 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     }
 
 
-    // ===========================================================
-    // VIEW HOLDER
-    // ===========================================================
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         TextView titulo, descripcion, estado, tecnica, medidas, precio, categoria, likes,autor;
@@ -188,7 +214,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
 
     public interface OnLikeClickListener {
-        void onLikeClick(int idObra, ImageButton btnLike, TextView txtLikes);
+        void onLikeClick(int idObra, boolean userLiked);
 
     }
 

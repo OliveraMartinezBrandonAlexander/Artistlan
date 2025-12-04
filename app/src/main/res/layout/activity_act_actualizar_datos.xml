@@ -64,12 +64,21 @@
                     android:padding="5dp"
                     android:text="Ingresa la siguiente información:"
                     android:textSize="16sp" />
+                <TextView
+                android:id="@+id/IsTxtindicacion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:gravity="center"
+                android:padding="5dp"
+                android:text=" Campos marcados con * son obligatorios"
+                android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/tvCorreo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Correo Electrónico"
+                    android:text="Correo Electrónico (no editable)"
                     android:layout_marginTop="10dp"
                     android:fontFamily="sans-serif-black"
                     android:textSize="14sp" />
@@ -78,7 +87,7 @@
                     android:id="@+id/correo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/editredondonoeditable"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
                     android:hint="ejemplo@gmail.com"
@@ -97,7 +106,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
-                    android:text="Nombre"
+                    android:text="Nombre *"
                     android:textSize="14sp" />
 
                 <EditText
@@ -186,7 +195,7 @@
                     android:id="@+id/tvFecha"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Fecha de Nacimiento"
+                    android:text="Fecha de Nacimiento *"
                     android:fontFamily="sans-serif-black"
                     android:textSize="14sp" />
 
@@ -214,7 +223,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
-                    android:text="Usuario "
+                    android:text="Usuario  (no editable)"
                     android:textSize="16sp" />
 
                 <EditText
@@ -223,7 +232,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/editredondonoeditable"
                     android:hint="SuperMariposonejemplo"
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
@@ -240,14 +249,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
-                    android:text="Contraseña"
+                    android:text="Contraseña (no editable)"
                     android:textSize="16sp" />
 
                 <EditText
                     android:id="@+id/contra"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/editredondonoeditable"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
                     android:paddingStart="20dp"

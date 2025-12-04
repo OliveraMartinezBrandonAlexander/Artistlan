@@ -48,7 +48,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.descripcion.setText(obra.getDescripcion());
         holder.estado.setText("Estado: " + obra.getEstado());
         holder.tecnica.setText("Técnica: " + obra.getTecnicas());
-        holder.medidas.setText("Medidas: " + obra.getMedidas());
+        holder.medidas.setText("Medidas: " + obra.getMedidas() +" cm");
         holder.precio.setText("Precio: $ " + String.format("%,.2f", obra.getPrecio()));
         holder.likes.setText("" + obra.getLikes());
         holder.categoria.setText("Categoría: " + obra.getNombreCategoria());

@@ -35,6 +35,16 @@
                 android:orientation="vertical"
                 android:padding="15dp">
 
+                <ImageButton
+                    android:id="@+id/btnRegresar"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/regresarimg"
+                    android:background="@android:color/transparent"
+                    android:scaleType="centerInside"
+                    android:adjustViewBounds="true"
+                    android:padding="4dp" />
+
                 <TextView
                     android:id="@+id/IsTxtTitulo"
                     android:layout_width="match_parent"
@@ -259,14 +269,7 @@
                     android:textColor="@android:color/white"
                     android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/btnRegresar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="40dp"
-                    android:backgroundTint="#C0A898"
-                    android:text="Regresar" />
+                0
             </LinearLayout>
         </ScrollView>
     </LinearLayout>

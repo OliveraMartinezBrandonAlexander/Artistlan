@@ -18,6 +18,16 @@
         android:background="@drawable/bordes_redondeados"
         android:backgroundTint="#A6A1BBCE">
 
+        <ImageButton
+            android:id="@+id/CrcBtnRegresar"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/regresarimg"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"
+            android:padding="4dp" />
+
         <!-- Título -->
         <TextView
             android:id="@+id/CrcTxtTitulo"

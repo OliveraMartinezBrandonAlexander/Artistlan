@@ -87,77 +87,135 @@
                             android:backgroundTint="#A1BBCE"
                             android:text="Subir Servicio" />
 
+                        <!-- Etiqueta Teléfono -->
+                        <TextView
+                            android:id="@+id/VrpLblTelefono"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="Teléfono:"
+                            android:textStyle="bold"
+                            android:textSize="14sp" />
+
+                        <!-- Valor Teléfono -->
                         <TextView
                             android:id="@+id/VrpTxvTelefono"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
                             android:background="@drawable/editredondo"
                             android:backgroundTint="#A1BBCE"
-                            android:hint="Teléfono"
-                            android:padding="12dp" />
+                            android:padding="12dp"
+                            android:hint="Teléfono" />
                     </LinearLayout>
                 </LinearLayout>
+
+                <TextView
+                    android:id="@+id/VrpLblDescripcion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Descripción:"
+                    android:textStyle="bold"
+                    android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/VrpTxvDescripcion"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
                     android:background="@drawable/editredondo"
                     android:backgroundTint="#A1BBCE"
                     android:padding="12dp"
                     android:hint="Descripción" />
 
                 <TextView
-                    android:id="@+id/VrpTxvCorreo"
+                    android:id="@+id/VrpLblCorreo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    android:text="Correo:"
+                    android:textStyle="bold"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/VrpTxvCorreo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/editredondo"
                     android:backgroundTint="#A1BBCE"
                     android:padding="12dp"
                     android:hint="Correo" />
 
                 <TextView
-                    android:id="@+id/VrpTxvNombre"
+                    android:id="@+id/VrpLblNombre"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    android:text="Nombre completo:"
+                    android:textStyle="bold"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/VrpTxvNombre"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/editredondo"
                     android:backgroundTint="#A1BBCE"
                     android:padding="12dp"
-                    android:hint="Nombre Completo" />
+                    android:hint="Nombre" />
+
+                <TextView
+                    android:id="@+id/VrpLblRedes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Redes sociales:"
+                    android:textStyle="bold"
+                    android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/VrpTxvRedes"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
                     android:background="@drawable/editredondo"
                     android:backgroundTint="#A1BBCE"
                     android:padding="12dp"
                     android:hint="Redes sociales" />
 
                 <TextView
-                    android:id="@+id/VrpTxvFecNac"
+                    android:id="@+id/VrpLblFecNac"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    android:text="Fecha de nacimiento:"
+                    android:textStyle="bold"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/VrpTxvFecNac"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/editredondo"
                     android:backgroundTint="#A1BBCE"
                     android:padding="12dp"
-                    android:hint="Fecha nacimiento" />
+                    android:hint="Fecha de nacimiento" />
+
+                <TextView
+                    android:id="@+id/VrpLblCategoria"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Categoría:"
+                    android:textStyle="bold"
+                    android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/VrpTxvCategoria"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
                     android:background="@drawable/editredondo"
                     android:backgroundTint="#A1BBCE"
                     android:padding="12dp"
-                    android:hint="Categoria" />
+                    android:hint="Categoría" />
 
                 <View
                     android:layout_width="match_parent"

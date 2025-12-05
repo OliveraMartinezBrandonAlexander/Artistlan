@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -42,7 +43,7 @@ public class FragSubirServicio extends Fragment {
     private EditText etTecnicaServicio;
     private EditText etContactoServicio;
     private Button btnPublicarServicio;
-    private Button btnRegresarServicio;
+    private ImageButton btnRegresarServicio;
 
     private final List<CategoriaDTO> listaCategoriasProfesiones = new ArrayList<>();
     private ArrayAdapter<String> categoriasAdapter;

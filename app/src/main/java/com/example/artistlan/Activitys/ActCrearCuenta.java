@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,6 +25,7 @@ import java.util.regex.Pattern;
 public class ActCrearCuenta extends AppCompatActivity implements View.OnClickListener {
 
     private Button btnCrear;
+    ImageButton btnRegresar;
     private EditText edtEmail, edtNombre, edtTel, edtFecha, edtUsuario, edtContra, edtContraConf;
     private UsuarioApi api;
 
@@ -45,6 +47,9 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         btnCrear.setOnClickListener(this);
         edtFecha.setOnClickListener(v -> mostrarDatePicker());
 
+        btnRegresar = findViewById(R.id.CrcBtnRegresar);
+        btnRegresar.setOnClickListener(this);
+
         api = RetrofitClient.getClient().create(UsuarioApi.class); //conexion con la api
     }
 
@@ -54,6 +59,8 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
             if (validarCampos()) {
                 verificarNombreUsuario();
             }
+        } else if (v.getId() == R.id.CrcBtnRegresar) {
+            finish();
         }
     }
 

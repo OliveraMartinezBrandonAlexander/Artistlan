@@ -3,6 +3,7 @@ package com.example.artistlan.Fragments;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,12 +15,20 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.artistlan.BotonesMenuSuperior;
+import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.api.ObraApi;
+import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Carrusel.adapter.CarruselAdapter;
 import com.example.artistlan.Carrusel.model.ObraCarruselItem;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class FragMain extends Fragment {
 
@@ -43,6 +52,8 @@ public class FragMain extends Fragment {
         CarruselAdapter adapter = new CarruselAdapter(obras, getContext());
         viewPager.setAdapter(adapter);
 
+        cargarObrasCarrusel(obras, adapter);
+
         btnDer.setOnClickListener(v -> {
             if (viewPager.getCurrentItem() < obras.size() - 1) {
                 viewPager.setCurrentItem(viewPager.getCurrentItem() + 1, true);
@@ -58,6 +69,96 @@ public class FragMain extends Fragment {
         });
 
         return root;
+    }
+
+    private void cargarObrasCarrusel(List<ObraCarruselItem> obras, CarruselAdapter adapter) {
+
+        ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
+        Call<List<ObraDTO>> call = api.obtenerTodasLasObras();
+
+        call.enqueue(new Callback<List<ObraDTO>>() {
+            @Override
+            public void onResponse(Call<List<ObraDTO>> call, Response<List<ObraDTO>> response) {
+                if (!isAdded()) return;
+
+                if (!response.isSuccessful()) {
+                    // Error de API: dejamos las 3 default
+                    return;
+                }
+
+                List<ObraDTO> dtos = response.body();
+                if (dtos == null || dtos.isEmpty()) {
+                    // No hay obras en BD → se quedan las 3 default
+                    return;
+                }
+
+                // Selección aleatoria cuando hay más de 3
+                List<ObraDTO> seleccionadas;
+                if (dtos.size() <= 3) {
+                    // Si hay 1, 2 o 3, usamos esas mismas
+                    seleccionadas = dtos;
+                } else {
+                    // Si hay más de 3, barajamos y tomamos 3 al azar
+                    List<ObraDTO> copia = new ArrayList<>(dtos);
+                    Collections.shuffle(copia);
+                    seleccionadas = copia.subList(0, 3);
+                }
+
+                int reemplazos = Math.min(3, seleccionadas.size());
+
+                for (int i = 0; i < reemplazos; i++) {
+                    ObraDTO dto = seleccionadas.get(i);
+                    ObraCarruselItem original = obras.get(i); // la default en esa posición (pin1/pin2/pin3)
+
+                    String titulo = (dto.getTitulo() != null && !dto.getTitulo().isEmpty())
+                            ? dto.getTitulo()
+                            : original.getTitulo();
+
+                    String descripcion = (dto.getDescripcion() != null && !dto.getDescripcion().isEmpty())
+                            ? dto.getDescripcion()
+                            : original.getDescripcion();
+
+                    String autor = (dto.getNombreAutor() != null && !dto.getNombreAutor().isEmpty())
+                            ? dto.getNombreAutor()
+                            : original.getAutor();
+
+                    String likes;
+                    if (dto.getLikes() != null) {
+                        likes = dto.getLikes() + " likes";
+                    } else {
+                        likes = original.getLikes();
+                    }
+
+                    // URL de la imagen desde tu DTO (imagen1)
+                    String imagenUrl = null;
+                    if (dto.getImagen1() != null && !dto.getImagen1().isEmpty()) {
+                        imagenUrl = dto.getImagen1();
+                    }
+
+                    // Reemplazamos la tarjeta i con la obra seleccionada:
+                    // - drawable local original (pin1/2/3) como fallback
+                    // - URL real si existe para que Glide la cargue
+                    obras.set(i, new ObraCarruselItem(
+                            original.getImagen(), // drawable local
+                            imagenUrl,            // URL de la BD
+                            titulo,
+                            descripcion,
+                            autor,
+                            likes
+                    ));
+                }
+
+
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onFailure(Call<List<ObraDTO>> call, Throwable t) {
+                t.printStackTrace();
+                if (!isAdded()) return;
+                Log.e("FragMain", "Error de red al cargar obras del carrusel: " + t.getMessage());
+            }
+        });
     }
 
     private void animarBoton(View v) {

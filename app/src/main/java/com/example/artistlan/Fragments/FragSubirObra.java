@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -44,7 +45,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
     private Button btnSubirImg;
     private Button btnSubirObra;
-    private Button btnRegresar;
+    private ImageButton btnRegresar;
     private ImageView imgPreviewObra;
 
     private Uri uriImagenObra;

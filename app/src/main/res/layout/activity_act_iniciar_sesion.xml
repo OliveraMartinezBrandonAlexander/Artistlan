@@ -18,6 +18,18 @@
         android:background="@drawable/bordes_redondeados"
         android:backgroundTint="#A6A1BBCE">
 
+        <ImageButton
+            android:id="@+id/IsBtnRegresar"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/regresarimg"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"
+            android:padding="4dp"
+            android:contentDescription="Regresar" />
+
+
         <TextView
             android:id="@+id/IsTxtTitulo"
             android:layout_width="match_parent"
@@ -124,6 +136,7 @@
             android:backgroundTint="#6C6C6C"
             android:textColor="@android:color/white"
             android:layout_gravity="center_horizontal" />
+
 
     </LinearLayout>
 

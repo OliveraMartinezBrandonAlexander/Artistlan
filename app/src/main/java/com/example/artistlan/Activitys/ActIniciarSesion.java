@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -24,6 +25,7 @@ import retrofit2.Response;
 public class ActIniciarSesion extends AppCompatActivity implements View.OnClickListener {
 
     Button btnIniciarSesion;
+    ImageButton btnRegresar;
     EditText etCorreo, etUsuario, etContrasena;
     UsuarioApi api;
 
@@ -39,6 +41,8 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
         btnIniciarSesion = findViewById(R.id.btnIniciarSesion);
         btnIniciarSesion.setOnClickListener(this);
+        btnRegresar = findViewById(R.id.IsBtnRegresar);
+        btnRegresar.setOnClickListener(this);
 
         api = RetrofitClient.getClient().create(UsuarioApi.class);
     }
@@ -47,7 +51,10 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
     public void onClick(View v) {
         if (v.getId() == R.id.btnIniciarSesion) {
             iniciarSesion();
+        } else if (v.getId() == R.id.IsBtnRegresar) {
+            finish();
         }
+
     }
 
     private void iniciarSesion() {

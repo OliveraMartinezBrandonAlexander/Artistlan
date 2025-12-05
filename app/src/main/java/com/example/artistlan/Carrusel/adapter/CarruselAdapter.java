@@ -10,53 +10,71 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.artistlan.R;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.artistlan.Carrusel.model.ObraCarruselItem;
+import com.example.artistlan.R;
 
 import java.util.List;
 
 public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.CarruselViewHolder> {
-    private List<ObraCarruselItem> obras;
-    private Context context;
 
-    public CarruselAdapter(List<ObraCarruselItem> obras, Context context) {
-        this.obras = obras;
+    private final List<ObraCarruselItem> lista;
+    private final Context context;
+
+    public CarruselAdapter(List<ObraCarruselItem> lista, Context context) {
+        this.lista = lista;
         this.context = context;
     }
 
     @NonNull
     @Override
     public CarruselViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_carrusel, parent, false);
-        return new CarruselViewHolder(view);
+        View vista = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_carrusel, parent, false);
+        return new CarruselViewHolder(vista);
     }
 
     @Override
     public void onBindViewHolder(@NonNull CarruselViewHolder holder, int position) {
-        ObraCarruselItem obra = obras.get(position);
-        holder.imgObra.setImageResource(obra.getImagen());
-        holder.tvTitulo.setText(obra.getTitulo());
-        holder.tvDescripcion.setText(obra.getDescripcion());
-        holder.tvAutor.setText(obra.getAutor());
-        holder.tvLikes.setText(obra.getLikes());
+        ObraCarruselItem item = lista.get(position);
+
+        // Si hay URL de imagen (Firebase / servidor), la usamos.
+        if (item.getImagenUrl() != null && !item.getImagenUrl().isEmpty()) {
+            Glide.with(context)
+                    .load(item.getImagenUrl())
+                    .placeholder(item.getImagen())   // mientras carga
+                    .error(item.getImagen())         // si falla
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .into(holder.imgObra);
+        } else {
+            // Si no hay URL, usamos el drawable por defecto
+            holder.imgObra.setImageResource(item.getImagen());
+        }
+
+        holder.tvTitulo.setText(item.getTitulo());
+        holder.tvDescripcion.setText(item.getDescripcion());
+        holder.tvAutor.setText(item.getAutor());
+        holder.tvLikes.setText(item.getLikes());
     }
 
     @Override
     public int getItemCount() {
-        return obras.size();
+        return lista.size();
     }
 
     public static class CarruselViewHolder extends RecyclerView.ViewHolder {
+
         ImageView imgObra;
         TextView tvTitulo, tvDescripcion, tvAutor, tvLikes;
 
         public CarruselViewHolder(@NonNull View itemView) {
             super(itemView);
-            imgObra = itemView.findViewById(R.id.imgObra);
-            tvTitulo = itemView.findViewById(R.id.tvTitulo);
-            tvDescripcion = itemView.findViewById(R.id.tvDescripcion);
-            tvAutor = itemView.findViewById(R.id.tvAutor);
-            tvLikes = itemView.findViewById(R.id.tvLikes);
+            imgObra      = itemView.findViewById(R.id.imgObra);
+            tvTitulo     = itemView.findViewById(R.id.tvTitulo);
+            tvDescripcion= itemView.findViewById(R.id.tvDescripcion);
+            tvAutor      = itemView.findViewById(R.id.tvAutor);
+            tvLikes      = itemView.findViewById(R.id.tvLikes);
         }
     }
 }

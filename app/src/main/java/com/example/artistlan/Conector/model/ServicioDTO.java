@@ -9,8 +9,9 @@ public class ServicioDTO {
     private String tecnicas;
     private Integer idUsuario;
     private String nombreUsuario;
-    private String categoria;    // nombre de la categoría/profesión
-    private Integer idCategoria; // ID real de la categoría en la BD
+    private String categoria;
+    private Integer idCategoria;
+    private String fotoPerfilAutor;
 
     public Integer getIdServicio() {
         return idServicio;
@@ -80,7 +81,17 @@ public class ServicioDTO {
         return idCategoria;
     }
 
+    public String getFotoPerfilAutor() {
+        return fotoPerfilAutor;
+    }
+
+    public void setFotoPerfilAutor(String fotoPerfilAutor) {
+        this.fotoPerfilAutor = fotoPerfilAutor;
+    }
+
     public void setIdCategoria(Integer idCategoria) {
         this.idCategoria = idCategoria;
+
+
     }
 }

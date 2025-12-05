@@ -7,24 +7,28 @@ public class TarjetaTextoArtistaItem {
     private String nombre;
     private String categoria;
     private String descripcion;
-    private String mensaje;
-    private List<Integer> miniObras;
+
+    private String fotoPerfil;
+    private List<String> miniObras;
     private boolean expandido = false;
 
-    public TarjetaTextoArtistaItem(String nombre, String categoria, String descripcion, String mensaje, List<Integer> miniObras) {
+    public TarjetaTextoArtistaItem(String nombre, String categoria, String descripcion,
+                                   String fotoPerfil, List<String> miniObras) {
         this.nombre = nombre;
         this.categoria = categoria;
         this.descripcion = descripcion;
-        this.mensaje = mensaje;
+        this.fotoPerfil = fotoPerfil;
         this.miniObras = miniObras;
     }
 
+    // Getters
     public String getNombre() { return nombre; }
     public String getCategoria() { return categoria; }
     public String getDescripcion() { return descripcion; }
-    public String getMensaje() { return mensaje; }
-    public List<Integer> getMiniObras() { return miniObras; }
-
+    public String getFotoPerfil() { return fotoPerfil; }
+    public List<String> getMiniObras() { return miniObras; }
     public boolean isExpandido() { return expandido; }
+
+    // Setter para expandido
     public void setExpandido(boolean expandido) { this.expandido = expandido; }
 }

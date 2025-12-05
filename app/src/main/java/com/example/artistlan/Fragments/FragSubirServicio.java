@@ -279,9 +279,6 @@ public class FragSubirServicio extends Fragment {
             public void onResponse(@NonNull Call<CategoriaServiciosDTO> call,
                                    @NonNull Response<CategoriaServiciosDTO> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(getContext(),
-                            "Relación servicio-categoría guardada.",
-                            Toast.LENGTH_SHORT).show();
                     limpiarFormulario();
                     requireActivity().getSupportFragmentManager().popBackStack();
                 } else {

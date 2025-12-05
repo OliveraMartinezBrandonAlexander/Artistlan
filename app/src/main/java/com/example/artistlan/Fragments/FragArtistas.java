@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,27 +15,37 @@ import android.widget.Button;
 import android.widget.ImageButton;
 
 import com.example.artistlan.BotonesMenuSuperior;
+import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.api.ObraApi;
+import com.example.artistlan.Conector.api.UsuarioApi;
+import com.example.artistlan.Conector.model.ArtistaDTO;
+import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Carrusel.adapter.PalabraCarruselAdapter;
 import com.example.artistlan.Carrusel.layout.CenterZoomLayoutManager;
 import com.example.artistlan.Carrusel.model.PalabraCarruselItem;
+import com.example.artistlan.TarjetaTextoArtista.adapter.TarjetaTextoArtistaAdapter;
+import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnCategoriaClickListener {
 
     private RecyclerView recyclerViewArtistas;
     private RecyclerView recyclerViewCarrusel;
+    private TarjetaTextoArtistaAdapter adapter;
     private PalabraCarruselAdapter carruselAdapter;
     private ImageButton btnIzq, btnDer;
     private Button btnAplicarFiltro;
     private List<PalabraCarruselItem> profesionesArtistas;
     private String profesionFiltroActual = "";
     private CenterZoomLayoutManager layoutManager;
-
-    // TODO: Crear un adapter específico para artistas cuando lo necesites
-    // private ArtistaAdapter adapter;
+    private List<TarjetaTextoArtistaItem> listaArtistas = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -58,24 +67,24 @@ public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnC
 
         // Configurar botón de aplicar filtro
         configurarBotonFiltro(view);
+
+        // Cargar artistas y sus mini obras
+        cargarArtistas();
     }
 
+    // ---------------- Carrusel ------------------
     private void configurarCarrusel(View view) {
         recyclerViewCarrusel = view.findViewById(R.id.recyclerCarruselArtistas);
         btnIzq = view.findViewById(R.id.btnCarruselIzquierdoArtistas);
         btnDer = view.findViewById(R.id.btnCarruselDerechoArtistas);
 
-        // Configurar LayoutManager personalizado
         layoutManager = new CenterZoomLayoutManager(getContext());
         recyclerViewCarrusel.setLayoutManager(layoutManager);
 
-        // Crear lista de profesiones para el carrusel
         profesionesArtistas = obtenerProfesionesDeBD();
-
         carruselAdapter = new PalabraCarruselAdapter(profesionesArtistas, requireContext(), this);
         recyclerViewCarrusel.setAdapter(carruselAdapter);
 
-        // Scroll listener para detectar el item central
         recyclerViewCarrusel.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -86,7 +95,6 @@ public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnC
             }
         });
 
-        // Configurar botones de navegación
         btnDer.setOnClickListener(v -> {
             int currentPosition = carruselAdapter.getItemSeleccionado();
             if (currentPosition < carruselAdapter.getItemCount() - 2) {
@@ -103,28 +111,21 @@ public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnC
             }
         });
 
-        // Establecer posición inicial (primer item real)
         recyclerViewCarrusel.post(() -> {
             recyclerViewCarrusel.smoothScrollToPosition(1);
-            recyclerViewCarrusel.postDelayed(() -> {
-                carruselAdapter.setItemSeleccionado(1);
-            }, 100);
+            recyclerViewCarrusel.postDelayed(() -> carruselAdapter.setItemSeleccionado(1), 100);
         });
     }
 
     private void encontrarItemCentral() {
         int centerX = recyclerViewCarrusel.getWidth() / 2;
         float centerY = recyclerViewCarrusel.getHeight() / 2.0f;
-
         View centerView = recyclerViewCarrusel.findChildViewUnder(centerX, centerY);
 
         if (centerView != null) {
             int position = recyclerViewCarrusel.getChildAdapterPosition(centerView);
-            if (position != RecyclerView.NO_POSITION) {
-                // Solo permitir selección de items reales (no vacíos)
-                if (position > 0 && position < carruselAdapter.getItemCount() - 1) {
-                    carruselAdapter.setItemSeleccionado(position);
-                }
+            if (position != RecyclerView.NO_POSITION && position > 0 && position < carruselAdapter.getItemCount() - 1) {
+                carruselAdapter.setItemSeleccionado(position);
             }
         }
     }
@@ -136,60 +137,27 @@ public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnC
         btnAplicarFiltro.setOnClickListener(v -> {
             PalabraCarruselItem profesionSeleccionada = carruselAdapter.getCategoriaSeleccionada();
             if (profesionSeleccionada != null) {
-                aplicarFiltro(profesionSeleccionada.getIdCategoria());
+                // por ahora dejamos el filtro pendiente
                 animarBoton(v);
             }
         });
     }
 
     private List<PalabraCarruselItem> obtenerProfesionesDeBD() {
-        // TODO: CONECTAR CON BASE DE DATOS - Reemplazar con tu lógica real
         List<PalabraCarruselItem> profesiones = new ArrayList<>();
-
-        // Ejemplo de profesiones - reemplaza con datos reales de BD
         String[] profesionesArray = {
                 "Pintor", "Escultor", "Fotógrafo", "Ilustrador", "Dibujante",
                 "Grabador", "Ceramista", "Muralista", "Digital", "Acuarelista",
                 "Retratista", "Paisajista", "Abstracto", "Conceptual",
                 "Collagista", "Textil", "Mixta", "Profesional"
         };
-
         int colorNormal = 0xFF4B2056;
         int colorSeleccionado = 0xFF6A2D7A;
 
         for (String profesion : profesionesArray) {
             profesiones.add(new PalabraCarruselItem(profesion, "prof_" + profesion.toLowerCase(), colorNormal, colorSeleccionado));
         }
-
         return profesiones;
-    }
-
-    private void aplicarFiltro(String idProfesion) {
-        profesionFiltroActual = idProfesion;
-
-        PalabraCarruselItem profesion = carruselAdapter.getCategoriaSeleccionada();
-        if (profesion != null) {
-            System.out.println("Aplicando filtro para profesión: " + profesion.getPalabra());
-
-            // TODO: CONECTAR CON BASE DE DATOS - Implementar filtrado real
-            // Ejemplo:
-            // List<Artista> artistasFiltrados = tuRepositorio.obtenerArtistasPorProfesion(idProfesion);
-            // adapter.actualizarLista(artistasFiltrados);
-        }
-    }
-
-    private void configurarArtistas(View view) {
-        recyclerViewArtistas = view.findViewById(R.id.recyclerArtistas);
-        recyclerViewArtistas.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        // TODO: CONECTAR CON BASE DE DATOS - Reemplazar con datos reales
-        // Por ahora solo mostramos un mensaje
-        // List<Artista> listaArtistas = obtenerArtistasDeBD();
-        // adapter = new ArtistaAdapter(listaArtistas, requireContext());
-        // recyclerViewArtistas.setAdapter(adapter);
-
-        // Mensaje temporal
-        recyclerViewArtistas.setVisibility(View.GONE); // Ocultar hasta que implementes el adapter
     }
 
     private void animarBoton(View v) {
@@ -214,18 +182,71 @@ public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnC
         btnAplicarFiltro.setText("Aplicar Filtro: " + categoria.getPalabra());
     }
 
-    // Métodos para futura implementación con base de datos
-    public String getProfesionFiltroActual() {
-        return profesionFiltroActual;
+    // ---------------- Artistas ------------------
+    private void configurarArtistas(View view) {
+        recyclerViewArtistas = view.findViewById(R.id.recyclerArtistas);
+        recyclerViewArtistas.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        adapter = new TarjetaTextoArtistaAdapter(listaArtistas, requireContext());
+        recyclerViewArtistas.setAdapter(adapter);
     }
 
-    public void limpiarFiltro() {
-        profesionFiltroActual = "";
-        btnAplicarFiltro.setVisibility(View.GONE);
+    private void cargarArtistas() {
+        UsuarioApi api = RetrofitClient.getClient().create(UsuarioApi.class);
+        Call<List<ArtistaDTO>> call = api.getArtistas();
 
-        // TODO: Recargar todos los artistas sin filtro
-        // configurarArtistas(getView());
+        call.enqueue(new Callback<List<ArtistaDTO>>() {
+            @Override
+            public void onResponse(Call<List<ArtistaDTO>> call, Response<List<ArtistaDTO>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<ArtistaDTO> artistas = response.body();
+                    for (ArtistaDTO artista : artistas) {
+                        obtenerMiniObras(artista);
+                    }
+                }
+            }
 
-        System.out.println("Filtro de artistas limpiado");
+            @Override
+            public void onFailure(Call<List<ArtistaDTO>> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
+    }
+
+    private void obtenerMiniObras(ArtistaDTO artista) {
+        ObraApi obraApi = RetrofitClient.getClient().create(ObraApi.class);
+        Call<List<ObraDTO>> call = obraApi.obtenerObrasDeUsuario(artista.getIdUsuario());
+
+        call.enqueue(new Callback<List<ObraDTO>>() {
+            @Override
+            public void onResponse(Call<List<ObraDTO>> call, Response<List<ObraDTO>> response) {
+                List<String> miniObras = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null) {
+                    List<ObraDTO> obras = response.body();
+                    for (int i = 0; i < Math.min(3, obras.size()); i++) {
+                        miniObras.add(obras.get(i).getImagen1());
+                    }
+                }
+                while (miniObras.size() < 3) {
+                    miniObras.add(null);
+                }
+
+                TarjetaTextoArtistaItem item = new TarjetaTextoArtistaItem(
+                        artista.getUsuario(),
+                        artista.getCategoria(),
+                        artista.getDescripcion(),
+                        artista.getFotoPerfil(),
+                        miniObras
+                );
+
+                listaArtistas.add(item);
+                adapter.actualizarLista(new ArrayList<>(listaArtistas));
+            }
+
+            @Override
+            public void onFailure(Call<List<ObraDTO>> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
     }
 }

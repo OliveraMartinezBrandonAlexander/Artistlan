@@ -1,6 +1,8 @@
 package com.example.artistlan.Conector.api;
 
 import com.example.artistlan.Conector.model.ActualizarFotoPerfilRequestDTO;
+import com.example.artistlan.Conector.model.ArtistaDTO;
+import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import java.util.List;
 import retrofit2.Call;
@@ -15,7 +17,7 @@ import retrofit2.http.Query;
 public interface UsuarioApi
 {
     @GET("usuarios")
-    Call<List<UsuariosDTO>> obtenerTodos();
+    Call<List<ArtistaDTO>> getArtistas();
 
     @POST("usuarios")
     Call<List<UsuariosDTO>> crearUsuarios(@Body List<UsuariosDTO> usuarios);
@@ -28,8 +30,10 @@ public interface UsuarioApi
             @Query("contrasena") String contrasena
     );
 
-    @GET("api/usuarios/{id}")
+    @GET("usuarios/{id}")
     Call<UsuariosDTO> obtenerUsuarioPorId(@Path("id") int id);
+    @PUT("usuarios/{id}")
+    Call<Void> actualizarUsuario(@Path("id") int id, @Body UsuariosDTO usuario);
 
     @GET("usuarios/existe")
     Call<String> existeUsuario(@Query("usuario") String usuario, @Query("correo") String correo);
@@ -42,5 +46,6 @@ public interface UsuarioApi
     @PUT("usuariosusuario/{id}")
     Call<Void> actualizarUsuario(@Path("id") Integer id, @Body UsuariosDTO usuario);
 
-
+    @GET("usuarios/{id}/categoria")
+    Call<UsuariosDTO> obtenerCategoriaUsuario(@Path("id") int idUsuario);
 }

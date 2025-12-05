@@ -15,11 +15,12 @@ public class TarjetaTextoObraItem {
     private int likes;
     private String nombreAutor;
     private String nombreCategoria;
+    private String fotoPerfilAutor;
     private boolean userLiked;
     private boolean expandido = false;
 
 
-    public TarjetaTextoObraItem(int idObra, String titulo, String descripcion, String estado, Double precio, String imagen1, String imagen2, String imagen3, String tecnicas, String medidas, int likes, String nombreAutor, String nombreCategoria, boolean userLiked, boolean expandido) {
+    public TarjetaTextoObraItem(int idObra, String titulo, String descripcion, String estado, Double precio, String imagen1, String imagen2, String imagen3, String tecnicas, String medidas, int likes, String nombreAutor, String nombreCategoria,String fotoPerfilAutor, boolean userLiked, boolean expandido) {
         this.idObra = idObra;
         this.titulo = titulo;
         this.descripcion = descripcion;
@@ -33,9 +34,17 @@ public class TarjetaTextoObraItem {
         this.likes = likes;
         this.nombreAutor = nombreAutor;
         this.nombreCategoria = nombreCategoria;
+        this.fotoPerfilAutor = fotoPerfilAutor;
         this.userLiked = userLiked;
         this.expandido = expandido;
 
+    }
+    public String getFotoPerfilAutor() {
+        return fotoPerfilAutor;
+    }
+
+    public void setFotoPerfilAutor(String fotoPerfilAutor) {
+        this.fotoPerfilAutor = fotoPerfilAutor;
     }
 
     public String getTitulo() {

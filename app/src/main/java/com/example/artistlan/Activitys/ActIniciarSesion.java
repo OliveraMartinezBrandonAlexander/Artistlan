@@ -1,4 +1,5 @@
 package com.example.artistlan.Activitys;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -76,16 +77,43 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
                     UsuariosDTO user = response.body();
 
-                    guardarUsuarioLogeado(user);
+                    // Guardar los datos básicos primero
+                    guardarUsuarioLogeado(user, contrasena);
 
+                    // Ahora obtener la categoría del usuario
+                    api.obtenerCategoriaUsuario(user.getIdUsuario()).enqueue(new Callback<UsuariosDTO>() {
+                        @Override
+                        public void onResponse(Call<UsuariosDTO> call, Response<UsuariosDTO> respCategoria) {
+                            if (respCategoria.isSuccessful() && respCategoria.body() != null) {
+                                UsuariosDTO userConCategoria = respCategoria.body();
+                                // Actualizar la categoría en SharedPreferences
+                                SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+                                SharedPreferences.Editor editor = prefs.edit();
+                                String categoria = userConCategoria.getCategoria();
+                                editor.putString("categoria", categoria != null ? categoria : "Sin categoría");
+                                editor.apply();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<UsuariosDTO> call, Throwable t) {
+                            // Si falla, dejar "Sin categoría"
+                            SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+                            SharedPreferences.Editor editor = prefs.edit();
+                            editor.putString("categoria", "Sin categoría");
+                            editor.apply();
+                        }
+                    });
+
+                    // Abrir actividad principal
                     Intent ir = new Intent(ActIniciarSesion.this, ActFragmentoPrincipal.class);
                     startActivity(ir);
+                    Toast.makeText(ActIniciarSesion.this, "Cargando...", Toast.LENGTH_SHORT).show();
                     Toast.makeText(ActIniciarSesion.this,
                             "Bienvenido " + user.getUsuario(),
                             Toast.LENGTH_SHORT).show();
                     finish();
-                }
-                else {
+                } else {
                     Toast.makeText(ActIniciarSesion.this,
                             "Credenciales incorrectas",
                             Toast.LENGTH_SHORT).show();
@@ -101,7 +129,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         });
     }
 
-    private void guardarUsuarioLogeado(UsuariosDTO usuario) {
+    private void guardarUsuarioLogeado(UsuariosDTO usuario, String contrasenaIngresada) {
 
         SharedPreferences prefs =
                 getSharedPreferences("usuario_prefs", MODE_PRIVATE);
@@ -113,12 +141,14 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         editor.putString("correo", usuario.getCorreo());
 
         editor.putString("nombreCompleto", usuario.getNombreCompleto());
-        editor.putString("contrasena", usuario.getContrasena());
+        editor.putString("contrasena", contrasenaIngresada);
         editor.putString("telefono", usuario.getTelefono());
         editor.putString("descripcion", usuario.getDescripcion());
         editor.putString("redes", usuario.getRedesSociales());
         editor.putString("fechaNac", usuario.getFechaNacimiento());
-        editor.putString("fotoPerfil", usuario.getFotoPerfil());
+
+        String foto = usuario.getFotoPerfil();
+        editor.putString("fotoPerfil", foto != null ? foto : "");
 
         editor.apply();
     }

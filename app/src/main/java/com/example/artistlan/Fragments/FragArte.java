@@ -230,7 +230,7 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
 
                     // FILTRO
                     if (!categoriaFiltroActual.isEmpty() &&
-                            !categoriaFiltroActual.equalsIgnoreCase(dto.getTecnicas())) {
+                            (dto.getNombreCategoria() == null || !categoriaFiltroActual.equalsIgnoreCase(dto.getNombreCategoria()))) {
                         continue;
                     }
 
@@ -248,6 +248,7 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
                             dto.getLikes() != null ? dto.getLikes() : 0,
                             dto.getNombreAutor(),
                             dto.getNombreCategoria(),
+                            dto.getFotoPerfilAutor(),
                             false,
                             false
                     ));
@@ -262,82 +263,6 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
             }
         });
     }
-
-//    public void inicializarLikes(int idObra, ImageView btnLike, TextView tvLikes) {
-//
-//        // siempre ponlo morado primero para evitar basura reciclada
-//        btnLike.setImageResource(R.drawable.ic_heart_purple);
-//
-//        boolean yaLike = likesLocal.getOrDefault(idObra, false);
-//
-//        likesApi.obtenerLikes(idObra).enqueue(new Callback<Integer>() {
-//            @Override
-//            public void onResponse(Call<Integer> call, Response<Integer> response) {
-//                if (!response.isSuccessful()) return;
-//
-//                int likes = response.body();
-//                tvLikes.setText(String.valueOf(likes));
-//
-//                // AQUI se pone el color correcto con certeza
-//                btnLike.setImageResource(
-//                        yaLike ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple
-//                );
-//            }
-//
-//            @Override
-//            public void onFailure(Call<Integer> call, Throwable t) {}
-//        });
-//
-//        btnLike.setOnClickListener(v -> {
-//            boolean like = likesLocal.getOrDefault(idObra, false);
-//
-//            if (like) {
-//                quitarLike(idObra, btnLike, tvLikes);
-//            } else {
-//                darLike(idObra, btnLike, tvLikes);
-//            }
-//        });
-//    }
-//
-//    private void darLike(int idObra, ImageView btnLike, TextView tvLikes) {
-//
-//        likesApi.darLike(idObra).enqueue(new Callback<ObraDTO>() {
-//            @Override
-//            public void onResponse(Call<ObraDTO> call, Response<ObraDTO> response) {
-//                if (!response.isSuccessful()) return;
-//
-//                ObraDTO obra = response.body();
-//                tvLikes.setText(String.valueOf(obra.getLikes()));
-//
-//                likesLocal.put(idObra, true);
-//
-//                btnLike.setImageResource(R.drawable.ic_heart_red);
-//            }
-//
-//            @Override
-//            public void onFailure(Call<ObraDTO> call, Throwable t) {}
-//        });
-//    }
-//
-//    private void quitarLike(int idObra, ImageView btnLike, TextView tvLikes) {
-//
-//        likesApi.quitarLike(idObra).enqueue(new Callback<ObraDTO>() {
-//            @Override
-//            public void onResponse(Call<ObraDTO> call, Response<ObraDTO> response) {
-//                if (!response.isSuccessful()) return;
-//
-//                ObraDTO obra = response.body();
-//                tvLikes.setText(String.valueOf(obra.getLikes()));
-//
-//                likesLocal.put(idObra, false);
-//
-//                btnLike.setImageResource(R.drawable.ic_heart_purple);
-//            }
-//
-//            @Override
-//            public void onFailure(Call<ObraDTO> call, Throwable t) {}
-//        });
-//    }
 
     // -------------------------------------------------------------
     // ANIMACIÓN BOTÓN

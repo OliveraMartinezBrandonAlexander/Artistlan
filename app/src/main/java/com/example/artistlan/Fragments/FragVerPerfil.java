@@ -16,6 +16,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.artistlan.Activitys.ActActualizarDatos;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
@@ -110,24 +112,36 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         String nombre = prefs.getString("nombreCompleto", "Nombre no disponible");
         String usuario = prefs.getString("usuario", "usuario");
         String correo = prefs.getString("correo", "correo no disponible");
-        String descripcion = prefs.getString("descripcion", ""); // Obtener la descripción, pero el default es ""
+        String descripcion = prefs.getString("descripcion", "");
         String telefono = prefs.getString("telefono", "");
         String redes = prefs.getString("redes", "");
         String fechaNac = prefs.getString("fechaNac", "");
+        String categoria = prefs.getString("categoria", "Sin categoría"); // NUEVO
 
         // Aplicar los valores a los TextViews, usando el valor por defecto si la cadena está vacía
         tvNombre.setText(nombre.isEmpty() ? "Nombre no disponible" : nombre);
         tvUsuario.setText(usuario.isEmpty() ? "usuario" : usuario);
         tvCorreo.setText(correo.isEmpty() ? "correo no disponible" : correo);
-
-
         tvDescripcion.setText(descripcion.isEmpty() ? "Sin descripción" : descripcion);
         tvTelefono.setText(telefono.isEmpty() ? "No disponible" : telefono);
         tvRedes.setText(redes.isEmpty() ? "Sin redes" : redes);
         tvFecNac.setText(fechaNac.isEmpty() ? "Sin fecha" : fechaNac);
 
-        // Glide para foto si luego lo usas:
-        // Glide.with(this).load(prefs.getString("fotoPerfil", null)).into(imgFotoPerfil);
+        // Cargar la foto de perfil
+        String fotoPerfil = prefs.getString("fotoPerfil", null);
+        if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+            Glide.with(this)
+                    .load(fotoPerfil)
+                    .placeholder(R.drawable.fotoperfilprueba)
+                    .error(R.drawable.fotoperfilprueba)
+                    .skipMemoryCache(true)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .into(imgFotoPerfil);
+        }
+        TextView tvCategoria = getView().findViewById(R.id.VrpTxvCategoria);
+        if (tvCategoria != null) {
+            tvCategoria.setText(categoria.isEmpty() ? "Sin categoría" : categoria);
+        }
     }
 
     @Override

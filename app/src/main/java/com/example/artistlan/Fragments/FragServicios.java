@@ -256,7 +256,9 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
                     dto.getContacto(),
                     dto.getTecnicas(),
                     dto.getNombreUsuario(),
-                    dto.getCategoria()
+                    dto.getCategoria(),
+                    dto.getFotoPerfilAutor(),
+                    false
             ));
         }
         return lista;

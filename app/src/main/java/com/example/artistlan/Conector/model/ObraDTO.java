@@ -17,7 +17,7 @@ public class ObraDTO
     private Integer idCategoria;
     private String nombreCategoria;
     private String nombreAutor;
-    private String fotoUsuario;
+    private String fotoPerfilAutor;
 
 
 
@@ -29,12 +29,12 @@ public class ObraDTO
         this.nombreCategoria = nombreCategoria;
     }
 
-    public String getFotoUsuario() {
-        return fotoUsuario;
+    public String getFotoPerfilAutor() {
+        return fotoPerfilAutor;
     }
 
-    public void setFotoUsuario(String fotoUsuario) {
-        this.fotoUsuario = fotoUsuario;
+    public void setFotoPerfilAutor(String fotoPerfilAutor) {
+        this.fotoPerfilAutor = fotoPerfilAutor;
     }
 
     public String getNombreAutor() {

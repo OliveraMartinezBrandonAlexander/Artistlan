@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
 
@@ -45,34 +46,64 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         holder.nombre.setText(artista.getNombre());
         holder.categoria.setText(artista.getCategoria());
         holder.descripcion.setText(artista.getDescripcion());
-        holder.mensaje.setText(artista.getMensaje());
 
         // Mini obras
-        List<Integer> obras = artista.getMiniObras();
-        holder.imgMini1.setImageResource(obras.get(0));
-        holder.imgMini2.setImageResource(obras.get(1));
-        holder.imgMini3.setImageResource(obras.get(2));
+        List<String> obras = artista.getMiniObras();
+        // Mini obras
+        if(obras.size() > 0)
+            Glide.with(context).load(obras.get(0)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini1);
+        else
+            holder.imgMini1.setImageResource(R.drawable.imagencargaobras);
+
+        if(obras.size() > 1)
+            Glide.with(context).load(obras.get(1)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini2);
+        else
+            holder.imgMini2.setImageResource(R.drawable.imagencargaobras);
+
+        if(obras.size() > 2)
+            Glide.with(context).load(obras.get(2)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini3);
+        else
+            holder.imgMini3.setImageResource(R.drawable.imagencargaobras);
+
+        String fotoPerfil = artista.getFotoPerfil();
+        Object targetSource = (fotoPerfil != null && !fotoPerfil.isEmpty())
+                ? fotoPerfil
+                : R.drawable.fotoperfilprueba;
+
+        Glide.with(context)
+                .load(targetSource)
+                .placeholder(R.drawable.fotoperfilprueba)
+                .error(R.drawable.fotoperfilprueba)
+                .circleCrop()
+                .into(holder.imgPerfil);
+
 
         boolean expandido = (tarjetaExpandida == position);
-        holder.expandedSection.setVisibility(expandido ? View.VISIBLE : View.GONE);
+
+
+        if (expandido) {
+            animarVista(holder.expandedSection, true);
+        } else {
+            animarVista(holder.expandedSection, false);
+        }
 
         holder.itemView.setOnClickListener(v -> {
 
             int previous = tarjetaExpandida;
+            int currentPosition = holder.getAdapterPosition();
 
-            if (expandido) {
+            if (previous == currentPosition) {
                 tarjetaExpandida = -1;
-                animarVista(holder.expandedSection, false);
             } else {
-                tarjetaExpandida = position;
+                tarjetaExpandida = currentPosition;
 
-                if (previous != -1)
+                if (previous != -1) {
                     notifyItemChanged(previous);
-
-                animarVista(holder.expandedSection, true);
+                }
             }
 
-            notifyItemChanged(position);
+            notifyItemChanged(currentPosition);
+
         });
 
         holder.btnVisitar.setOnClickListener(v -> {
@@ -87,12 +118,16 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
 
     private void animarVista(View v, boolean expandir) {
         if (expandir) {
+            if (v.getVisibility() == View.VISIBLE && v.getScaleY() == 1f) return; // Ya expandida
+
             v.setVisibility(View.VISIBLE);
             v.setAlpha(0);
             v.setScaleY(0);
-            v.animate().alpha(1f).scaleY(1f).setDuration(200).start();
+            v.animate().alpha(1f).scaleY(1f).setDuration(100).start();
         } else {
-            v.animate().alpha(0f).scaleY(0f).setDuration(200)
+            if (v.getVisibility() == View.GONE) return;
+
+            v.animate().alpha(0f).scaleY(0f).setDuration(150)
                     .withEndAction(() -> v.setVisibility(View.GONE))
                     .start();
         }
@@ -122,4 +157,10 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             btnVisitar = itemView.findViewById(R.id.btnVisitar);
         }
     }
+    public void actualizarLista(List<TarjetaTextoArtistaItem> nuevaLista) {
+        this.listaArtistas.clear();
+        this.listaArtistas.addAll(nuevaLista);
+        notifyDataSetChanged();
+    }
+
 }

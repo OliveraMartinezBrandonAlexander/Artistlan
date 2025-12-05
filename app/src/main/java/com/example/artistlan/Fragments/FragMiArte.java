@@ -68,6 +68,7 @@ public class FragMiArte extends Fragment {
                     dto.getLikes() != null ? dto.getLikes() : 0,
                     dto.getNombreAutor(),
                     dto.getNombreCategoria(),
+                    dto.getFotoPerfilAutor(),
                     false,
                     false
             ));

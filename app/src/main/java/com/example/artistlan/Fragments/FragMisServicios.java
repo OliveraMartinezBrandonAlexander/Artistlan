@@ -61,7 +61,9 @@ public class FragMisServicios extends Fragment {
                     dto.getContacto(),
                     dto.getTecnicas(),
                     dto.getNombreUsuario(),
-                    dto.getCategoria()
+                    dto.getCategoria(),
+                    dto.getFotoPerfilAutor(),
+                    false
             ));
         }
 

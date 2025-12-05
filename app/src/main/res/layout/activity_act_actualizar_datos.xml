@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:id="@+id/main"
     android:orientation="vertical"
-    tools:context=".Fragments.FragSubirObra">
+    tools:context=".Activitys.ActActualizarDatos">
 
     <include layout="@layout/layout_menu_superior" />
 
@@ -78,7 +78,7 @@
                     android:id="@+id/tvCorreo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Correo Electrónico (no editable)"
+                    android:text="Correo Electrónico"
                     android:layout_marginTop="10dp"
                     android:fontFamily="sans-serif-black"
                     android:textSize="14sp" />
@@ -90,7 +90,6 @@
                     android:background="@drawable/editredondonoeditable"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:hint="ejemplo@gmail.com"
                     android:paddingStart="25dp"
                     android:paddingEnd="20dp"
                     android:paddingTop="8dp"
@@ -100,6 +99,57 @@
                     android:enabled="false"
                     android:focusable="false"
                     android:clickable="false" />
+
+
+                <TextView
+                    android:id="@+id/tvUsuario"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Usuario"
+                    android:textSize="16sp" />
+
+                <EditText
+                    android:id="@+id/usuario"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/editredondonoeditable"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="#202020"
+                    android:inputType="textPersonName"
+                    android:enabled="false"
+                    android:focusable="false"
+                    android:clickable="false" />
+
+                <TextView
+                    android:id="@+id/tvFotoPerfil"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Foto de perfil"
+                    android:textSize="14sp" />
+
+                <ImageView
+                    android:id="@+id/imgFotoPerfil"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/fotoperfilprueba"
+                    android:background="@drawable/bordes_redondeados"
+                    android:layout_gravity="center"/>
+
+                <ImageView
+                    android:id="@+id/btnCambiarFoto"
+                    android:src="@drawable/camarafotoperfil"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:padding="5dp"/>
 
                 <TextView
                     android:id="@+id/tvNombre"
@@ -116,7 +166,7 @@
                     android:background="@drawable/editredondo"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:hint="ejemplo"
+                    android:hint="Juanito Perez"
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
                     android:paddingTop="8dp"
@@ -144,6 +194,23 @@
                     android:minLines="3"
                     android:padding="10dp"
                     android:textColor="#202020" />
+                <TextView
+                    android:id="@+id/lsTxtCategoria"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Categoría"
+                    android:textSize="14sp" />
+
+                <Spinner
+                    android:id="@+id/spinnerCategoriaUsuario"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/editredondo"
+                    android:padding="10dp" />
 
                 <TextView
                     android:id="@+id/tvRedes"
@@ -161,7 +228,7 @@
                     android:layout_marginBottom="12dp"
                     android:background="@drawable/editredondo"
                     android:gravity="top|start"
-                    android:hint="ejemplo"
+                    android:hint="https://www.youtube.com/usuario"
                     android:inputType="textMultiLine"
                     android:minLines="3"
                     android:padding="10dp"
@@ -218,53 +285,6 @@
                     android:inputType="none"
                     android:textCursorDrawable="@null" />
 
-                <TextView
-                    android:id="@+id/tvUsuario"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-black"
-                    android:text="Usuario  (no editable)"
-                    android:textSize="16sp" />
-
-                <EditText
-                    android:id="@+id/usuario"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondonoeditable"
-                    android:hint="SuperMariposonejemplo"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="8dp"
-                    android:textColor="#202020"
-                    android:inputType="textPersonName"
-                    android:enabled="false"
-                    android:focusable="false"
-                    android:clickable="false" />
-
-                <TextView
-                    android:id="@+id/tvContra"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-black"
-                    android:text="Contraseña (no editable)"
-                    android:textSize="16sp" />
-
-                <EditText
-                    android:id="@+id/contra"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/editredondonoeditable"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginBottom="12dp"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="8dp"
-                    android:textColor="#202020"
-                    android:inputType="text" />
                 <Button
                     android:id="@+id/btnActualizarDatos"
                     android:layout_width="150dp"

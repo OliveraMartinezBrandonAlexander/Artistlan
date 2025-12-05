@@ -7,16 +7,21 @@ public class TarjetaTextoServicioItem {
     private String contacto;
     private String tecnicas;
     private String autor;
+    private String fotoPerfilAutor;
     private String categoria;
+
     private boolean expandido = false;
 
-    public TarjetaTextoServicioItem(String titulo, String descripcion, String contacto, String tecnicas, String autor, String categoria) {
+
+    public TarjetaTextoServicioItem(String titulo, String descripcion, String contacto, String tecnicas, String autor, String categoria,String fotoPerfilAutor, boolean expandido) {
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.contacto = contacto;
         this.tecnicas = tecnicas;
         this.autor = autor;
         this.categoria = categoria;
+        this.fotoPerfilAutor= fotoPerfilAutor;
+        this.expandido = expandido;
     }
 
     public String getTitulo() {
@@ -39,6 +44,14 @@ public class TarjetaTextoServicioItem {
         return autor;
     }
     public String getCategoria() { return categoria; }
+
+    public String getFotoPerfilAutor() {
+        return fotoPerfilAutor;
+    }
+
+    public void setFotoPerfilAutor(String fotoPerfilAutor) {
+        this.fotoPerfilAutor = fotoPerfilAutor;
+    }
 
     public boolean isExpandido() { return expandido; }
     public void setExpandido(boolean expandido) { this.expandido = expandido; }

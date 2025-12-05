@@ -54,12 +54,35 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.categoria.setText("Categoría: " + obra.getNombreCategoria());
 
         holder.imgAutor.setImageResource(R.drawable.fotoperfilprueba);
-        Glide.with(context)
-                .load(obra.getImagen1())
-                .placeholder(R.drawable.imagencargaobras)
-                .error(R.drawable.imagencargaobras)
-                .into(holder.imgObra);
 
+        String fotoPerfil = obra.getFotoPerfilAutor();
+
+        if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+            Glide.with(context)
+                    .load(fotoPerfil)
+                    .placeholder(R.drawable.fotoperfilprueba)
+                    .circleCrop()
+                    .into(holder.imgAutor);
+        } else {
+            Glide.with(context)
+                    .load(R.drawable.fotoperfilprueba)
+                    .circleCrop()
+                    .into(holder.imgAutor);
+        }
+
+        String imagenObra = obra.getImagen1();
+
+        if (imagenObra != null && !imagenObra.isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(imagenObra)
+                    .placeholder(R.drawable.imagencargaobras)
+                    .error(R.drawable.imagencargaobras)
+                    .into(holder.imgObra);
+        } else {
+            holder.imgObra.setImageResource(R.drawable.imagencargaobras);
+        }
+
+        //
         if (obra.isUserLiked()) {
             holder.btnLike.setImageResource(R.drawable.ic_heart_red);
         } else {

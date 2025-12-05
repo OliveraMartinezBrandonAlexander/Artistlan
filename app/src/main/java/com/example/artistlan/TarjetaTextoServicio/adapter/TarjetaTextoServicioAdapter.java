@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 
@@ -37,6 +38,19 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
                 .inflate(R.layout.item_tarjetatextoservicio, parent, false);
         return new ViewHolder(view);
     }
+    private String fixUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return null;
+        }
+
+        // Si ya es una URL completa de Firebase, la regresamos tal cual
+        if (url.startsWith("http")) {
+            return url;
+        }
+
+        // Si NO empieza con http → es nombre de archivo viejo → evitar crash
+        return null;
+    }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
@@ -50,6 +64,21 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         holder.tecnicas.setText(servicio.getTecnicas());
         holder.categoria.setText(servicio.getCategoria());
 
+        // Se añaden todos los elementos del layout XML (item_tarjetatextoservicio)
+        String urlPerfil = fixUrl(servicio.getFotoPerfilAutor());
+
+        if (urlPerfil != null) {
+            Glide.with(holder.itemView.getContext())
+                    .load(urlPerfil)
+                    .placeholder(R.drawable.fotoperfilprueba)
+                    .circleCrop()
+                    .into(holder.imgAutor);
+        } else {
+            Glide.with(context)
+                    .load(R.drawable.fotoperfilprueba)
+                    .circleCrop()
+                    .into(holder.imgAutor);
+        }
 
         // 2. Lógica de expansión/colapso
         boolean expandido = (tarjetaExpandida == position);
@@ -134,8 +163,6 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
 
-            // Se añaden todos los elementos del layout XML (item_tarjetatextoservicio)
-            imgAutor = itemView.findViewById(R.id.imgAutor);
             autor = itemView.findViewById(R.id.autor);
             titulo = itemView.findViewById(R.id.titulo);
             descripcion = itemView.findViewById(R.id.descripcion);
@@ -144,6 +171,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             categoria = itemView.findViewById(R.id.categoria);
             expandedSection = itemView.findViewById(R.id.expanded_section);
             btnVisitar = itemView.findViewById(R.id.btnVisitar);
+            imgAutor = itemView.findViewById(R.id.imgAutor);
         }
     }
 }

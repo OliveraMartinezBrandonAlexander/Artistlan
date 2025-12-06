@@ -66,7 +66,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
 
     // Mostrar DatePicker y guardar fecha
     private void mostrarDatePicker() {
-        //variables para obtener cada valor
+
         final Calendar c = Calendar.getInstance();
         int y = c.get(Calendar.YEAR);
         int m = c.get(Calendar.MONTH);
@@ -136,12 +136,11 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         return true;
     }
 
-    //VALIDACIÓN DE CONTRASEÑA
     private boolean validarContrasena(String pass) {
         if (pass == null) return false;
-        // Mínimo 8 caracteres
+
         if (pass.length() < 8) return false;
-        // Validacion de mayuscula + minuscula +  numero
+
         Pattern p = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$");
         return p.matcher(pass).find();
     }

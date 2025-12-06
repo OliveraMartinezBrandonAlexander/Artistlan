@@ -92,7 +92,6 @@ public class FirebaseImageRepository {
                 );
     }
 
-    // OBRA YA EXISTENTE
     public void subirImagenObraYActualizarEnBD(
             int idObra,
             Uri imagenLocal,

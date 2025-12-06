@@ -1,6 +1,5 @@
 package com.example.artistlan.Fragments;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -55,8 +54,6 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private android.widget.EditText etTituloObra, etDescripcion, etPrecio, etMedidas, etTecnicas;
     private android.widget.RadioGroup rgOpciones;
     private Spinner spinnerCategoria;
-
-    // Lista real que viene de la API
     private List<CategoriaDTO> listaCategorias = new ArrayList<>();
 
     @Override
@@ -93,8 +90,6 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         etTecnicas    = view.findViewById(R.id.edit_text_tecnica);
 
         spinnerCategoria = view.findViewById(R.id.categoria);
-
-        // Se cargan dinámicamente desde la API
         cargarCategorias();
 
         imgPreviewObra = view.findViewById(R.id.imgPreviewObra);

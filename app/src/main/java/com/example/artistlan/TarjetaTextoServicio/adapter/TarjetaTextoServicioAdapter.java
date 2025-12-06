@@ -22,8 +22,6 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
     private List<TarjetaTextoServicioItem> listaServicios;
     private Context context;
-
-    // Campo para manejar el estado de la tarjeta expandida
     private int tarjetaExpandida = -1;
 
     public TarjetaTextoServicioAdapter(List<TarjetaTextoServicioItem> listaServicios, Context context) {
@@ -42,13 +40,9 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         if (url == null || url.isEmpty()) {
             return null;
         }
-
-        // Si ya es una URL completa de Firebase, la regresamos tal cual
         if (url.startsWith("http")) {
             return url;
         }
-
-        // Si NO empieza con http → es nombre de archivo viejo → evitar crash
         return null;
     }
 
@@ -56,7 +50,6 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
         TarjetaTextoServicioItem servicio = listaServicios.get(position);
 
-        // 1. Asignar datos a los TextViews
         holder.autor.setText(servicio.getAutor());
         holder.titulo.setText(servicio.getTitulo());
         holder.descripcion.setText(servicio.getDescripcion());
@@ -64,7 +57,6 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         holder.tecnicas.setText(servicio.getTecnicas());
         holder.categoria.setText(servicio.getCategoria());
 
-        // Se añaden todos los elementos del layout XML (item_tarjetatextoservicio)
         String urlPerfil = fixUrl(servicio.getFotoPerfilAutor());
 
         if (urlPerfil != null) {
@@ -80,7 +72,6 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
                     .into(holder.imgAutor);
         }
 
-        // 2. Lógica de expansión/colapso
         boolean expandido = (tarjetaExpandida == position);
 
         if (expandido) {
@@ -90,7 +81,6 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             animarVista(holder.expandedSection, false);
         }
 
-        // 3. Listener para el clic en el elemento
         holder.itemView.setOnClickListener(v -> {
             int previous = tarjetaExpandida;
             int currentPosition = holder.getAdapterPosition();
@@ -109,7 +99,6 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             notifyItemChanged(currentPosition);
         });
 
-        // 4. Listener para el botón Visitar
         holder.btnVisitar.setOnClickListener(v -> {
             // Aquí iría el código para abrir la vista del usuario/contacto, por ejemplo:
             // Intent intent = new Intent(context, PerfilActivity.class);

@@ -9,7 +9,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.artistlan.R;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    // 1. Declaración de variables
     Button btnInicioSesion, btnCrearCuenta;
 
     @Override
@@ -18,11 +17,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        // 2. Recuperar IDs
         btnInicioSesion = findViewById(R.id.btnInicioSesion);
         btnCrearCuenta = findViewById(R.id.btnCrearCuenta);
 
-        // 3. Insertar listeners
         btnInicioSesion.setOnClickListener(this);
         btnCrearCuenta.setOnClickListener(this);
     }

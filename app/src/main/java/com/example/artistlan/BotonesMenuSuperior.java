@@ -38,8 +38,6 @@ public class BotonesMenuSuperior {
         try {
             PopupMenu popupMenu = new PopupMenu(fragmento.requireContext(), anchorView);
             popupMenu.getMenuInflater().inflate(R.menu.menu_superior, popupMenu.getMenu());
-
-            // Configurar gravedad para que el menú se muestre a la derecha
             popupMenu.setGravity(Gravity.END);
 
             popupMenu.setOnMenuItemClickListener(item -> {

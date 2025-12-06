@@ -19,7 +19,6 @@ public class ObraCarruselItem {
         this.likes = likes;
     }
 
-    // Nuevo constructor para cuando venga info desde la BD
     public ObraCarruselItem(int imagen, String imagenUrl,
                             String titulo, String descripcion, String autor, String likes) {
         this.imagen = imagen;

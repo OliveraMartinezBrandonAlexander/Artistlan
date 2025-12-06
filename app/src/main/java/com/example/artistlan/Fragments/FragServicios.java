@@ -2,6 +2,7 @@ package com.example.artistlan.Fragments;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -57,29 +58,22 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
 
         new BotonesMenuSuperior(this, view);
 
-        // Configurar el carrusel de tipos de servicios
         configurarCarrusel(view);
-
-        // Configurar el RecyclerView de servicios
         configurarServicios(view);
-
-        // Configurar botón de aplicar filtro
         configurarBotonFiltro(view);
 
-        // Cargar datos de la red
         cargarTodosLosServicios();
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void configurarCarrusel(View view) {
         recyclerViewCarrusel = view.findViewById(R.id.recyclerCarruselServicios);
         btnIzq = view.findViewById(R.id.btnCarruselIzquierdoServicios);
         btnDer = view.findViewById(R.id.btnCarruselDerechoServicios);
 
-        // Configurar LayoutManager personalizado
         layoutManager = new CenterZoomLayoutManager(getContext());
         recyclerViewCarrusel.setLayoutManager(layoutManager);
 
-        // HABILITAR SCROLL HORIZONTAL
         recyclerViewCarrusel.setHasFixedSize(false);
         recyclerViewCarrusel.setNestedScrollingEnabled(true);
 
@@ -88,7 +82,6 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         carruselAdapter = new PalabraCarruselAdapter(tiposServicios, requireContext(), this);
         recyclerViewCarrusel.setAdapter(carruselAdapter);
 
-        // AGREGAR SCROLL LISTENER PARA DETECTAR ITEM CENTRAL - ESTO ES LO QUE FALTABA
         recyclerViewCarrusel.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -100,7 +93,6 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         });
 
         recyclerViewCarrusel.setOnTouchListener((v, event) -> {
-            // Permitir que el RecyclerView maneje el scroll táctil
             v.getParent().requestDisallowInterceptTouchEvent(true);
             return false;
         });
@@ -286,7 +278,6 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         btnAplicarFiltro.setText("Aplicar Filtro: " + categoria.getPalabra());
     }
 
-    // Métodos para futura implementación con base de datos
     public String getTipoServicioFiltroActual() {
         return tipoServicioFiltroActual;
     }

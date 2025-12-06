@@ -49,7 +49,6 @@ public class FragSubirServicio extends Fragment {
     private ArrayAdapter<String> categoriasAdapter;
 
     public FragSubirServicio() {
-        // Required empty public constructor
     }
 
     @Nullable

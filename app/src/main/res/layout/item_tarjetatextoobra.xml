@@ -6,7 +6,7 @@
     android:layout_margin="12dp"
     app:cardElevation="8dp"
     app:cardCornerRadius="20dp"
-    android:backgroundTint="#F3E8FF">  <!-- MORADO CLARO -->
+    android:backgroundTint="#F3E8FF">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,9 +14,6 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <!-- ============================= -->
-        <!-- SECCIÓN COMPACTA (HEADER)    -->
-        <!-- ============================= -->
         <LinearLayout
             android:id="@+id/header_section"
             android:layout_width="match_parent"

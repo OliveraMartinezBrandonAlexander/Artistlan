@@ -42,7 +42,6 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
         TarjetaTextoObraItem obra = listaObras.get(position);
 
-        // ---------- DATOS ----------
         holder.titulo.setText(obra.getTitulo());
         holder.autor.setText(obra.getNombreAutor());
         holder.descripcion.setText(obra.getDescripcion());
@@ -137,7 +136,6 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         }
         obra.setExpandido(expandido);;
 
-        // ---------- CLICK EN LA TARJETA ----------
         holder.itemView.setOnClickListener(v -> {
 
             int previousExpanded = tarjetaExpandida;

@@ -59,16 +59,10 @@ public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnC
 
         new BotonesMenuSuperior(this, view);
 
-        // Configurar el carrusel de profesiones
         configurarCarrusel(view);
-
-        // Configurar el RecyclerView de artistas
         configurarArtistas(view);
-
-        // Configurar botón de aplicar filtro
         configurarBotonFiltro(view);
 
-        // Cargar artistas y sus mini obras
         cargarArtistas();
     }
 
@@ -182,7 +176,6 @@ public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnC
         btnAplicarFiltro.setText("Aplicar Filtro: " + categoria.getPalabra());
     }
 
-    // ---------------- Artistas ------------------
     private void configurarArtistas(View view) {
         recyclerViewArtistas = view.findViewById(R.id.recyclerArtistas);
         recyclerViewArtistas.setLayoutManager(new LinearLayoutManager(getContext()));

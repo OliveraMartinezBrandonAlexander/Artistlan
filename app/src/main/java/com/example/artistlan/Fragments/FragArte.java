@@ -78,9 +78,6 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
         configurarBotonFiltro(view);
     }
 
-    // -------------------------------------------------------------
-    // CARRUSEL
-    // -------------------------------------------------------------
     private void configurarCarrusel(View view) {
 
         recyclerViewCarrusel = view.findViewById(R.id.recyclerCarruselArte);
@@ -170,9 +167,6 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
         return categorias;
     }
 
-    // -------------------------------------------------------------
-    // BOTÓN FILTRO
-    // -------------------------------------------------------------
     private void configurarBotonFiltro(View view) {
         btnAplicarFiltro = view.findViewById(R.id.btnAplicarFiltro);
         btnAplicarFiltro.setVisibility(View.GONE);
@@ -199,9 +193,6 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
         obtenerObrasDeAPI();
     }
 
-    // -------------------------------------------------------------
-    // OBRAS Y ADAPTER
-    // -------------------------------------------------------------
     private void configurarObras(View view) {
         recyclerViewObras = view.findViewById(R.id.recyclerObras);
         recyclerViewObras.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -264,9 +255,6 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
         });
     }
 
-    // -------------------------------------------------------------
-    // ANIMACIÓN BOTÓN
-    // -------------------------------------------------------------
     private void animarBoton(View v) {
         ObjectAnimator scaleX = ObjectAnimator.ofFloat(v, "scaleX", 1f, 1.2f, 1f);
         ObjectAnimator scaleY = ObjectAnimator.ofFloat(v, "scaleY", 1f, 1.2f, 1f);
@@ -277,9 +265,6 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
         set.start();
     }
 
-    // -------------------------------------------------------------
-    // EVENTOS CARRUSEL
-    // -------------------------------------------------------------
     @Override
     public void onCategoriaClick(int position, PalabraCarruselItem categoria) {
         if (position > 0 && position < carruselAdapter.getItemCount() - 1) {

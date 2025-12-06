@@ -84,10 +84,8 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
                     UsuariosDTO user = response.body();
 
-                    // Guardar los datos básicos primero
                     guardarUsuarioLogeado(user, contrasena);
 
-                    // Ahora obtener la categoría del usuario
                     api.obtenerCategoriaUsuario(user.getIdUsuario()).enqueue(new Callback<UsuariosDTO>() {
                         @Override
                         public void onResponse(Call<UsuariosDTO> call, Response<UsuariosDTO> respCategoria) {
@@ -104,7 +102,6 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
                         @Override
                         public void onFailure(Call<UsuariosDTO> call, Throwable t) {
-                            // Si falla, dejar "Sin categoría"
                             SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
                             SharedPreferences.Editor editor = prefs.edit();
                             editor.putString("categoria", "Sin categoría");
@@ -112,7 +109,6 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                         }
                     });
 
-                    // Abrir actividad principal
                     Intent ir = new Intent(ActIniciarSesion.this, ActFragmentoPrincipal.class);
                     startActivity(ir);
                     Toast.makeText(ActIniciarSesion.this, "Cargando...", Toast.LENGTH_SHORT).show();

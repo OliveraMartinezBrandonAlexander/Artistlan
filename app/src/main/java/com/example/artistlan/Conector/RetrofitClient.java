@@ -12,26 +12,24 @@ import java.util.concurrent.TimeUnit; // Nueva importación
 public class RetrofitClient {
 
     private static final String BASE_URL = "http://10.0.2.2:8080/api/";
+    
     private static Retrofit retrofit;
 
     public static Retrofit getClient() {
         if (retrofit == null) {
 
-            //Interceptor para ver logs de la conexión
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
             logging.setLevel(HttpLoggingInterceptor.Level.BODY);
 
-            // Cliente HTTP con logging y timeouts
             OkHttpClient client = new OkHttpClient.Builder()
                     .addInterceptor(logging)
-                    .connectTimeout(30, TimeUnit.SECONDS) // Añadido timeout
+                    .connectTimeout(30, TimeUnit.SECONDS)
                     .build();
 
             //Gson más tolerante con respuestas no estrictamente válidas
             Gson gson = new GsonBuilder()
                     .setLenient()
                     .create();
-            //
             // Retrofit con el cliente OkHttpClient
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)

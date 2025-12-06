@@ -15,7 +15,6 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <!-- Encabezado de autor y likes -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -51,7 +50,6 @@
                 android:textSize="14sp"/>
         </LinearLayout>
 
-        <!-- Imagen principal -->
         <ImageView
             android:id="@+id/imgObra"
             android:layout_width="match_parent"
@@ -60,7 +58,6 @@
             android:scaleType="centerCrop"
             android:background="@android:color/darker_gray"/>
 
-        <!-- Título -->
         <TextView
             android:id="@+id/tvTitulo"
             android:layout_width="match_parent"
@@ -72,7 +69,6 @@
             android:textColor="@android:color/black"
             android:gravity="center"/>
 
-        <!-- Descripción -->
         <TextView
             android:id="@+id/tvDescripcion"
             android:layout_width="match_parent"

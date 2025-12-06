@@ -21,7 +21,6 @@ public class TarjetaTextoArtistaItem {
         this.miniObras = miniObras;
     }
 
-    // Getters
     public String getNombre() { return nombre; }
     public String getCategoria() { return categoria; }
     public String getDescripcion() { return descripcion; }
@@ -29,6 +28,5 @@ public class TarjetaTextoArtistaItem {
     public List<String> getMiniObras() { return miniObras; }
     public boolean isExpandido() { return expandido; }
 
-    // Setter para expandido
     public void setExpandido(boolean expandido) { this.expandido = expandido; }
 }

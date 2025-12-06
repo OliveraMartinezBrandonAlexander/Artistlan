@@ -7,7 +7,6 @@
     android:orientation="vertical"
     tools:context=".Fragments.FragMain">
 
-    <!-- MENÚ SUPERIOR DENTRO DEL FRAGMENT -->
     <include layout="@layout/layout_menu_superior" />
 
     <View
@@ -15,7 +14,6 @@
         android:layout_height="1dp"
         android:background="@android:color/black" />
 
-    <!-- CONTENIDO SCROLLEABLE -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollContenido"
         android:layout_width="match_parent"
@@ -33,7 +31,6 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp">
 
-            <!-- TÍTULO PRINCIPAL -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -45,7 +42,6 @@
                 android:layout_marginTop="16dp"
                 android:fontFamily="sans-serif-condensed-medium"/>
 
-            <!-- SUBTÍTULO -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -56,13 +52,11 @@
                 android:textSize="18sp"
                 android:fontFamily="sans-serif-light"/>
 
-            <!-- SECCIÓN DEL CARRUSEL -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp">
 
-                <!-- Botón Izquierdo -->
                 <ImageButton
                     android:id="@+id/btnCarruselIzquierdo"
                     android:layout_width="40dp"
@@ -74,7 +68,6 @@
                     android:scaleType="fitCenter"
                     android:contentDescription="Imagen anterior"/>
 
-                <!-- ViewPager2 del carrusel -->
                 <androidx.viewpager2.widget.ViewPager2
                     android:id="@+id/viewPagerCarrusel"
                     android:layout_width="match_parent"
@@ -84,7 +77,6 @@
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"/>
 
-                <!-- Botón Derecho -->
                 <ImageButton
                     android:id="@+id/btnCarruselDerecho"
                     android:layout_width="40dp"
@@ -97,7 +89,6 @@
                     android:contentDescription="Siguiente imagen"/>
             </RelativeLayout>
 
-            <!-- SECCIÓN EVENTOS PRÓXIMOS -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -108,7 +99,6 @@
                 android:textSize="20sp"
                 android:textStyle="bold"/>
 
-            <!-- Contenedor de eventos tipo CardView -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -125,7 +115,6 @@
                     android:orientation="vertical"
                     android:padding="4dp">
 
-                    <!-- Evento 1 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -137,7 +126,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="• Concurso de óleo en Bellas Artes\nFECHA:\nDESCRIPCIÓN:\nREQUISITOS:"
+                            android:text="• Concurso de óleo en Bellas Artes\nFECHA: 25-12-2025\nDESCRIPCIÓN: ---\nREQUISITOS: $ 1000"
                             android:textColor="@android:color/black"
                             android:textSize="14sp"/>
 
@@ -162,7 +151,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="• Concurso de óleo en Artes Bellas\nFECHA:\nDESCRIPCIÓN:\nREQUISITOS:"
+                            android:text="• Concurso de óleo en Artes Bellas\nFECHA: 26-12-2025\nDESCRIPCIÓN:---\nREQUISITOS: $15"
                             android:textColor="@android:color/black"
                             android:textSize="14sp"/>
 

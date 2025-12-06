@@ -8,7 +8,7 @@
     <!-- Ejemplo: fragments que ya tenías -->
     <fragment
         android:id="@+id/FirstFragment"
-        android:name="com.example.artistlan.Activitys.FirstFragment"
+        android:name="com.example.artistlan.Activitys."
         android:label="@string/first_fragment_label"
         tools:layout="@layout/fragment_first">
 

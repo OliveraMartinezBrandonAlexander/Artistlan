@@ -78,7 +78,6 @@
                             android:backgroundTint="#A1BBCE"
                             android:text="Subir Obra" />
 
-                        <!-- NUEVO: botón Subir Servicio -->
                         <Button
                             android:id="@+id/btnSubirServicio"
                             android:layout_width="200dp"
@@ -87,7 +86,6 @@
                             android:backgroundTint="#A1BBCE"
                             android:text="Subir Servicio" />
 
-                        <!-- Etiqueta Teléfono -->
                         <TextView
                             android:id="@+id/VrpLblTelefono"
                             android:layout_width="match_parent"
@@ -97,7 +95,6 @@
                             android:textStyle="bold"
                             android:textSize="14sp" />
 
-                        <!-- Valor Teléfono -->
                         <TextView
                             android:id="@+id/VrpTxvTelefono"
                             android:layout_width="match_parent"

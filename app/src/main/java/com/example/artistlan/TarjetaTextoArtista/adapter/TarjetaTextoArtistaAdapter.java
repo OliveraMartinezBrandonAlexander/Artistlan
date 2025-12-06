@@ -49,7 +49,6 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
 
         // Mini obras
         List<String> obras = artista.getMiniObras();
-        // Mini obras
         if(obras.size() > 0)
             Glide.with(context).load(obras.get(0)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini1);
         else

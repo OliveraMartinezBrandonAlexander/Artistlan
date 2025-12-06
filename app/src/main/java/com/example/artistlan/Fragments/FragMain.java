@@ -82,23 +82,19 @@ public class FragMain extends Fragment {
                 if (!isAdded()) return;
 
                 if (!response.isSuccessful()) {
-                    // Error de API: dejamos las 3 default
                     return;
                 }
 
                 List<ObraDTO> dtos = response.body();
                 if (dtos == null || dtos.isEmpty()) {
-                    // No hay obras en BD → se quedan las 3 default
                     return;
                 }
 
                 // Selección aleatoria cuando hay más de 3
                 List<ObraDTO> seleccionadas;
                 if (dtos.size() <= 3) {
-                    // Si hay 1, 2 o 3, usamos esas mismas
                     seleccionadas = dtos;
                 } else {
-                    // Si hay más de 3, barajamos y tomamos 3 al azar
                     List<ObraDTO> copia = new ArrayList<>(dtos);
                     Collections.shuffle(copia);
                     seleccionadas = copia.subList(0, 3);
@@ -108,7 +104,7 @@ public class FragMain extends Fragment {
 
                 for (int i = 0; i < reemplazos; i++) {
                     ObraDTO dto = seleccionadas.get(i);
-                    ObraCarruselItem original = obras.get(i); // la default en esa posición (pin1/pin2/pin3)
+                    ObraCarruselItem original = obras.get(i);
 
                     String titulo = (dto.getTitulo() != null && !dto.getTitulo().isEmpty())
                             ? dto.getTitulo()
@@ -129,15 +125,11 @@ public class FragMain extends Fragment {
                         likes = original.getLikes();
                     }
 
-                    // URL de la imagen desde tu DTO (imagen1)
                     String imagenUrl = null;
                     if (dto.getImagen1() != null && !dto.getImagen1().isEmpty()) {
                         imagenUrl = dto.getImagen1();
                     }
 
-                    // Reemplazamos la tarjeta i con la obra seleccionada:
-                    // - drawable local original (pin1/2/3) como fallback
-                    // - URL real si existe para que Glide la cargue
                     obras.set(i, new ObraCarruselItem(
                             original.getImagen(), // drawable local
                             imagenUrl,            // URL de la BD

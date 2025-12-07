@@ -174,7 +174,20 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
         btnAplicarFiltro.setOnClickListener(v -> {
             PalabraCarruselItem categoria = carruselAdapter.getCategoriaSeleccionada();
             if (categoria != null) {
-                aplicarFiltro(categoria.getPalabra());
+                String categoriaNombre = categoria.getPalabra();
+
+                boolean yaActivo = categoriaNombre.equalsIgnoreCase(categoriaFiltroActual);
+
+                // Aplica o desactiva el filtro
+                aplicarFiltro(categoriaNombre);
+
+                // Actualiza el texto del botón según el estado anterior
+                if (yaActivo) {
+                    btnAplicarFiltro.setText("Aplicar Filtro: " + categoriaNombre);
+                } else {
+                    btnAplicarFiltro.setText("Desactivar Filtro: " + categoriaNombre);
+                }
+
                 animarBoton(v);
             }
         });
@@ -274,9 +287,17 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
 
     @Override
     public void onCategoriaCentrada(int position, PalabraCarruselItem categoria) {
-        if (!categoria.getPalabra().isEmpty()) {
+        if (categoria != null && !categoria.getPalabra().isEmpty()) {
             btnAplicarFiltro.setVisibility(View.VISIBLE);
-            btnAplicarFiltro.setText("Aplicar Filtro: " + categoria.getPalabra());
+
+            String nombre = categoria.getPalabra();
+
+            if (nombre.equalsIgnoreCase(categoriaFiltroActual)) {
+                btnAplicarFiltro.setText("Desactivar Filtro: " + nombre);
+            } else {
+                btnAplicarFiltro.setText("Aplicar Filtro: " + nombre);
+            }
+
         } else {
             btnAplicarFiltro.setVisibility(View.GONE);
         }

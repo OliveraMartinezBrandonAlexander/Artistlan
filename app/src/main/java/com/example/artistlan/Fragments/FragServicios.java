@@ -143,9 +143,22 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         btnAplicarFiltro.setVisibility(View.GONE);
 
         btnAplicarFiltro.setOnClickListener(v -> {
-            PalabraCarruselItem tipoServicioSeleccionado = carruselAdapter.getCategoriaSeleccionada();
-            if (tipoServicioSeleccionado != null) {
-                aplicarFiltro(tipoServicioSeleccionado.getPalabra());
+            PalabraCarruselItem tipoSeleccionado = carruselAdapter.getCategoriaSeleccionada();
+            if (tipoSeleccionado != null) {
+                String tipoNombre = tipoSeleccionado.getPalabra();
+
+                boolean yaActivo = tipoNombre.equalsIgnoreCase(tipoServicioFiltroActual);
+
+                // Aplica o desactiva el filtro
+                aplicarFiltro(tipoNombre);
+
+                // Actualiza el texto del botón según el estado anterior
+                if (yaActivo) {
+                    btnAplicarFiltro.setText("Aplicar Filtro: " + tipoNombre);
+                } else {
+                    btnAplicarFiltro.setText("Desactivar Filtro: " + tipoNombre);
+                }
+
                 animarBoton(v);
             }
         });
@@ -155,10 +168,10 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         List<PalabraCarruselItem> profesiones = new ArrayList<>();
 
         String[] profesionesArray = {
-                "Pintor", "Escultor", "Fotógrafo", "Ilustrador", "Dibujante",
-                "Grabador", "Ceramista", "Muralista", "Digital", "Acuarelista",
-                "Retratista", "Paisajista", "Abstracto", "Conceptual",
-                "Collagista", "Textil", "Mixta", "Profesional"
+                "Pintor", "Escultor", "Fotógrafo", "Ilustrador", "Diseñador gráfico",
+                "Diseñador industrial", "Diseñador de moda", "Caricaturista", "Animador", "Artesano",
+                "Ceramista", "Grabador", "Artista digital", "Artista plástico",
+                "Maquetador", "Decorador", "Restaurador de arte", "Graffitero", "Modelador 3D"
         };
 
         int colorNormal = 0xFF4B2056;
@@ -288,8 +301,20 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
 
     @Override
     public void onCategoriaCentrada(int position, PalabraCarruselItem categoria) {
-        btnAplicarFiltro.setVisibility(View.VISIBLE);
-        btnAplicarFiltro.setText("Aplicar Filtro: " + categoria.getPalabra());
+        if (categoria != null && !categoria.getPalabra().isEmpty()) {
+            btnAplicarFiltro.setVisibility(View.VISIBLE);
+
+            String tipoNombre = categoria.getPalabra();
+
+            if (tipoNombre.equalsIgnoreCase(tipoServicioFiltroActual)) {
+                btnAplicarFiltro.setText("Desactivar Filtro: " + tipoNombre);
+            } else {
+                btnAplicarFiltro.setText("Aplicar Filtro: " + tipoNombre);
+            }
+
+        } else {
+            btnAplicarFiltro.setVisibility(View.GONE);
+        }
     }
 
     public String getTipoServicioFiltroActual() {

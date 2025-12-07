@@ -31,7 +31,8 @@ import retrofit2.Response;
 
 public class ActActualizarDatos extends AppCompatActivity implements View.OnClickListener {
 
-    private Button btnActualizarDatos, btnRegresar;
+    private Button btnActualizarDatos;
+    private ImageButton IsbtnRegresar;
     private EditText etCorreo, etNombre, etDescripcion, etRedes, etTelefono, etFecha, etUsuario, etContra;
     private ImageView btnCambiarFoto, imgFotoPerfil;
     private Spinner spinnerCategoriaUsuario;
@@ -59,12 +60,12 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         spinnerCategoriaUsuario = findViewById(R.id.spinnerCategoriaUsuario);
 
         btnActualizarDatos = findViewById(R.id.btnActualizarDatos);
-        btnRegresar = findViewById(R.id.btnRegresar);
+        IsbtnRegresar = findViewById(R.id.IsbtnRegresar);
         imgFotoPerfil = findViewById(R.id.imgFotoPerfil);
         btnCambiarFoto = findViewById(R.id.btnCambiarFoto);
 
         btnActualizarDatos.setOnClickListener(this);
-        btnRegresar.setOnClickListener(this);
+        IsbtnRegresar.setOnClickListener(this);
 
         api = RetrofitClient.getClient().create(UsuarioApi.class);
 
@@ -168,7 +169,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.btnRegresar) finish();
+        if (v.getId() == R.id.IsbtnRegresar) finish();
         else if (v.getId() == R.id.btnActualizarDatos) actualizarUsuario();
     }
 

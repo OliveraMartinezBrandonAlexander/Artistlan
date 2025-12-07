@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Conector.RetrofitClient;
@@ -130,11 +131,27 @@ public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnC
 
         btnAplicarFiltro.setOnClickListener(v -> {
             PalabraCarruselItem profesionSeleccionada = carruselAdapter.getCategoriaSeleccionada();
-            if (profesionSeleccionada != null) {
-                // por ahora dejamos el filtro pendiente
+            if (profesionSeleccionada != null && !profesionSeleccionada.getPalabra().isEmpty()) {
+                aplicarFiltro(profesionSeleccionada.getPalabra());
                 animarBoton(v);
             }
         });
+    }
+
+    private void aplicarFiltro(String profesionNombre) {
+
+        if (profesionFiltroActual.equals(profesionNombre)) {
+            // Si el filtro ya estaba activo con esa profesión, lo apagamos
+            profesionFiltroActual = "";
+            Toast.makeText(getContext(), "Filtro desactivado", Toast.LENGTH_SHORT).show();
+        } else {
+            // Activamos el filtro con la nueva profesión
+            profesionFiltroActual = profesionNombre;
+            Toast.makeText(getContext(), "Filtrando: " + profesionNombre, Toast.LENGTH_SHORT).show();
+        }
+
+        // Volver a cargar la lista de artistas con el filtro actual
+        cargarArtistas();
     }
 
     private List<PalabraCarruselItem> obtenerProfesionesDeBD() {
@@ -188,20 +205,54 @@ public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnC
         UsuarioApi api = RetrofitClient.getClient().create(UsuarioApi.class);
         Call<List<ArtistaDTO>> call = api.getArtistas();
 
+        // Cada vez que pedimos artistas, limpiamos la lista actual
+        listaArtistas.clear();
+        adapter.actualizarLista(new ArrayList<>());
+
         call.enqueue(new Callback<List<ArtistaDTO>>() {
             @Override
-            public void onResponse(Call<List<ArtistaDTO>> call, Response<List<ArtistaDTO>> response) {
+            public void onResponse(Call<List<ArtistaDTO>> call,
+                                   Response<List<ArtistaDTO>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<ArtistaDTO> artistas = response.body();
+
+                    int artistasQueCumplenFiltro = 0;
+
                     for (ArtistaDTO artista : artistas) {
+
+                        // ---------- FILTRO POR PROFESIÓN ----------
+                        if (!profesionFiltroActual.isEmpty()) {
+                            String profesionArtista = artista.getCategoria(); // o el campo que uses
+                            if (profesionArtista == null ||
+                                    !profesionFiltroActual.equalsIgnoreCase(profesionArtista)) {
+                                // Si no coincide con el filtro, lo saltamos
+                                continue;
+                            }
+                        }
+
+                        artistasQueCumplenFiltro++;
+                        // Solo pedimos mini-obras para los artistas que pasan el filtro
                         obtenerMiniObras(artista);
                     }
+
+                    // Si nadie cumplió el filtro, dejamos la lista vacía
+                    if (artistasQueCumplenFiltro == 0) {
+                        adapter.actualizarLista(new ArrayList<>());
+                    }
+
+                } else {
+                    Toast.makeText(getContext(),
+                            "Error al obtener artistas: " + response.code(),
+                            Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<List<ArtistaDTO>> call, Throwable t) {
                 t.printStackTrace();
+                Toast.makeText(getContext(),
+                        "Error de conexión al cargar artistas",
+                        Toast.LENGTH_LONG).show();
             }
         });
     }

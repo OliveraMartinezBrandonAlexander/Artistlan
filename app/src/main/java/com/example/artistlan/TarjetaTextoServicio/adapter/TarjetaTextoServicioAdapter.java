@@ -21,7 +21,7 @@ import java.util.List;
 public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTextoServicioAdapter.ViewHolder> {
 
     private List<TarjetaTextoServicioItem> listaServicios;
-    private Context context;
+    private final Context context;
     private int tarjetaExpandida = -1;
 
     public TarjetaTextoServicioAdapter(List<TarjetaTextoServicioItem> listaServicios, Context context) {
@@ -36,13 +36,10 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
                 .inflate(R.layout.item_tarjetatextoservicio, parent, false);
         return new ViewHolder(view);
     }
+
     private String fixUrl(String url) {
-        if (url == null || url.isEmpty()) {
-            return null;
-        }
-        if (url.startsWith("http")) {
-            return url;
-        }
+        if (url == null || url.isEmpty()) return null;
+        if (url.startsWith("http")) return url;
         return null;
     }
 
@@ -74,33 +71,24 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
         boolean expandido = (tarjetaExpandida == position);
 
-        if (expandido) {
-            holder.expandedSection.setVisibility(View.VISIBLE);
-
-        } else {
-            animarVista(holder.expandedSection, false);
-        }
+        // ✅ Aquí la animación correcta (expand/collapse)
+        animarVista(holder.expandedSection, expandido);
 
         holder.itemView.setOnClickListener(v -> {
             int previous = tarjetaExpandida;
             int currentPosition = holder.getAdapterPosition();
 
             if (previous == currentPosition) {
-
-                tarjetaExpandida = -1;
+                tarjetaExpandida = -1; // colapsa si era la misma
             } else {
-                tarjetaExpandida = currentPosition;
-
-                if (previous != -1) {
-                    notifyItemChanged(previous);
-                }
+                tarjetaExpandida = currentPosition; // expande nueva
+                if (previous != -1) notifyItemChanged(previous);
             }
-
             notifyItemChanged(currentPosition);
         });
 
         holder.btnVisitar.setOnClickListener(v -> {
-            // Aquí iría el código para abrir la vista del usuario/contacto, por ejemplo:
+            // Aquí iría tu navegación (PerfilActivity, etc.)
             // Intent intent = new Intent(context, PerfilActivity.class);
             // intent.putExtra("autor_id", servicio.getAutorId());
             // context.startActivity(intent);
@@ -109,7 +97,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
     @Override
     public int getItemCount() {
-        return listaServicios.size();
+        return listaServicios != null ? listaServicios.size() : 0;
     }
 
     public void actualizarLista(List<TarjetaTextoServicioItem> nuevaLista) {
@@ -128,7 +116,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             view.animate()
                     .alpha(1f)
                     .scaleY(1f)
-                    .setDuration(100)
+                    .setDuration(140)
                     .start();
         } else {
             if (view.getVisibility() == View.GONE) return;
@@ -136,7 +124,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             view.animate()
                     .alpha(0f)
                     .scaleY(0f)
-                    .setDuration(150)
+                    .setDuration(160)
                     .withEndAction(() -> view.setVisibility(View.GONE))
                     .start();
         }

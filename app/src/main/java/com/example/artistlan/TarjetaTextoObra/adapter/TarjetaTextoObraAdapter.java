@@ -5,6 +5,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -13,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.artistlan.Fragments.FragArte;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 
@@ -22,7 +22,7 @@ import java.util.List;
 public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoObraAdapter.ViewHolder> {
 
     private List<TarjetaTextoObraItem> listaObras;
-    private Context context;
+    private final Context context;
     private int tarjetaExpandida = -1;
 
     public TarjetaTextoObraAdapter(List<TarjetaTextoObraItem> listaObras, Context context) {
@@ -47,15 +47,15 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.descripcion.setText(obra.getDescripcion());
         holder.estado.setText("Estado: " + obra.getEstado());
         holder.tecnica.setText("Técnica: " + obra.getTecnicas());
-        holder.medidas.setText("Medidas: " + obra.getMedidas() +" cm");
+        holder.medidas.setText("Medidas: " + obra.getMedidas() + " cm");
         holder.precio.setText("Precio: $ " + String.format("%,.2f", obra.getPrecio()));
-        holder.likes.setText("" + obra.getLikes());
+        holder.likes.setText(String.valueOf(obra.getLikes()));
+
+        // categoría ahora está en expandido (mismo id, no rompe nada)
         holder.categoria.setText("Categoría: " + obra.getNombreCategoria());
 
-        holder.imgAutor.setImageResource(R.drawable.fotoperfilprueba);
-
+        // Foto perfil autor
         String fotoPerfil = obra.getFotoPerfilAutor();
-
         if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
             Glide.with(context)
                     .load(fotoPerfil)
@@ -69,8 +69,8 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
                     .into(holder.imgAutor);
         }
 
+        // Imagen principal de la obra
         String imagenObra = obra.getImagen1();
-
         if (imagenObra != null && !imagenObra.isEmpty()) {
             Glide.with(holder.itemView.getContext())
                     .load(imagenObra)
@@ -81,7 +81,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             holder.imgObra.setImageResource(R.drawable.imagencargaobras);
         }
 
-        //
+        // Estado del like (icono)
         if (obra.isUserLiked()) {
             holder.btnLike.setImageResource(R.drawable.ic_heart_red);
         } else {
@@ -89,75 +89,61 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         }
 
         holder.btnLike.setOnClickListener(v -> {
-
             int currentPosition = holder.getAdapterPosition();
             if (currentPosition == RecyclerView.NO_POSITION) return;
+
             TarjetaTextoObraItem currentObra = listaObras.get(currentPosition);
 
             boolean currentlyLiked = currentObra.isUserLiked();
             int newLikesCount = currentObra.getLikes();
 
             if (currentlyLiked) {
-
                 currentObra.setUserLiked(false);
                 newLikesCount--;
-
                 holder.btnLike.setImageResource(R.drawable.ic_heart_purple);
             } else {
-
                 currentObra.setUserLiked(true);
                 newLikesCount++;
-
                 holder.btnLike.setImageResource(R.drawable.ic_heart_red);
             }
 
             currentObra.setLikes(newLikesCount);
-            holder.likes.setText("" + newLikesCount);
+            holder.likes.setText(String.valueOf(newLikesCount));
 
             animarLike(holder.btnLike);
 
             if (listener != null) {
-                listener.onLikeClick(
-                        currentObra.getIdObra(),
-                        currentObra.isUserLiked()
-                );
-
+                listener.onLikeClick(currentObra.getIdObra(), currentObra.isUserLiked());
             }
 
             notifyItemChanged(currentPosition);
         });
 
-
+        // Expand / collapse
         boolean expandido = (position == tarjetaExpandida);
-        if (expandido) {
-            animarVista(holder.expandedSection, true);
-        } else {
-            animarVista(holder.expandedSection, false);
-        }
-        obra.setExpandido(expandido);;
+        animarVista(holder.expandedSection, expandido);
+        obra.setExpandido(expandido);
 
         holder.itemView.setOnClickListener(v -> {
-
             int previousExpanded = tarjetaExpandida;
             int currentPosition = holder.getAdapterPosition();
 
             if (previousExpanded == currentPosition) {
-
                 tarjetaExpandida = -1;
             } else {
-
                 tarjetaExpandida = currentPosition;
-
-                if (previousExpanded != -1) {
-
-                    notifyItemChanged(previousExpanded);
-                }
+                if (previousExpanded != -1) notifyItemChanged(previousExpanded);
             }
             notifyItemChanged(currentPosition);
+        });
 
+        // Botón visitar (por ahora stub)
+        holder.btnVisitar.setOnClickListener(v -> {
+            if (visitarListener != null) {
+                visitarListener.onVisitarClick(obra.getIdObra());
+            }
         });
     }
-
 
     @Override
     public int getItemCount() {
@@ -173,13 +159,13 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             view.animate()
                     .alpha(1f)
                     .scaleY(1f)
-                    .setDuration(100)
+                    .setDuration(120)
                     .start();
         } else {
             view.animate()
                     .alpha(0f)
                     .scaleY(0f)
-                    .setDuration(150)
+                    .setDuration(160)
                     .withEndAction(() -> view.setVisibility(View.GONE))
                     .start();
         }
@@ -199,13 +185,13 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
                 ).start();
     }
 
-
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView titulo, descripcion, estado, tecnica, medidas, precio, categoria, likes,autor;
+        TextView titulo, descripcion, estado, tecnica, medidas, precio, categoria, likes, autor;
         ImageView imgAutor, imgObra;
         ImageButton btnLike;
         View expandedSection;
+        Button btnVisitar;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -223,8 +209,9 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             likes = itemView.findViewById(R.id.likes);
 
             btnLike = itemView.findViewById(R.id.btnLike);
-
             expandedSection = itemView.findViewById(R.id.expanded_section);
+
+            btnVisitar = itemView.findViewById(R.id.btnVisitar);
         }
     }
 
@@ -233,16 +220,25 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         notifyDataSetChanged();
     }
 
-
+    // Like listener existente
     public interface OnLikeClickListener {
         void onLikeClick(int idObra, boolean userLiked);
-
     }
 
     private OnLikeClickListener listener;
 
     public void setOnLikeClickListener(OnLikeClickListener listener) {
         this.listener = listener;
+    }
 
+    // Listener opcional para Visitar
+    public interface OnVisitarClickListener {
+        void onVisitarClick(int idObra);
+    }
+
+    private OnVisitarClickListener visitarListener;
+
+    public void setOnVisitarClickListener(OnVisitarClickListener visitarListener) {
+        this.visitarListener = visitarListener;
     }
 }

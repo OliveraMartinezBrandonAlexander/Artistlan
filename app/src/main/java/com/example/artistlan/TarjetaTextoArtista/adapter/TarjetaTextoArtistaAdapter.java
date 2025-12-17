@@ -16,17 +16,18 @@ import com.bumptech.glide.Glide;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaTextoArtistaAdapter.ViewHolder> {
 
+    private final Context context;
     private List<TarjetaTextoArtistaItem> listaArtistas;
-    private Context context;
 
     private int tarjetaExpandida = -1;
 
     public TarjetaTextoArtistaAdapter(List<TarjetaTextoArtistaItem> listaArtistas, Context context) {
-        this.listaArtistas = listaArtistas;
+        this.listaArtistas = (listaArtistas != null) ? listaArtistas : new ArrayList<>();
         this.context = context;
     }
 
@@ -44,50 +45,33 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         TarjetaTextoArtistaItem artista = listaArtistas.get(position);
 
         holder.nombre.setText(artista.getNombre());
-        holder.categoria.setText(artista.getCategoria());
         holder.descripcion.setText(artista.getDescripcion());
+        holder.categoria.setText(artista.getCategoria()); // ahora se ve en expandido
 
-        // Mini obras
-        List<String> obras = artista.getMiniObras();
-        if(obras.size() > 0)
-            Glide.with(context).load(obras.get(0)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini1);
-        else
-            holder.imgMini1.setImageResource(R.drawable.imagencargaobras);
-
-        if(obras.size() > 1)
-            Glide.with(context).load(obras.get(1)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini2);
-        else
-            holder.imgMini2.setImageResource(R.drawable.imagencargaobras);
-
-        if(obras.size() > 2)
-            Glide.with(context).load(obras.get(2)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini3);
-        else
-            holder.imgMini3.setImageResource(R.drawable.imagencargaobras);
-
+        // Foto perfil (circular)
         String fotoPerfil = artista.getFotoPerfil();
-        Object targetSource = (fotoPerfil != null && !fotoPerfil.isEmpty())
+        Object perfilSource = (fotoPerfil != null && !fotoPerfil.trim().isEmpty())
                 ? fotoPerfil
                 : R.drawable.fotoperfilprueba;
 
         Glide.with(context)
-                .load(targetSource)
+                .load(perfilSource)
                 .placeholder(R.drawable.fotoperfilprueba)
                 .error(R.drawable.fotoperfilprueba)
                 .circleCrop()
                 .into(holder.imgPerfil);
 
+        // Mini obras (más seguro si vienen null/empty)
+        List<String> obras = artista.getMiniObras();
+
+        cargarMiniObra(holder.imgMini1, (obras != null && obras.size() > 0) ? obras.get(0) : null);
+        cargarMiniObra(holder.imgMini2, (obras != null && obras.size() > 1) ? obras.get(1) : null);
+        cargarMiniObra(holder.imgMini3, (obras != null && obras.size() > 2) ? obras.get(2) : null);
 
         boolean expandido = (tarjetaExpandida == position);
-
-
-        if (expandido) {
-            animarVista(holder.expandedSection, true);
-        } else {
-            animarVista(holder.expandedSection, false);
-        }
+        animarVista(holder.expandedSection, expandido);
 
         holder.itemView.setOnClickListener(v -> {
-
             int previous = tarjetaExpandida;
             int currentPosition = holder.getAdapterPosition();
 
@@ -95,41 +79,53 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
                 tarjetaExpandida = -1;
             } else {
                 tarjetaExpandida = currentPosition;
-
-                if (previous != -1) {
-                    notifyItemChanged(previous);
-                }
+                if (previous != -1) notifyItemChanged(previous);
             }
-
             notifyItemChanged(currentPosition);
-
         });
 
         holder.btnVisitar.setOnClickListener(v -> {
-            // Aquí iría la vista de perfil de artista
+            // Aquí iría la navegación a perfil del artista
         });
+    }
+
+    private void cargarMiniObra(ImageView img, String url) {
+        Object source = (url != null && !url.trim().isEmpty())
+                ? url
+                : R.drawable.imagencargaobras;
+
+        Glide.with(context)
+                .load(source)
+                .placeholder(R.drawable.imagencargaobras)
+                .error(R.drawable.imagencargaobras)
+                .into(img);
     }
 
     @Override
     public int getItemCount() {
-        return listaArtistas.size();
+        return listaArtistas != null ? listaArtistas.size() : 0;
     }
 
     private void animarVista(View v, boolean expandir) {
         if (expandir) {
-            if (v.getVisibility() == View.VISIBLE && v.getScaleY() == 1f) return; // Ya expandida
+            if (v.getVisibility() == View.VISIBLE && v.getScaleY() == 1f) return;
 
             v.setVisibility(View.VISIBLE);
-            v.setAlpha(0);
-            v.setScaleY(0);
-            v.animate().alpha(1f).scaleY(1f).setDuration(100).start();
+            v.setAlpha(0f);
+            v.setScaleY(0f);
+            v.animate().alpha(1f).scaleY(1f).setDuration(140).start();
         } else {
             if (v.getVisibility() == View.GONE) return;
 
-            v.animate().alpha(0f).scaleY(0f).setDuration(150)
+            v.animate().alpha(0f).scaleY(0f).setDuration(160)
                     .withEndAction(() -> v.setVisibility(View.GONE))
                     .start();
         }
+    }
+
+    public void actualizarLista(List<TarjetaTextoArtistaItem> nuevaLista) {
+        this.listaArtistas = (nuevaLista != null) ? nuevaLista : new ArrayList<>();
+        notifyDataSetChanged();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -156,10 +152,4 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             btnVisitar = itemView.findViewById(R.id.btnVisitar);
         }
     }
-    public void actualizarLista(List<TarjetaTextoArtistaItem> nuevaLista) {
-        this.listaArtistas.clear();
-        this.listaArtistas.addAll(nuevaLista);
-        notifyDataSetChanged();
-    }
-
 }

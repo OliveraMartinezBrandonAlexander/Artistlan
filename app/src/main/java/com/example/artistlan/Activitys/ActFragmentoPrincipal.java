@@ -13,7 +13,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // EdgeToEdge.enable(this); comentado para que no oculte el menu
+
         setContentView(R.layout.activity_act_fragmento_principal);
 
         //Conexion con el navHostFragment y la barra inferior

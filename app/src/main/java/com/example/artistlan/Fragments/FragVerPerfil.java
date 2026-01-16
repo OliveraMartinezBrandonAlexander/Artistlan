@@ -42,7 +42,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     // Segment control
     private View segmentContainer;
     private View segmentIndicator;
-    private boolean selectedObras = true; // default
+    private boolean selectedObras = true;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -56,39 +56,33 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
         new BotonesMenuSuperior(this, view);
 
-        // Root click => colapsar ficha si está abierta
         View root = view.findViewById(R.id.rootPerfil);
         root.setOnClickListener(v -> colapsarFicha());
 
-        // Menú superior
         btnFavoritos = view.findViewById(R.id.btnFavoritos);
         btnFavoritos.setVisibility(View.VISIBLE);
         btnFavoritos.setOnClickListener(this);
 
-        // Ficha
         cardPerfilInfo = view.findViewById(R.id.cardPerfilInfo);
         expandedSectionPerfil = view.findViewById(R.id.expanded_section_perfil);
 
         cardPerfilInfo.setOnClickListener(v -> {
-            // Consumimos el click y toggle
             toggleFicha();
         });
 
-        // Editar perfil (icono dentro de ficha)
         btnEditarPefil = view.findViewById(R.id.btnEditarPefil);
         btnEditarPefil.setOnClickListener(this);
 
-        // Botones subir
         btnSubirObra = view.findViewById(R.id.btnSubirObra);
         btnSubirServicio = view.findViewById(R.id.btnSubirServicio);
         btnSubirObra.setOnClickListener(this);
         btnSubirServicio.setOnClickListener(this);
 
-        // Botones editar (nuevos)
-        btnEditarObra = view.findViewById(R.id.btnEditarObra);
-        btnEditarServicio = view.findViewById(R.id.btnEditarServicio);
-        btnEditarObra.setOnClickListener(this);
-        btnEditarServicio.setOnClickListener(this);
+//        // Botones editar (nuevos)
+//        btnEditarObra = view.findViewById(R.id.btnEditarObra);
+//        btnEditarServicio = view.findViewById(R.id.btnEditarServicio);
+//        btnEditarObra.setOnClickListener(this);
+//        btnEditarServicio.setOnClickListener(this);
 
         // TextViews datos
         tvNombre = view.findViewById(R.id.VrpTxvNombre);
@@ -113,14 +107,13 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         btnMiArte.setOnClickListener(v -> seleccionarSegmento(true));
         btnMisServicios.setOnClickListener(v -> seleccionarSegmento(false));
 
-        // Cargar datos usuario (tu lógica)
+
         cargarDatosUsuario();
 
-        // Default: Mis Obras SIEMPRE al entrar
         if (savedInstanceState == null) {
-            seleccionarSegmento(true); // además carga FragMiArte
+            seleccionarSegmento(true);
         } else {
-            // Si quieres, podrías conservar el estado, pero pediste default siempre "Mis Obras"
+
             seleccionarSegmento(true);
         }
     }
@@ -218,7 +211,6 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private void seleccionarSegmento(boolean obras) {
         selectedObras = obras;
 
-        // 1) UI (animación del indicador)
         segmentContainer.post(() -> {
             int w = segmentContainer.getWidth();
             int half = w / 2;
@@ -233,7 +225,6 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                     .setDuration(180)
                     .start();
 
-            // colores de texto invertidos
             if (obras) {
                 btnMiArte.setTextColor(0xFFFFFFFF);
                 btnMisServicios.setTextColor(0xFF1E3A8A);
@@ -243,7 +234,6 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
             }
         });
 
-        // 2) Cargar fragment correspondiente (tu lógica de BD no cambia)
         if (obras) {
             getChildFragmentManager()
                     .beginTransaction()
@@ -274,13 +264,13 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
             Intent intent = new Intent(v.getContext(), ActActualizarDatos.class);
             v.getContext().startActivity(intent);
 
-        } else if (id == R.id.btnEditarObra) {
-            // Pendiente: pantalla real de edición obra
-            Toast.makeText(requireContext(), "Editar Obra (pendiente pantalla)", Toast.LENGTH_SHORT).show();
-
-        } else if (id == R.id.btnEditarServicio) {
-            // Pendiente: pantalla real de edición servicio
-            Toast.makeText(requireContext(), "Editar Servicio (pendiente pantalla)", Toast.LENGTH_SHORT).show();
+//        } else if (id == R.id.btnEditarObra) {
+//            // Pendiente: pantalla real de edición obra
+//            Toast.makeText(requireContext(), "Editar Obra (pendiente pantalla)", Toast.LENGTH_SHORT).show();
+//
+//        } else if (id == R.id.btnEditarServicio) {
+//            // Pendiente: pantalla real de edición servicio
+//            Toast.makeText(requireContext(), "Editar Servicio (pendiente pantalla)", Toast.LENGTH_SHORT).show();
         }
     }
 }

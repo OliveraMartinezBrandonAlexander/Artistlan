@@ -11,11 +11,15 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ScrollView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.artistlan.Conector.RetrofitClient;
@@ -83,7 +87,7 @@ public class FragSubirServicio extends Fragment {
 
         cargarCategoriasDesdeBD();
 
-        btnPublicarServicio.setOnClickListener(v -> validarYPublicarServicio());
+        btnPublicarServicio.setOnClickListener(v -> validarYMostrarDialogo());
 
         btnRegresarServicio.setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager().popBackStack()
@@ -96,10 +100,29 @@ public class FragSubirServicio extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        ScrollView scrollView = view.findViewById(R.id.fragScrollSubirServicio);
+
+        ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
+            int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+
+            v.setPadding(
+                    v.getPaddingLeft(),
+                    v.getPaddingTop(),
+                    v.getPaddingRight(),
+                    imeHeight + dpToPx(24)
+            );
+            return insets;
+        });
+
+
         View bottomBar = requireActivity().findViewById(R.id.bottomBar);
         if (bottomBar != null) {
             bottomBar.setVisibility(View.GONE);
         }
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     @Override
@@ -232,6 +255,119 @@ public class FragSubirServicio extends Fragment {
         guardarServicioEnBD(idUsuario, categoriaSeleccionada.getIdCategoria(), servicio);
     }
 
+    private void validarYMostrarDialogo() {
+
+        SharedPreferences prefs = requireActivity()
+                .getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        int idUsuario = prefs.getInt("id", -1);
+
+        if (idUsuario == -1) {
+            Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String titulo      = etTituloServicio.getText().toString().trim();
+        String descripcion = etDescripcionServicio.getText().toString().trim();
+        String tecnica     = etTecnicaServicio.getText().toString().trim();
+        String contacto    = etContactoServicio.getText().toString().trim();
+
+        if (TextUtils.isEmpty(titulo)) {
+            etTituloServicio.setError("Ingresa un título");
+            etTituloServicio.requestFocus();
+            return;
+        }
+
+        if (TextUtils.isEmpty(descripcion)) {
+            etDescripcionServicio.setError("Ingresa una descripción");
+            etDescripcionServicio.requestFocus();
+            return;
+        }
+
+        if (TextUtils.isEmpty(tecnica)) {
+            etTecnicaServicio.setError("Indica la técnica que manejas");
+            etTecnicaServicio.requestFocus();
+            return;
+        }
+
+        if (TextUtils.isEmpty(contacto)) {
+            etContactoServicio.setError("Ingresa un medio de contacto");
+            etContactoServicio.requestFocus();
+            return;
+        }
+
+        int pos = spinnerCategoriaServicio.getSelectedItemPosition();
+        if (pos <= 0 || pos > listaCategoriasProfesiones.size()) {
+            Toast.makeText(requireContext(), "Selecciona una categoría válida", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        CategoriaDTO categoriaSeleccionada = listaCategoriasProfesiones.get(pos - 1);
+
+        mostrarDialogConfirmacion(
+                idUsuario,
+                categoriaSeleccionada,
+                titulo,
+                descripcion,
+                tecnica,
+                contacto
+        );
+    }
+
+    private void mostrarDialogConfirmacion(
+            int idUsuario,
+            CategoriaDTO categoria,
+            String titulo,
+            String descripcion,
+            String tecnica,
+            String contacto
+    ) {
+
+        View view = LayoutInflater.from(getContext())
+                .inflate(R.layout.dialog_confirmar_servicio, null);
+
+        TextView txtResumen = view.findViewById(R.id.txtResumenServicio);
+        Button btnEditar = view.findViewById(R.id.btnEditar);
+        Button btnPublicar = view.findViewById(R.id.btnConfirmarPublicar);
+
+        String resumen =
+                "📌 Título:\n" + titulo + "\n\n" +
+                        "📝 Descripción:\n" + descripcion + "\n\n" +
+                        "🎨 Técnica:\n" + tecnica + "\n\n" +
+                        "📞 Contacto:\n" + contacto + "\n\n" +
+                        "🏷 Categoría:\n" + categoria.getNombreCategoria();
+
+        txtResumen.setText(resumen);
+
+        androidx.appcompat.app.AlertDialog dialog =
+                new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                        .setView(view)
+                        .setCancelable(false)
+                        .create();
+
+        btnEditar.setOnClickListener(v -> dialog.dismiss());
+
+        btnPublicar.setOnClickListener(v -> {
+
+            btnPublicar.setEnabled(false);
+            btnPublicar.setText("Publicando...");
+            dialog.dismiss();
+
+            ServicioDTO servicio = new ServicioDTO();
+            servicio.setTitulo(titulo);
+            servicio.setDescripcion(descripcion);
+            servicio.setTecnicas(tecnica);
+            servicio.setContacto(contacto);
+            servicio.setIdUsuario(idUsuario);
+            servicio.setCategoria(categoria.getNombreCategoria());
+
+            guardarServicioEnBD(idUsuario, categoria.getIdCategoria(), servicio);
+        });
+
+        dialog.show();
+    }
+
+
+
 
     private void guardarServicioEnBD(int idUsuario, int idCategoria, ServicioDTO servicio) {
         ServicioApi servicioApi = RetrofitClient.getClient().create(ServicioApi.class);
@@ -245,9 +381,8 @@ public class FragSubirServicio extends Fragment {
 
                 if (response.isSuccessful() && response.body() != null) {
                     ServicioDTO creado = response.body();
-                    Toast.makeText(getContext(),
-                            "Servicio publicado. ID: " + creado.getIdServicio(),
-                            Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "¡Servicio subido con éxito! " , Toast.LENGTH_LONG).show();
+
 
                     crearRelacionCategoriaServicio(creado.getIdServicio(), idCategoria);
                 } else {

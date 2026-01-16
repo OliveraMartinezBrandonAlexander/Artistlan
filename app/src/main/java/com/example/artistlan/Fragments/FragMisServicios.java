@@ -94,7 +94,7 @@ public class FragMisServicios extends Fragment {
 
                 List<ServicioDTO> dtos = response.body();
                 if (dtos.isEmpty()) {
-                    Toast.makeText(requireContext(), "No hay servicios disponibles.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "Servicios cargados: 0", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 List<TarjetaTextoServicioItem> items = convertirDTOaItem(dtos);

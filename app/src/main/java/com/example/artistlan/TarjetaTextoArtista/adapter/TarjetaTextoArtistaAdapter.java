@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.navigation.Navigation;
@@ -29,7 +30,6 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
     private Context context;
     private int tarjetaExpandida = -1;
 
-    // Defaults random descripción (solo si viene null/vacía)
     private static final String[] DEFAULT_DESCRIPCIONES = new String[] {
             "Hola, estoy usando Artistlan",
             "En busca del arte",
@@ -38,9 +38,6 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             "Arte en proceso, gracias por visitar"
     };
 
-    // ✅ Likes locales (sin BD)
-    private final Map<String, Boolean> likedMap = new ArrayMap<>();
-    private final Map<String, Integer> likesCountMap = new ArrayMap<>();
 
     public TarjetaTextoArtistaAdapter(List<TarjetaTextoArtistaItem> listaArtistas, Context context) {
         this.listaArtistas = listaArtistas;
@@ -62,7 +59,6 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
     }
 
     private String keyFor(TarjetaTextoArtistaItem a, int position) {
-        // clave “estable” para que no cambie al reciclar
         String seed =
                 safeText(a.getNombre(), "") + "|" +
                         safeText(a.getCategoria(), "") + "|" +
@@ -82,8 +78,8 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         TarjetaTextoArtistaItem artista = listaArtistas.get(position);
 
         // Textos principales
-        holder.nombre.setText(safeText(artista.getNombre(), "Usuario"));
-        holder.categoria.setText(safeText(artista.getCategoria(), "Ninguna"));
+        holder.nombre.setText(artista.getNombre());
+        holder.categoria.setText("Categoría: " + safeText(artista.getCategoria(), "Sin categoria"));
 
         String desc = artista.getDescripcion();
         if (desc == null || desc.trim().isEmpty()) {
@@ -122,43 +118,43 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         else
             holder.imgMini3.setImageResource(R.drawable.imagencargaobras);
 
-        // ✅ LIKE local
-        String key = keyFor(artista, position);
-
-        boolean liked = likedMap.containsKey(key) && Boolean.TRUE.equals(likedMap.get(key));
-        int likesCount = likesCountMap.containsKey(key) ? likesCountMap.get(key) : 0;
-
-        holder.likes.setText(String.valueOf(likesCount));
-        holder.btnLike.setImageResource(liked ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
-
-        holder.btnLike.setOnClickListener(v -> {
-            int currentPos = holder.getAdapterPosition();
-            if (currentPos == RecyclerView.NO_POSITION) return;
-
-            String k = keyFor(listaArtistas.get(currentPos), currentPos);
-
-            boolean currentLiked = likedMap.containsKey(k) && Boolean.TRUE.equals(likedMap.get(k));
-            int currentCount = likesCountMap.containsKey(k) ? likesCountMap.get(k) : 0;
-
-            if (currentLiked) {
-                // quitar like
-                likedMap.put(k, false);
-                currentCount = Math.max(0, currentCount - 1);
-            } else {
-                // dar like
-                likedMap.put(k, true);
-                currentCount = currentCount + 1;
-            }
-
-            likesCountMap.put(k, currentCount);
-
-            holder.likes.setText(String.valueOf(currentCount));
-            holder.btnLike.setImageResource(Boolean.TRUE.equals(likedMap.get(k))
-                    ? R.drawable.ic_heart_red
-                    : R.drawable.ic_heart_purple);
-
-            animarLike(holder.btnLike);
-        });
+//        //  LIKE local
+//        String key = keyFor(artista, position);
+//
+//        boolean liked = likedMap.containsKey(key) && Boolean.TRUE.equals(likedMap.get(key));
+//        int likesCount = likesCountMap.containsKey(key) ? likesCountMap.get(key) : 0;
+//
+//        holder.likes.setText(String.valueOf(likesCount));
+//        holder.btnLike.setImageResource(liked ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
+//
+//        holder.btnLike.setOnClickListener(v -> {
+//            int currentPos = holder.getAdapterPosition();
+//            if (currentPos == RecyclerView.NO_POSITION) return;
+//
+//            String k = keyFor(listaArtistas.get(currentPos), currentPos);
+//
+//            boolean currentLiked = likedMap.containsKey(k) && Boolean.TRUE.equals(likedMap.get(k));
+//            int currentCount = likesCountMap.containsKey(k) ? likesCountMap.get(k) : 0;
+//
+//            if (currentLiked) {
+//                // quitar like
+//                likedMap.put(k, false);
+//                currentCount = Math.max(0, currentCount - 1);
+//            } else {
+//                // dar like
+//                likedMap.put(k, true);
+//                currentCount = currentCount + 1;
+//            }
+//
+//            likesCountMap.put(k, currentCount);
+//
+//            holder.likes.setText(String.valueOf(currentCount));
+//            holder.btnLike.setImageResource(Boolean.TRUE.equals(likedMap.get(k))
+//                    ? R.drawable.ic_heart_red
+//                    : R.drawable.ic_heart_purple);
+//
+//            animarLike(holder.btnLike);
+//        });
 
         // Expandible
         boolean expandido = (tarjetaExpandida == position);
@@ -178,7 +174,7 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         });
 
         holder.btnVisitar.setOnClickListener(v -> {
-            Navigation.findNavController(v).navigate(R.id.contenedorFragmentsPerfilPublico);
+            Toast.makeText(context, "Proximamente...", Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -202,19 +198,19 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         }
     }
 
-    private void animarLike(ImageButton btn) {
-        btn.animate()
-                .scaleX(0.75f)
-                .scaleY(0.75f)
-                .setDuration(80)
-                .withEndAction(() ->
-                        btn.animate()
-                                .scaleX(1f)
-                                .scaleY(1f)
-                                .setDuration(80)
-                                .start()
-                ).start();
-    }
+//    private void animarLike(ImageButton btn) {
+//        btn.animate()
+//                .scaleX(0.75f)
+//                .scaleY(0.75f)
+//                .setDuration(80)
+//                .withEndAction(() ->
+//                        btn.animate()
+//                                .scaleX(1f)
+//                                .scaleY(1f)
+//                                .setDuration(80)
+//                                .start()
+//                ).start();
+//    }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView nombre, categoria, descripcion, mensaje, likes;
@@ -237,8 +233,8 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             imgMini2 = itemView.findViewById(R.id.imgMini2);
             imgMini3 = itemView.findViewById(R.id.imgMini3);
 
-            likes = itemView.findViewById(R.id.likes);
-            btnLike = itemView.findViewById(R.id.btnLike);
+//            likes = itemView.findViewById(R.id.likes);
+//            btnLike = itemView.findViewById(R.id.btnLike);
 
             expandedSection = itemView.findViewById(R.id.expanded_section);
             btnVisitar = itemView.findViewById(R.id.btnVisitar);

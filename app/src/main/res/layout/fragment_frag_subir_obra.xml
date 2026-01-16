@@ -22,9 +22,11 @@
         android:paddingBottom="30dp">
 
         <ScrollView
+            android:id="@+id/fragScrollSubirObra"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fillViewport="true">
+            android:fillViewport="true"
+            android:clipToPadding="false">
             <LinearLayout
                 android:id="@+id/IsLayCard"
                 android:layout_width="match_parent"
@@ -177,7 +179,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
-                    android:text="Precio en pesos mxn"
+                    android:text="Precio en pesos mxn "
                     android:textSize="14sp" />
 
                 <EditText
@@ -200,7 +202,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
-                    android:text="Medidas en cm"
+                    android:text="Medidas en cm "
                     android:textSize="14sp" />
 
                 <EditText

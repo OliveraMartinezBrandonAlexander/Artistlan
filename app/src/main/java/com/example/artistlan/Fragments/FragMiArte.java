@@ -105,7 +105,7 @@ public class FragMiArte extends Fragment {
 
                 List<ObraDTO> dtos = response.body();
                 if (dtos == null || dtos.isEmpty()) {
-                    Toast.makeText(requireContext(), "No tienes obras creadas.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "Obras cargadas: 0", Toast.LENGTH_SHORT).show();
                     return;
                 }
 

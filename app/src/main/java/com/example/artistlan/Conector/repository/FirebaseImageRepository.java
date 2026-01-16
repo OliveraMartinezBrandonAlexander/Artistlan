@@ -151,7 +151,6 @@ public class FirebaseImageRepository {
             return;
         }
 
-        // Ruta: obras/ID_USUARIO/nombre_unico_timestamp.jpg
         String ruta = "obras/" + idUsuario + "/temp_" + System.currentTimeMillis() + ".jpg";
         StorageReference ref = storageRef.child(ruta);
 

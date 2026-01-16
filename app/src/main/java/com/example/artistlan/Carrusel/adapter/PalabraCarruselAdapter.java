@@ -16,7 +16,7 @@ public class PalabraCarruselAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private List<PalabraCarruselItem> palabras;
     private Context context;
     private OnCategoriaClickListener listener;
-    private int itemSeleccionado = 1; // Empieza en 1 (primer item real)
+    private int itemSeleccionado = 1;
 
     private static final int TYPE_EMPTY = 0;
     private static final int TYPE_ITEM = 1;
@@ -68,7 +68,6 @@ public class PalabraCarruselAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 }
             });
         }
-        // Los EmptyViewHolder no necesitan binding
     }
 
     @Override

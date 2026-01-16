@@ -39,16 +39,15 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
     public void onBindViewHolder(@NonNull CarruselViewHolder holder, int position) {
         ObraCarruselItem item = lista.get(position);
 
-        // Si hay URL de imagen (Firebase / servidor), la usamos.
         if (item.getImagenUrl() != null && !item.getImagenUrl().isEmpty()) {
             Glide.with(context)
                     .load(item.getImagenUrl())
-                    .placeholder(item.getImagen())   // mientras carga
-                    .error(item.getImagen())         // si falla
+                    .placeholder(item.getImagen())
+                    .error(item.getImagen())
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(holder.imgObra);
         } else {
-            // Si no hay URL, usamos el drawable por defecto
+
             holder.imgObra.setImageResource(item.getImagen());
         }
 

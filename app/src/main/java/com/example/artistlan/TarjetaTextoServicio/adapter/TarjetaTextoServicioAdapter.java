@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -49,10 +50,10 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
         holder.autor.setText(servicio.getAutor());
         holder.titulo.setText(servicio.getTitulo());
-        holder.descripcion.setText(servicio.getDescripcion());
-        holder.contacto.setText(servicio.getContacto());
-        holder.tecnicas.setText(servicio.getTecnicas());
-        holder.categoria.setText(servicio.getCategoria());
+        holder.descripcion.setText("Descripción: " + servicio.getDescripcion());
+        holder.contacto.setText("Contacto: " + servicio.getContacto());
+        holder.tecnicas.setText("Técnicas: " + servicio.getTecnicas());
+        holder.categoria.setText("Categoría: " + servicio.getCategoria());
 
         String urlPerfil = fixUrl(servicio.getFotoPerfilAutor());
 
@@ -71,7 +72,6 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
         boolean expandido = (tarjetaExpandida == position);
 
-        // ✅ Aquí la animación correcta (expand/collapse)
         animarVista(holder.expandedSection, expandido);
 
         holder.itemView.setOnClickListener(v -> {
@@ -88,10 +88,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         });
 
         holder.btnVisitar.setOnClickListener(v -> {
-            // Aquí iría tu navegación (PerfilActivity, etc.)
-            // Intent intent = new Intent(context, PerfilActivity.class);
-            // intent.putExtra("autor_id", servicio.getAutorId());
-            // context.startActivity(intent);
+            Toast.makeText(context, "Proximamente...", Toast.LENGTH_SHORT).show();
         });
     }
 

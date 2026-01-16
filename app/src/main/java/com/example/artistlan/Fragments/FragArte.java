@@ -54,9 +54,7 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
 
     private CenterZoomLayoutManager layoutManager;
 
-    private final Map<Integer, Boolean> likesLocal = new HashMap<>();
     private ObraApi obraApi;
-    private ObrasLikesApi likesApi;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -71,7 +69,6 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
         new BotonesMenuSuperior(this, view);
 
         obraApi = RetrofitClient.getClient().create(ObraApi.class);
-        likesApi = RetrofitClient.getClient().create(ObrasLikesApi.class);
 
         configurarCarrusel(view);
         configurarObras(view);

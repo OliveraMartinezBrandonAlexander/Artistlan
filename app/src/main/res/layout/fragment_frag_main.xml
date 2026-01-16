@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="#E1C699"
     tools:context=".Fragments.FragMain">
 
     <include layout="@layout/layout_menu_superior" />
@@ -22,7 +23,8 @@
         android:background="@android:color/white"
         android:clipToPadding="false"
         android:paddingTop="16dp"
-        android:paddingBottom="16dp">
+        android:paddingBottom="16dp"
+        >
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -113,56 +115,179 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="4dp">
+                    android:padding="8dp">
 
-                    <LinearLayout
+                    <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:padding="8dp">
+                        android:layout_marginBottom="12dp"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="4dp">
 
-                        <TextView
-                            android:layout_width="0dp"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="• Concurso de óleo en Bellas Artes\nFECHA: 25-12-2025\nDESCRIPCIÓN: ---\nREQUISITOS: $ 1000"
-                            android:textColor="@android:color/black"
-                            android:textSize="14sp"/>
+                            android:orientation="vertical"
+                            android:padding="16dp">
 
-                        <Button
-                            android:id="@+id/btnEvento1"
-                            android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:text="Saber Más!"
-                            android:textSize="12sp"
-                            android:backgroundTint="#A1BBCE"/>
-                    </LinearLayout>
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="XVII Concurso Nacional de Fotografía"
+                                android:textColor="@android:color/black"
+                                android:textSize="17sp"
+                                android:textStyle="bold" />
 
-                    <!-- Evento 2 -->
-                    <LinearLayout
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="FECHA CIERRE: 29 de mayo, 2026\nTEMÁTICA: Ritualidad y Espacios Sagrados.\nREQUISITOS: Fotos originales de prácticas ceremoniales."
+                                android:textColor="#555555"
+                                android:textSize="14sp"
+                                android:lineSpacingExtra="2dp"/>
+
+                            <Button
+                                android:id="@+id/btnEvento1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="38dp"
+                                android:layout_gravity="end"
+                                android:layout_marginTop="8dp"
+                                android:backgroundTint="#A1BBCE"
+                                android:text="Saber Más!"
+                                android:textAllCaps="false"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:padding="8dp">
+                        android:layout_marginBottom="12dp"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="4dp">
 
-                        <TextView
-                            android:layout_width="0dp"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="• Concurso de óleo en Artes Bellas\nFECHA: 26-12-2025\nDESCRIPCIÓN:---\nREQUISITOS: $15"
-                            android:textColor="@android:color/black"
-                            android:textSize="14sp"/>
+                            android:orientation="vertical"
+                            android:padding="16dp">
 
-                        <Button
-                            android:id="@+id/btnEvento2"
-                            android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:text="Saber Más!"
-                            android:textSize="12sp"
-                            android:backgroundTint="#A1BBCE"/>
-                    </LinearLayout>
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="BADA México 2026 (Feria de Arte)"
+                                android:textColor="@android:color/black"
+                                android:textSize="17sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="FECHA EVENTO: 05 al 08 de febrero, 2026\nCIUDAD: Ciudad de México (Campo Marte).\nREQUISITOS: +18 años, enviar 4 a 6 obras y CV."
+                                android:textColor="#555555"
+                                android:textSize="14sp"
+                                android:lineSpacingExtra="2dp"/>
+
+                            <Button
+                                android:id="@+id/btnEvento2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="38dp"
+                                android:layout_gravity="end"
+                                android:layout_marginTop="8dp"
+                                android:backgroundTint="#A1BBCE"
+                                android:text="Saber Más!"
+                                android:textAllCaps="false"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="4dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Beca Jenkins-Del Toro 2026"
+                                android:textColor="@android:color/black"
+                                android:textSize="17sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="FECHA CIERRE: 06 de febrero, 2026\nESTÍMULO: $60,000 USD para cine en el extranjero.\nREQUISITOS: Promedio mín. 90 e inglés certificado."
+                                android:textColor="#555555"
+                                android:textSize="14sp"
+                                android:lineSpacingExtra="2dp"/>
+
+                            <Button
+                                android:id="@+id/btnEvento3"
+                                android:layout_width="wrap_content"
+                                android:layout_height="38dp"
+                                android:layout_gravity="end"
+                                android:layout_marginTop="8dp"
+                                android:backgroundTint="#A1BBCE"
+                                android:text="Saber Más!"
+                                android:textAllCaps="false"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="4dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="PACMyC 2026 (Culturas Populares)"
+                                android:textColor="@android:color/black"
+                                android:textSize="17sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="FECHA CIERRE: 29 de abril, 2026\nAPOYO: Hasta $100,000 MXN por proyecto cultural.\nREQUISITOS: Grupos comunitarios con aval oficial."
+                                android:textColor="#555555"
+                                android:textSize="14sp"
+                                android:lineSpacingExtra="2dp"/>
+
+                            <Button
+                                android:id="@+id/btnEvento4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="38dp"
+                                android:layout_gravity="end"
+                                android:layout_marginTop="8dp"
+                                android:backgroundTint="#A1BBCE"
+                                android:text="Saber Más!"
+                                android:textAllCaps="false"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

@@ -44,7 +44,6 @@ public class CenterZoomLayoutManager extends LinearLayoutManager {
 
             int position = getPosition(child);
 
-            // Solo aplicar efectos a items reales (no vacíos)
             if (position > 0 && position < getItemCount() - 1) {
                 float childMidpoint = (getDecoratedLeft(child) + getDecoratedRight(child)) / 2.0f;
                 float d = Math.min(d1, Math.abs(midpoint - childMidpoint));
@@ -58,7 +57,6 @@ public class CenterZoomLayoutManager extends LinearLayoutManager {
                     child.setAlpha(0.7f);
                 }
             } else {
-                // Items vacíos - completamente transparentes
                 child.setAlpha(0.0f);
             }
         }

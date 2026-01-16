@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:text="Palabra"
         android:textColor="@color/white"
-        android:textSize="12sp"
+        android:textSize="9sp"
         android:textStyle="bold"
         android:maxLines="2"
         android:ellipsize="end"

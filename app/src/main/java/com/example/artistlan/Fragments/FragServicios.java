@@ -185,23 +185,19 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
     }
     private void aplicarFiltro(String tipoServicioNombre) {
 
-        // Si ya estamos filtrando por este tipo -> quitar filtro
         if (tipoServicioFiltroActual.equalsIgnoreCase(tipoServicioNombre)) {
             tipoServicioFiltroActual = "";
             Toast.makeText(getContext(), "Filtro desactivado", Toast.LENGTH_SHORT).show();
 
-            // Volvemos a mostrar TODOS los servicios
             if (adapter != null) {
                 adapter.actualizarLista(new ArrayList<>(listaServicios));
             }
             return;
         }
 
-        // Activamos nuevo filtro
         tipoServicioFiltroActual = tipoServicioNombre;
         Toast.makeText(getContext(), "Filtrando: " + tipoServicioNombre, Toast.LENGTH_SHORT).show();
 
-        // Aplicamos filtro en la lista actual
         filtrarServiciosLocalmente(tipoServicioNombre);
     }
 
@@ -214,7 +210,7 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
         }
 
         for (TarjetaTextoServicioItem servicio : listaServicios) {
-            // Filtramos por tipo de categoria
+
             String categoria = servicio.getCategoria();
             if (categoria != null && categoria.equalsIgnoreCase(tipoServicio)) {
                 serviciosFiltrados.add(servicio);
@@ -223,7 +219,6 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
 
         if (serviciosFiltrados.isEmpty()) {
 
-            // Si no hay resultados, mostramos la lista vacia
             adapter.actualizarLista(new ArrayList<>());
         } else {
             adapter.actualizarLista(serviciosFiltrados);

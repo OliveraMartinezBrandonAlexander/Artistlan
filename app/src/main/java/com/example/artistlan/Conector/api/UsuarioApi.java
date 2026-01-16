@@ -48,4 +48,8 @@ public interface UsuarioApi
 
     @GET("usuarios/{id}/categoria")
     Call<UsuariosDTO> obtenerCategoriaUsuario(@Path("id") int idUsuario);
+
+    @DELETE("usuariosusuario/{id}")
+    Call<Void> eliminarUsuario(@Path("id") int idUsuario);
+
 }

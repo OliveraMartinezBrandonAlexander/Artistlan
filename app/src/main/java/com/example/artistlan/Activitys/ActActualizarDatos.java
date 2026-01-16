@@ -1,9 +1,12 @@
 package com.example.artistlan.Activitys;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.*;
 
@@ -43,6 +46,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
     private ActivityResultLauncher<String> seleccionarImagenperfilLauncher;
     private Uri imageUri = null;
+    private Button btnEliminarCuenta;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +67,9 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         IsbtnRegresar = findViewById(R.id.IsbtnRegresar);
         imgFotoPerfil = findViewById(R.id.imgFotoPerfil);
         btnCambiarFoto = findViewById(R.id.btnCambiarFoto);
+        btnEliminarCuenta = findViewById(R.id.btnEliminarCuenta);
+
+        btnEliminarCuenta.setOnClickListener(this);
 
         btnActualizarDatos.setOnClickListener(this);
         IsbtnRegresar.setOnClickListener(this);
@@ -169,9 +176,103 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.IsbtnRegresar) finish();
-        else if (v.getId() == R.id.btnActualizarDatos) actualizarUsuario();
+        if (v.getId() == R.id.IsbtnRegresar) {
+            finish();
+        } else if (v.getId() == R.id.btnActualizarDatos) {
+            actualizarUsuario();
+        } else if (v.getId() == R.id.btnEliminarCuenta) {
+            mostrarDialogoEliminarCuenta();
+        }
     }
+
+    private void mostrarDialogoEliminarCuenta() {
+        // Primer diálogo: confirmar intención
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Eliminar cuenta")
+                .setMessage("Esta acción es permanente y eliminará tu cuenta y toda tu información. ¿Deseas continuar?")
+                .setPositiveButton("Sí, eliminar", (dialog, which) -> {
+                    dialog.dismiss();
+                    // Segundo diálogo: pedir contraseña
+                    View view = LayoutInflater.from(this).inflate(R.layout.dialog_ingresar_password, null);
+                    EditText etPassword = view.findViewById(R.id.etPasswordDialog);
+
+                    AlertDialog dialogPassword = new AlertDialog.Builder(this)
+                            .setTitle("Confirma tu contraseña")
+                            .setView(view)
+                            .setCancelable(false)
+                            .setPositiveButton("Eliminar", null) // sobreescribimos más abajo
+                            .setNegativeButton("Cancelar", (d, w) -> d.dismiss())
+                            .create();
+
+                    dialogPassword.setOnShowListener(d -> {
+                        Button btnEliminar = dialogPassword.getButton(AlertDialog.BUTTON_POSITIVE);
+                        btnEliminar.setOnClickListener(v2 -> {
+                            String passwordIngresada = etPassword.getText().toString().trim();
+                            if (passwordIngresada.isEmpty()) {
+                                etPassword.setError("Ingresa tu contraseña");
+                                etPassword.requestFocus();
+                                return;
+                            }
+
+                            SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+                            String passwordActual = prefs.getString("contrasena", "");
+
+                            if (passwordIngresada.equals(passwordActual)) {
+                                dialogPassword.dismiss();
+                                eliminarCuentaConApi();
+                            } else {
+                                etPassword.setError("Contraseña incorrecta");
+                                etPassword.requestFocus();
+                            }
+                        });
+                    });
+
+                    dialogPassword.show();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void eliminarCuentaConApi() {
+        SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+        int idUsuario = prefs.getInt("id", -1);
+
+        if (idUsuario == -1) {
+            Toast.makeText(this, "Error: sesión no válida", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        api.eliminarUsuario(idUsuario).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+
+                    prefs.edit().clear().apply();
+
+                    Toast.makeText(ActActualizarDatos.this,
+                            "Cuenta eliminada correctamente",
+                            Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent(ActActualizarDatos.this, MainActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+
+                } else {
+                    Toast.makeText(ActActualizarDatos.this,
+                            "Error al eliminar la cuenta (Código: " + response.code() + ")",
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(ActActualizarDatos.this,
+                        "Error de conexión: " + t.getMessage(),
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+
+
 
     private void actualizarUsuario() {
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);

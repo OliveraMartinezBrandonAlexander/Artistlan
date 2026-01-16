@@ -2,11 +2,14 @@ package com.example.artistlan.Fragments;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
@@ -44,6 +47,12 @@ public class FragMain extends Fragment {
         btnIzq = root.findViewById(R.id.btnCarruselIzquierdo);
         btnDer = root.findViewById(R.id.btnCarruselDerecho);
 
+        Button btn1 = root.findViewById(R.id.btnEvento1);
+        Button btn2 = root.findViewById(R.id.btnEvento2);
+        Button btn3 = root.findViewById(R.id.btnEvento3);
+        Button btn4 = root.findViewById(R.id.btnEvento4);
+
+
         List<ObraCarruselItem> obras = new ArrayList<>();
         obras.add(new ObraCarruselItem(R.drawable.pin1, "Obra 1", "Descripción 1", "Superman", "135K"));
         obras.add(new ObraCarruselItem(R.drawable.pin2, "Obra 2", "Descripción 2", "Batman", "80K"));
@@ -68,7 +77,24 @@ public class FragMain extends Fragment {
             }
         });
 
+
+
+        btn1.setOnClickListener(v -> openWebPage("https://convocatorias.cultura.gob.mx/vigentes/detalle/4012/xvii-concurso-nacional-de-fotografia"));
+        btn2.setOnClickListener(v -> openWebPage("https://bada.com.mx/convocatoria-2026/"));
+        btn3.setOnClickListener(v -> openWebPage("https://www.becajenkinsdeltoro.com/"));
+        btn4.setOnClickListener(v -> openWebPage("https://convocatorias.cultura.gob.mx/"));
+
         return root;
+    }
+    public void openWebPage(String url) {
+        try {
+            Uri webpage = Uri.parse(url);
+            Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        } catch (Exception e) {
+            Log.e("FragMain", "No se pudo abrir el navegador: " + e.getMessage());
+        }
     }
 
     private void cargarObrasCarrusel(List<ObraCarruselItem> obras, CarruselAdapter adapter) {

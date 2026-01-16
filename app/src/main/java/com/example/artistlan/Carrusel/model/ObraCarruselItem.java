@@ -2,14 +2,13 @@ package com.example.artistlan.Carrusel.model;
 
 public class ObraCarruselItem {
 
-    private int imagen;        // drawable local (pin1, pin2, pin3)
-    private String imagenUrl;  // URL de la BD/Firebase (puede ser null)
+    private int imagen;
+    private String imagenUrl;
     private String titulo;
     private String descripcion;
     private String autor;
     private String likes;
 
-    // Constructor que ya usas para las 3 default
     public ObraCarruselItem(int imagen, String titulo, String descripcion, String autor, String likes) {
         this.imagen = imagen;
         this.imagenUrl = null;

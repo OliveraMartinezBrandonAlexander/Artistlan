@@ -229,7 +229,7 @@ public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnC
         UsuarioApi api = RetrofitClient.getClient().create(UsuarioApi.class);
         Call<List<ArtistaDTO>> call = api.getArtistas();
 
-        // Cada vez que pedimos artistas, limpiamos la lista actual
+
         listaArtistas.clear();
         adapter.actualizarLista(new ArrayList<>());
 
@@ -246,20 +246,18 @@ public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnC
 
                         // ---------- FILTRO POR PROFESIÓN ----------
                         if (!profesionFiltroActual.isEmpty()) {
-                            String profesionArtista = artista.getCategoria(); // o el campo que uses
+                            String profesionArtista = artista.getCategoria();
                             if (profesionArtista == null ||
                                     !profesionFiltroActual.equalsIgnoreCase(profesionArtista)) {
-                                // Si no coincide con el filtro, lo saltamos
                                 continue;
                             }
                         }
 
                         artistasQueCumplenFiltro++;
-                        // Solo pedimos mini-obras para los artistas que pasan el filtro
+
                         obtenerMiniObras(artista);
                     }
 
-                    // Si nadie cumplió el filtro, dejamos la lista vacía
                     if (artistasQueCumplenFiltro == 0) {
                         adapter.actualizarLista(new ArrayList<>());
                     }

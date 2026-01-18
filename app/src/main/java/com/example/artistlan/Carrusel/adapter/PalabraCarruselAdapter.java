@@ -53,14 +53,14 @@ public class PalabraCarruselAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
             viewHolder.tvPalabra.setText(palabra.getPalabra());
 
-            // Cambiar apariencia según selección
-            if (position == itemSeleccionado) {
-                viewHolder.itemView.setBackgroundColor(palabra.getColorSeleccionado());
-                viewHolder.tvPalabra.setTextColor(Color.WHITE);
-            } else {
-                viewHolder.itemView.setBackgroundColor(palabra.getColorNormal());
-                viewHolder.tvPalabra.setTextColor(Color.WHITE);
-            }
+//            // Cambiar apariencia según selección
+//            if (position == itemSeleccionado) {
+//                viewHolder.itemView.setBackgroundColor(palabra.getColorSeleccionado());
+//                viewHolder.tvPalabra.setTextColor(Color.WHITE);
+//            } else {
+//                viewHolder.itemView.setBackgroundColor(palabra.getColorNormal());
+//                viewHolder.tvPalabra.setTextColor(Color.WHITE);
+//            }
 
             viewHolder.itemView.setOnClickListener(v -> {
                 if (listener != null) {

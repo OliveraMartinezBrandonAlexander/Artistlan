@@ -78,7 +78,7 @@
                 android:layout_height="wrap_content"
                 android:text="Aplicar Filtro"
                 android:layout_gravity="center"
-                android:backgroundTint="@color/purple_500"
+                android:backgroundTint="@color/GRIS"
                 android:textColor="@color/white"
                 android:paddingHorizontal="24dp"
                 android:visibility="gone" />

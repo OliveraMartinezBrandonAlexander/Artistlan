@@ -39,6 +39,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
     public void onBindViewHolder(@NonNull CarruselViewHolder holder, int position) {
         ObraCarruselItem item = lista.get(position);
 
+        // Imagen de la obra
         if (item.getImagenUrl() != null && !item.getImagenUrl().isEmpty()) {
             Glide.with(context)
                     .load(item.getImagenUrl())
@@ -47,14 +48,24 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(holder.imgObra);
         } else {
-
             holder.imgObra.setImageResource(item.getImagen());
+        }
+
+        // Foto de perfil del autor
+        if (item.getAutorFotoUrl() != null && !item.getAutorFotoUrl().isEmpty()) {
+            Glide.with(context)
+                    .load(item.getAutorFotoUrl())
+                    .placeholder(R.drawable.fotoperfilprueba)
+                    .error(R.drawable.fotoperfilprueba)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .into(holder.imgAutor);
+        } else {
+            holder.imgAutor.setImageResource(R.drawable.fotoperfilprueba);
         }
 
         holder.tvTitulo.setText(item.getTitulo());
         holder.tvDescripcion.setText(item.getDescripcion());
         holder.tvAutor.setText(item.getAutor());
-        holder.tvLikes.setText(item.getLikes());
     }
 
     @Override
@@ -64,16 +75,16 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
 
     public static class CarruselViewHolder extends RecyclerView.ViewHolder {
 
-        ImageView imgObra;
-        TextView tvTitulo, tvDescripcion, tvAutor, tvLikes;
+        ImageView imgObra, imgAutor;
+        TextView tvTitulo, tvDescripcion, tvAutor;
 
         public CarruselViewHolder(@NonNull View itemView) {
             super(itemView);
-            imgObra      = itemView.findViewById(R.id.imgObra);
-            tvTitulo     = itemView.findViewById(R.id.tvTitulo);
-            tvDescripcion= itemView.findViewById(R.id.tvDescripcion);
-            tvAutor      = itemView.findViewById(R.id.tvAutor);
-            tvLikes      = itemView.findViewById(R.id.tvLikes);
+            imgObra       = itemView.findViewById(R.id.imgObra);
+            imgAutor      = itemView.findViewById(R.id.imgAutor);
+            tvTitulo      = itemView.findViewById(R.id.tvTitulo);
+            tvDescripcion = itemView.findViewById(R.id.tvDescripcion);
+            tvAutor       = itemView.findViewById(R.id.tvAutor);
         }
     }
 }

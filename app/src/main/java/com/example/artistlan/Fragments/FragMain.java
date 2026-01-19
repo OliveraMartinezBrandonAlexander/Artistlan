@@ -54,9 +54,9 @@ public class FragMain extends Fragment {
 
 
         List<ObraCarruselItem> obras = new ArrayList<>();
-        obras.add(new ObraCarruselItem(R.drawable.pin1, "Obra 1", "Descripción 1", "Superman", "135K"));
-        obras.add(new ObraCarruselItem(R.drawable.pin2, "Obra 2", "Descripción 2", "Batman", "80K"));
-        obras.add(new ObraCarruselItem(R.drawable.pin3, "Obra 3", "Descripción 3", "Wonder Woman", "95K"));
+        obras.add(new ObraCarruselItem(R.drawable.pin1, "Obra 1", "Descripción 1", "Superman", ""));
+        obras.add(new ObraCarruselItem(R.drawable.pin2, "Obra 2", "Descripción 2", "Batman", ""));
+        obras.add(new ObraCarruselItem(R.drawable.pin3, "Obra 3", "Descripción 3", "Wonder Woman", ""));
 
         CarruselAdapter adapter = new CarruselAdapter(obras, getContext());
         viewPager.setAdapter(adapter);
@@ -156,13 +156,30 @@ public class FragMain extends Fragment {
                         imagenUrl = dto.getImagen1();
                     }
 
+                    String autorFotoUrl = null;
+                    if (dto.getFotoPerfilAutor() != null && !dto.getFotoPerfilAutor().isEmpty()) {
+                        autorFotoUrl = dto.getFotoPerfilAutor();
+
+                        autorFotoUrl = autorFotoUrl.replace("http://localhost", "http://10.0.2.2");
+                        autorFotoUrl = autorFotoUrl.replace("https://localhost", "https://10.0.2.2");
+
+                        if (!autorFotoUrl.startsWith("http")) {
+                            String base = "http://10.0.2.2:8080"; // <-- AJUSTA tu puerto
+                            if (!autorFotoUrl.startsWith("/")) autorFotoUrl = "/" + autorFotoUrl;
+                            autorFotoUrl = base + autorFotoUrl;
+                        }
+                    }
+
+
                     obras.set(i, new ObraCarruselItem(
                             original.getImagen(), // drawable local
                             imagenUrl,            // URL de la BD
                             titulo,
                             descripcion,
                             autor,
-                            likes
+                            "",
+                            autorFotoUrl
+
                     ));
                 }
 

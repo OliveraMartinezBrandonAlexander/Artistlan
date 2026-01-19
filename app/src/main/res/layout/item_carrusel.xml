@@ -47,16 +47,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="❤️ 123"
+                android:visibility="gone"
                 android:textSize="14sp"/>
         </LinearLayout>
 
         <ImageView
             android:id="@+id/imgObra"
             android:layout_width="match_parent"
-            android:layout_height="250dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:scaleType="centerCrop"
-            android:background="@android:color/darker_gray"/>
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:background="@color/light_gray"/>
+
 
         <TextView
             android:id="@+id/tvTitulo"

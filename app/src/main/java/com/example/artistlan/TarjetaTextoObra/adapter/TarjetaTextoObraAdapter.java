@@ -18,16 +18,19 @@ import com.bumptech.glide.Glide;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoObraAdapter.ViewHolder> {
 
     private List<TarjetaTextoObraItem> listaObras;
+    private List<TarjetaTextoObraItem> listaOriginal;
     private final Context context;
     private int tarjetaExpandida = -1;
 
     public TarjetaTextoObraAdapter(List<TarjetaTextoObraItem> listaObras, Context context) {
         this.listaObras = listaObras;
+        this.listaOriginal = new ArrayList<>(listaObras);
         this.context = context;
     }
 
@@ -221,10 +224,44 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         }
     }
 
-    public void actualizarLista(List<TarjetaTextoObraItem> nuevaLista) {
-        this.listaObras = nuevaLista;
+    public void filtrar(String texto){
+
+        List<TarjetaTextoObraItem> listaFiltrada = new ArrayList<>();
+
+        if(texto == null || texto.isEmpty()){
+            listaFiltrada.addAll(listaOriginal);
+        }else{
+
+            texto = texto.toLowerCase();
+
+            for(TarjetaTextoObraItem obra : listaOriginal){
+
+                if(obra.getTitulo() != null &&
+                        obra.getTitulo().toLowerCase().contains(texto)){
+
+                    listaFiltrada.add(obra);
+                }
+
+            }
+        }
+
+        listaObras.clear();
+        listaObras.addAll(listaFiltrada);
+
         notifyDataSetChanged();
     }
+
+    public void actualizarLista(List<TarjetaTextoObraItem> nuevaLista) {
+
+        listaOriginal.clear();
+        listaOriginal.addAll(nuevaLista);
+
+        listaObras.clear();
+        listaObras.addAll(nuevaLista);
+
+        notifyDataSetChanged();
+    }
+
 
 //    // Like listener existente
 //    public interface OnLikeClickListener {
@@ -236,6 +273,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 //    public void setOnLikeClickListener(OnLikeClickListener listener) {
 //        this.listener = listener;
 //    }
+
 
     // Listener opcional para Visitar
     public interface OnVisitarClickListener {

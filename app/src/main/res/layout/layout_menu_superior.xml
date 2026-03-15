@@ -35,6 +35,13 @@
     <ImageView
         android:layout_width="40dp"
         android:layout_height="36dp"
+        android:src="@drawable/notificacion"
+        android:id="@+id/btnNotificaciones"
+        android:visibility="visible"/>
+
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="36dp"
         android:src="@drawable/favoritos"
         android:id="@+id/btnFavoritos"
         android:visibility="gone"/>

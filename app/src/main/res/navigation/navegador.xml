@@ -16,6 +16,15 @@
         tools:layout="@layout/fragment_frag_servicios" />
 
     <fragment
+        android:id="@+id/fragExplorar"
+        android:name="com.example.artistlan.Fragments.FragExplorar"
+        tools:layout="@layout/fragment_frag_explorar" />
+    <fragment
+        android:id="@+id/fragPortafolio"
+        android:name="com.example.artistlan.Fragments.FragPortafolio"
+        tools:layout="@layout/fragment_frag_portafolio" />
+
+    <fragment
         android:id="@+id/fragArtistas"
         android:name="com.example.artistlan.Fragments.FragArtistas"
         tools:layout="@layout/fragment_frag_artistas" />
@@ -40,7 +49,6 @@
         android:name="com.example.artistlan.Fragments.FragSubirObra"
         tools:layout="@layout/fragment_frag_subir_obra" />
 
-    <!-- NUEVO: fragSubirServicio registrado en este graph -->
     <fragment
         android:id="@+id/fragSubirServicio"
         android:name="com.example.artistlan.Fragments.FragSubirServicio"

@@ -29,7 +29,8 @@
             android:theme="@style/Theme.Artistlan" />
         <activity
             android:name=".Activitys.ActFragmentoPrincipal"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustPan"/>
         <activity
             android:name=".Activitys.ActIniciarSesion"
             android:exported="false" />

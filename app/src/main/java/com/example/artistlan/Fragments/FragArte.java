@@ -62,6 +62,13 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
         return inflater.inflate(R.layout.fragment_frag_arte, container, false);
     }
 
+    public void filtrarBusqueda(String texto){
+
+        if(adapter != null){
+            adapter.filtrar(texto);
+        }
+
+    }
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);

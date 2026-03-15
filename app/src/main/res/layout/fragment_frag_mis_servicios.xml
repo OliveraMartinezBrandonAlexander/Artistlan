@@ -16,8 +16,9 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerMisServicios"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:nestedScrollingEnabled="false"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
         android:paddingTop="10dp"/>
 
 </LinearLayout>

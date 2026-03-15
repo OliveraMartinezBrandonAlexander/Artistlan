@@ -9,6 +9,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,6 +52,12 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_frag_servicios, container, false);
+    }
+
+    public void filtrarBusqueda(String texto){
+        if(adapter != null){
+            adapter.filtrar(texto);
+        }
     }
 
     @Override
@@ -227,10 +235,12 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
 
     private void configurarServicios(View view) {
         recyclerServicios = view.findViewById(R.id.recyclerServicios);
-        recyclerServicios.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerServicios.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        adapter = new TarjetaTextoServicioAdapter(listaServicios, requireContext());
+        adapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
         recyclerServicios.setAdapter(adapter);
+
+        cargarTodosLosServicios();
     }
 
     private void cargarTodosLosServicios() {
@@ -243,9 +253,8 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
                 if (response.isSuccessful() && response.body() != null) {
                     List<TarjetaTextoServicioItem> items = convertir(response.body());
 
-                    listaServicios.clear();
-                    listaServicios.addAll(items);
-                    adapter.actualizarLista(listaServicios);
+                    listaServicios = new ArrayList<>(items);
+                    adapter.actualizarLista(items);
 
                 } else {
                     Toast.makeText(requireContext(), "Error al obtener servicios: " + response.code(), Toast.LENGTH_SHORT).show();
@@ -273,8 +282,10 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
                     dto.getCategoria(),
                     dto.getFotoPerfilAutor(),
                     false
+
             ));
         }
+
         return lista;
     }
 

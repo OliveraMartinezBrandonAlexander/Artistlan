@@ -5,17 +5,13 @@
         android:title="Inicio"
         android:icon="@drawable/inicio"/>
     <item
-        android:id="@+id/fragServicios"
-        android:title="Servicios"
-        android:icon="@drawable/servicios"/>
+        android:id="@+id/fragExplorar"
+        android:title="Explorar"
+        android:icon="@drawable/explorar"/>
     <item
-        android:title="Artistas"
-        android:id="@+id/fragArtistas"
-        android:icon="@drawable/artista"/>
-    <item
-        android:title="Arte"
-        android:id="@+id/fragArte"
-        android:icon="@drawable/arte"/>
+        android:title="Portafolio"
+        android:id="@+id/fragPortafolio"
+        android:icon="@drawable/ic_srv"/>
     <item
         android:title="Mi perfil"
         android:id="@+id/fragVerPerfil"

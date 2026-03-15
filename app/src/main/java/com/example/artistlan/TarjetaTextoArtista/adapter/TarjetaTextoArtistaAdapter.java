@@ -20,6 +20,7 @@ import com.bumptech.glide.Glide;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -27,6 +28,7 @@ import java.util.Random;
 public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaTextoArtistaAdapter.ViewHolder> {
 
     private List<TarjetaTextoArtistaItem> listaArtistas;
+    private List<TarjetaTextoArtistaItem> listaOriginal;
     private Context context;
     private int tarjetaExpandida = -1;
 
@@ -41,6 +43,7 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
 
     public TarjetaTextoArtistaAdapter(List<TarjetaTextoArtistaItem> listaArtistas, Context context) {
         this.listaArtistas = listaArtistas;
+        this.listaOriginal = new ArrayList<>(listaArtistas);
         this.context = context;
     }
 
@@ -241,9 +244,44 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         }
     }
 
+    public void filtrar(String texto){
+
+        List<TarjetaTextoArtistaItem> listaFiltrada = new ArrayList<>();
+
+        if(texto == null || texto.isEmpty()){
+
+            listaFiltrada.addAll(listaOriginal);
+
+        }else{
+
+            texto = texto.toLowerCase();
+
+            for(TarjetaTextoArtistaItem artista : listaOriginal){
+
+                if(artista.getNombre() != null &&
+                        artista.getNombre().toLowerCase().contains(texto)){
+
+                    listaFiltrada.add(artista);
+                }
+
+            }
+
+        }
+
+        listaArtistas.clear();
+        listaArtistas.addAll(listaFiltrada);
+
+        notifyDataSetChanged();
+    }
+
     public void actualizarLista(List<TarjetaTextoArtistaItem> nuevaLista) {
-        this.listaArtistas.clear();
-        this.listaArtistas.addAll(nuevaLista);
+
+        listaOriginal.clear();
+        listaOriginal.addAll(nuevaLista);
+
+        listaArtistas.clear();
+        listaArtistas.addAll(nuevaLista);
+
         notifyDataSetChanged();
     }
 }

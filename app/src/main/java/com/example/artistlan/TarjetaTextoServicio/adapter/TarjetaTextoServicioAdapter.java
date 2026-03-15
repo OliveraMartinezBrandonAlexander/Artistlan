@@ -17,16 +17,19 @@ import com.bumptech.glide.Glide;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTextoServicioAdapter.ViewHolder> {
 
     private List<TarjetaTextoServicioItem> listaServicios;
+    private List<TarjetaTextoServicioItem> listaOriginal;
     private final Context context;
     private int tarjetaExpandida = -1;
 
     public TarjetaTextoServicioAdapter(List<TarjetaTextoServicioItem> listaServicios, Context context) {
         this.listaServicios = listaServicios;
+        this.listaOriginal = new ArrayList<>(listaServicios);
         this.context = context;
     }
 
@@ -97,8 +100,44 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         return listaServicios != null ? listaServicios.size() : 0;
     }
 
+    public void filtrar(String texto){
+
+        List<TarjetaTextoServicioItem> listaFiltrada = new ArrayList<>();
+
+        if(texto == null || texto.isEmpty()){
+
+            listaFiltrada.addAll(listaOriginal);
+
+        }else{
+
+            texto = texto.toLowerCase();
+
+            for(TarjetaTextoServicioItem servicio : listaOriginal){
+
+                if(servicio.getTitulo() != null &&
+                        servicio.getTitulo().toLowerCase().contains(texto)){
+
+                    listaFiltrada.add(servicio);
+                }
+
+            }
+
+        }
+
+        listaServicios.clear();
+        listaServicios.addAll(listaFiltrada);
+
+        notifyDataSetChanged();
+    }
+
     public void actualizarLista(List<TarjetaTextoServicioItem> nuevaLista) {
-        this.listaServicios = nuevaLista;
+
+        listaOriginal.clear();
+        listaOriginal.addAll(nuevaLista);
+
+        listaServicios.clear();
+        listaServicios.addAll(nuevaLista);
+
         notifyDataSetChanged();
     }
 

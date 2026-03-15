@@ -7,11 +7,9 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -32,17 +30,11 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     private ImageButton btnEditarPefil;
 
-    private Button btnMisServicios, btnMiArte, btnSubirObra, btnSubirServicio;
-    private Button btnEditarObra, btnEditarServicio;
 
     // Ficha expandible
     private CardView cardPerfilInfo;
     private View expandedSectionPerfil;
 
-    // Segment control
-    private View segmentContainer;
-    private View segmentIndicator;
-    private boolean selectedObras = true;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -73,17 +65,6 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         btnEditarPefil = view.findViewById(R.id.btnEditarPefil);
         btnEditarPefil.setOnClickListener(this);
 
-        btnSubirObra = view.findViewById(R.id.btnSubirObra);
-        btnSubirServicio = view.findViewById(R.id.btnSubirServicio);
-        btnSubirObra.setOnClickListener(this);
-        btnSubirServicio.setOnClickListener(this);
-
-//        // Botones editar (nuevos)
-//        btnEditarObra = view.findViewById(R.id.btnEditarObra);
-//        btnEditarServicio = view.findViewById(R.id.btnEditarServicio);
-//        btnEditarObra.setOnClickListener(this);
-//        btnEditarServicio.setOnClickListener(this);
-
         // TextViews datos
         tvNombre = view.findViewById(R.id.VrpTxvNombre);
         tvUsuario = view.findViewById(R.id.VrpTxvUsuario);
@@ -96,26 +77,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
         imgFotoPerfil = view.findViewById(R.id.imgPerfil);
 
-        // Segment control refs
-        segmentContainer = view.findViewById(R.id.segmentContainer);
-        segmentIndicator = view.findViewById(R.id.segmentIndicator);
-
-        // Botones segmento
-        btnMiArte = view.findViewById(R.id.btnMiArte);
-        btnMisServicios = view.findViewById(R.id.btnMisServicios);
-
-        btnMiArte.setOnClickListener(v -> seleccionarSegmento(true));
-        btnMisServicios.setOnClickListener(v -> seleccionarSegmento(false));
-
-
         cargarDatosUsuario();
-
-        if (savedInstanceState == null) {
-            seleccionarSegmento(true);
-        } else {
-
-            seleccionarSegmento(true);
-        }
     }
 
     @Override
@@ -124,20 +86,6 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         cargarDatosUsuario();
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        Fragment fragmentoActual = getChildFragmentManager()
-                .findFragmentById(R.id.contenedorFragmentsPerfil);
-
-        if (fragmentoActual != null) {
-            getChildFragmentManager()
-                    .beginTransaction()
-                    .remove(fragmentoActual)
-                    .commitAllowingStateLoss();
-        }
-    }
 
     private void cargarDatosUsuario() {
         SharedPreferences prefs = requireActivity()
@@ -206,47 +154,6 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         }
     }
 
-    // ======== SEGMENT CONTROL ========
-
-    private void seleccionarSegmento(boolean obras) {
-        selectedObras = obras;
-
-        segmentContainer.post(() -> {
-            int w = segmentContainer.getWidth();
-            int half = w / 2;
-
-            ViewGroup.LayoutParams lp = segmentIndicator.getLayoutParams();
-            lp.width = half - (int) (8 * getResources().getDisplayMetrics().density); // margen aprox por padding
-            segmentIndicator.setLayoutParams(lp);
-
-            float targetX = obras ? 0f : half;
-            segmentIndicator.animate()
-                    .translationX(targetX)
-                    .setDuration(180)
-                    .start();
-
-            if (obras) {
-                btnMiArte.setTextColor(0xFFFFFFFF);
-                btnMisServicios.setTextColor(0xFF1E3A8A);
-            } else {
-                btnMiArte.setTextColor(0xFF1E3A8A);
-                btnMisServicios.setTextColor(0xFFFFFFFF);
-            }
-        });
-
-        if (obras) {
-            getChildFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.contenedorFragmentsPerfil, new FragMiArte())
-                    .commit();
-        } else {
-            getChildFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.contenedorFragmentsPerfil, new FragMisServicios())
-                    .commit();
-        }
-    }
-
     @Override
     public void onClick(View v) {
         int id = v.getId();
@@ -254,23 +161,9 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         if (id == R.id.btnFavoritos) {
             Navigation.findNavController(v).navigate(R.id.fragFavoritos);
 
-        } else if (id == R.id.btnSubirObra) {
-            Navigation.findNavController(v).navigate(R.id.fragSubirObra);
-
-        } else if (id == R.id.btnSubirServicio) {
-            Navigation.findNavController(v).navigate(R.id.fragSubirServicio);
-
         } else if (id == R.id.btnEditarPefil) {
             Intent intent = new Intent(v.getContext(), ActActualizarDatos.class);
             v.getContext().startActivity(intent);
-
-//        } else if (id == R.id.btnEditarObra) {
-//            // Pendiente: pantalla real de edición obra
-//            Toast.makeText(requireContext(), "Editar Obra (pendiente pantalla)", Toast.LENGTH_SHORT).show();
-//
-//        } else if (id == R.id.btnEditarServicio) {
-//            // Pendiente: pantalla real de edición servicio
-//            Toast.makeText(requireContext(), "Editar Servicio (pendiente pantalla)", Toast.LENGTH_SHORT).show();
         }
     }
 }

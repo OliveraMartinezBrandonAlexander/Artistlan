@@ -116,8 +116,6 @@ public class FragMiArte extends Fragment {
                     recyclerMisObras.setAdapter(adapter);
                     recyclerMisObras.invalidate();
                 });
-
-                Toast.makeText(requireContext(), "Obras cargadas: " + items.size(), Toast.LENGTH_SHORT).show();
             }
 
             @Override

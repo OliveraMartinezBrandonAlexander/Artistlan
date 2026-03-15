@@ -106,8 +106,6 @@ public class FragMisServicios extends Fragment {
 
                     recyclerMisServicios.invalidate();
                 });
-
-                Toast.makeText(requireContext(), "Servicios cargados: " + items.size(), Toast.LENGTH_SHORT).show();
             }
 
             @Override

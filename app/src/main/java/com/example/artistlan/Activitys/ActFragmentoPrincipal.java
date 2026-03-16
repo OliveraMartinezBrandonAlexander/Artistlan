@@ -11,6 +11,13 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 import android.graphics.RenderEffect;
 import android.graphics.Shader;
+import android.content.SharedPreferences;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import com.example.artistlan.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -23,6 +30,63 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private NavController navController;
     private ImageButton btnMenuLateral;
 
+    private void cargarHeaderDrawer() {
+        if (navigationView == null) return;
+
+        View headerView = navigationView.getHeaderView(0);
+        if (headerView == null) return;
+
+        ImageView imgPerfilDrawer = headerView.findViewById(R.id.imgPerfilDrawer);
+        TextView txtNombreDrawer = headerView.findViewById(R.id.txtNombreDrawer);
+        TextView txtCorreoDrawer = headerView.findViewById(R.id.txtCorreoDrawer);
+        TextView txtRolDrawer = headerView.findViewById(R.id.txtRolDrawer);
+
+        SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+
+        String nombre = prefs.getString("nombreCompleto", "Perfil de usuario");
+        String correo = prefs.getString("correo", "correo no disponible");
+
+        // Aquí usa la llave que realmente guardes en tu app
+        String rol = prefs.getString("rol", "");
+        String categoria = prefs.getString("categoria", "");
+        String modo = prefs.getString("modo", "");
+
+        String valorModo;
+        if (!modo.isEmpty()) {
+            valorModo = modo;
+        } else if (!rol.isEmpty()) {
+            valorModo = rol;
+        } else if (!categoria.isEmpty()) {
+            valorModo = "Artista";
+        } else {
+            valorModo = "Artista";
+        }
+
+        String fotoPerfil = prefs.getString("fotoPerfil", null);
+
+        txtNombreDrawer.setText(nombre.isEmpty() ? "Perfil de usuario" : nombre);
+        txtCorreoDrawer.setText(correo.isEmpty() ? "correo no disponible" : correo);
+        txtRolDrawer.setText("Modo: " + valorModo);
+
+        if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+            Glide.with(this)
+                    .load(fotoPerfil)
+                    .placeholder(R.drawable.cuenta)
+                    .error(R.drawable.cuenta)
+                    .skipMemoryCache(true)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .into(imgPerfilDrawer);
+        } else {
+            imgPerfilDrawer.setImageResource(R.drawable.cuenta);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        cargarHeaderDrawer();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +96,9 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         navigationView = findViewById(R.id.navigationView);
         btnMenuLateral = findViewById(R.id.btnMenuLateral);
 
+        drawerLayout.setScrimColor(0x99000000);
+
+        cargarHeaderDrawer();
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragmentContainerView);
@@ -48,9 +115,11 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             NavigationUI.setupWithNavController(navigationView, navController);
         }
 
-        btnMenuLateral.setOnClickListener(v ->
-                drawerLayout.openDrawer(GravityCompat.START)
-        );
+        if (btnMenuLateral != null) {
+            btnMenuLateral.setOnClickListener(v ->
+                    drawerLayout.openDrawer(GravityCompat.START)
+            );
+        }
 
         navigationView.setNavigationItemSelectedListener(item -> {
             if (navController != null) {

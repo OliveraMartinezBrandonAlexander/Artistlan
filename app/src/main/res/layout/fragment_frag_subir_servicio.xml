@@ -7,7 +7,7 @@
     android:background="@drawable/fon_ser"
     tools:context=".Fragments.FragSubirServicio">
 
-    <include layout="@layout/layout_menu_superior" />
+
 
     <View
         android:layout_width="match_parent"

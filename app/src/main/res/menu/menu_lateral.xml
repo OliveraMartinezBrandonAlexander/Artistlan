@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/fragVerPerfil"
+            android:icon="@drawable/cuenta"
+            android:title="Perfil del artista" />
+
+        <item
+            android:id="@+id/fragPortafolio"
+            android:icon="@drawable/ic_srv"
+            android:title="Portafolio de obras" />
+
+        <item
+            android:id="@+id/fragMiArte"
+            android:icon="@drawable/arte"
+            android:title="Mi arte" />
+
+        <item
+            android:id="@+id/fragFavoritos"
+            android:icon="@drawable/favoritos"
+            android:title="Favoritos" />
+    </group>
+
+    <item android:title="Opciones">
+        <menu>
+            <item
+                android:id="@+id/navCalendario"
+                android:icon="@drawable/ic_calendario"
+                android:title="Calendario de eventos" />
+
+            <item
+                android:id="@+id/navMensajes"
+                android:icon="@drawable/ic_mensajes"
+                android:title="Bandeja de mensajes" />
+
+            <item
+                android:id="@+id/navNotificaciones"
+                android:icon="@drawable/notificacion"
+                android:title="Notificaciones" />
+
+            <item
+                android:id="@+id/navConfiguracion"
+                android:icon="@drawable/ic_configuracion"
+                android:title="Configuración" />
+
+            <item
+                android:id="@+id/navCerrarSesion"
+                android:icon="@drawable/ic_cerrar_sesion"
+                android:title="Cerrar sesión" />
+        </menu>
+    </item>
+
+</menu>

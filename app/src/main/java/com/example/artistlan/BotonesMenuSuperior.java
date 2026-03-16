@@ -8,7 +8,6 @@ import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation;
 
 import com.example.artistlan.Activitys.MainActivity;
 
@@ -17,49 +16,42 @@ public class BotonesMenuSuperior {
     private final Fragment fragmento;
     private ImageButton btnMenuSuperior;
 
-    public BotonesMenuSuperior(Fragment fragmento, View ruta) {
+    public BotonesMenuSuperior(Fragment fragmento) {
         this.fragmento = fragmento;
-        inicializarMenuSuperior(ruta);
+        inicializarMenuSuperior();
     }
 
-    private void inicializarMenuSuperior(View ruta) {
-        btnMenuSuperior = ruta.findViewById(R.id.btnMenuSuperior);
+    private void inicializarMenuSuperior() {
+        btnMenuSuperior = fragmento.requireActivity().findViewById(R.id.btnMenuSuperior);
+
         if (btnMenuSuperior != null) {
-            btnMenuSuperior.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mostrarMenuPopup(v);
-                }
-            });
+            btnMenuSuperior.setOnClickListener(this::mostrarMenuPopup);
         }
     }
 
     private void mostrarMenuPopup(View anchorView) {
-        try {
-            PopupMenu popupMenu = new PopupMenu(fragmento.requireContext(), anchorView);
-            popupMenu.getMenuInflater().inflate(R.menu.menu_superior, popupMenu.getMenu());
-            popupMenu.setGravity(Gravity.END);
+        PopupMenu popupMenu = new PopupMenu(fragmento.requireContext(), anchorView);
+        popupMenu.getMenuInflater().inflate(R.menu.menu_superior, popupMenu.getMenu());
+        popupMenu.setGravity(Gravity.END);
 
-            popupMenu.setOnMenuItemClickListener(item -> {
-                int itemId = item.getItemId();
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
 
-                if (itemId == R.id.frag_historia_arte) {
-                    Toast.makeText(fragmento.getContext(), "Historia del Arte...", Toast.LENGTH_SHORT).show();
-                    return true;
-                } else if (itemId == R.id.frag_historia_artistlan) {
-                    Toast.makeText(fragmento.getContext(), "Historia de Artislan", Toast.LENGTH_SHORT).show();
-                    return true;
-                } else if (itemId == R.id.frag_cerrar_sesion) {
-                    Intent irActivity = new Intent(fragmento.requireContext(), MainActivity.class);
-                    fragmento.startActivity(irActivity);
-                    return true;
-                }
-                return false;
-            });
+            if (itemId == R.id.frag_historia_arte) {
+                Toast.makeText(fragmento.requireContext(), "Historia del Arte...", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (itemId == R.id.frag_historia_artistlan) {
+                Toast.makeText(fragmento.requireContext(), "Historia de Artistlan", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (itemId == R.id.frag_cerrar_sesion) {
+                Intent intent = new Intent(fragmento.requireContext(), MainActivity.class);
+                fragmento.startActivity(intent);
+                return true;
+            }
 
-            popupMenu.show();
-        } catch (Exception e) {
-            Toast.makeText(fragmento.getContext(), "Error al mostrar menú", Toast.LENGTH_SHORT).show();
-        }
+            return false;
+        });
+
+        popupMenu.show();
     }
 }

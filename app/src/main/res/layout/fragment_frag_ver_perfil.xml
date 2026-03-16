@@ -11,7 +11,7 @@
     android:focusable="true"
     tools:context=".Fragments.FragVerPerfil">
 
-    <include layout="@layout/layout_menu_superior" />
+
 
     <View
         android:layout_width="match_parent"

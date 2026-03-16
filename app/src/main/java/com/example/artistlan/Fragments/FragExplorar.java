@@ -28,7 +28,7 @@ public class FragExplorar extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_frag_explorar, container, false);
 
-        new com.example.artistlan.BotonesMenuSuperior(this, view);
+        new com.example.artistlan.BotonesMenuSuperior(this);
 
         chipGroup = view.findViewById(R.id.chipGroupExplorar);
         searchView = view.findViewById(R.id.searchExplorar);

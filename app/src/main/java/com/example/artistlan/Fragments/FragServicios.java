@@ -64,7 +64,7 @@ public class FragServicios extends Fragment implements PalabraCarruselAdapter.On
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        new BotonesMenuSuperior(this, view);
+        new BotonesMenuSuperior(this);
 
         configurarCarrusel(view);
         configurarServicios(view);

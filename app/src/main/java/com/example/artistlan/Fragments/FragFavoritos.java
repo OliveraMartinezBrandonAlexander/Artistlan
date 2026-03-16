@@ -31,7 +31,7 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
         super.onViewCreated(view, savedInstanceState);
 
         requireActivity().findViewById(R.id.MenuInferior).setVisibility(View.GONE);
-        new BotonesMenuSuperior(this, view);
+        new BotonesMenuSuperior(this);
 
         // Referencias
         btnArte = view.findViewById(R.id.btnArte);

@@ -8,7 +8,7 @@
     android:background="#E1C699"
     tools:context=".Fragments.FragMain">
 
-    <include layout="@layout/layout_menu_superior" />
+    <!-- <include layout="@layout/layout_menu_superior" /> -->
 
     <View
         android:layout_width="match_parent"

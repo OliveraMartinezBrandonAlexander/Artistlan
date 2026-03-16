@@ -6,7 +6,7 @@
     android:orientation="vertical"
     tools:context=".Fragments.FragSubirObra">
 
-    <include layout="@layout/layout_menu_superior" />
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

@@ -66,7 +66,7 @@ public class FragArtistas extends Fragment implements PalabraCarruselAdapter.OnC
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        new BotonesMenuSuperior(this, view);
+        new BotonesMenuSuperior(this);
 
         configurarCarrusel(view);
         configurarArtistas(view);

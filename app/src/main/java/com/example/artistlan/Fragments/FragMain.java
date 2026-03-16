@@ -42,7 +42,7 @@ public class FragMain extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_frag_main, container, false);
-        new BotonesMenuSuperior(this, root);
+        new BotonesMenuSuperior(this);
         viewPager = root.findViewById(R.id.viewPagerCarrusel);
         btnIzq = root.findViewById(R.id.btnCarruselIzquierdo);
         btnDer = root.findViewById(R.id.btnCarruselDerecho);

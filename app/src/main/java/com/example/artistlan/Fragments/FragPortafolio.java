@@ -36,7 +36,7 @@ public class FragPortafolio extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        new com.example.artistlan.BotonesMenuSuperior(this, view);
+        new com.example.artistlan.BotonesMenuSuperior(this);
 
         tabLayout = view.findViewById(R.id.tabLayoutPortafolio);
         viewPager = view.findViewById(R.id.viewPagerPortafolio);

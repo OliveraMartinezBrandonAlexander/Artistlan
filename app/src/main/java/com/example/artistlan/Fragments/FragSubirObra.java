@@ -219,7 +219,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         btnRegresar = view.findViewById(R.id.btnRegresar);
         btnRegresar.setOnClickListener(this);
 
-        new BotonesMenuSuperior(this, view);
+        new BotonesMenuSuperior(this);
     }
 
     @Override

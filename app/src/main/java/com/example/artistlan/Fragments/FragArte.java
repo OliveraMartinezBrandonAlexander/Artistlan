@@ -73,7 +73,7 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        new BotonesMenuSuperior(this, view);
+        new BotonesMenuSuperior(this);
 
         obraApi = RetrofitClient.getClient().create(ObraApi.class);
 

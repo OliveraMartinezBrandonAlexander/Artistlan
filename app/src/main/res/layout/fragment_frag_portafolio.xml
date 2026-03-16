@@ -20,7 +20,7 @@
             android:orientation="vertical"
             app:layout_scrollFlags="scroll|enterAlways">
 
-            <include layout="@layout/layout_menu_superior"/>
+
 
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tabLayoutPortafolio"

@@ -54,4 +54,9 @@
         android:name="com.example.artistlan.Fragments.FragSubirServicio"
         tools:layout="@layout/fragment_frag_subir_servicio" />
 
+    <fragment
+        android:id="@+id/fragMiArte"
+        android:name="com.example.artistlan.Fragments.FragMiArte"
+        tools:layout="@layout/fragment_frag_mi_arte" />
+
 </navigation>

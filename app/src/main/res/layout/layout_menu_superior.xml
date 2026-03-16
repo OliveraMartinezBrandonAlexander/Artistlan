@@ -11,6 +11,15 @@
     android:paddingTop="24dp"
     android:paddingBottom="8dp">
 
+    <ImageButton
+        android:id="@+id/btnMenuLateral"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_menu_hamburguer"
+        android:contentDescription="Menú superior"
+        android:padding="8dp" />
+
     <ImageView
         android:id="@+id/ivLogo"
         android:layout_width="wrap_content"

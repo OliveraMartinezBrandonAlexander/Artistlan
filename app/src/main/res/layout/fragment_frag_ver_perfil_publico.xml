@@ -8,7 +8,7 @@
     android:orientation="vertical"
     tools:context=".Fragments.FragVerPerfilPublico">
 
-    <include layout="@layout/layout_menu_superior" />
+
 
     <View
         android:layout_width="match_parent"

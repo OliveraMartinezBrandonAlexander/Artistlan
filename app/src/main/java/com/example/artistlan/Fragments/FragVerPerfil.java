@@ -46,26 +46,25 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        new BotonesMenuSuperior(this, view);
+        new BotonesMenuSuperior(this);
 
         View root = view.findViewById(R.id.rootPerfil);
         root.setOnClickListener(v -> colapsarFicha());
 
-        btnFavoritos = view.findViewById(R.id.btnFavoritos);
-        btnFavoritos.setVisibility(View.VISIBLE);
-        btnFavoritos.setOnClickListener(this);
+        btnFavoritos = requireActivity().findViewById(R.id.btnFavoritos);
+        if (btnFavoritos != null) {
+            btnFavoritos.setVisibility(View.VISIBLE);
+            btnFavoritos.setOnClickListener(this);
+        }
 
         cardPerfilInfo = view.findViewById(R.id.cardPerfilInfo);
         expandedSectionPerfil = view.findViewById(R.id.expanded_section_perfil);
 
-        cardPerfilInfo.setOnClickListener(v -> {
-            toggleFicha();
-        });
+        cardPerfilInfo.setOnClickListener(v -> toggleFicha());
 
         btnEditarPefil = view.findViewById(R.id.btnEditarPefil);
         btnEditarPefil.setOnClickListener(this);
 
-        // TextViews datos
         tvNombre = view.findViewById(R.id.VrpTxvNombre);
         tvUsuario = view.findViewById(R.id.VrpTxvUsuario);
         tvCorreo = view.findViewById(R.id.VrpTxvCorreo);
@@ -74,7 +73,6 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tvRedes = view.findViewById(R.id.VrpTxvRedes);
         tvFecNac = view.findViewById(R.id.VrpTxvFecNac);
         tvCategoria = view.findViewById(R.id.VrpTxvCategoria);
-
         imgFotoPerfil = view.findViewById(R.id.imgPerfil);
 
         cargarDatosUsuario();
@@ -159,7 +157,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         int id = v.getId();
 
         if (id == R.id.btnFavoritos) {
-            Navigation.findNavController(v).navigate(R.id.fragFavoritos);
+            Navigation.findNavController(requireView()).navigate(R.id.fragFavoritos);
 
         } else if (id == R.id.btnEditarPefil) {
             Intent intent = new Intent(v.getContext(), ActActualizarDatos.class);

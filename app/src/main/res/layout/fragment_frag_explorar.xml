@@ -21,15 +21,34 @@
 
 
             <!-- BUSCADOR -->
-            <SearchView
-                android:id="@+id/searchExplorar"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:layout_marginEnd="12dp"
                 android:layout_marginTop="12dp"
-                android:hint="Buscar en Artistlan"
-                app:navigationIcon="@android:drawable/ic_menu_search"/>
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <SearchView
+                    android:id="@+id/searchExplorar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Buscar en Artistlan"
+                    app:navigationIcon="@android:drawable/ic_menu_search"/>
+
+                <ImageButton
+                    android:id="@+id/btnFiltrosExplorar"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Mostrar filtros"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_list_24" />
+
+            </LinearLayout>
 
             <!-- SELECTORES -->
             <com.google.android.material.chip.ChipGroup

@@ -1,15 +1,20 @@
 package com.example.artistlan.Fragments;
 
 import android.app.AlertDialog;
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-
+import android.os.Environment;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
@@ -36,7 +41,9 @@ import com.example.artistlan.Conector.model.CategoriaDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.Conector.repository.FirebaseImageRepository;
 import com.example.artistlan.R;
-
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,6 +62,8 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private Uri uriImagenObra;
     private FirebaseImageRepository firebaseRepo;
     private ActivityResultLauncher<String> seleccionarImagenObraLauncher;
+    private ActivityResultLauncher<Void> tomarFotoLauncher;
+    private ActivityResultLauncher<String> permisoCamaraLauncher;
 
     private android.widget.EditText etTituloObra, etDescripcion, etPrecio, etMedidas, etTecnicas;
     private android.widget.RadioGroup rgOpciones;
@@ -76,6 +85,36 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                                 if (imgPreviewObra != null) {
                                     Glide.with(this).load(uri).into(imgPreviewObra);
                                 }
+                            }
+                        }
+                );
+        tomarFotoLauncher =
+                registerForActivityResult(
+                        new ActivityResultContracts.TakePicturePreview(),
+                        bitmap -> {
+                            if (bitmap != null) {
+                                Uri imagenCameraUri = guardarBitmapEnCache(bitmap);
+                                if (imagenCameraUri == null) {
+                                    Toast.makeText(getContext(), "No se pudo procesar la foto tomada.", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+
+                                uriImagenObra = imagenCameraUri;
+                                if (imgPreviewObra != null) {
+                                    Glide.with(this).load(uriImagenObra).into(imgPreviewObra);
+                                }
+                            }
+                        }
+                );
+
+        permisoCamaraLauncher =
+                registerForActivityResult(
+                        new ActivityResultContracts.RequestPermission(),
+                        isGranted -> {
+                            if (isGranted) {
+                                tomarFotoLauncher.launch(null);
+                            } else if (isAdded()) {
+                                Toast.makeText(getContext(), "Debes conceder permiso de cámara para tomar fotos.", Toast.LENGTH_LONG).show();
                             }
                         }
                 );
@@ -101,9 +140,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         btnSubirImg = view.findViewById(R.id.btnSubirImg);
         btnSubirObra = view.findViewById(R.id.btnSubirObra);
 
-        btnSubirImg.setOnClickListener(v ->
-                seleccionarImagenObraLauncher.launch("image/*")
-        );
+        btnSubirImg.setOnClickListener(v -> mostrarOpcionesImagen());
 
         btnSubirObra.setOnClickListener(v ->
                 validarYMostrarDialogoObra()
@@ -137,6 +174,59 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         });
 
         return view;
+    }
+
+    private void mostrarOpcionesImagen() {
+        if (!isAdded()) return;
+
+        String[] opciones = {"Elegir de galería", "Tomar foto con cámara"};
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Selecciona una opción")
+                .setItems(opciones, (dialog, which) -> {
+                    if (which == 0) {
+                        seleccionarImagenObraLauncher.launch("image/*");
+                    } else if (which == 1) {
+                        abrirCamaraConPermiso();
+                    }
+                })
+                .show();
+    }
+
+    private void abrirCamaraConPermiso() {
+        if (!isAdded()) return;
+
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            tomarFotoLauncher.launch(null);
+            return;
+        }
+
+        permisoCamaraLauncher.launch(Manifest.permission.CAMERA);
+    }
+
+    @Nullable
+    private Uri guardarBitmapEnCache(@NonNull Bitmap bitmap) {
+        if (getContext() == null) return null;
+
+        File picturesDir = new File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "obras");
+        if (!picturesDir.exists() && !picturesDir.mkdirs()) {
+            return null;
+        }
+
+        File imageFile = new File(picturesDir, "obra_" + System.currentTimeMillis() + ".jpg");
+
+        try (FileOutputStream fos = new FileOutputStream(imageFile)) {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos);
+            fos.flush();
+            return FileProvider.getUriForFile(
+                    requireContext(),
+                    requireContext().getPackageName() + ".fileprovider",
+                    imageFile
+            );
+        } catch (IOException | IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private void cargarCategorias() {

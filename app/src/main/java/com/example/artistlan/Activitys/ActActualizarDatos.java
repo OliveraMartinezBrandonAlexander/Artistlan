@@ -3,15 +3,21 @@ package com.example.artistlan.Activitys;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.Manifest;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.*;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
+import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.artistlan.Conector.RetrofitClient;
@@ -27,7 +33,9 @@ import com.example.artistlan.R;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -45,6 +53,8 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     private List<CategoriaDTO> listaCategorias;
 
     private ActivityResultLauncher<String> seleccionarImagenperfilLauncher;
+    private ActivityResultLauncher<Void> tomarFotoPerfilLauncher;
+    private ActivityResultLauncher<String> permisoCamaraPerfilLauncher;
     private Uri imageUri = null;
     private Button btnEliminarCuenta;
 
@@ -94,12 +104,86 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                             }
                         }
                 );
-        btnCambiarFoto.setOnClickListener(v -> seleccionarImagenperfilLauncher.launch("image/*"));
+        tomarFotoPerfilLauncher =
+                registerForActivityResult(
+                        new androidx.activity.result.contract.ActivityResultContracts.TakePicturePreview(),
+                        bitmap -> {
+                            if (bitmap != null) {
+                                Uri cameraUri = guardarBitmapPerfilEnCache(bitmap);
+                                if (cameraUri == null) {
+                                    Toast.makeText(this, "No se pudo procesar la foto tomada", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+                                imageUri = cameraUri;
+                                Glide.with(this).load(imageUri).centerCrop().into(imgFotoPerfil);
+                            }
+                        }
+                );
+
+        permisoCamaraPerfilLauncher =
+                registerForActivityResult(
+                        new androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+                        isGranted -> {
+                            if (isGranted) {
+                                tomarFotoPerfilLauncher.launch(null);
+                            } else {
+                                Toast.makeText(this, "Debes conceder permiso de cámara para tomar fotos", Toast.LENGTH_LONG).show();
+                            }
+                        }
+                );
+
+        btnCambiarFoto.setOnClickListener(v -> mostrarOpcionesFotoPerfil());
 
         // Cargar datos del usuario y categorías
         cargarDatosUsuario();
         cargarCategoriasDesdeApi();
     }
+
+    private void mostrarOpcionesFotoPerfil() {
+        String[] opciones = {"Elegir de galería", "Tomar foto con cámara"};
+
+        new AlertDialog.Builder(this)
+                .setTitle("Selecciona una opción")
+                .setItems(opciones, (dialog, which) -> {
+                    if (which == 0) {
+                        seleccionarImagenperfilLauncher.launch("image/*");
+                    } else if (which == 1) {
+                        abrirCamaraPerfilConPermiso();
+                    }
+                })
+                .show();
+    }
+
+    private void abrirCamaraPerfilConPermiso() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            tomarFotoPerfilLauncher.launch(null);
+            return;
+        }
+        permisoCamaraPerfilLauncher.launch(Manifest.permission.CAMERA);
+    }
+
+    private Uri guardarBitmapPerfilEnCache(Bitmap bitmap) {
+        File picturesDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "perfil");
+        if (!picturesDir.exists() && !picturesDir.mkdirs()) {
+            return null;
+        }
+
+        File imageFile = new File(picturesDir, "perfil_" + System.currentTimeMillis() + ".jpg");
+
+        try (FileOutputStream fos = new FileOutputStream(imageFile)) {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos);
+            fos.flush();
+            return FileProvider.getUriForFile(
+                    this,
+                    getPackageName() + ".fileprovider",
+                    imageFile
+            );
+        } catch (IOException | IllegalArgumentException e) {
+            return null;
+        }
+    }
+
 
     private void mostrarDatePicker() {
         Calendar calendar = Calendar.getInstance();

@@ -2,25 +2,30 @@ package com.example.artistlan.Fragments;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.PopupMenu;
 import android.widget.SearchView;
 
 import androidx.fragment.app.Fragment;
 
 import com.example.artistlan.R;
 import com.google.android.material.chip.ChipGroup;
-import com.google.android.material.search.SearchBar;
+
+import java.util.List;
 
 public class FragExplorar extends Fragment {
 
+    private static final int MENU_GROUP_FILTERS = 100;
+    private static final int MENU_ID_CLEAR_FILTERS = 1000;
+
     private ChipGroup chipGroup;
-    SearchView searchView;
+    private SearchView searchView;
+    private ImageButton btnFiltros;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -32,6 +37,7 @@ public class FragExplorar extends Fragment {
 
         chipGroup = view.findViewById(R.id.chipGroupExplorar);
         searchView = view.findViewById(R.id.searchExplorar);
+        btnFiltros = view.findViewById(R.id.btnFiltrosExplorar);
 
         // Fragment inicial
         cargarFragment(new FragArte());
@@ -71,9 +77,6 @@ public class FragExplorar extends Fragment {
             }
 
         });
-
-        searchView = view.findViewById(R.id.searchExplorar);
-
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 
             @Override
@@ -103,7 +106,53 @@ public class FragExplorar extends Fragment {
             }
         });
 
+        btnFiltros.setOnClickListener(v -> mostrarMenuFiltros());
+
         return view;
+    }
+
+    private void mostrarMenuFiltros() {
+        Fragment fragmentActual = getChildFragmentManager()
+                .findFragmentById(R.id.fragmentContainerExplorar);
+
+        if (!(fragmentActual instanceof FilterableExplorarFragment)) {
+            return;
+        }
+
+        FilterableExplorarFragment filterableFragment = (FilterableExplorarFragment) fragmentActual;
+        List<String> filtros = filterableFragment.getFilterOptions();
+
+        PopupMenu popupMenu = new PopupMenu(requireContext(), btnFiltros);
+        Menu menu = popupMenu.getMenu();
+        String filtroActivo = filterableFragment.getActiveFilter();
+
+        for (int i = 0; i < filtros.size(); i++) {
+            String filtro = filtros.get(i);
+            menu.add(MENU_GROUP_FILTERS, i, i, filtro)
+                    .setCheckable(true)
+                    .setChecked(filtro.equalsIgnoreCase(filtroActivo));
+        }
+
+        menu.setGroupCheckable(MENU_GROUP_FILTERS, true, true);
+
+        menu.add(Menu.NONE, MENU_ID_CLEAR_FILTERS, filtros.size(), "Borrar filtros")
+                .setEnabled(filtroActivo != null && !filtroActivo.isEmpty());
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == MENU_ID_CLEAR_FILTERS) {
+                filterableFragment.clearFilter();
+                return true;
+            }
+
+            if (item.getGroupId() == MENU_GROUP_FILTERS) {
+                filterableFragment.applyFilter(item.getTitle().toString());
+                return true;
+            }
+
+            return false;
+        });
+
+        popupMenu.show();
     }
 
     private void cerrarTeclado() {

@@ -1,59 +1,38 @@
 package com.example.artistlan.Fragments;
 
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.ObraApi;
-import com.example.artistlan.Conector.api.ObrasLikesApi;
 import com.example.artistlan.Conector.model.ObraDTO;
-
 import com.example.artistlan.R;
-import com.example.artistlan.Carrusel.adapter.PalabraCarruselAdapter;
-import com.example.artistlan.Carrusel.layout.CenterZoomLayoutManager;
-import com.example.artistlan.Carrusel.model.PalabraCarruselItem;
-
 import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCategoriaClickListener {
+public class FragArte extends Fragment implements FilterableExplorarFragment {
 
     private RecyclerView recyclerViewObras;
-    private RecyclerView recyclerViewCarrusel;
     private TarjetaTextoObraAdapter adapter;
-    private PalabraCarruselAdapter carruselAdapter;
-    private ImageButton btnIzq, btnDer;
-    private Button btnAplicarFiltro;
-
-    private List<PalabraCarruselItem> palabrasArte;
     private String categoriaFiltroActual = "";
-
-    private CenterZoomLayoutManager layoutManager;
-
     private ObraApi obraApi;
 
     @Override
@@ -62,13 +41,12 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
         return inflater.inflate(R.layout.fragment_frag_arte, container, false);
     }
 
-    public void filtrarBusqueda(String texto){
-
-        if(adapter != null){
+    public void filtrarBusqueda(String texto) {
+        if (adapter != null) {
             adapter.filtrar(texto);
         }
-
     }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -77,136 +55,46 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
 
         obraApi = RetrofitClient.getClient().create(ObraApi.class);
 
-        configurarCarrusel(view);
         configurarObras(view);
-        configurarBotonFiltro(view);
     }
 
-    private void configurarCarrusel(View view) {
-
-        recyclerViewCarrusel = view.findViewById(R.id.recyclerCarruselArte);
-        btnIzq = view.findViewById(R.id.btnCarruselIzquierdo);
-        btnDer = view.findViewById(R.id.btnCarruselDerecho);
-
-        layoutManager = new CenterZoomLayoutManager(getContext());
-        recyclerViewCarrusel.setLayoutManager(layoutManager);
-
-        palabrasArte = obtenerCategoriasDeBD();
-
-        carruselAdapter = new PalabraCarruselAdapter(palabrasArte, requireContext(), this);
-        recyclerViewCarrusel.setAdapter(carruselAdapter);
-
-        recyclerViewCarrusel.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    encontrarItemCentral();
-                }
-            }
-        });
-
-        btnDer.setOnClickListener(v -> {
-            int current = carruselAdapter.getItemSeleccionado();
-            if (current < carruselAdapter.getItemCount() - 2) {
-                recyclerViewCarrusel.smoothScrollToPosition(current + 1);
-                animarBoton(v);
-            }
-        });
-
-        btnIzq.setOnClickListener(v -> {
-            int current = carruselAdapter.getItemSeleccionado();
-            if (current > 1) {
-                recyclerViewCarrusel.smoothScrollToPosition(current - 1);
-                animarBoton(v);
-            }
-        });
-
-        recyclerViewCarrusel.post(() -> {
-            recyclerViewCarrusel.smoothScrollToPosition(1);
-            recyclerViewCarrusel.postDelayed(() -> {
-                carruselAdapter.setItemSeleccionado(1);
-            }, 100);
-        });
-    }
-
-    private void encontrarItemCentral() {
-        int centerX = recyclerViewCarrusel.getWidth() / 2;
-        float centerY = recyclerViewCarrusel.getHeight() / 2.0f;
-
-        View centerView = recyclerViewCarrusel.findChildViewUnder(centerX, centerY);
-
-        if (centerView != null) {
-            int position = recyclerViewCarrusel.getChildAdapterPosition(centerView);
-            if (position != RecyclerView.NO_POSITION &&
-                    position > 0 && position < carruselAdapter.getItemCount() - 1) {
-
-                carruselAdapter.setItemSeleccionado(position);
-            }
-        }
-    }
-
-    private List<PalabraCarruselItem> obtenerCategoriasDeBD() {
-        List<PalabraCarruselItem> categorias = new ArrayList<>();
-
-        String[] categoriasArray = {
+    @Override
+    public List<String> getFilterOptions() {
+        return Arrays.asList(
                 "Pintura", "Dibujo", "Escultura", "Fotografía", "Digital",
                 "Acuarela", "Óleo", "Acrílico", "Grabado", "Cerámica",
                 "Arte textil", "Collage", "Ilustración", "Mural",
                 "Arte abstracto", "Retrato", "Paisaje", "Arte conceptual"
-        };
+        );
+    }
 
-        int colorNormal = 0xFF4B2056;
-        int colorSeleccionado = 0xFF6A2D7A;
+    @Override
+    public String getActiveFilter() {
+        return categoriaFiltroActual;
+    }
 
-        for (String cat : categoriasArray) {
-            categorias.add(new PalabraCarruselItem(
-                    cat,
-                    cat,
-                    colorNormal,
-                    colorSeleccionado
-            ));
+    @Override
+    public void applyFilter(String filter) {
+        if (filter == null || filter.isEmpty()) {
+            clearFilter();
+            return;
         }
 
-        return categorias;
-    }
-
-    private void configurarBotonFiltro(View view) {
-        btnAplicarFiltro = view.findViewById(R.id.btnAplicarFiltro);
-        btnAplicarFiltro.setVisibility(View.GONE);
-
-        btnAplicarFiltro.setOnClickListener(v -> {
-            PalabraCarruselItem categoria = carruselAdapter.getCategoriaSeleccionada();
-            if (categoria != null) {
-                String categoriaNombre = categoria.getPalabra();
-
-                boolean yaActivo = categoriaNombre.equalsIgnoreCase(categoriaFiltroActual);
-
-                // Aplica o desactiva el filtro
-                aplicarFiltro(categoriaNombre);
-
-                // Actualiza el texto del botón según el estado anterior
-                if (yaActivo) {
-                    btnAplicarFiltro.setText("Aplicar Filtro: " + categoriaNombre);
-                } else {
-                    btnAplicarFiltro.setText("Desactivar Filtro: " + categoriaNombre);
-                }
-
-                animarBoton(v);
-            }
-        });
-    }
-
-    private void aplicarFiltro(String categoriaNombre) {
-
-        if (categoriaFiltroActual.equals(categoriaNombre)) {
+        if (filter.equalsIgnoreCase(categoriaFiltroActual)) {
             categoriaFiltroActual = "";
             Toast.makeText(getContext(), "Filtro desactivado", Toast.LENGTH_SHORT).show();
         } else {
-            categoriaFiltroActual = categoriaNombre;
-            Toast.makeText(getContext(), "Filtrando: " + categoriaNombre, Toast.LENGTH_SHORT).show();
+            categoriaFiltroActual = filter;
+            Toast.makeText(getContext(), "Filtrando: " + filter, Toast.LENGTH_SHORT).show();
         }
 
+        obtenerObrasDeAPI();
+    }
+
+    @Override
+    public void clearFilter() {
+        categoriaFiltroActual = "";
+        Toast.makeText(getContext(), "Filtros borrados", Toast.LENGTH_SHORT).show();
         obtenerObrasDeAPI();
     }
 
@@ -235,8 +123,6 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
                 List<TarjetaTextoObraItem> items = new ArrayList<>();
 
                 for (ObraDTO dto : response.body()) {
-
-                    // FILTRO
                     if (!categoriaFiltroActual.isEmpty() &&
                             (dto.getNombreCategoria() == null || !categoriaFiltroActual.equalsIgnoreCase(dto.getNombreCategoria()))) {
                         continue;
@@ -270,40 +156,5 @@ public class FragArte extends Fragment implements PalabraCarruselAdapter.OnCateg
                 Toast.makeText(getContext(), "Fallo: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
-    }
-
-    private void animarBoton(View v) {
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(v, "scaleX", 1f, 1.2f, 1f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(v, "scaleY", 1f, 1.2f, 1f);
-
-        AnimatorSet set = new AnimatorSet();
-        set.playTogether(scaleX, scaleY);
-        set.setDuration(300);
-        set.start();
-    }
-
-    @Override
-    public void onCategoriaClick(int position, PalabraCarruselItem categoria) {
-        if (position > 0 && position < carruselAdapter.getItemCount() - 1) {
-            recyclerViewCarrusel.smoothScrollToPosition(position);
-        }
-    }
-
-    @Override
-    public void onCategoriaCentrada(int position, PalabraCarruselItem categoria) {
-        if (categoria != null && !categoria.getPalabra().isEmpty()) {
-            btnAplicarFiltro.setVisibility(View.VISIBLE);
-
-            String nombre = categoria.getPalabra();
-
-            if (nombre.equalsIgnoreCase(categoriaFiltroActual)) {
-                btnAplicarFiltro.setText("Desactivar Filtro: " + nombre);
-            } else {
-                btnAplicarFiltro.setText("Aplicar Filtro: " + nombre);
-            }
-
-        } else {
-            btnAplicarFiltro.setVisibility(View.GONE);
-        }
     }
 }

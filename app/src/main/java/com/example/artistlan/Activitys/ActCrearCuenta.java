@@ -233,9 +233,9 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         dividerShimmer.post(() -> {
             cancelAnimator(dividerShimmerAnim);
 
-            float distance = 135f;
+            float distance = 400f;
             dividerShimmerAnim = ObjectAnimator.ofFloat(dividerShimmer, "translationX", -distance, distance);
-            dividerShimmerAnim.setDuration(1500);
+            dividerShimmerAnim.setDuration(2000);
             dividerShimmerAnim.setRepeatCount(ValueAnimator.INFINITE);
             dividerShimmerAnim.setRepeatMode(ValueAnimator.RESTART);
             dividerShimmerAnim.setInterpolator(new AccelerateDecelerateInterpolator());

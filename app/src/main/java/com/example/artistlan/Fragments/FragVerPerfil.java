@@ -26,7 +26,7 @@ import com.example.artistlan.R;
 public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     private TextView tvNombre, tvUsuario, tvCorreo, tvDescripcion, tvTelefono, tvRedes, tvFecNac, tvCategoria;
-    private ImageView imgFotoPerfil, btnFavoritos;
+    private ImageView imgFotoPerfil;
 
     private ImageButton btnEditarPefil;
 
@@ -51,11 +51,6 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         View root = view.findViewById(R.id.rootPerfil);
         root.setOnClickListener(v -> colapsarFicha());
 
-        btnFavoritos = requireActivity().findViewById(R.id.btnFavoritos);
-        if (btnFavoritos != null) {
-            btnFavoritos.setVisibility(View.VISIBLE);
-            btnFavoritos.setOnClickListener(this);
-        }
 
         cardPerfilInfo = view.findViewById(R.id.cardPerfilInfo);
         expandedSectionPerfil = view.findViewById(R.id.expanded_section_perfil);
@@ -156,10 +151,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     public void onClick(View v) {
         int id = v.getId();
 
-        if (id == R.id.btnFavoritos) {
-            Navigation.findNavController(requireView()).navigate(R.id.fragFavoritos);
-
-        } else if (id == R.id.btnEditarPefil) {
+        if (id == R.id.btnEditarPefil) {
             Intent intent = new Intent(v.getContext(), ActActualizarDatos.class);
             v.getContext().startActivity(intent);
         }

@@ -2,66 +2,64 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layoutBarraSuperior"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="#CAD7E0"
+    android:layout_height="72dp"
+    android:background="@drawable/bg_topbar_artistlan"
+    android:elevation="10dp"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingStart="8dp"
-    android:paddingEnd="8dp"
-    android:paddingTop="24dp"
-    android:paddingBottom="8dp">
+    android:paddingStart="14dp"
+    android:paddingEnd="14dp">
 
     <ImageButton
         android:id="@+id/btnMenuLateral"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:background="@android:color/transparent"
+        android:contentDescription="Abrir menú lateral"
+        android:padding="6dp"
+        android:scaleType="centerInside"
         android:src="@drawable/ic_menu_hamburguer"
-        android:contentDescription="Menú superior"
-        android:padding="8dp" />
+        android:tint="@color/artistlan_menu_icon_default" />
 
     <ImageView
         android:id="@+id/ivLogo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="10dp"
         android:adjustViewBounds="true"
-        android:maxWidth="40dp"
-        android:maxHeight="36dp"
+        android:contentDescription="Logo ARTISTLAN"
         android:scaleType="fitCenter"
-        android:src="@drawable/logo"
-        android:contentDescription="Logo ARTISTLAN" />
+        android:src="@drawable/logo" />
 
     <TextView
+        android:id="@+id/txtTituloTopBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
         android:layout_weight="1"
-        android:layout_marginStart="4dp"
+        android:shadowColor="#CC000000"
+        android:shadowDx="0"
+        android:shadowDy="2"
+        android:shadowRadius="4"
         android:text="ARTISTLAN"
-        android:textColor="@android:color/black"
-        android:textSize="18sp"
+        android:textColor="@color/artistlan_menu_text_primary"
+        android:textSize="22sp"
         android:textStyle="bold" />
 
-    <ImageView
-        android:layout_width="40dp"
-        android:layout_height="36dp"
-        android:src="@drawable/notificacion"
-        android:id="@+id/btnNotificaciones"
-        android:visibility="visible"/>
+    <FrameLayout
+        android:layout_width="44dp"
+        android:layout_height="44dp">
 
-    <ImageView
-        android:layout_width="40dp"
-        android:layout_height="36dp"
-        android:src="@drawable/favoritos"
-        android:id="@+id/btnFavoritos"
-        android:visibility="gone"/>
-
-    <ImageButton
-        android:id="@+id/btnMenuSuperior"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="@android:color/transparent"
-        android:src="@drawable/ic_menu"
-        android:contentDescription="Menú superior"
-        android:padding="8dp" />
+        <ImageButton
+            android:id="@+id/btnNotificaciones"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:contentDescription="Notificaciones"
+            android:padding="6dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/notificacion"
+            android:tint="@color/artistlan_menu_notification" />
+    </FrameLayout>
 
 </LinearLayout>

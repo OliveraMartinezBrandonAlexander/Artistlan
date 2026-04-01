@@ -54,8 +54,8 @@
 
     <LinearLayout
         android:id="@+id/contentContainer"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="353dp"
+        android:layout_height="372dp"
         android:layout_marginStart="28dp"
         android:layout_marginEnd="28dp"
         android:gravity="center_horizontal"
@@ -127,10 +127,10 @@
                 android:text="Iniciar sesión"
                 android:textColor="@color/artistlan_text_primary"
                 android:textSize="17sp"
-                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <com.airbnb.lottie.LottieAnimationView
                 android:id="@+id/lottieLogin"
@@ -177,10 +177,10 @@
                 android:text="Crear cuenta"
                 android:textColor="@color/artistlan_text_primary"
                 android:textSize="17sp"
-                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <com.airbnb.lottie.LottieAnimationView
                 android:id="@+id/lottieCrear"
@@ -197,6 +197,6 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        </LinearLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

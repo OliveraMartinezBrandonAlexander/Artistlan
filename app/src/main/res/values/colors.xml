@@ -7,28 +7,71 @@
     <color name="light_gray">#F5F5F5</color>
     <color name="GRIS">#4C5467</color>
 
-        <!-- Fondo -->
-        <color name="artistlan_bg_top">#12091D</color>
-        <color name="artistlan_bg_mid">#1E1030</color>
-        <color name="artistlan_bg_bottom">#0B0612</color>
+    <!-- Fondo login / pantallas oscuras -->
+    <color name="artistlan_bg_top">#12091D</color>
+    <color name="artistlan_bg_mid">#1E1030</color>
+    <color name="artistlan_bg_bottom">#0B0612</color>
 
-        <!-- Superficies -->
-        <color name="artistlan_surface">#1EFFFFFF</color>
-        <color name="artistlan_stroke">#33FFFFFF</color>
+    <!-- Superficies base actuales -->
+    <color name="artistlan_surface">#1EFFFFFF</color>
+    <color name="artistlan_stroke">#33FFFFFF</color>
 
-        <!-- Texto -->
-        <color name="artistlan_text_primary">#FFFFFFFF</color>
-        <color name="artistlan_text_secondary">#D0D4E6</color>
+    <!-- Texto base actual -->
+    <color name="artistlan_text_primary">#FFFFFFFF</color>
+    <color name="artistlan_text_secondary">#D0D4E6</color>
 
-        <!-- Colores base personalizables a futuro -->
-        <color name="artistlan_primary">#B28DFF</color>
-        <color name="artistlan_primary_light">#D6C2FF</color>
+    <!-- Colores base personalizables -->
+    <color name="artistlan_primary">#B28DFF</color>
+    <color name="artistlan_primary_light">#D6C2FF</color>
 
-        <color name="artistlan_secondary">#FF85D0</color>
-        <color name="artistlan_secondary_light">#FFC4E9</color>
+    <color name="artistlan_secondary">#FF85D0</color>
+    <color name="artistlan_secondary_light">#FFC4E9</color>
 
-        <!-- Texto de botones -->
-        <color name="artistlan_button_text_dark">#1A1026</color>
-        <color name="artistlan_button_text_light">#2A1020</color>
+    <!-- Texto de botones -->
+    <color name="artistlan_button_text_dark">#1A1026</color>
+    <color name="artistlan_button_text_light">#2A1020</color>
 
+    <!-- ===== MENUS ===== -->
+    <!-- ===== MENUS / TEMA OSCURO PREMIUM ===== -->
+    <color name="artistlan_menu_bg">#0E0917</color>
+
+    <color name="artistlan_menu_topbar">#211132</color>
+    <color name="artistlan_menu_topbar_2">#2A1441</color>
+
+    <color name="artistlan_menu_bottombar">#1B102B</color>
+    <color name="artistlan_menu_bottombar_2">#26123B</color>
+
+    <color name="artistlan_menu_drawer">#D9111A22</color>
+    <color name="artistlan_menu_drawer_header">#E31A2532</color>
+
+    <color name="artistlan_menu_surface">#241431</color>
+    <color name="artistlan_menu_surface_soft">#2D183F</color>
+    <color name="artistlan_menu_surface_glass">#33FFFFFF</color>
+
+    <color name="artistlan_menu_accent">#A97CFF</color>
+    <color name="artistlan_menu_accent_strong">#8C5CFF</color>
+    <color name="artistlan_menu_accent_soft">#33B894FF</color>
+
+    <color name="artistlan_menu_accent_secondary">#FF88D8</color>
+    <color name="artistlan_menu_accent_secondary_soft">#2EFF88D8</color>
+
+    <color name="artistlan_menu_icon_default">#D7C8F7</color>
+    <color name="artistlan_menu_icon_active">#FFFFFF</color>
+    <color name="artistlan_menu_icon_soft">#A895D6</color>
+
+    <color name="artistlan_menu_text_primary">#FFFFFFFF</color>
+    <color name="artistlan_menu_text_secondary">#D3C6E8</color>
+    <color name="artistlan_menu_text_muted">#A99BC2</color>
+    <color name="artistlan_menu_text_on_accent">#FFFFFFFF</color>
+
+    <color name="artistlan_menu_stroke">#42FFFFFF</color>
+    <color name="artistlan_menu_stroke_soft">#24FFFFFF</color>
+    <color name="artistlan_menu_shadow">#55000000</color>
+
+    <color name="artistlan_menu_notification">#FFFFFFFF</color>
+
+    <!-- Glows / esferas -->
+    <color name="artistlan_menu_glow_purple">#7A7C3AED</color>
+    <color name="artistlan_menu_glow_pink">#66FF6FD8</color>
+    <color name="artistlan_menu_glow_blue">#4D6DA8FF</color>
 </resources>

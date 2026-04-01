@@ -298,9 +298,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         dividerShimmer.post(() -> {
             cancelAnimator(dividerShimmerAnim);
 
-            float distance = 130f;
+            float distance = 250f;
             dividerShimmerAnim = ObjectAnimator.ofFloat(dividerShimmer, "translationX", -distance, distance);
-            dividerShimmerAnim.setDuration(1500);
+            dividerShimmerAnim.setDuration(1800);
             dividerShimmerAnim.setRepeatCount(ValueAnimator.INFINITE);
             dividerShimmerAnim.setRepeatMode(ValueAnimator.RESTART);
             dividerShimmerAnim.setInterpolator(new AccelerateDecelerateInterpolator());

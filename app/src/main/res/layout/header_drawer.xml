@@ -1,48 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="140dp"
+    android:layout_height="152dp"
+    android:background="@drawable/bg_drawer_header_artistlan"
+    android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:padding="16dp"
-    android:background="@drawable/bg_header_glass"
-    android:gravity="center_vertical">
+    android:paddingStart="18dp"
+    android:paddingTop="18dp"
+    android:paddingEnd="18dp"
+    android:paddingBottom="18dp">
 
-    <ImageView
-        android:id="@+id/imgPerfilDrawer"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:src="@drawable/cuenta"
-        android:scaleType="centerCrop"
-        android:contentDescription="Foto de perfil" />
+    <FrameLayout
+        android:layout_width="74dp"
+        android:layout_height="74dp"
+        android:background="@drawable/bg_drawer_avatar"
+        android:padding="6dp">
+
+        <ImageView
+            android:id="@+id/imgPerfilDrawer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="Foto de perfil"
+            android:scaleType="centerCrop"
+            android:src="@drawable/cuenta" />
+    </FrameLayout>
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginStart="12dp">
+        android:layout_marginStart="14dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/txtNombreDrawer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:shadowColor="#CC000000"
+            android:shadowDx="0"
+            android:shadowDy="2"
+            android:shadowRadius="4"
             android:text="Perfil de usuario"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:textColor="@android:color/black" />
+            android:textColor="@color/artistlan_menu_text_primary"
+            android:textSize="19sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/txtCorreoDrawer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:text="demo@artistlan.com"
-            android:textColor="@android:color/black" />
+            android:textColor="@color/artistlan_menu_text_secondary"
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/txtRolDrawer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_drawer_item_selected"
+            android:paddingStart="12dp"
+            android:paddingTop="5dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="5dp"
             android:text="Modo: Artista"
-            android:textColor="@android:color/black" />
+            android:textColor="@color/artistlan_menu_text_on_accent"
+            android:textSize="12sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
 </LinearLayout>

@@ -64,7 +64,6 @@
             android:paddingTop="8dp"
             android:paddingBottom="16dp">
 
-            <!-- Fuera del panel -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -95,15 +94,14 @@
 
             </LinearLayout>
 
-            <!-- Panel principal glass -->
             <LinearLayout
                 android:id="@+id/IsFormContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="26dp"
+                android:background="@drawable/bg_form_glass_panel"
                 android:orientation="vertical"
-                android:padding="22dp"
-                android:background="@drawable/bg_form_glass_panel">
+                android:padding="22dp">
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -111,8 +109,8 @@
 
                     <com.airbnb.lottie.LottieAnimationView
                         android:id="@+id/IsLottieSide"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
+                        android:layout_width="76dp"
+                        android:layout_height="71dp"
                         android:layout_alignParentStart="true"
                         android:layout_centerVertical="true"
                         app:lottie_autoPlay="true"
@@ -140,7 +138,7 @@
 
                 <FrameLayout
                     android:id="@+id/IsDividerContainer"
-                    android:layout_width="110dp"
+                    android:layout_width="150dp"
                     android:layout_height="6dp"
                     android:layout_gravity="center_horizontal"
                     android:layout_marginTop="14dp">
@@ -157,7 +155,7 @@
                         android:layout_width="26dp"
                         android:layout_height="6dp"
                         android:layout_gravity="center_vertical"
-                        android:alpha="0.95"
+                        android:alpha="1"
                         android:background="@drawable/bg_divider_shimmer" />
                 </FrameLayout>
 
@@ -258,16 +256,6 @@
                         android:paddingStart="18dp"
                         android:paddingEnd="18dp">
 
-                        <com.airbnb.lottie.LottieAnimationView
-                            android:id="@+id/IsLottieButton"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:layout_alignParentStart="true"
-                            android:layout_centerVertical="true"
-                            app:lottie_autoPlay="true"
-                            app:lottie_loop="true"
-                            app:lottie_rawRes="@raw/login" />
-
                         <TextView
                             android:id="@+id/IsTxtBtnIniciarSesion"
                             android:layout_width="wrap_content"
@@ -295,7 +283,6 @@
 
     </ScrollView>
 
-    <!-- Overlay error / espera -->
     <FrameLayout
         android:id="@+id/IsResultOverlay"
         android:layout_width="match_parent"
@@ -310,10 +297,10 @@
             android:layout_width="320dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:orientation="vertical"
+            android:background="@drawable/bg_dialog_solid_panel"
             android:gravity="center_horizontal"
-            android:padding="24dp"
-            android:background="@drawable/bg_dialog_solid_panel">
+            android:orientation="vertical"
+            android:padding="24dp">
 
             <com.airbnb.lottie.LottieAnimationView
                 android:id="@+id/IsResultLottie"

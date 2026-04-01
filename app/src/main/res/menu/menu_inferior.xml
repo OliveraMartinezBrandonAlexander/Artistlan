@@ -1,19 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+
     <item
         android:id="@+id/fragMain"
-        android:title="Inicio"
-        android:icon="@drawable/inicio"/>
+        android:icon="@drawable/inicio"
+        android:title="Inicio" />
+
     <item
         android:id="@+id/fragExplorar"
-        android:title="Explorar"
-        android:icon="@drawable/explorar"/>
+        android:icon="@drawable/explorar"
+        android:title="Explorar" />
+
     <item
-        android:title="Portafolio"
         android:id="@+id/fragPortafolio"
-        android:icon="@drawable/ic_srv"/>
+        android:icon="@drawable/ic_srv"
+        android:title="Portafolio" />
+
     <item
-        android:title="Mi perfil"
         android:id="@+id/fragVerPerfil"
-        android:icon="@drawable/cuenta"/>
+        android:icon="@drawable/cuenta"
+        android:title="Mi perfil" />
+
 </menu>

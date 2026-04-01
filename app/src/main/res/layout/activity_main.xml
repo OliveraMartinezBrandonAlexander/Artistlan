@@ -1,72 +1,202 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".Activitys.MainActivity"
-    android:background="@drawable/panmain"
-    android:padding="40dp"
-    >
+    android:background="@drawable/bg_main_welcome"
+    tools:context=".Activitys.MainActivity">
+
+    <View
+        android:id="@+id/glowTopLeft"
+        android:layout_width="260dp"
+        android:layout_height="260dp"
+        android:alpha="0.55"
+        android:background="@drawable/bg_glow_purple"
+        android:translationX="-80dp"
+        android:translationY="-40dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/glowTopRight"
+        android:layout_width="170dp"
+        android:layout_height="170dp"
+        android:alpha="0.22"
+        android:background="@drawable/bg_glow_soft_white"
+        android:translationX="35dp"
+        android:translationY="120dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/glowBottomRight"
+        android:layout_width="290dp"
+        android:layout_height="290dp"
+        android:alpha="0.52"
+        android:background="@drawable/bg_glow_pink"
+        android:translationX="90dp"
+        android:translationY="90dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <View
+        android:id="@+id/glowBottomLeft"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:alpha="0.18"
+        android:background="@drawable/bg_glow_purple"
+        android:translationX="-40dp"
+        android:translationY="40dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:id="@+id/contentContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:layout_marginEnd="28dp"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:gravity="center"
-        android:padding="40dp">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/titulomain"
-            android:layout_width="270dp"
-            android:layout_height="80dp"
-            android:layout_marginBottom="40dp"
-            android:fontFamily="sans-serif-black"
-            android:gravity="center_horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/urbanist_bold"
+            android:letterSpacing="0.04"
             android:text="ARTISTLAN"
-            android:textSize="40dp">
+            android:textColor="@color/artistlan_text_primary"
+            android:textSize="40sp" />
 
-        </TextView>
         <TextView
             android:id="@+id/texto1"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="“DONDE EL ARTE Y EL ARTISTA CONVERGEN”"
-            android:gravity="center_horizontal"
-            android:fontFamily="sans-serif-black"
-            android:textSize="15dp">
-        </TextView>
-
-        <Button
-            android:id="@+id/btnInicioSesion"
-            android:layout_width="150dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="INICIAR SESION"
-            android:padding="15dp"
-            android:layout_marginBottom="80dp"
-            android:backgroundTint="#b3b3b3"
-            android:textColor="#000000" />
+            android:layout_marginTop="20dp"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:text="Donde el arte y el artista convergen"
+            android:textColor="@color/artistlan_text_secondary"
+            android:textSize="16sp" />
+
+        <FrameLayout
+            android:id="@+id/dividerContainer"
+            android:layout_width="100dp"
+            android:layout_height="6dp"
+            android:layout_marginTop="18dp">
+
+            <View
+                android:id="@+id/dividerBase"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_divider_glow" />
+
+            <View
+                android:id="@+id/dividerShimmer"
+                android:layout_width="26dp"
+                android:layout_height="6dp"
+                android:layout_gravity="center_vertical"
+                android:alpha="0.95"
+                android:background="@drawable/bg_divider_shimmer" />
+        </FrameLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/btnInicioSesion"
+            android:layout_width="329dp"
+            android:layout_height="62dp"
+            android:layout_marginTop="42dp"
+            android:background="@drawable/bg_btn_bubble_glass_primary"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless">
+
+            <TextView
+                android:id="@+id/txtBtnInicioSesion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:text="Iniciar sesión"
+                android:textColor="@color/artistlan_text_primary"
+                android:textSize="17sp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/lottieLogin"
+                android:layout_width="47dp"
+                android:layout_height="65dp"
+                android:layout_marginEnd="6dp"
+                app:layout_constraintBottom_toBottomOf="@id/txtBtnInicioSesion"
+                app:layout_constraintEnd_toStartOf="@id/txtBtnInicioSesion"
+                app:layout_constraintTop_toTopOf="@id/txtBtnInicioSesion"
+                app:lottie_autoPlay="true"
+                app:lottie_loop="true"
+                app:lottie_rawRes="@raw/login" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
         <TextView
             android:id="@+id/texto2"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="Aun no tienes cuenta? Crea una "
-            android:gravity="center_horizontal"
-            android:fontFamily="sans-serif-black"
-            android:padding="15dp">
-        </TextView>
-        <Button
-            android:id="@+id/btnCrearCuenta"
-            android:layout_width="150dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Crear Cuenta"
-            android:layout_marginBottom="15dp"
-            android:backgroundTint="#b3b3b3"
-            android:textColor="@color/black" />
+            android:layout_marginTop="26dp"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:text="¿Aún no tienes cuenta?"
+            android:textColor="@color/artistlan_text_secondary"
+            android:textSize="15sp" />
 
-    </LinearLayout>
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/btnCrearCuenta"
+            android:layout_width="322dp"
+            android:layout_height="62dp"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_btn_bubble_glass_secondary"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless">
 
+            <TextView
+                android:id="@+id/txtBtnCrearCuenta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:text="Crear cuenta"
+                android:textColor="@color/artistlan_text_primary"
+                android:textSize="17sp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
 
-</LinearLayout>
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/lottieCrear"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginEnd="16dp"
+                app:layout_constraintBottom_toBottomOf="@id/txtBtnCrearCuenta"
+                app:layout_constraintEnd_toStartOf="@id/txtBtnCrearCuenta"
+                app:layout_constraintTop_toTopOf="@id/txtBtnCrearCuenta"
+                app:layout_constraintVertical_bias="0.428"
+                app:lottie_autoPlay="true"
+                app:lottie_loop="true"
+                app:lottie_rawRes="@raw/lottie_create_side" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

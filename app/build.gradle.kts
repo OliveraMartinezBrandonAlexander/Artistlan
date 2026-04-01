@@ -67,4 +67,5 @@ dependencies {
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 
     implementation ("com.getbase:floatingactionbutton:1.10.1")
+    implementation ("com.airbnb.android:lottie:6.4.0")
 }

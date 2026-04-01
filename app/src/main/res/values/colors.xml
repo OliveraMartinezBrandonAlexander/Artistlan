@@ -7,4 +7,28 @@
     <color name="light_gray">#F5F5F5</color>
     <color name="GRIS">#4C5467</color>
 
+        <!-- Fondo -->
+        <color name="artistlan_bg_top">#12091D</color>
+        <color name="artistlan_bg_mid">#1E1030</color>
+        <color name="artistlan_bg_bottom">#0B0612</color>
+
+        <!-- Superficies -->
+        <color name="artistlan_surface">#1EFFFFFF</color>
+        <color name="artistlan_stroke">#33FFFFFF</color>
+
+        <!-- Texto -->
+        <color name="artistlan_text_primary">#FFFFFFFF</color>
+        <color name="artistlan_text_secondary">#D0D4E6</color>
+
+        <!-- Colores base personalizables a futuro -->
+        <color name="artistlan_primary">#B28DFF</color>
+        <color name="artistlan_primary_light">#D6C2FF</color>
+
+        <color name="artistlan_secondary">#FF85D0</color>
+        <color name="artistlan_secondary_light">#FFC4E9</color>
+
+        <!-- Texto de botones -->
+        <color name="artistlan_button_text_dark">#1A1026</color>
+        <color name="artistlan_button_text_light">#2A1020</color>
+
 </resources>

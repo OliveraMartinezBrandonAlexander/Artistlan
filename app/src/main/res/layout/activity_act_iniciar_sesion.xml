@@ -1,143 +1,360 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/IsLayMain"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="30dp"
-    android:background="@drawable/fondois"
+    android:background="@drawable/bg_create_account_screen"
     tools:context=".Activitys.ActIniciarSesion">
 
-    <LinearLayout
-        android:id="@+id/IsLayCard"
+    <View
+        android:id="@+id/IsGlowTop"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:alpha="0.42"
+        android:background="@drawable/bg_glow_purple"
+        android:translationX="-55dp"
+        android:translationY="-35dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/IsGlowCenter"
+        android:layout_width="210dp"
+        android:layout_height="210dp"
+        android:alpha="0.18"
+        android:background="@drawable/bg_glow_soft_white"
+        android:translationY="95dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/IsGlowBottom"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:alpha="0.38"
+        android:background="@drawable/bg_glow_pink"
+        android:translationX="70dp"
+        android:translationY="85dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ScrollView
+        android:id="@+id/IsScroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingStart="24dp"
+        android:paddingTop="22dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="28dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:id="@+id/IsLayCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="8dp"
+            android:paddingBottom="16dp">
+
+            <!-- Fuera del panel -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/IsBtnRegresar"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_back_bubble"
+                    android:contentDescription="Regresar"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/regresarimg" />
+
+                <TextView
+                    android:id="@+id/IsTxtBrand"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/urbanist_bold"
+                    android:letterSpacing="0.05"
+                    android:text="ARTISTLAN"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="26sp" />
+
+            </LinearLayout>
+
+            <!-- Panel principal glass -->
+            <LinearLayout
+                android:id="@+id/IsFormContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:orientation="vertical"
+                android:padding="22dp"
+                android:background="@drawable/bg_form_glass_panel">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <com.airbnb.lottie.LottieAnimationView
+                        android:id="@+id/IsLottieSide"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        app:lottie_autoPlay="true"
+                        app:lottie_loop="true"
+                        app:lottie_rawRes="@raw/login" />
+
+                    <TextView
+                        android:id="@+id/IsTxtTitulo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Inicio de sesión"
+                        android:textColor="@color/artistlan_text_primary"
+                        android:textSize="24sp" />
+
+                    <View
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:visibility="invisible" />
+
+                </RelativeLayout>
+
+                <FrameLayout
+                    android:id="@+id/IsDividerContainer"
+                    android:layout_width="110dp"
+                    android:layout_height="6dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="14dp">
+
+                    <View
+                        android:id="@+id/IsDividerBase"
+                        android:layout_width="match_parent"
+                        android:layout_height="4dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/bg_divider_glow" />
+
+                    <View
+                        android:id="@+id/IsDividerShimmer"
+                        android:layout_width="26dp"
+                        android:layout_height="6dp"
+                        android:layout_gravity="center_vertical"
+                        android:alpha="0.95"
+                        android:background="@drawable/bg_divider_shimmer" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/IsTxtInstruccion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:text="Ingresa tu nombre de usuario o correo"
+                    android:textColor="@color/artistlan_text_secondary"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/IsTxtCorreoLbl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="22dp"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Correo Electrónico"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/correoinicio"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="14dp"
+                    android:background="@drawable/bg_input_artistlan"
+                    android:hint="ejemplo@gmail.com"
+                    android:inputType="textEmailAddress"
+                    android:paddingStart="18dp"
+                    android:paddingEnd="18dp"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textColorHint="#9FB1C7" />
+
+                <TextView
+                    android:id="@+id/IsTxtUsuarioLbl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Nombre de usuario"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/usuarioinicio"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="14dp"
+                    android:background="@drawable/bg_input_artistlan"
+                    android:hint="Usuario123"
+                    android:inputType="textPersonName"
+                    android:paddingStart="18dp"
+                    android:paddingEnd="18dp"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textColorHint="#9FB1C7" />
+
+                <TextView
+                    android:id="@+id/IsTxtPassLbl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Contraseña"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/contrainicio"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="22dp"
+                    android:background="@drawable/bg_input_artistlan"
+                    android:hint="Contra123"
+                    android:inputType="textPassword"
+                    android:paddingStart="18dp"
+                    android:paddingEnd="18dp"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textColorHint="#9FB1C7" />
+
+                <FrameLayout
+                    android:id="@+id/btnIniciarSesion"
+                    android:layout_width="match_parent"
+                    android:layout_height="62dp"
+                    android:layout_marginTop="22dp"
+                    android:background="@drawable/bg_btn_bubble_glass_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:paddingStart="18dp"
+                        android:paddingEnd="18dp">
+
+                        <com.airbnb.lottie.LottieAnimationView
+                            android:id="@+id/IsLottieButton"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_alignParentStart="true"
+                            android:layout_centerVertical="true"
+                            app:lottie_autoPlay="true"
+                            app:lottie_loop="true"
+                            app:lottie_rawRes="@raw/login" />
+
+                        <TextView
+                            android:id="@+id/IsTxtBtnIniciarSesion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerInParent="true"
+                            android:fontFamily="sans-serif-black"
+                            android:text="Iniciar sesión"
+                            android:textColor="@color/artistlan_text_primary"
+                            android:textSize="17sp" />
+
+                        <View
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:visibility="invisible" />
+
+                    </RelativeLayout>
+
+                </FrameLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- Overlay error / espera -->
+    <FrameLayout
+        android:id="@+id/IsResultOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="15dp"
-        android:background="@drawable/bordes_redondeados"
-        android:backgroundTint="#A6A1BBCE">
+        android:background="#73000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
 
-        <ImageButton
-            android:id="@+id/IsBtnRegresar"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:src="@drawable/regresarimg"
-            android:background="@android:color/transparent"
-            android:scaleType="centerInside"
-            android:adjustViewBounds="true"
-            android:padding="4dp"
-            android:contentDescription="Regresar" />
-
-
-        <TextView
-            android:id="@+id/IsTxtTitulo"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:id="@+id/IsResultDialog"
+            android:layout_width="320dp"
             android:layout_height="wrap_content"
-            android:text="Inicio de Sesión"
-            android:gravity="center"
-            android:fontFamily="sans-serif-black"
-            android:textSize="16sp"
-            android:padding="5dp" />
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:padding="24dp"
+            android:background="@drawable/bg_dialog_solid_panel">
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/darker_gray"
-            android:layout_marginBottom="10dp"
-            android:layout_marginTop="5dp" />
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/IsResultLottie"
+                android:layout_width="130dp"
+                android:layout_height="130dp"
+                app:lottie_autoPlay="false"
+                app:lottie_loop="false" />
 
-        <TextView
-            android:id="@+id/IsTxtInstruccion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Ingresa tu nombre de usuario o correo:"
-            android:gravity="center"
-            android:textSize="16sp"
-            android:layout_marginBottom="10dp" />
+            <TextView
+                android:id="@+id/IsResultTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:fontFamily="sans-serif-black"
+                android:text="Resultado"
+                android:textColor="@android:color/white"
+                android:textSize="21sp" />
 
-        <TextView
-            android:id="@+id/IsTxtCorreoLbl"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Correo Electrónico"
-            android:fontFamily="sans-serif-black"
-            android:textSize="14sp"
-            android:layout_marginTop="10dp" />
+            <TextView
+                android:id="@+id/IsResultMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:text="Mensaje"
+                android:textColor="#E8EDF7"
+                android:textSize="14sp" />
 
-        <EditText
-            android:id="@+id/correoinicio"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/editredondo"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="12dp"
-            android:hint="ejemplo@gmail.com"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:inputType="textEmailAddress"
-            android:textColor="#202020" />
+            <Button
+                android:id="@+id/IsResultOk"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="18dp"
+                android:background="@drawable/bg_btn_bubble_glass_secondary"
+                android:text="Aceptar"
+                android:textAllCaps="false"
+                android:textColor="@color/artistlan_text_primary"
+                android:textSize="16sp" />
 
-        <TextView
-            android:id="@+id/IsTxtUsuarioLbl"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Nombre de usuario"
-            android:fontFamily="sans-serif-black"
-            android:textSize="14sp" />
+        </LinearLayout>
 
-        <EditText
-            android:id="@+id/usuarioinicio"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/editredondo"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="12dp"
-            android:hint="Tamalero2007"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:inputType="textPersonName"
-            android:textColor="#202020" />
+    </FrameLayout>
 
-        <TextView
-            android:id="@+id/IsTxtPassLbl"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Contraseña"
-            android:fontFamily="sans-serif-black"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/contrainicio"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/editredondo"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="20dp"
-            android:hint="Contra123"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:inputType="textPassword"
-            android:textColor="#202020" />
-
-        <Button
-            android:id="@+id/btnIniciarSesion"
-            android:layout_width="150dp"
-            android:layout_height="50dp"
-            android:text="INICIAR SESIÓN"
-            android:padding="10dp"
-            android:layout_marginBottom="24dp"
-            android:backgroundTint="#6C6C6C"
-            android:textColor="@android:color/white"
-            android:layout_gravity="center_horizontal" />
-
-
-    </LinearLayout>
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

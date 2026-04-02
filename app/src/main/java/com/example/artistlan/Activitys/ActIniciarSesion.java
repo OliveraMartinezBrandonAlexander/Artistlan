@@ -4,7 +4,6 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
@@ -31,6 +30,10 @@ import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeEffectsApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -43,7 +46,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
     private EditText etCorreo, etUsuario, etContrasena;
     private UsuarioApi api;
 
-    private View glowTop, glowCenter, glowBottom, formContainer, dividerShimmer;
+    private View glowTop, glowCenter, glowBottom, formContainer, dividerShimmer, dividerBase, rootMain;
     private ObjectAnimator glowTopY, glowTopX, glowTopAlpha;
     private ObjectAnimator glowCenterY, glowCenterX, glowCenterAlpha;
     private ObjectAnimator glowBottomY, glowBottomX, glowBottomAlpha;
@@ -52,7 +55,10 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
     private View resultOverlay, resultDialog;
     private View resultOk;
     private TextView resultTitle, resultMessage;
+    private TextView txtBrand, txtTitulo, txtInstruccion, txtCorreoLbl, txtUsuarioLbl, txtPassLbl;
     private LottieAnimationView resultLottie, sideLottie;
+
+    private ThemeManager themeManager;
 
     private boolean waitingMode = false;
     private boolean isNavigating = false;
@@ -67,6 +73,10 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_act_iniciar_sesion);
 
+        themeManager = new ThemeManager(this);
+
+        rootMain = findViewById(R.id.IsLayMain);
+
         etCorreo = findViewById(R.id.correoinicio);
         etUsuario = findViewById(R.id.usuarioinicio);
         etContrasena = findViewById(R.id.contrainicio);
@@ -79,6 +89,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         glowBottom = findViewById(R.id.IsGlowBottom);
         formContainer = findViewById(R.id.IsFormContainer);
         dividerShimmer = findViewById(R.id.IsDividerShimmer);
+        dividerBase = findViewById(R.id.IsDividerBase);
 
         resultOverlay = findViewById(R.id.IsResultOverlay);
         resultDialog = findViewById(R.id.IsResultDialog);
@@ -87,9 +98,16 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         resultMessage = findViewById(R.id.IsResultMessage);
         resultLottie = findViewById(R.id.IsResultLottie);
 
+        txtBrand = findViewById(R.id.IsTxtBrand);
+        txtTitulo = findViewById(R.id.IsTxtTitulo);
+        txtInstruccion = findViewById(R.id.IsTxtInstruccion);
+        txtCorreoLbl = findViewById(R.id.IsTxtCorreoLbl);
+        txtUsuarioLbl = findViewById(R.id.IsTxtUsuarioLbl);
+        txtPassLbl = findViewById(R.id.IsTxtPassLbl);
+
         sideLottie = findViewById(R.id.IsLottieSide);
 
-        tintLottieWhite(sideLottie);
+        applyThemeOnlyColors();
 
         btnIniciarSesion.setOnClickListener(this);
         btnRegresar.setOnClickListener(this);
@@ -104,12 +122,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         ScrollView scrollView = findViewById(R.id.IsScroll);
         ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
             int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-            v.setPadding(
-                    v.getPaddingLeft(),
-                    v.getPaddingTop(),
-                    v.getPaddingRight(),
-                    imeHeight
-            );
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), imeHeight);
             return insets;
         });
 
@@ -119,13 +132,56 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         startDividerShimmer();
     }
 
-    private void tintLottieWhite(LottieAnimationView lottieView) {
-        if (lottieView == null) return;
+    private void applyThemeOnlyColors() {
+        ThemeApplier.applySystemBars(this, themeManager);
 
+        if (rootMain != null) {
+            rootMain.setBackgroundColor(themeManager.color(ThemeKeys.BG_BOTTOM));
+        }
+
+        ThemeApplier.applyTextPrimary(txtBrand, themeManager);
+        ThemeApplier.applyTextPrimary(txtTitulo, themeManager);
+        ThemeApplier.applyTextSecondary(txtInstruccion, themeManager);
+        ThemeApplier.applyTextPrimary(txtCorreoLbl, themeManager);
+        ThemeApplier.applyTextPrimary(txtUsuarioLbl, themeManager);
+        ThemeApplier.applyTextPrimary(txtPassLbl, themeManager);
+        ThemeApplier.applyTextPrimary(resultTitle, themeManager);
+        ThemeApplier.applyTextSecondary(resultMessage, themeManager);
+
+        ThemeApplier.applyInput(etCorreo, themeManager);
+        ThemeApplier.applyInput(etUsuario, themeManager);
+        ThemeApplier.applyInput(etContrasena, themeManager);
+
+        ThemeApplier.applyPrimaryButton(btnIniciarSesion, themeManager);
+        ThemeApplier.applySecondaryButton(resultOk, themeManager);
+
+        ThemeEffectsApplier.applyGlowIntensity(glowTop, themeManager, ThemeKeys.GLOW_PRIMARY);
+        ThemeEffectsApplier.applyGlowIntensity(glowCenter, themeManager, ThemeKeys.GLOW_TERTIARY);
+        ThemeEffectsApplier.applyGlowIntensity(glowBottom, themeManager, ThemeKeys.GLOW_SECONDARY);
+
+        if (dividerBase != null && dividerBase.getBackground() != null) {
+            dividerBase.getBackground().setColorFilter(
+                    themeManager.color(ThemeKeys.ACCOUNT_DIVIDER),
+                    PorterDuff.Mode.SRC_ATOP
+            );
+        }
+
+        if (dividerShimmer != null && dividerShimmer.getBackground() != null) {
+            dividerShimmer.getBackground().setColorFilter(
+                    themeManager.color(ThemeKeys.ACCOUNT_SHIMMER),
+                    PorterDuff.Mode.SRC_ATOP
+            );
+        }
+
+        tintDecorativeLottie(sideLottie, themeManager.color(ThemeKeys.ICON_ACTIVE));
+    }
+
+    private void tintDecorativeLottie(LottieAnimationView lottieView, int color) {
+        if (lottieView == null) return;
         lottieView.addValueCallback(
                 new KeyPath("**"),
                 LottieProperty.COLOR_FILTER,
-                new LottieValueCallback<>(new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP))
+                new LottieValueCallback<>(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_ATOP))
         );
     }
 
@@ -158,7 +214,6 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
     private void setupPressAnimation(View view) {
         if (view == null) return;
-
         view.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
@@ -203,7 +258,6 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
     private ObjectAnimator createAnimator(View target, String property, float from, float to, long duration) {
         if (target == null) return null;
-
         ObjectAnimator animator = ObjectAnimator.ofFloat(target, property, from, to);
         animator.setDuration(duration);
         animator.setRepeatCount(ValueAnimator.INFINITE);
@@ -214,10 +268,8 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
     private void startDividerShimmer() {
         if (dividerShimmer == null) return;
-
         dividerShimmer.post(() -> {
             cancelAnimator(dividerShimmerAnim);
-
             float distance = 400f;
             dividerShimmerAnim = ObjectAnimator.ofFloat(dividerShimmer, "translationX", -distance, distance);
             dividerShimmerAnim.setDuration(2000);
@@ -356,15 +408,9 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                             .start();
                 }
 
-                if (glowTop != null) {
-                    glowTop.animate().alpha(0.12f).setDuration(300).start();
-                }
-                if (glowCenter != null) {
-                    glowCenter.animate().alpha(0.08f).setDuration(300).start();
-                }
-                if (glowBottom != null) {
-                    glowBottom.animate().alpha(0.10f).setDuration(300).start();
-                }
+                if (glowTop != null) glowTop.animate().alpha(0.12f).setDuration(300).start();
+                if (glowCenter != null) glowCenter.animate().alpha(0.08f).setDuration(300).start();
+                if (glowBottom != null) glowBottom.animate().alpha(0.10f).setDuration(300).start();
 
                 resultDialog.animate()
                         .alpha(0f)
@@ -375,13 +421,8 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                         .withEndAction(this::launchMainScreen)
                         .start();
 
-                resultOverlay.animate()
-                        .alpha(0f)
-                        .setDuration(280)
-                        .start();
-
+                resultOverlay.animate().alpha(0f).setDuration(280).start();
             }, 900);
-
         }, remaining);
     }
 
@@ -393,9 +434,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
     }
 
     private void hideResultDialog() {
-        if (resultLottie != null) {
-            resultLottie.cancelAnimation();
-        }
+        if (resultLottie != null) resultLottie.cancelAnimation();
 
         if (resultDialog == null || resultOverlay == null) return;
 
@@ -452,9 +491,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         call.enqueue(new Callback<UsuariosDTO>() {
             @Override
             public void onResponse(Call<UsuariosDTO> call, Response<UsuariosDTO> response) {
-
                 if (response.isSuccessful() && response.body() != null) {
-
                     UsuariosDTO user = response.body();
                     guardarUsuarioLogeado(user, contrasena);
 
@@ -481,7 +518,6 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                     });
 
                     showSuccessAndNavigate();
-
                 } else {
                     showErrorDialog("Credenciales incorrectas", "Revisa tu usuario, correo o contraseña.");
                 }
@@ -501,7 +537,6 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         editor.putInt("id", usuario.getIdUsuario());
         editor.putString("usuario", usuario.getUsuario());
         editor.putString("correo", usuario.getCorreo());
-
         editor.putString("nombreCompleto", usuario.getNombreCompleto());
         editor.putString("contrasena", contrasenaIngresada);
         editor.putString("telefono", usuario.getTelefono());
@@ -511,7 +546,6 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
         String foto = usuario.getFotoPerfil();
         editor.putString("fotoPerfil", foto != null ? foto : "");
-
         editor.apply();
     }
 
@@ -520,19 +554,18 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         super.onPause();
         cancelGlowAnimations();
         cancelAnimator(dividerShimmerAnim);
-
         if (resultLottie != null) resultLottie.cancelAnimation();
         if (sideLottie != null) sideLottie.cancelAnimation();
-
         uiHandler.removeCallbacksAndMessages(null);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        themeManager = new ThemeManager(this);
+        applyThemeOnlyColors();
         startGlowAnimations();
         startDividerShimmer();
-
         if (sideLottie != null && !sideLottie.isAnimating()) {
             sideLottie.playAnimation();
         }
@@ -543,10 +576,8 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         super.onDestroy();
         cancelGlowAnimations();
         cancelAnimator(dividerShimmerAnim);
-
         if (resultLottie != null) resultLottie.cancelAnimation();
         if (sideLottie != null) sideLottie.cancelAnimation();
-
         uiHandler.removeCallbacksAndMessages(null);
     }
 
@@ -554,11 +585,9 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         cancelAnimator(glowTopX);
         cancelAnimator(glowTopY);
         cancelAnimator(glowTopAlpha);
-
         cancelAnimator(glowCenterX);
         cancelAnimator(glowCenterY);
         cancelAnimator(glowCenterAlpha);
-
         cancelAnimator(glowBottomX);
         cancelAnimator(glowBottomY);
         cancelAnimator(glowBottomAlpha);

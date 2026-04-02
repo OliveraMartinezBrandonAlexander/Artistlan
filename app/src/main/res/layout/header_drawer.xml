@@ -1,73 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="152dp"
-    android:background="@drawable/bg_drawer_header_artistlan"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:paddingStart="18dp"
-    android:paddingTop="18dp"
-    android:paddingEnd="18dp"
-    android:paddingBottom="18dp">
+    android:layout_height="160dp"
+    android:background="@drawable/bg_drawer_header_artistlan">
 
-    <FrameLayout
-        android:layout_width="74dp"
-        android:layout_height="74dp"
-        android:background="@drawable/bg_drawer_avatar"
-        android:padding="6dp">
+    <View
+        android:id="@+id/drawerGlow1"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="start|top"
+        android:layout_marginStart="-30dp"
+        android:layout_marginTop="-20dp"
+        android:alpha="0.45"
+        android:background="@drawable/bg_menu_glow_purple" />
 
-        <ImageView
-            android:id="@+id/imgPerfilDrawer"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="Foto de perfil"
-            android:scaleType="centerCrop"
-            android:src="@drawable/cuenta" />
-    </FrameLayout>
+    <View
+        android:id="@+id/drawerGlow2"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
+        android:layout_gravity="end|bottom"
+        android:layout_marginEnd="-20dp"
+        android:layout_marginBottom="-10dp"
+        android:alpha="0.28"
+        android:background="@drawable/bg_menu_glow_pink" />
 
     <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="14dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="18dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="18dp">
 
-        <TextView
-            android:id="@+id/txtNombreDrawer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:shadowColor="#CC000000"
-            android:shadowDx="0"
-            android:shadowDy="2"
-            android:shadowRadius="4"
-            android:text="Perfil de usuario"
-            android:textColor="@color/artistlan_menu_text_primary"
-            android:textSize="19sp"
-            android:textStyle="bold" />
+        <FrameLayout
+            android:layout_width="74dp"
+            android:layout_height="74dp"
+            android:background="@drawable/bg_drawer_avatar"
+            android:padding="6dp">
 
-        <TextView
-            android:id="@+id/txtCorreoDrawer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="demo@artistlan.com"
-            android:textColor="@color/artistlan_menu_text_secondary"
-            android:textSize="13sp" />
+            <ImageView
+                android:id="@+id/imgPerfilDrawer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="Foto de perfil"
+                android:scaleType="centerCrop"
+                android:src="@drawable/cuenta" />
+        </FrameLayout>
 
-        <TextView
-            android:id="@+id/txtRolDrawer"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_drawer_item_selected"
-            android:paddingStart="12dp"
-            android:paddingTop="5dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="5dp"
-            android:text="Modo: Artista"
-            android:textColor="@color/artistlan_menu_text_on_accent"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtNombreDrawer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:shadowColor="#CC000000"
+                android:shadowDx="0"
+                android:shadowDy="2"
+                android:shadowRadius="4"
+                android:text="Perfil de usuario"
+                android:textColor="@android:color/white"
+                android:textSize="19sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtCorreoDrawer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="demo@artistlan.com"
+                android:textColor="#E0D3F5"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/txtRolDrawer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_drawer_item_selected"
+                android:paddingStart="12dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="5dp"
+                android:text="Modo: Artista"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
     </LinearLayout>
 
-</LinearLayout>
+</FrameLayout>

@@ -3,7 +3,6 @@ package com.example.artistlan.Activitys;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.DatePickerDialog;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
@@ -31,6 +30,10 @@ import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeEffectsApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -50,7 +53,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
     private EditText edtEmail, edtNombre, edtTel, edtFecha, edtUsuario, edtContra, edtContraConf;
     private UsuarioApi api;
 
-    private View glowTop, glowCenter, glowBottom, formContainer, dividerShimmer;
+    private View glowTop, glowCenter, glowBottom, formContainer, dividerShimmer, dividerBase, rootMain;
     private ObjectAnimator glowTopY, glowTopX, glowTopAlpha;
     private ObjectAnimator glowCenterY, glowCenterX, glowCenterAlpha;
     private ObjectAnimator glowBottomY, glowBottomX, glowBottomAlpha;
@@ -59,12 +62,15 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
     private View resultOverlay, resultDialog;
     private Button resultOk;
     private TextView resultTitle, resultMessage;
+    private TextView txtBrand, txtTitulo, txtUsuarioMainLbl, txtUsuarioDescLbl, txtEmailLbl, txtNombreLbl,
+            txtTelLbl, txtFechaLbl, txtPassMainLbl, txtPassDescLbl, txtPassConfLbl, txtSeparador2;
     private LottieAnimationView resultLottie, sideLottie;
+
+    private ThemeManager themeManager;
 
     private boolean closeAfterDialog = false;
     private boolean waitingMode = false;
 
-    // Nuevo: control para suavizar cambio de carga -> resultado
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
     private static final long MIN_WAIT_VISIBLE_MS = 1400L;
     private long waitingShownAt = 0L;
@@ -74,6 +80,10 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_act_crear_cuenta);
+
+        themeManager = new ThemeManager(this);
+
+        rootMain = findViewById(R.id.CrcLayMain);
 
         btnCrear = findViewById(R.id.CrcBtnCrc);
         edtEmail = findViewById(R.id.CrcEdtEmail);
@@ -91,6 +101,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         glowBottom = findViewById(R.id.CrcGlowBottom);
         formContainer = findViewById(R.id.CrcFormContainer);
         dividerShimmer = findViewById(R.id.CrcDividerShimmer);
+        dividerBase = findViewById(R.id.CrcDividerBase);
 
         resultOverlay = findViewById(R.id.CrcResultOverlay);
         resultDialog = findViewById(R.id.CrcResultDialog);
@@ -100,15 +111,26 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         resultLottie = findViewById(R.id.CrcResultLottie);
         sideLottie = findViewById(R.id.CrcLottieSide);
 
-        tintSideLottie(Color.WHITE);
+        txtBrand = findViewById(R.id.CrcTxtBrand);
+        txtTitulo = findViewById(R.id.CrcTxtTitulo);
+        txtUsuarioMainLbl = findViewById(R.id.CrcTxtUsuarioMainLbl);
+        txtUsuarioDescLbl = findViewById(R.id.CrcTxtUsuarioDescLbl);
+        txtEmailLbl = findViewById(R.id.CrcTxtEmailLbl);
+        txtNombreLbl = findViewById(R.id.CrcTxtNombreLbl);
+        txtTelLbl = findViewById(R.id.CrcTxtTelLbl);
+        txtFechaLbl = findViewById(R.id.CrcTxtFechaLbl);
+        txtPassMainLbl = findViewById(R.id.CrcTxtPassMainLbl);
+        txtPassDescLbl = findViewById(R.id.CrcTxtPassDescLbl);
+        txtPassConfLbl = findViewById(R.id.CrcTxtPassConfLbl);
+        txtSeparador2 = findViewById(R.id.CrcTxtSeparador2);
+
+        applyThemeOnlyColors();
 
         btnCrear.setOnClickListener(this);
         btnRegresar.setOnClickListener(this);
         resultOk.setOnClickListener(v -> {
             hideResultDialog();
-            if (closeAfterDialog) {
-                finish();
-            }
+            if (closeAfterDialog) finish();
         });
 
         edtFecha.setOnClickListener(v -> mostrarDatePicker());
@@ -120,15 +142,9 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         api = RetrofitClient.getClient().create(UsuarioApi.class);
 
         ScrollView scrollView = findViewById(R.id.CrcScroll);
-
         ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
             int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-            v.setPadding(
-                    v.getPaddingLeft(),
-                    v.getPaddingTop(),
-                    v.getPaddingRight(),
-                    imeHeight
-            );
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), imeHeight);
             return insets;
         });
 
@@ -138,10 +154,63 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         startDividerShimmer();
     }
 
-    private void tintSideLottie(int color) {
-        if (sideLottie == null) return;
+    private void applyThemeOnlyColors() {
+        ThemeApplier.applySystemBars(this, themeManager);
 
-        sideLottie.addValueCallback(
+        if (rootMain != null) {
+            rootMain.setBackgroundColor(themeManager.color(ThemeKeys.BG_BOTTOM));
+        }
+
+        ThemeApplier.applyTextPrimary(txtBrand, themeManager);
+        ThemeApplier.applyTextPrimary(txtTitulo, themeManager);
+        ThemeApplier.applyTextPrimary(txtUsuarioMainLbl, themeManager);
+        ThemeApplier.applyTextSecondary(txtUsuarioDescLbl, themeManager);
+        ThemeApplier.applyTextPrimary(txtEmailLbl, themeManager);
+        ThemeApplier.applyTextPrimary(txtNombreLbl, themeManager);
+        ThemeApplier.applyTextPrimary(txtTelLbl, themeManager);
+        ThemeApplier.applyTextPrimary(txtFechaLbl, themeManager);
+        ThemeApplier.applyTextPrimary(txtPassMainLbl, themeManager);
+        ThemeApplier.applyTextSecondary(txtPassDescLbl, themeManager);
+        ThemeApplier.applyTextSecondary(txtSeparador2, themeManager);
+        ThemeApplier.applyTextPrimary(txtPassConfLbl, themeManager);
+        ThemeApplier.applyTextPrimary(resultTitle, themeManager);
+        ThemeApplier.applyTextSecondary(resultMessage, themeManager);
+
+        ThemeApplier.applyInput(edtEmail, themeManager);
+        ThemeApplier.applyInput(edtNombre, themeManager);
+        ThemeApplier.applyInput(edtTel, themeManager);
+        ThemeApplier.applyInput(edtFecha, themeManager);
+        ThemeApplier.applyInput(edtUsuario, themeManager);
+        ThemeApplier.applyInput(edtContra, themeManager);
+        ThemeApplier.applyInput(edtContraConf, themeManager);
+
+        ThemeApplier.applyPrimaryButton(btnCrear, themeManager);
+        ThemeApplier.applySecondaryButton(resultOk, themeManager);
+
+        ThemeEffectsApplier.applyGlowIntensity(glowTop, themeManager, ThemeKeys.GLOW_PRIMARY);
+        ThemeEffectsApplier.applyGlowIntensity(glowCenter, themeManager, ThemeKeys.GLOW_TERTIARY);
+        ThemeEffectsApplier.applyGlowIntensity(glowBottom, themeManager, ThemeKeys.GLOW_SECONDARY);
+
+        if (dividerBase != null && dividerBase.getBackground() != null) {
+            dividerBase.getBackground().setColorFilter(
+                    themeManager.color(ThemeKeys.ACCOUNT_DIVIDER),
+                    PorterDuff.Mode.SRC_ATOP
+            );
+        }
+
+        if (dividerShimmer != null && dividerShimmer.getBackground() != null) {
+            dividerShimmer.getBackground().setColorFilter(
+                    themeManager.color(ThemeKeys.ACCOUNT_SHIMMER),
+                    PorterDuff.Mode.SRC_ATOP
+            );
+        }
+
+        tintDecorativeLottie(sideLottie, themeManager.color(ThemeKeys.ICON_ACTIVE));
+    }
+
+    private void tintDecorativeLottie(LottieAnimationView lottieView, int color) {
+        if (lottieView == null) return;
+        lottieView.addValueCallback(
                 new KeyPath("**"),
                 LottieProperty.COLOR_FILTER,
                 new LottieValueCallback<>(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_ATOP))
@@ -208,11 +277,9 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         glowTopX.start();
         glowTopY.start();
         glowTopAlpha.start();
-
         glowCenterX.start();
         glowCenterY.start();
         glowCenterAlpha.start();
-
         glowBottomX.start();
         glowBottomY.start();
         glowBottomAlpha.start();
@@ -232,7 +299,6 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
 
         dividerShimmer.post(() -> {
             cancelAnimator(dividerShimmerAnim);
-
             float distance = 400f;
             dividerShimmerAnim = ObjectAnimator.ofFloat(dividerShimmer, "translationX", -distance, distance);
             dividerShimmerAnim.setDuration(2000);
@@ -344,9 +410,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.CrcBtnCrc) {
-            if (validarCampos()) {
-                verificarNombreUsuario();
-            }
+            if (validarCampos()) verificarNombreUsuario();
         } else if (v.getId() == R.id.CrcBtnRegresar) {
             finish();
         }
@@ -423,7 +487,6 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
     private boolean validarContrasena(String pass) {
         if (pass == null) return false;
         if (pass.length() < 8) return false;
-
         Pattern p = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$");
         return p.matcher(pass).find();
     }
@@ -454,24 +517,20 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
                             edtUsuario.requestFocus();
                             showErrorDialog("Usuario ocupado", "El nombre de usuario ya está registrado.");
                             break;
-
                         case "CORREO_DUPLICADO":
                             edtEmail.setError("Correo ya existe");
                             edtEmail.requestFocus();
                             showErrorDialog("Correo duplicado", "El correo electrónico ya está registrado.");
                             break;
-
                         case "AMBOS_DUPLICADOS":
                             edtUsuario.setError("Usuario ya existe");
                             edtEmail.setError("Correo ya existe");
                             edtUsuario.requestFocus();
                             showErrorDialog("Datos duplicados", "Usuario y correo ya están registrados.");
                             break;
-
                         case "OK":
                             enviarCrearCuenta();
                             break;
-
                         default:
                             showErrorDialog("Error del servidor", "Respuesta inesperada: " + resultado);
                             break;
@@ -484,7 +543,6 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
             @Override
             public void onFailure(Call<String> call, Throwable t) {
                 btnCrear.setEnabled(true);
-                t.printStackTrace();
                 showErrorDialog("Fallo de red", "No se pudo verificar: " + t.getMessage());
             }
         });
@@ -538,13 +596,16 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         super.onPause();
         cancelGlowAnimations();
         cancelAnimator(dividerShimmerAnim);
-        resultLottie.cancelAnimation();
+        if (resultLottie != null) resultLottie.cancelAnimation();
+        if (sideLottie != null) sideLottie.cancelAnimation();
         uiHandler.removeCallbacksAndMessages(null);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        themeManager = new ThemeManager(this);
+        applyThemeOnlyColors();
         startGlowAnimations();
         startDividerShimmer();
         if (sideLottie != null && !sideLottie.isAnimating()) {
@@ -557,7 +618,8 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         super.onDestroy();
         cancelGlowAnimations();
         cancelAnimator(dividerShimmerAnim);
-        resultLottie.cancelAnimation();
+        if (resultLottie != null) resultLottie.cancelAnimation();
+        if (sideLottie != null) sideLottie.cancelAnimation();
         uiHandler.removeCallbacksAndMessages(null);
     }
 
@@ -565,11 +627,9 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         cancelAnimator(glowTopX);
         cancelAnimator(glowTopY);
         cancelAnimator(glowTopAlpha);
-
         cancelAnimator(glowCenterX);
         cancelAnimator(glowCenterY);
         cancelAnimator(glowCenterAlpha);
-
         cancelAnimator(glowBottomX);
         cancelAnimator(glowBottomY);
         cancelAnimator(glowBottomAlpha);

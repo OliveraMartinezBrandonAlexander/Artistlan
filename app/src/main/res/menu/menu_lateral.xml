@@ -4,22 +4,22 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/fragVerPerfil"
-            android:icon="@drawable/cuenta"
+            android:icon="@drawable/ic_nav_perfil_artistlan"
             android:title="Perfil del artista" />
 
         <item
             android:id="@+id/fragPortafolio"
-            android:icon="@drawable/ic_srv"
+            android:icon="@drawable/ic_nav_portafolio_artistlan"
             android:title="Portafolio de obras" />
 
         <item
             android:id="@+id/fragMiArte"
-            android:icon="@drawable/arte"
+            android:icon="@drawable/ic_nav_arte_artistlan"
             android:title="Mi arte" />
 
         <item
             android:id="@+id/fragFavoritos"
-            android:icon="@drawable/favoritos"
+            android:icon="@drawable/ic_nav_favoritos_artistlan"
             android:title="Favoritos" />
     </group>
 
@@ -27,27 +27,27 @@
         <menu>
             <item
                 android:id="@+id/navCalendario"
-                android:icon="@drawable/ic_calendario"
+                android:icon="@drawable/ic_nav_calendario_artistlan"
                 android:title="Calendario de eventos" />
 
             <item
                 android:id="@+id/navMensajes"
-                android:icon="@drawable/ic_mensajes"
+                android:icon="@drawable/ic_nav_mensajes_artistlan"
                 android:title="Bandeja de mensajes" />
 
             <item
                 android:id="@+id/navNotificaciones"
-                android:icon="@drawable/notificacion"
+                android:icon="@drawable/ic_notificaciones_artistlan"
                 android:title="Notificaciones" />
 
             <item
                 android:id="@+id/navConfiguracion"
-                android:icon="@drawable/ic_configuracion"
+                android:icon="@drawable/ic_nav_config_artistlan"
                 android:title="Configuración" />
 
             <item
                 android:id="@+id/navCerrarSesion"
-                android:icon="@drawable/ic_cerrar_sesion"
+                android:icon="@drawable/ic_nav_cerrar_artistlan"
                 android:title="Cerrar sesión" />
         </menu>
     </item>

@@ -3,22 +3,22 @@
 
     <item
         android:id="@+id/fragMain"
-        android:icon="@drawable/inicio"
+        android:icon="@drawable/ic_nav_inicio_artistlan"
         android:title="Inicio" />
 
     <item
         android:id="@+id/fragExplorar"
-        android:icon="@drawable/explorar"
+        android:icon="@drawable/ic_nav_explorar_artistlan"
         android:title="Explorar" />
 
     <item
-        android:id="@+id/fragPortafolio"
-        android:icon="@drawable/ic_srv"
-        android:title="Portafolio" />
+        android:id="@+id/fragSubirObra"
+        android:icon="@drawable/ic_nav_subir_artistlan"
+        android:title="Subir" />
 
     <item
         android:id="@+id/fragVerPerfil"
-        android:icon="@drawable/cuenta"
+        android:icon="@drawable/ic_nav_perfil_artistlan"
         android:title="Mi perfil" />
 
 </menu>

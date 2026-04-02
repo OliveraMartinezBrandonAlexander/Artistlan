@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <queries>
         <intent>
@@ -24,30 +24,44 @@
         android:theme="@style/Theme.Artistlan"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+
         <activity
             android:name=".Activitys.ActActualizarDatos"
             android:exported="false"
             android:theme="@style/Theme.Artistlan" />
+
+        <activity
+            android:name=".Theme.ActAjustesTema"
+            android:exported="false"
+            android:theme="@style/Theme.Artistlan" />
+
         <activity
             android:name=".Activitys.ActFragmentoPrincipal"
             android:exported="false"
-            android:windowSoftInputMode="adjustPan"/>
+            android:theme="@style/Theme.Artistlan"
+            android:windowSoftInputMode="adjustPan" />
+
         <activity
             android:name=".Activitys.ActIniciarSesion"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.Artistlan" />
+
         <activity
             android:name=".Activitys.ActCrearCuenta"
             android:exported="false"
-            android:windowSoftInputMode="stateHidden|adjustResize"/>
+            android:theme="@style/Theme.Artistlan"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+
         <activity
             android:name=".Activitys.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.Artistlan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -57,6 +71,7 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
     </application>
 
 </manifest>

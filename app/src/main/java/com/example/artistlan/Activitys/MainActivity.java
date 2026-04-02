@@ -3,7 +3,6 @@ package com.example.artistlan.Activitys;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
@@ -22,15 +21,22 @@ import com.airbnb.lottie.LottieProperty;
 import com.airbnb.lottie.model.KeyPath;
 import com.airbnb.lottie.value.LottieValueCallback;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeEffectsApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private View btnInicioSesion, btnCrearCuenta;
     private View glowTopLeft, glowTopRight, glowBottomRight, glowBottomLeft;
-    private View contentContainer, dividerShimmer;
+    private View contentContainer, dividerShimmer, dividerBase;
+    private View rootMain;
     private TextView titulomain, texto1, texto2;
 
     private LottieAnimationView lottieLogin, lottieCrear;
+
+    private ThemeManager themeManager;
 
     private final Handler pulseHandler = new Handler(Looper.getMainLooper());
     private boolean animateLogin = true;
@@ -62,6 +68,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        themeManager = new ThemeManager(this);
+
+        rootMain = findViewById(R.id.main);
         btnInicioSesion = findViewById(R.id.btnInicioSesion);
         btnCrearCuenta = findViewById(R.id.btnCrearCuenta);
 
@@ -72,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         contentContainer = findViewById(R.id.contentContainer);
         dividerShimmer = findViewById(R.id.dividerShimmer);
+        dividerBase = findViewById(R.id.dividerBase);
 
         titulomain = findViewById(R.id.titulomain);
         texto1 = findViewById(R.id.texto1);
@@ -80,8 +90,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         lottieLogin = findViewById(R.id.lottieLogin);
         lottieCrear = findViewById(R.id.lottieCrear);
 
-        tintLottieWhite(lottieLogin);
-        tintLottieWhite(lottieCrear);
+        applyThemeOnlyColors();
 
         btnInicioSesion.setOnClickListener(this);
         btnCrearCuenta.setOnClickListener(this);
@@ -94,13 +103,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startIntroAnimation();
     }
 
-    private void tintLottieWhite(LottieAnimationView lottieView) {
+    private void applyThemeOnlyColors() {
+        ThemeApplier.applySystemBars(this, themeManager);
+
+        if (rootMain != null) {
+            rootMain.setBackgroundColor(themeManager.color(ThemeKeys.BG_BOTTOM));
+        }
+
+        ThemeApplier.applyTextPrimary(titulomain, themeManager);
+        ThemeApplier.applyTextSecondary(texto1, themeManager);
+        ThemeApplier.applyTextSecondary(texto2, themeManager);
+
+        ThemeApplier.applyPrimaryButton(btnInicioSesion, themeManager);
+        ThemeApplier.applySecondaryButton(btnCrearCuenta, themeManager);
+
+        if (dividerBase != null && dividerBase.getBackground() != null) {
+            dividerBase.getBackground().setColorFilter(
+                    themeManager.color(ThemeKeys.ACCOUNT_DIVIDER),
+                    PorterDuff.Mode.SRC_ATOP
+            );
+        }
+
+        if (dividerShimmer != null && dividerShimmer.getBackground() != null) {
+            dividerShimmer.getBackground().setColorFilter(
+                    themeManager.color(ThemeKeys.ACCOUNT_SHIMMER),
+                    PorterDuff.Mode.SRC_ATOP
+            );
+        }
+
+        ThemeEffectsApplier.applyGlowIntensity(glowTopLeft, themeManager, ThemeKeys.GLOW_PRIMARY);
+        ThemeEffectsApplier.applyGlowIntensity(glowTopRight, themeManager, ThemeKeys.GLOW_TERTIARY);
+        ThemeEffectsApplier.applyGlowIntensity(glowBottomRight, themeManager, ThemeKeys.GLOW_SECONDARY);
+        ThemeEffectsApplier.applyGlowIntensity(glowBottomLeft, themeManager, ThemeKeys.GLOW_PRIMARY);
+
+        tintLottieWithTheme(lottieLogin, themeManager.color(ThemeKeys.ICON_ACTIVE));
+        tintLottieWithTheme(lottieCrear, themeManager.color(ThemeKeys.ICON_ACTIVE));
+    }
+
+    private void tintLottieWithTheme(LottieAnimationView lottieView, int color) {
         if (lottieView == null) return;
 
         lottieView.addValueCallback(
                 new KeyPath("**"),
                 LottieProperty.COLOR_FILTER,
-                new LottieValueCallback<>(new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP))
+                new LottieValueCallback<>(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_ATOP))
         );
     }
 
@@ -335,6 +381,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
+
+        themeManager = new ThemeManager(this);
+        applyThemeOnlyColors();
+
         startGlowAnimations();
         startButtonPulseLoop();
         startDividerShimmer();

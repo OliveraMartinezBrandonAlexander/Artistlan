@@ -68,4 +68,5 @@ dependencies {
 
     implementation ("com.getbase:floatingactionbutton:1.10.1")
     implementation ("com.airbnb.android:lottie:6.4.0")
+    implementation ("com.github.yukuku:ambilwarna:2.0.1")
 }

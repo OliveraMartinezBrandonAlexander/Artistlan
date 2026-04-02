@@ -46,7 +46,7 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Mostrar filtros"
                     android:padding="8dp"
-                    android:src="@drawable/ic_list_24" />
+                    android:src="@drawable/ic_menu_hamburguer" />
 
             </LinearLayout>
 

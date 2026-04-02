@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="22dp"
+    android:background="@drawable/bg_dialog_solid_panel">
+
+    <TextView
+        android:id="@+id/dialogColorTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Color"
+        android:textColor="@android:color/white"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Ajusta el color con sliders o escribe el valor HEX."
+        android:textColor="#D7DCEF"
+        android:textSize="13sp" />
+
+    <View
+        android:id="@+id/dialogColorPreview"
+        android:layout_width="match_parent"
+        android:layout_height="84dp"
+        android:layout_marginTop="18dp"
+        android:background="#FFFFFFFF" />
+
+    <EditText
+        android:id="@+id/dialogHexInput"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_input_artistlan"
+        android:gravity="center_vertical"
+        android:hint="#FFFFFFFF"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textColor="@color/artistlan_text_primary"
+        android:textColorHint="#9FB1C7"
+        android:textSize="15sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="Alpha"
+        android:textColor="@color/artistlan_text_primary"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <SeekBar
+        android:id="@+id/seekAlpha"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="255"
+        android:progress="255" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Rojo"
+        android:textColor="@color/artistlan_text_primary"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <SeekBar
+        android:id="@+id/seekRed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="255" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Verde"
+        android:textColor="@color/artistlan_text_primary"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <SeekBar
+        android:id="@+id/seekGreen"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="255" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Azul"
+        android:textColor="@color/artistlan_text_primary"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <SeekBar
+        android:id="@+id/seekBlue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="255" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/dialogCancelColor"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_btn_bubble_glass_secondary"
+            android:text="Cancelar"
+            android:textAllCaps="false"
+            android:textColor="@color/artistlan_text_primary"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/dialogApplyColor"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/bg_btn_bubble_glass_primary"
+            android:text="Aplicar"
+            android:textAllCaps="false"
+            android:textColor="@color/artistlan_text_primary"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -9,6 +9,9 @@ public class ArtistaDTO
     private String fotoPerfil; // URL
     private Integer idCategoria;
     private String categoria;
+    private Integer likes;
+    private Boolean esFavorito;
+    private String rol;
 
     public int getIdUsuario() {
         return idUsuario;
@@ -64,5 +67,28 @@ public class ArtistaDTO
 
     public void setCategoria(String categoria) {
         this.categoria = categoria;
+    }
+    public Integer getLikes() {
+        return likes;
+    }
+
+    public void setLikes(Integer likes) {
+        this.likes = likes;
+    }
+
+    public Boolean getEsFavorito() {
+        return esFavorito;
+    }
+
+    public void setEsFavorito(Boolean esFavorito) {
+        this.esFavorito = esFavorito;
+    }
+
+    public String getRol() {
+        return rol;
+    }
+
+    public void setRol(String rol) {
+        this.rol = rol;
     }
 }

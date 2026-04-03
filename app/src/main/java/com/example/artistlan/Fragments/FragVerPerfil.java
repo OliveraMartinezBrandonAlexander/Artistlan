@@ -10,51 +10,83 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation;
-
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.artistlan.Activitys.ActActualizarDatos;
 import com.example.artistlan.BotonesMenuSuperior;
+import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.api.FavoritosApi;
+import com.example.artistlan.Conector.api.ObraApi;
+import com.example.artistlan.Conector.api.ServicioApi;
+import com.example.artistlan.Conector.api.UsuarioApi;
+import com.example.artistlan.Conector.model.ArtistaDTO;
+import com.example.artistlan.Conector.model.FavoritoDTO;
+import com.example.artistlan.Conector.model.ObraDTO;
+import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.TarjetaTextoArtista.adapter.TarjetaTextoArtistaAdapter;
+import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
+import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
+import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
+import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
+import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
+import com.google.android.material.tabs.TabLayout;
+import java.util.ArrayList;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
-    private TextView tvNombre, tvUsuario, tvCorreo, tvDescripcion, tvTelefono, tvRedes, tvFecNac, tvCategoria;
+    private TextView tvNombre, tvUsuario, tvCorreo, tvDescripcion, tvTelefono, tvRedes, tvFecNac, tvCategoria, tvFavoritosVacio;
     private ImageView imgFotoPerfil;
-
     private ImageButton btnEditarPefil;
-
-
-    // Ficha expandible
     private CardView cardPerfilInfo;
     private View expandedSectionPerfil;
+    private View adminActionsContainer;
+    private RecyclerView recyclerFavoritos;
+    private TabLayout tabFavoritos;
 
+    private int idUsuarioLogueado = -1;
+    private String rolUsuario = "USER";
+
+    private FavoritosApi favoritosApi;
+    private ObraApi obraApi;
+    private ServicioApi servicioApi;
+    private UsuarioApi usuarioApi;
+
+    private TarjetaTextoObraAdapter obraAdapter;
+    private TarjetaTextoServicioAdapter servicioAdapter;
+    private TarjetaTextoArtistaAdapter artistaAdapter;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_frag_ver_perfil, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         new BotonesMenuSuperior(this);
+
+        favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
+        obraApi = RetrofitClient.getClient().create(ObraApi.class);
+        servicioApi = RetrofitClient.getClient().create(ServicioApi.class);
+        usuarioApi = RetrofitClient.getClient().create(UsuarioApi.class);
 
         View root = view.findViewById(R.id.rootPerfil);
         root.setOnClickListener(v -> colapsarFicha());
 
-
         cardPerfilInfo = view.findViewById(R.id.cardPerfilInfo);
         expandedSectionPerfil = view.findViewById(R.id.expanded_section_perfil);
-
         cardPerfilInfo.setOnClickListener(v -> toggleFicha());
 
         btnEditarPefil = view.findViewById(R.id.btnEditarPefil);
@@ -70,6 +102,17 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tvCategoria = view.findViewById(R.id.VrpTxvCategoria);
         imgFotoPerfil = view.findViewById(R.id.imgPerfil);
 
+        adminActionsContainer = view.findViewById(R.id.adminActionsContainer);
+        recyclerFavoritos = view.findViewById(R.id.recyclerFavoritosPerfil);
+        tvFavoritosVacio = view.findViewById(R.id.tvFavoritosVacio);
+        tabFavoritos = view.findViewById(R.id.tabFavoritosPerfil);
+
+        recyclerFavoritos.setLayoutManager(new LinearLayoutManager(requireContext()));
+        obraAdapter = new TarjetaTextoObraAdapter(new ArrayList<>(), requireContext());
+        servicioAdapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
+        artistaAdapter = new TarjetaTextoArtistaAdapter(new ArrayList<>(), requireContext());
+
+        setupTabs();
         cargarDatosUsuario();
     }
 
@@ -77,12 +120,26 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     public void onResume() {
         super.onResume();
         cargarDatosUsuario();
+        cargarFavoritosPorTab(0);
     }
 
+    private void setupTabs() {
+        tabFavoritos.removeAllTabs();
+        tabFavoritos.addTab(tabFavoritos.newTab().setText("Obras"));
+        tabFavoritos.addTab(tabFavoritos.newTab().setText("Servicios"));
+        tabFavoritos.addTab(tabFavoritos.newTab().setText("Usuarios"));
+        tabFavoritos.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) { cargarFavoritosPorTab(tab.getPosition()); }
+            @Override public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override public void onTabReselected(TabLayout.Tab tab) { cargarFavoritosPorTab(tab.getPosition()); }
+        });
+    }
 
     private void cargarDatosUsuario() {
-        SharedPreferences prefs = requireActivity()
-                .getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+        rolUsuario = prefs.getString("rol", "USER");
 
         String nombre = prefs.getString("nombreCompleto", "Nombre no disponible");
         String usuario = prefs.getString("usuario", "usuario");
@@ -102,6 +159,11 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tvFecNac.setText(fechaNac.isEmpty() ? "Sin fecha" : fechaNac);
         tvCategoria.setText(categoria.isEmpty() ? "Sin categoría" : categoria);
 
+        adminActionsContainer.setVisibility("ADMIN".equals(rolUsuario) ? View.VISIBLE : View.GONE);
+        if ("MODERADOR".equals(rolUsuario)) {
+            // detección de rol reservada para lógica futura
+        }
+
         String fotoPerfil = prefs.getString("fotoPerfil", null);
         if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
             Glide.with(this)
@@ -116,20 +178,112 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         }
     }
 
-    // ======== FICHA EXPANDIBLE ========
+    private void cargarFavoritosPorTab(int tabIndex) {
+        if (idUsuarioLogueado <= 0) return;
+        favoritosApi.obtenerFavoritosUsuario(idUsuarioLogueado).enqueue(new Callback<List<FavoritoDTO>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<FavoritoDTO>> call, @NonNull Response<List<FavoritoDTO>> response) {
+                if (response.code() == 204 || response.body() == null || response.body().isEmpty()) {
+                    recyclerFavoritos.setAdapter(null);
+                    tvFavoritosVacio.setVisibility(View.VISIBLE);
+                    return;
+                }
+                tvFavoritosVacio.setVisibility(View.GONE);
+                List<FavoritoDTO> all = response.body();
+                if (tabIndex == 0) cargarObrasFavoritas(all);
+                else if (tabIndex == 1) cargarServiciosFavoritos(all);
+                else cargarUsuariosFavoritos(all);
+            }
 
-    private void toggleFicha() {
-        if (expandedSectionPerfil.getVisibility() == View.VISIBLE) {
-            animarExpand(expandedSectionPerfil, false);
-        } else {
-            animarExpand(expandedSectionPerfil, true);
+            @Override
+            public void onFailure(@NonNull Call<List<FavoritoDTO>> call, @NonNull Throwable t) {
+                tvFavoritosVacio.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    private void cargarObrasFavoritas(List<FavoritoDTO> favoritos) {
+        List<TarjetaTextoObraItem> items = new ArrayList<>();
+        final int[] total = {0};
+        final int[] done = {0};
+        for (FavoritoDTO fav : favoritos) if (fav.idObra != null) total[0]++;
+        if (total[0] == 0) { obraAdapter.actualizarLista(new ArrayList<>()); recyclerFavoritos.setAdapter(obraAdapter); tvFavoritosVacio.setVisibility(View.VISIBLE); return; }
+
+        for (FavoritoDTO fav : favoritos) {
+            if (fav.idObra == null) continue;
+            obraApi.obtenerObraPorId(fav.idObra, idUsuarioLogueado).enqueue(new Callback<ObraDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<ObraDTO> call, @NonNull Response<ObraDTO> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        ObraDTO dto = response.body();
+                        items.add(new TarjetaTextoObraItem(dto.getIdObra(), dto.getTitulo(), dto.getDescripcion(), dto.getEstado(), dto.getPrecio(), dto.getImagen1(), dto.getImagen2(), dto.getImagen3(), dto.getTecnicas(), dto.getMedidas(), dto.getLikes() != null ? dto.getLikes() : 0, dto.getNombreAutor(), dto.getNombreCategoria(), dto.getFotoPerfilAutor(), Boolean.TRUE.equals(dto.getEsFavorito()), false));
+                    }
+                    done[0]++;
+                    if (done[0] == total[0]) { obraAdapter.actualizarLista(items); recyclerFavoritos.setAdapter(obraAdapter); tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE); }
+                }
+                @Override
+                public void onFailure(@NonNull Call<ObraDTO> call, @NonNull Throwable t) { done[0]++; }
+            });
         }
     }
 
-    private void colapsarFicha() {
-        if (expandedSectionPerfil != null && expandedSectionPerfil.getVisibility() == View.VISIBLE) {
-            animarExpand(expandedSectionPerfil, false);
+    private void cargarServiciosFavoritos(List<FavoritoDTO> favoritos) {
+        List<TarjetaTextoServicioItem> items = new ArrayList<>();
+        final int[] total = {0};
+        final int[] done = {0};
+        for (FavoritoDTO fav : favoritos) if (fav.idServicio != null) total[0]++;
+        if (total[0] == 0) { servicioAdapter.actualizarLista(new ArrayList<>()); recyclerFavoritos.setAdapter(servicioAdapter); tvFavoritosVacio.setVisibility(View.VISIBLE); return; }
+
+        for (FavoritoDTO fav : favoritos) {
+            if (fav.idServicio == null) continue;
+            servicioApi.obtenerPorId(fav.idServicio, idUsuarioLogueado).enqueue(new Callback<ServicioDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<ServicioDTO> call, @NonNull Response<ServicioDTO> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        ServicioDTO dto = response.body();
+                        items.add(new TarjetaTextoServicioItem(dto.getIdServicio(), dto.getTitulo(), dto.getDescripcion(), dto.getContacto(), dto.getTecnicas(), dto.getNombreUsuario(), dto.getCategoria(), dto.getFotoPerfilAutor(), dto.getLikes() != null ? dto.getLikes() : 0, Boolean.TRUE.equals(dto.getEsFavorito()), false));
+                    }
+                    done[0]++;
+                    if (done[0] == total[0]) { servicioAdapter.actualizarLista(items); recyclerFavoritos.setAdapter(servicioAdapter); tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE); }
+                }
+                @Override
+                public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) { done[0]++; }
+            });
         }
+    }
+
+    private void cargarUsuariosFavoritos(List<FavoritoDTO> favoritos) {
+        List<TarjetaTextoArtistaItem> items = new ArrayList<>();
+        final int[] total = {0};
+        final int[] done = {0};
+        for (FavoritoDTO fav : favoritos) if (fav.idArtista != null) total[0]++;
+        if (total[0] == 0) { artistaAdapter.actualizarLista(new ArrayList<>()); recyclerFavoritos.setAdapter(artistaAdapter); tvFavoritosVacio.setVisibility(View.VISIBLE); return; }
+
+        for (FavoritoDTO fav : favoritos) {
+            if (fav.idArtista == null) continue;
+            usuarioApi.obtenerUsuarioPorId(fav.idArtista, idUsuarioLogueado).enqueue(new Callback<com.example.artistlan.Conector.model.UsuariosDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<com.example.artistlan.Conector.model.UsuariosDTO> call, @NonNull Response<com.example.artistlan.Conector.model.UsuariosDTO> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        com.example.artistlan.Conector.model.UsuariosDTO dto = response.body();
+                        items.add(new TarjetaTextoArtistaItem(dto.getIdUsuario(), dto.getUsuario(), dto.getCategoria(), dto.getDescripcion(), dto.getFotoPerfil(), new ArrayList<>(), dto.getLikes() != null ? dto.getLikes() : 0, Boolean.TRUE.equals(dto.getEsFavorito())));
+                    }
+                    done[0]++;
+                    if (done[0] == total[0]) { artistaAdapter.actualizarLista(items); recyclerFavoritos.setAdapter(artistaAdapter); tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE); }
+                }
+                @Override
+                public void onFailure(@NonNull Call<com.example.artistlan.Conector.model.UsuariosDTO> call, @NonNull Throwable t) { done[0]++; }
+            });
+        }
+    }
+
+    private void toggleFicha() {
+        if (expandedSectionPerfil.getVisibility() == View.VISIBLE) animarExpand(expandedSectionPerfil, false);
+        else animarExpand(expandedSectionPerfil, true);
+    }
+
+    private void colapsarFicha() {
+        if (expandedSectionPerfil != null && expandedSectionPerfil.getVisibility() == View.VISIBLE) animarExpand(expandedSectionPerfil, false);
     }
 
     private void animarExpand(View v, boolean expandir) {
@@ -149,9 +303,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        int id = v.getId();
-
-        if (id == R.id.btnEditarPefil) {
+        if (v.getId() == R.id.btnEditarPefil) {
             Intent intent = new Intent(v.getContext(), ActActualizarDatos.class);
             v.getContext().startActivity(intent);
         }

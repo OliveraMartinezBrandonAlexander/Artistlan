@@ -558,7 +558,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         u.setFechaNacimiento(edtFecha.getText().toString().trim());
         u.setUsuario(edtUsuario.getText().toString().trim());
         u.setContrasena(edtContra.getText().toString());
-        u.setAdminUsuario(0);
+        u.setRol("USER");
 
         List<UsuariosDTO> lista = new ArrayList<>();
         lista.add(u);

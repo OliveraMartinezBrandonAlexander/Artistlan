@@ -23,6 +23,11 @@ import java.util.List;
 
 public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoObraAdapter.ViewHolder> {
 
+    public interface OnLikeClickListener {
+        void onLikeClick(TarjetaTextoObraItem obraItem, int position);
+    }
+
+    private OnLikeClickListener onLikeClickListener;
     private List<TarjetaTextoObraItem> listaObras;
     private List<TarjetaTextoObraItem> listaOriginal;
     private final Context context;
@@ -32,6 +37,10 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         this.listaObras = listaObras;
         this.listaOriginal = new ArrayList<>(listaObras);
         this.context = context;
+    }
+
+    public void setOnLikeClickListener(OnLikeClickListener listener) {
+        this.onLikeClickListener = listener;
     }
 
     @NonNull
@@ -51,86 +60,29 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.descripcion.setText(obra.getDescripcion());
         holder.estado.setText("Estado: " + obra.getEstado());
         holder.tecnica.setText("Técnica: " + obra.getTecnicas());
-        if (obra.getMedidas() != null && !obra.getMedidas().isEmpty()) {
-            holder.medidas.setText("Medidas: " + obra.getMedidas() + " cm");
-        } else {
-            holder.medidas.setText("Medidas: N/A");
-        }
-        if (obra.getPrecio() != null) {
-            holder.precio.setText("Precio: $ " + String.format("%,.2f", obra.getPrecio()));
-        } else {
-            holder.precio.setText("Precio: N/A");
-        }
-
-
+        holder.medidas.setText((obra.getMedidas() != null && !obra.getMedidas().isEmpty()) ? "Medidas: " + obra.getMedidas() + " cm" : "Medidas: N/A");
+        holder.precio.setText(obra.getPrecio() != null ? "Precio: $ " + String.format("%,.2f", obra.getPrecio()) : "Precio: N/A");
         holder.categoria.setText("Categoría: " + obra.getNombreCategoria());
+        holder.likes.setText("❤️ " + obra.getLikes());
 
-        // Foto perfil autor
+        holder.btnLike.setImageResource(obra.isUserLiked() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
+        holder.btnLike.setOnClickListener(v -> {
+            int adapterPosition = holder.getAdapterPosition();
+            if (onLikeClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                onLikeClickListener.onLikeClick(listaObras.get(adapterPosition), adapterPosition);
+            }
+        });
+
         String fotoPerfil = obra.getFotoPerfilAutor();
-        if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
-            Glide.with(context)
-                    .load(fotoPerfil)
-                    .placeholder(R.drawable.fotoperfilprueba)
-                    .circleCrop()
-                    .into(holder.imgAutor);
-        } else {
-            Glide.with(context)
-                    .load(R.drawable.fotoperfilprueba)
-                    .circleCrop()
-                    .into(holder.imgAutor);
-        }
+        Glide.with(context).load((fotoPerfil != null && !fotoPerfil.isEmpty()) ? fotoPerfil : R.drawable.fotoperfilprueba).placeholder(R.drawable.fotoperfilprueba).circleCrop().into(holder.imgAutor);
 
-        // Imagen principal de la obra
         String imagenObra = obra.getImagen1();
         if (imagenObra != null && !imagenObra.isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                    .load(imagenObra)
-                    .placeholder(R.drawable.imagencargaobras)
-                    .error(R.drawable.imagencargaobras)
-                    .into(holder.imgObra);
+            Glide.with(holder.itemView.getContext()).load(imagenObra).placeholder(R.drawable.imagencargaobras).error(R.drawable.imagencargaobras).into(holder.imgObra);
         } else {
             holder.imgObra.setImageResource(R.drawable.imagencargaobras);
         }
 
-//        // Estado del like
-//        if (obra.isUserLiked()) {
-//            holder.btnLike.setImageResource(R.drawable.ic_heart_red);
-//        } else {
-//            holder.btnLike.setImageResource(R.drawable.ic_heart_purple);
-//        }
-//
-//        holder.btnLike.setOnClickListener(v -> {
-//            int currentPosition = holder.getAdapterPosition();
-//            if (currentPosition == RecyclerView.NO_POSITION) return;
-//
-//            TarjetaTextoObraItem currentObra = listaObras.get(currentPosition);
-//
-//            boolean currentlyLiked = currentObra.isUserLiked();
-//            int newLikesCount = currentObra.getLikes();
-//
-//            if (currentlyLiked) {
-//                currentObra.setUserLiked(false);
-//                newLikesCount--;
-//                holder.btnLike.setImageResource(R.drawable.ic_heart_purple);
-//            } else {
-//                currentObra.setUserLiked(true);
-//                newLikesCount++;
-//                holder.btnLike.setImageResource(R.drawable.ic_heart_red);
-//            }
-//
-//            currentObra.setLikes(newLikesCount);
-//            holder.likes.setText(String.valueOf(newLikesCount));
-//
-//            animarLike(holder.btnLike);
-//
-//            if (listener != null) {
-//                listener.onLikeClick(currentObra.getIdObra(), currentObra.isUserLiked());
-//            }
-//
-//            notifyItemChanged(currentPosition);
-//        });
-
-        // Expand / collapse
         boolean expandido = (position == tarjetaExpandida);
         animarVista(holder.expandedSection, expandido);
         obra.setExpandido(expandido);
@@ -139,19 +91,15 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             int previousExpanded = tarjetaExpandida;
             int currentPosition = holder.getAdapterPosition();
 
-            if (previousExpanded == currentPosition) {
-                tarjetaExpandida = -1;
-            } else {
+            if (previousExpanded == currentPosition) tarjetaExpandida = -1;
+            else {
                 tarjetaExpandida = currentPosition;
                 if (previousExpanded != -1) notifyItemChanged(previousExpanded);
             }
             notifyItemChanged(currentPosition);
         });
 
-        // Botón visitar (por ahora stub)
-        holder.btnVisitar.setOnClickListener(v -> {
-            Toast.makeText(context, "Proximamente...", Toast.LENGTH_SHORT).show();
-        });
+        holder.btnVisitar.setOnClickListener(v -> Toast.makeText(context, "Proximamente...", Toast.LENGTH_SHORT).show());
     }
 
     @Override
@@ -180,22 +128,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         }
     }
 
-//    private void animarLike(ImageButton btn) {
-//        btn.animate()
-//                .scaleX(0.7f)
-//                .scaleY(0.7f)
-//                .setDuration(80)
-//                .withEndAction(() ->
-//                        btn.animate()
-//                                .scaleX(1f)
-//                                .scaleY(1f)
-//                                .setDuration(80)
-//                                .start()
-//                ).start();
-//    }
-
     public static class ViewHolder extends RecyclerView.ViewHolder {
-
         TextView titulo, descripcion, estado, tecnica, medidas, precio, categoria, likes, autor;
         ImageView imgAutor, imgObra;
         ImageButton btnLike;
@@ -204,7 +137,6 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-
             imgAutor = itemView.findViewById(R.id.imgAutor);
             imgObra = itemView.findViewById(R.id.imgObra);
             titulo = itemView.findViewById(R.id.titulo);
@@ -215,74 +147,40 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             precio = itemView.findViewById(R.id.precio);
             autor = itemView.findViewById(R.id.autor);
             categoria = itemView.findViewById(R.id.categoria);
-//            likes = itemView.findViewById(R.id.likes);
-//
-//            btnLike = itemView.findViewById(R.id.btnLike);
+            likes = itemView.findViewById(R.id.likes);
+            btnLike = itemView.findViewById(R.id.btnLike);
             expandedSection = itemView.findViewById(R.id.expanded_section);
-
             btnVisitar = itemView.findViewById(R.id.btnVisitar);
         }
     }
 
     public void filtrar(String texto){
-
         List<TarjetaTextoObraItem> listaFiltrada = new ArrayList<>();
 
-        if(texto == null || texto.isEmpty()){
-            listaFiltrada.addAll(listaOriginal);
-        }else{
-
+        if(texto == null || texto.isEmpty()) listaFiltrada.addAll(listaOriginal);
+        else {
             texto = texto.toLowerCase();
-
             for(TarjetaTextoObraItem obra : listaOriginal){
-
-                if(obra.getTitulo() != null &&
-                        obra.getTitulo().toLowerCase().contains(texto)){
-
-                    listaFiltrada.add(obra);
-                }
-
+                if(obra.getTitulo() != null && obra.getTitulo().toLowerCase().contains(texto)) listaFiltrada.add(obra);
             }
         }
-
+        int oldSize = listaObras.size();
         listaObras.clear();
         listaObras.addAll(listaFiltrada);
-
-        notifyDataSetChanged();
+        if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
+        if (!listaFiltrada.isEmpty()) notifyItemRangeInserted(0, listaFiltrada.size());
     }
 
     public void actualizarLista(List<TarjetaTextoObraItem> nuevaLista) {
-
+        int oldSize = listaObras.size();
         listaOriginal.clear();
         listaOriginal.addAll(nuevaLista);
-
         listaObras.clear();
         listaObras.addAll(nuevaLista);
-
-        notifyDataSetChanged();
+        if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
+        if (!nuevaLista.isEmpty()) notifyItemRangeInserted(0, nuevaLista.size());
     }
-
-
-//    // Like listener existente
-//    public interface OnLikeClickListener {
-//        void onLikeClick(int idObra, boolean userLiked);
-//    }
-//
-//    private OnLikeClickListener listener;
-//
-//    public void setOnLikeClickListener(OnLikeClickListener listener) {
-//        this.listener = listener;
-//    }
-
-
-    // Listener opcional para Visitar
-    public interface OnVisitarClickListener {
-        void onVisitarClick(int idObra);
-    }
-
-    private OnVisitarClickListener visitarListener;
-
-    public void setOnVisitarClickListener(OnVisitarClickListener visitarListener) {
-        this.visitarListener = visitarListener;
+    public void notifyLikeChanged(int position) {
+        if (position >= 0 && position < listaObras.size()) notifyItemChanged(position);
     }
 }

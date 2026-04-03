@@ -2,10 +2,7 @@ package com.example.artistlan.Conector.api;
 
 import com.example.artistlan.Conector.model.ActualizarImagenObraRequestDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
-import com.example.artistlan.Conector.model.UsuariosDTO;
-
 import java.util.List;
-
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -13,12 +10,17 @@ import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
-
-public interface ObraApi
-{
+public interface ObraApi {
     @GET("obras")
     Call<List<ObraDTO>> obtenerTodasLasObras();
+
+    @GET("obras")
+    Call<List<ObraDTO>> obtenerTodasLasObras(@Query("usuarioId") Integer usuarioId);
+
+    @GET("obras/{id}")
+    Call<ObraDTO> obtenerObraPorId(@Path("id") int idObra, @Query("usuarioId") Integer usuarioId);
 
     @POST("obras")
     Call<ObraDTO> crearObra(@Body ObraDTO obra);

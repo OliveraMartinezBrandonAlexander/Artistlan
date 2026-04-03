@@ -1,6 +1,8 @@
 package com.example.artistlan.Fragments;
 
 import android.os.Bundle;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +16,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.api.FavoritosApi;
+import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.R;
@@ -34,27 +38,24 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     private TarjetaTextoObraAdapter adapter;
     private String categoriaFiltroActual = "";
     private ObraApi obraApi;
+    private FavoritosApi favoritosApi;
+    private int idUsuarioLogueado = -1;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_frag_arte, container, false);
     }
 
-    public void filtrarBusqueda(String texto) {
-        if (adapter != null) {
-            adapter.filtrar(texto);
-        }
-    }
+    public void filtrarBusqueda(String texto) { if (adapter != null) adapter.filtrar(texto); }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         new BotonesMenuSuperior(this);
-
+        SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
         obraApi = RetrofitClient.getClient().create(ObraApi.class);
-
+        favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
         configurarObras(view);
     }
 
@@ -103,31 +104,53 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         recyclerViewObras.setLayoutManager(new LinearLayoutManager(getContext()));
 
         adapter = new TarjetaTextoObraAdapter(new ArrayList<>(), requireContext());
+        adapter.setOnLikeClickListener(this::toggleLikeObra);
         recyclerViewObras.setAdapter(adapter);
-
         obtenerObrasDeAPI();
     }
 
+    private void toggleLikeObra(TarjetaTextoObraItem obraItem, int position) {
+        if (idUsuarioLogueado <= 0) return;
+        final boolean favoritoAnterior = obraItem.isUserLiked();
+        final int likesAnterior = obraItem.getLikes();
+        obraItem.setUserLiked(!favoritoAnterior);
+        obraItem.setLikes(Math.max(0, likesAnterior + (favoritoAnterior ? -1 : 1)));
+        adapter.notifyLikeChanged(position);
+
+        FavoritoDTO dto = new FavoritoDTO();
+        dto.idUsuario = idUsuarioLogueado;
+        dto.idObra = obraItem.getIdObra();
+        Call<Void> call = favoritoAnterior ? favoritosApi.eliminarFavorito(dto) : favoritosApi.agregarFavorito(dto);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (!response.isSuccessful()) {
+                    obraItem.setUserLiked(favoritoAnterior);
+                    obraItem.setLikes(likesAnterior);
+                    adapter.notifyLikeChanged(position);
+                    Toast.makeText(getContext(), "No se pudo actualizar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                obraItem.setUserLiked(favoritoAnterior);
+                obraItem.setLikes(likesAnterior);
+                adapter.notifyLikeChanged(position);
+                Toast.makeText(getContext(), "Fallo de red al actualizar favorito", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void obtenerObrasDeAPI() {
-
-        Call<List<ObraDTO>> call = obraApi.obtenerTodasLasObras();
-
-        call.enqueue(new Callback<List<ObraDTO>>() {
+        obraApi.obtenerTodasLasObras(idUsuarioLogueado > 0 ? idUsuarioLogueado : null).enqueue(new Callback<List<ObraDTO>>() {
             @Override
             public void onResponse(@NonNull Call<List<ObraDTO>> call, @NonNull Response<List<ObraDTO>> response) {
-                if (!response.isSuccessful() || response.body() == null) {
-                    Toast.makeText(getContext(), "Error: " + response.code(), Toast.LENGTH_LONG).show();
-                    return;
-                }
+                if (response.code() == 204) { adapter.actualizarLista(new ArrayList<>()); return; }
+                if (!response.isSuccessful() || response.body() == null) { Toast.makeText(getContext(), "Error: " + response.code(), Toast.LENGTH_LONG).show(); return; }
 
                 List<TarjetaTextoObraItem> items = new ArrayList<>();
-
                 for (ObraDTO dto : response.body()) {
-                    if (!categoriaFiltroActual.isEmpty() &&
-                            (dto.getNombreCategoria() == null || !categoriaFiltroActual.equalsIgnoreCase(dto.getNombreCategoria()))) {
-                        continue;
-                    }
-
+                    if (!categoriaFiltroActual.isEmpty() && (dto.getNombreCategoria() == null || !categoriaFiltroActual.equalsIgnoreCase(dto.getNombreCategoria()))) continue;
                     items.add(new TarjetaTextoObraItem(
                             dto.getIdObra(),
                             dto.getTitulo(),
@@ -143,14 +166,11 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                             dto.getNombreAutor(),
                             dto.getNombreCategoria(),
                             dto.getFotoPerfilAutor(),
-                            false,
-                            false
-                    ));
+                            Boolean.TRUE.equals(dto.getEsFavorito()),
+                            false));
                 }
-
                 adapter.actualizarLista(items);
             }
-
             @Override
             public void onFailure(@NonNull Call<List<ObraDTO>> call, @NonNull Throwable t) {
                 Toast.makeText(getContext(), "Fallo: " + t.getMessage(), Toast.LENGTH_LONG).show();

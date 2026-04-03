@@ -12,6 +12,9 @@ public class ServicioDTO {
     private String categoria;
     private Integer idCategoria;
     private String fotoPerfilAutor;
+    private Integer likes;
+    private Boolean esFavorito;
+
 
     public Integer getIdServicio() {
         return idServicio;
@@ -92,6 +95,21 @@ public class ServicioDTO {
     public void setIdCategoria(Integer idCategoria) {
         this.idCategoria = idCategoria;
 
+    }
 
+    public Integer getLikes() {
+        return likes;
+    }
+
+    public void setLikes(Integer likes) {
+        this.likes = likes;
+    }
+
+    public Boolean getEsFavorito() {
+        return esFavorito;
+    }
+
+    public void setEsFavorito(Boolean esFavorito) {
+        this.esFavorito = esFavorito;
     }
 }

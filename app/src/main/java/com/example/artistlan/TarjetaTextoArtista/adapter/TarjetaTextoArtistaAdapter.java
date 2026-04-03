@@ -2,7 +2,6 @@ package com.example.artistlan.TarjetaTextoArtista.adapter;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.util.ArrayMap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +12,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -22,11 +20,15 @@ import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaTextoArtistaAdapter.ViewHolder> {
 
+    public interface OnLikeClickListener {
+        void onLikeClick(TarjetaTextoArtistaItem artistaItem, int position);
+    }
+
+    private OnLikeClickListener onLikeClickListener;
     private List<TarjetaTextoArtistaItem> listaArtistas;
     private List<TarjetaTextoArtistaItem> listaOriginal;
     private Context context;
@@ -47,11 +49,14 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         this.context = context;
     }
 
+    public void setOnLikeClickListener(OnLikeClickListener onLikeClickListener) {
+        this.onLikeClickListener = onLikeClickListener;
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_tarjetatextoartista, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_tarjetatextoartista, parent, false);
         return new ViewHolder(view);
     }
 
@@ -61,18 +66,10 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         return v.isEmpty() ? fallback : v;
     }
 
-    private String keyFor(TarjetaTextoArtistaItem a, int position) {
-        String seed =
-                safeText(a.getNombre(), "") + "|" +
-                        safeText(a.getCategoria(), "") + "|" +
-                        safeText(a.getFotoPerfil(), "") + "|" +
-                        position;
-        return String.valueOf(seed.hashCode());
-    }
+
 
     private String descripcionDefaultPara(TarjetaTextoArtistaItem artista, int position) {
-        int seed = keyFor(artista, position).hashCode();
-        Random r = new Random(seed);
+        Random r = new Random((artista.getNombre() + "|" + position).hashCode());
         return DEFAULT_DESCRIPCIONES[r.nextInt(DEFAULT_DESCRIPCIONES.length)];
     }
 
@@ -80,86 +77,25 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
         TarjetaTextoArtistaItem artista = listaArtistas.get(position);
 
-        // Textos principales
         holder.nombre.setText(artista.getNombre());
         holder.categoria.setText("Categoría: " + safeText(artista.getCategoria(), "Sin categoria"));
+        holder.descripcion.setText((artista.getDescripcion() == null || artista.getDescripcion().trim().isEmpty()) ? descripcionDefaultPara(artista, position) : artista.getDescripcion());
+        holder.likes.setText("❤️ " + artista.getLikes());
+        holder.btnLike.setImageResource(artista.isFavorito() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
+        holder.btnLike.setOnClickListener(v -> {
+            int adapterPosition = holder.getAdapterPosition();
+            if (onLikeClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                onLikeClickListener.onLikeClick(listaArtistas.get(adapterPosition), adapterPosition);
+            }
+        });
 
-        String desc = artista.getDescripcion();
-        if (desc == null || desc.trim().isEmpty()) {
-            holder.descripcion.setText(descripcionDefaultPara(artista, position));
-        } else {
-            holder.descripcion.setText(desc);
-        }
+        Glide.with(context).load((artista.getFotoPerfil() != null && !artista.getFotoPerfil().isEmpty()) ? artista.getFotoPerfil() : R.drawable.fotoperfilprueba).placeholder(R.drawable.fotoperfilprueba).error(R.drawable.fotoperfilprueba).circleCrop().into(holder.imgPerfil);
 
-        // Foto perfil
-        String fotoPerfil = artista.getFotoPerfil();
-        Object targetSource = (fotoPerfil != null && !fotoPerfil.isEmpty())
-                ? fotoPerfil
-                : R.drawable.fotoperfilprueba;
-
-        Glide.with(context)
-                .load(targetSource)
-                .placeholder(R.drawable.fotoperfilprueba)
-                .error(R.drawable.fotoperfilprueba)
-                .circleCrop()
-                .into(holder.imgPerfil);
-
-        // Mini obras
         List<String> obras = artista.getMiniObras();
-        if (obras.size() > 0)
-            Glide.with(context).load(obras.get(0)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini1);
-        else
-            holder.imgMini1.setImageResource(R.drawable.imagencargaobras);
+        if (obras.size() > 0) Glide.with(context).load(obras.get(0)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini1); else holder.imgMini1.setImageResource(R.drawable.imagencargaobras);
+        if (obras.size() > 1) Glide.with(context).load(obras.get(1)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini2); else holder.imgMini2.setImageResource(R.drawable.imagencargaobras);
+        if (obras.size() > 2) Glide.with(context).load(obras.get(2)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini3); else holder.imgMini3.setImageResource(R.drawable.imagencargaobras);
 
-        if (obras.size() > 1)
-            Glide.with(context).load(obras.get(1)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini2);
-        else
-            holder.imgMini2.setImageResource(R.drawable.imagencargaobras);
-
-        if (obras.size() > 2)
-            Glide.with(context).load(obras.get(2)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini3);
-        else
-            holder.imgMini3.setImageResource(R.drawable.imagencargaobras);
-
-//        //  LIKE local
-//        String key = keyFor(artista, position);
-//
-//        boolean liked = likedMap.containsKey(key) && Boolean.TRUE.equals(likedMap.get(key));
-//        int likesCount = likesCountMap.containsKey(key) ? likesCountMap.get(key) : 0;
-//
-//        holder.likes.setText(String.valueOf(likesCount));
-//        holder.btnLike.setImageResource(liked ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
-//
-//        holder.btnLike.setOnClickListener(v -> {
-//            int currentPos = holder.getAdapterPosition();
-//            if (currentPos == RecyclerView.NO_POSITION) return;
-//
-//            String k = keyFor(listaArtistas.get(currentPos), currentPos);
-//
-//            boolean currentLiked = likedMap.containsKey(k) && Boolean.TRUE.equals(likedMap.get(k));
-//            int currentCount = likesCountMap.containsKey(k) ? likesCountMap.get(k) : 0;
-//
-//            if (currentLiked) {
-//                // quitar like
-//                likedMap.put(k, false);
-//                currentCount = Math.max(0, currentCount - 1);
-//            } else {
-//                // dar like
-//                likedMap.put(k, true);
-//                currentCount = currentCount + 1;
-//            }
-//
-//            likesCountMap.put(k, currentCount);
-//
-//            holder.likes.setText(String.valueOf(currentCount));
-//            holder.btnLike.setImageResource(Boolean.TRUE.equals(likedMap.get(k))
-//                    ? R.drawable.ic_heart_red
-//                    : R.drawable.ic_heart_purple);
-//
-//            animarLike(holder.btnLike);
-//        });
-
-        // Expandible
         boolean expandido = (tarjetaExpandida == position);
         animarVista(holder.expandedSection, expandido);
 
@@ -167,9 +103,8 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             int previous = tarjetaExpandida;
             int currentPosition = holder.getAdapterPosition();
 
-            if (previous == currentPosition) {
-                tarjetaExpandida = -1;
-            } else {
+            if (previous == currentPosition) tarjetaExpandida = -1;
+            else {
                 tarjetaExpandida = currentPosition;
                 if (previous != -1) notifyItemChanged(previous);
             }
@@ -201,20 +136,6 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         }
     }
 
-//    private void animarLike(ImageButton btn) {
-//        btn.animate()
-//                .scaleX(0.75f)
-//                .scaleY(0.75f)
-//                .setDuration(80)
-//                .withEndAction(() ->
-//                        btn.animate()
-//                                .scaleX(1f)
-//                                .scaleY(1f)
-//                                .setDuration(80)
-//                                .start()
-//                ).start();
-//    }
-
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView nombre, categoria, descripcion, mensaje, likes;
         ImageView imgPerfil, imgMini1, imgMini2, imgMini3;
@@ -224,64 +145,48 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-
             imgPerfil = itemView.findViewById(R.id.imgPerfil);
             nombre = itemView.findViewById(R.id.nombre);
             descripcion = itemView.findViewById(R.id.descripcion);
-
             categoria = itemView.findViewById(R.id.categoria);
             mensaje = itemView.findViewById(R.id.mensaje);
-
             imgMini1 = itemView.findViewById(R.id.imgMini1);
             imgMini2 = itemView.findViewById(R.id.imgMini2);
             imgMini3 = itemView.findViewById(R.id.imgMini3);
-
-//            likes = itemView.findViewById(R.id.likes);
-//            btnLike = itemView.findViewById(R.id.btnLike);
-
+            likes = itemView.findViewById(R.id.likes);
+            btnLike = itemView.findViewById(R.id.btnLike);
             expandedSection = itemView.findViewById(R.id.expanded_section);
             btnVisitar = itemView.findViewById(R.id.btnVisitar);
         }
     }
 
     public void filtrar(String texto){
-
         List<TarjetaTextoArtistaItem> listaFiltrada = new ArrayList<>();
 
-        if(texto == null || texto.isEmpty()){
-
-            listaFiltrada.addAll(listaOriginal);
-
-        }else{
-
+        if(texto == null || texto.isEmpty()) listaFiltrada.addAll(listaOriginal);
+        else {
             texto = texto.toLowerCase();
-
             for(TarjetaTextoArtistaItem artista : listaOriginal){
-
-                if(artista.getNombre() != null &&
-                        artista.getNombre().toLowerCase().contains(texto)){
-
-                    listaFiltrada.add(artista);
-                }
-
+                if(artista.getNombre() != null && artista.getNombre().toLowerCase().contains(texto)) listaFiltrada.add(artista);
             }
-
         }
-
+        int oldSize = listaArtistas.size();
         listaArtistas.clear();
         listaArtistas.addAll(listaFiltrada);
-
-        notifyDataSetChanged();
+        if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
+        if (!listaFiltrada.isEmpty()) notifyItemRangeInserted(0, listaFiltrada.size());
     }
 
     public void actualizarLista(List<TarjetaTextoArtistaItem> nuevaLista) {
-
+        int oldSize = listaArtistas.size();
         listaOriginal.clear();
         listaOriginal.addAll(nuevaLista);
-
         listaArtistas.clear();
         listaArtistas.addAll(nuevaLista);
-
-        notifyDataSetChanged();
+        if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
+        if (!nuevaLista.isEmpty()) notifyItemRangeInserted(0, nuevaLista.size());
+    }
+    public void notifyLikeChanged(int position) {
+        if (position >= 0 && position < listaArtistas.size()) notifyItemChanged(position);
     }
 }

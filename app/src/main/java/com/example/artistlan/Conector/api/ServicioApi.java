@@ -8,14 +8,20 @@ import retrofit2.http.GET;
 import retrofit2.http.PUT;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 public interface ServicioApi {
 
-    //Generales
     @GET("servicios")
     Call<List<ServicioDTO>> obtenerTodos();
 
+    @GET("servicios")
+    Call<List<ServicioDTO>> obtenerTodos(@Query("usuarioId") Integer usuarioId);
+
     @GET("servicios/{id}")
     Call<ServicioDTO> obtenerPorId(@Path("id") int id);
+
+    @GET("servicios/{id}")
+    Call<ServicioDTO> obtenerPorId(@Path("id") int id, @Query("usuarioId") Integer usuarioId);
 
     @POST("servicios")
     Call<ServicioDTO> crear(@Body ServicioDTO servicio);
@@ -26,7 +32,6 @@ public interface ServicioApi {
     @DELETE("servicios/{id}")
     Call<Void> eliminar(@Path("id") int id);
 
-    //Personales
     @GET("portafolioPersonal/{usuarioId}")
     Call<List<ServicioDTO>> obtenerServiciosDeUsuario(@Path("usuarioId") int usuarioId);
 

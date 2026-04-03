@@ -15,6 +15,9 @@ public class UsuariosDTO
     private Integer adminUsuario;
     private String categoria;
     private Integer idCategoria;
+    private Integer likes;
+    private Boolean esFavorito;
+    private String rol;
 
     public Integer getIdCategoria() {
         return idCategoria;
@@ -113,5 +116,29 @@ public class UsuariosDTO
 
     public void setAdminUsuario(Integer adminUsuario) {
         this.adminUsuario = adminUsuario;
+    }
+
+    public Integer getLikes() {
+        return likes;
+    }
+
+    public void setLikes(Integer likes) {
+        this.likes = likes;
+    }
+
+    public Boolean getEsFavorito() {
+        return esFavorito;
+    }
+
+    public void setEsFavorito(Boolean esFavorito) {
+        this.esFavorito = esFavorito;
+    }
+
+    public String getRol() {
+        return rol;
+    }
+
+    public void setRol(String rol) {
+        this.rol = rol;
     }
 }

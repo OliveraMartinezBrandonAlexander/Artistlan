@@ -1,5 +1,7 @@
 package com.example.artistlan.Fragments;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,9 +16,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.ArtistaDTO;
+import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoArtista.adapter.TarjetaTextoArtistaAdapter;
@@ -36,10 +40,11 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     private TarjetaTextoArtistaAdapter adapter;
     private String profesionFiltroActual = "";
     private List<TarjetaTextoArtistaItem> listaArtistas = new ArrayList<>();
+    private int idUsuarioLogueado = -1;
+    private FavoritosApi favoritosApi;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_frag_artistas, container, false);
     }
 
@@ -52,9 +57,10 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         new BotonesMenuSuperior(this);
-
+        SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+        favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
         configurarArtistas(view);
         cargarArtistas();
     }
@@ -95,35 +101,58 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     @Override
     public void clearFilter() {
         profesionFiltroActual = "";
-        Toast.makeText(getContext(), "Filtros borrados", Toast.LENGTH_SHORT).show();
         cargarArtistas();
     }
 
     private void configurarArtistas(View view) {
         recyclerViewArtistas = view.findViewById(R.id.recyclerArtistas);
         recyclerViewArtistas.setLayoutManager(new LinearLayoutManager(getContext()));
-
         adapter = new TarjetaTextoArtistaAdapter(listaArtistas, requireContext());
+        adapter.setOnLikeClickListener(this::toggleLikeArtista);
         recyclerViewArtistas.setAdapter(adapter);
+    }
+    private void toggleLikeArtista(TarjetaTextoArtistaItem artistaItem, int position) {
+        if (idUsuarioLogueado <= 0 || artistaItem.getIdArtista() == null) return;
+        final boolean favoritoAnterior = artistaItem.isFavorito();
+        final int likesAnterior = artistaItem.getLikes();
+        artistaItem.setFavorito(!favoritoAnterior);
+        artistaItem.setLikes(Math.max(0, likesAnterior + (favoritoAnterior ? -1 : 1)));
+        adapter.notifyLikeChanged(position);
+
+        FavoritoDTO dto = new FavoritoDTO();
+        dto.idUsuario = idUsuarioLogueado;
+        dto.idArtista = artistaItem.getIdArtista();
+        Call<Void> call = favoritoAnterior ? favoritosApi.eliminarFavorito(dto) : favoritosApi.agregarFavorito(dto);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (!response.isSuccessful()) {
+                    artistaItem.setFavorito(favoritoAnterior);
+                    artistaItem.setLikes(likesAnterior);
+                    adapter.notifyLikeChanged(position);
+                    Toast.makeText(getContext(), "No se pudo actualizar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                artistaItem.setFavorito(favoritoAnterior);
+                artistaItem.setLikes(likesAnterior);
+                adapter.notifyLikeChanged(position);
+                Toast.makeText(getContext(), "No se pudo actualizar favorito", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void cargarArtistas() {
         UsuarioApi api = RetrofitClient.getClient().create(UsuarioApi.class);
-        Call<List<ArtistaDTO>> call = api.getArtistas();
-
-        listaArtistas.clear();
-        adapter.actualizarLista(new ArrayList<>());
-
-        call.enqueue(new Callback<List<ArtistaDTO>>() {
+        api.getArtistas(idUsuarioLogueado > 0 ? idUsuarioLogueado : null).enqueue(new Callback<List<ArtistaDTO>>() {
             @Override
-            public void onResponse(Call<List<ArtistaDTO>> call,
-                                   Response<List<ArtistaDTO>> response) {
+            public void onResponse(Call<List<ArtistaDTO>> call, Response<List<ArtistaDTO>> response) {
+                if (response.code() == 204) { adapter.actualizarLista(new ArrayList<>()); return; }
                 if (response.isSuccessful() && response.body() != null) {
-                    List<ArtistaDTO> artistas = response.body();
-
-                    int artistasQueCumplenFiltro = 0;
-
-                    for (ArtistaDTO artista : artistas) {
+                    listaArtistas.clear();
+                    adapter.actualizarLista(new ArrayList<>());
+                    for (ArtistaDTO artista : response.body()) {
                         if (!profesionFiltroActual.isEmpty()) {
                             String profesionArtista = artista.getCategoria();
                             if (profesionArtista == null ||
@@ -131,15 +160,8 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
                                 continue;
                             }
                         }
-
-                        artistasQueCumplenFiltro++;
                         obtenerMiniObras(artista);
                     }
-
-                    if (artistasQueCumplenFiltro == 0) {
-                        adapter.actualizarLista(new ArrayList<>());
-                    }
-
                 } else {
                     Toast.makeText(getContext(),
                             "Error al obtener artistas: " + response.code(),
@@ -159,9 +181,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
 
     private void obtenerMiniObras(ArtistaDTO artista) {
         ObraApi obraApi = RetrofitClient.getClient().create(ObraApi.class);
-        Call<List<ObraDTO>> call = obraApi.obtenerObrasDeUsuario(artista.getIdUsuario());
-
-        call.enqueue(new Callback<List<ObraDTO>>() {
+        obraApi.obtenerObrasDeUsuario(artista.getIdUsuario()).enqueue(new Callback<List<ObraDTO>>() {
             @Override
             public void onResponse(Call<List<ObraDTO>> call, Response<List<ObraDTO>> response) {
                 List<String> miniObras = new ArrayList<>();
@@ -174,17 +194,9 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
                 while (miniObras.size() < 3) {
                     miniObras.add(null);
                 }
-
-                TarjetaTextoArtistaItem item = new TarjetaTextoArtistaItem(
-                        artista.getUsuario(),
-                        artista.getCategoria(),
-                        artista.getDescripcion(),
-                        artista.getFotoPerfil(),
-                        miniObras
-                );
-
-                listaArtistas.add(item);
-                adapter.actualizarLista(new ArrayList<>(listaArtistas));
+                TarjetaTextoArtistaItem item = new TarjetaTextoArtistaItem(artista.getIdUsuario(), artista.getUsuario(), artista.getCategoria(), artista.getDescripcion(), artista.getFotoPerfil(), miniObras, artista.getLikes() != null ? artista.getLikes() : 0, Boolean.TRUE.equals(artista.getEsFavorito()));
+                        listaArtistas.add(item);
+                        adapter.actualizarLista(new ArrayList<>(listaArtistas));
             }
 
             @Override

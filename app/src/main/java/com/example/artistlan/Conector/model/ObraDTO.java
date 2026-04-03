@@ -14,6 +14,7 @@ public class ObraDTO
     private String medidas;
     private Integer idUsuario;
     private Integer likes;
+    private Boolean esFavorito;
     private Integer idCategoria;
     private String nombreCategoria;
     private String nombreAutor;
@@ -147,5 +148,12 @@ public class ObraDTO
 
     public void setLikes(Integer likes) {
         this.likes = likes;
+    }
+    public Boolean getEsFavorito() {
+        return esFavorito;
+    }
+
+    public void setEsFavorito(Boolean esFavorito) {
+        this.esFavorito = esFavorito;
     }
 }

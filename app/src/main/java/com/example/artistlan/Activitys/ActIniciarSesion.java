@@ -535,6 +535,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         SharedPreferences.Editor editor = prefs.edit();
 
         editor.putInt("id", usuario.getIdUsuario());
+        editor.putInt("idUsuario", usuario.getIdUsuario());
         editor.putString("usuario", usuario.getUsuario());
         editor.putString("correo", usuario.getCorreo());
         editor.putString("nombreCompleto", usuario.getNombreCompleto());
@@ -543,7 +544,8 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         editor.putString("descripcion", usuario.getDescripcion());
         editor.putString("redes", usuario.getRedesSociales());
         editor.putString("fechaNac", usuario.getFechaNacimiento());
-
+        String rol = (usuario.getRol() != null && !usuario.getRol().trim().isEmpty()) ? usuario.getRol() : "USER";
+        editor.putString("rol", rol);
         String foto = usuario.getFotoPerfil();
         editor.putString("fotoPerfil", foto != null ? foto : "");
         editor.apply();

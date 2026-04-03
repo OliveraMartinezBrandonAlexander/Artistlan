@@ -56,6 +56,7 @@ public class FragMisServicios extends Fragment {
 
         for (ServicioDTO dto : dtoList) {
             items.add(new TarjetaTextoServicioItem(
+                    dto.getIdServicio(),
                     dto.getTitulo(),
                     dto.getDescripcion(),
                     dto.getContacto(),
@@ -63,6 +64,8 @@ public class FragMisServicios extends Fragment {
                     dto.getNombreUsuario(),
                     dto.getCategoria(),
                     dto.getFotoPerfilAutor(),
+                    dto.getLikes() != null ? dto.getLikes() : 0,
+                    Boolean.TRUE.equals(dto.getEsFavorito()),
                     false
             ));
         }

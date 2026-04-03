@@ -2,8 +2,8 @@ package com.example.artistlan.Conector.api;
 
 import com.example.artistlan.Conector.model.ActualizarFotoPerfilRequestDTO;
 import com.example.artistlan.Conector.model.ArtistaDTO;
-import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
+import com.example.artistlan.Conector.model.FavoritoDTO;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -14,14 +14,15 @@ import retrofit2.http.PUT;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
-public interface UsuarioApi
-{
+public interface UsuarioApi {
     @GET("usuarios")
     Call<List<ArtistaDTO>> getArtistas();
 
+    @GET("usuarios")
+    Call<List<ArtistaDTO>> getArtistas(@Query("usuarioId") Integer usuarioId);
+
     @POST("usuarios")
     Call<List<UsuariosDTO>> crearUsuarios(@Body List<UsuariosDTO> usuarios);
-
 
     @GET("usuarios/login")
     Call<UsuariosDTO> login(
@@ -32,6 +33,10 @@ public interface UsuarioApi
 
     @GET("usuarios/{id}")
     Call<UsuariosDTO> obtenerUsuarioPorId(@Path("id") int id);
+
+    @GET("usuarios/{id}")
+    Call<UsuariosDTO> obtenerUsuarioPorId(@Path("id") int id, @Query("usuarioId") Integer usuarioId);
+
     @PUT("usuarios/{id}")
     Call<Void> actualizarUsuario(@Path("id") int id, @Body UsuariosDTO usuario);
 
@@ -52,4 +57,6 @@ public interface UsuarioApi
     @DELETE("usuariosusuario/{id}")
     Call<Void> eliminarUsuario(@Path("id") int idUsuario);
 
+    @GET("usuarios/favoritos/{usuarioId}")
+    Call<List<FavoritoDTO>> favoritosAlterno(@Path("usuarioId") int usuarioId);
 }

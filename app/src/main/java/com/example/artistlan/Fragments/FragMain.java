@@ -9,14 +9,19 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
-
+import com.example.artistlan.Conector.api.ConvocatoriaApi;
+import com.example.artistlan.Conector.model.ConvocatoriaDTO;
+import com.example.artistlan.adapter.ConvocatoriaHomeAdapter;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.ObraApi;
@@ -37,6 +42,11 @@ public class FragMain extends Fragment {
 
     private ViewPager2 viewPager;
     private ImageButton btnIzq, btnDer;
+    private RecyclerView rvConvocatoriasMain;
+    private ProgressBar pbConvocatoriasMain;
+    private TextView tvConvocatoriasMainEstado;
+
+    private ConvocatoriaHomeAdapter convocatoriaAdapter;
 
     @Nullable
     @Override
@@ -47,10 +57,9 @@ public class FragMain extends Fragment {
         btnIzq = root.findViewById(R.id.btnCarruselIzquierdo);
         btnDer = root.findViewById(R.id.btnCarruselDerecho);
 
-        Button btn1 = root.findViewById(R.id.btnEvento1);
-        Button btn2 = root.findViewById(R.id.btnEvento2);
-        Button btn3 = root.findViewById(R.id.btnEvento3);
-        Button btn4 = root.findViewById(R.id.btnEvento4);
+        rvConvocatoriasMain = root.findViewById(R.id.rvConvocatoriasMain);
+        pbConvocatoriasMain = root.findViewById(R.id.pbConvocatoriasMain);
+        tvConvocatoriasMainEstado = root.findViewById(R.id.tvConvocatoriasMainEstado);
 
 
         List<ObraCarruselItem> obras = new ArrayList<>();
@@ -62,6 +71,8 @@ public class FragMain extends Fragment {
         viewPager.setAdapter(adapter);
 
         cargarObrasCarrusel(obras, adapter);
+        configurarConvocatoriasMain();
+        cargarConvocatoriasMain();
 
         btnDer.setOnClickListener(v -> {
             if (viewPager.getCurrentItem() < obras.size() - 1) {
@@ -76,16 +87,55 @@ public class FragMain extends Fragment {
                 animarBoton(v);
             }
         });
-
-
-
-        btn1.setOnClickListener(v -> openWebPage("https://convocatorias.cultura.gob.mx/vigentes/detalle/4012/xvii-concurso-nacional-de-fotografia"));
-        btn2.setOnClickListener(v -> openWebPage("https://bada.com.mx/convocatoria-2026/"));
-        btn3.setOnClickListener(v -> openWebPage("https://www.becajenkinsdeltoro.com/"));
-        btn4.setOnClickListener(v -> openWebPage("https://convocatorias.cultura.gob.mx/"));
-
         return root;
     }
+
+    private void configurarConvocatoriasMain() {
+        convocatoriaAdapter = new ConvocatoriaHomeAdapter(this::openWebPage);
+        rvConvocatoriasMain.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvConvocatoriasMain.setNestedScrollingEnabled(false);
+        rvConvocatoriasMain.setAdapter(convocatoriaAdapter);
+    }
+
+    private void cargarConvocatoriasMain() {
+        mostrarEstadoConvocatorias(true, null);
+        ConvocatoriaApi api = RetrofitClient.getClient().create(ConvocatoriaApi.class);
+        api.getConvocatorias().enqueue(new Callback<List<ConvocatoriaDTO>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ConvocatoriaDTO>> call, @NonNull Response<List<ConvocatoriaDTO>> response) {
+                if (!isAdded()) return;
+                mostrarEstadoConvocatorias(false, null);
+                if (!response.isSuccessful() || response.body() == null) {
+                    mostrarEstadoConvocatorias(false, "No se pudieron cargar las convocatorias.");
+                    return;
+                }
+
+                List<ConvocatoriaDTO> convocatorias = response.body();
+                convocatoriaAdapter.actualizar(convocatorias);
+                if (convocatorias.isEmpty()) {
+                    mostrarEstadoConvocatorias(false, "No hay convocatorias activas por ahora.");
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ConvocatoriaDTO>> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                mostrarEstadoConvocatorias(false, "Error de conexión al cargar convocatorias.");
+            }
+        });
+    }
+
+    private void mostrarEstadoConvocatorias(boolean loading, @Nullable String mensaje) {
+        pbConvocatoriasMain.setVisibility(loading ? View.VISIBLE : View.GONE);
+
+        if (mensaje == null || mensaje.isEmpty()) {
+            tvConvocatoriasMainEstado.setVisibility(View.GONE);
+        } else {
+            tvConvocatoriasMainEstado.setVisibility(View.VISIBLE);
+            tvConvocatoriasMainEstado.setText(mensaje);
+        }
+    }
+
     public void openWebPage(String url) {
         try {
             Uri webpage = Uri.parse(url);
@@ -116,7 +166,6 @@ public class FragMain extends Fragment {
                     return;
                 }
 
-                // Selección aleatoria cuando hay más de 3
                 List<ObraDTO> seleccionadas;
                 if (dtos.size() <= 3) {
                     seleccionadas = dtos;
@@ -164,7 +213,7 @@ public class FragMain extends Fragment {
                         autorFotoUrl = autorFotoUrl.replace("https://localhost", "https://10.0.2.2");
 
                         if (!autorFotoUrl.startsWith("http")) {
-                            String base = "http://10.0.2.2:8080"; // <-- AJUSTA tu puerto
+                            String base = "http://10.0.2.2:8080";
                             if (!autorFotoUrl.startsWith("/")) autorFotoUrl = "/" + autorFotoUrl;
                             autorFotoUrl = base + autorFotoUrl;
                         }
@@ -172,8 +221,8 @@ public class FragMain extends Fragment {
 
 
                     obras.set(i, new ObraCarruselItem(
-                            original.getImagen(), // drawable local
-                            imagenUrl,            // URL de la BD
+                            original.getImagen(),
+                            imagenUrl,
                             titulo,
                             descripcion,
                             autor,

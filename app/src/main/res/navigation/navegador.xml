@@ -106,7 +106,7 @@
 
     <fragment
         android:id="@+id/fragAdminGestionUsuarios"
-        android:name="com.example.artistlan.Fragments.FragAdminGestionUsuarios"
+        android:name="com.example.artistlan.Fragments.FragGestionUsuarios"
         tools:layout="@layout/fragment_frag_admin_gestion_usuarios"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
@@ -115,7 +115,7 @@
 
     <fragment
         android:id="@+id/fragAdminConvocatorias"
-        android:name="com.example.artistlan.Fragments.FragAdminConvocatorias"
+        android:name="com.example.artistlan.Fragments.FragGestionConvocatorias"
         tools:layout="@layout/fragment_frag_admin_convocatorias"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"

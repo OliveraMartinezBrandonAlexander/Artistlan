@@ -3,6 +3,7 @@ package com.example.artistlan.Conector.api;
 import com.example.artistlan.Conector.model.ActualizarFotoPerfilRequestDTO;
 import com.example.artistlan.Conector.model.ArtistaDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
+import com.example.artistlan.Conector.model.CambiarRolRequestDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import java.util.List;
 import retrofit2.Call;
@@ -59,4 +60,14 @@ public interface UsuarioApi {
 
     @GET("usuarios/favoritos/{usuarioId}")
     Call<List<FavoritoDTO>> favoritosAlterno(@Path("usuarioId") int usuarioId);
+
+    @GET("usuarios")
+    Call<List<UsuariosDTO>> getUsuarios();
+
+    @PUT("usuarios/{id}/rol")
+    Call<UsuariosDTO> cambiarRol(
+            @Path("id") int idUsuario,
+            @Query("adminId") int adminId,
+            @Body CambiarRolRequestDTO body
+    );
 }

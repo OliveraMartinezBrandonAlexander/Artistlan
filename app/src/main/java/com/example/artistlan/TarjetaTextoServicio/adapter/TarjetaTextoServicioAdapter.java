@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,9 +28,10 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         void onLikeClick(TarjetaTextoServicioItem servicioItem, int position);
     }
 
+    private static final long LIKE_BUTTON_COOLDOWN_MS = 500L;
     private OnLikeClickListener onLikeClickListener;
-    private List<TarjetaTextoServicioItem> listaServicios;
-    private List<TarjetaTextoServicioItem> listaOriginal;
+    private final List<TarjetaTextoServicioItem> listaServicios;
+    private final List<TarjetaTextoServicioItem> listaOriginal;
     private final Context context;
     private int tarjetaExpandida = -1;
 
@@ -42,6 +44,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     public void setOnLikeClickListener(OnLikeClickListener onLikeClickListener) {
         this.onLikeClickListener = onLikeClickListener;
     }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -60,14 +63,18 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         holder.contacto.setText("Contacto: " + servicio.getContacto());
         holder.tecnicas.setText("Técnicas: " + servicio.getTecnicas());
         holder.categoria.setText("Categoría: " + servicio.getCategoria());
-        holder.likes.setText("❤️ " + servicio.getLikes());
+        holder.likes.setText(String.valueOf(servicio.getLikes()));
         holder.btnLike.setImageResource(servicio.isFavorito() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
         holder.btnLike.setOnClickListener(v -> {
+            v.setEnabled(false);
+            v.postDelayed(() -> v.setEnabled(true), LIKE_BUTTON_COOLDOWN_MS);
+            animateLikeButton(holder.btnLike, servicio.isFavorito());
             int adapterPosition = holder.getAdapterPosition();
             if (onLikeClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
                 onLikeClickListener.onLikeClick(listaServicios.get(adapterPosition), adapterPosition);
             }
         });
+
         Glide.with(holder.itemView.getContext())
                 .load((servicio.getFotoPerfilAutor() != null && servicio.getFotoPerfilAutor().startsWith("http")) ? servicio.getFotoPerfilAutor() : R.drawable.fotoperfilprueba)
                 .placeholder(R.drawable.fotoperfilprueba)
@@ -99,13 +106,36 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         return listaServicios != null ? listaServicios.size() : 0;
     }
 
-    public void filtrar(String texto){
+    private void animateLikeButton(ImageButton btnLike, boolean wasLiked) {
+        btnLike.animate().cancel();
+        btnLike.setScaleX(0.82f);
+        btnLike.setScaleY(0.82f);
+        btnLike.setAlpha(0.75f);
+
+        btnLike.animate()
+                .scaleX(1.24f)
+                .scaleY(1.24f)
+                .alpha(1f)
+                .setDuration(140)
+                .withEndAction(() -> {
+                    btnLike.setImageResource(wasLiked ? R.drawable.ic_heart_purple : R.drawable.ic_heart_red);
+                    btnLike.animate()
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .setDuration(220)
+                            .setInterpolator(new OvershootInterpolator(2.8f))
+                            .start();
+                })
+                .start();
+    }
+
+    public void filtrar(String texto) {
         List<TarjetaTextoServicioItem> listaFiltrada = new ArrayList<>();
-        if(texto == null || texto.isEmpty()) listaFiltrada.addAll(listaOriginal);
+        if (texto == null || texto.isEmpty()) listaFiltrada.addAll(listaOriginal);
         else {
             texto = texto.toLowerCase();
-            for(TarjetaTextoServicioItem servicio : listaOriginal){
-                if(servicio.getTitulo() != null && servicio.getTitulo().toLowerCase().contains(texto)) listaFiltrada.add(servicio);
+            for (TarjetaTextoServicioItem servicio : listaOriginal){
+                if (servicio.getTitulo() != null && servicio.getTitulo().toLowerCase().contains(texto)) listaFiltrada.add(servicio);
             }
         }
         int oldSize = listaServicios.size();
@@ -124,6 +154,14 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
         if (!nuevaLista.isEmpty()) notifyItemRangeInserted(0, nuevaLista.size());
     }
+
+    public void removeItemAt(int position) {
+        if (position < 0 || position >= listaServicios.size()) return;
+        TarjetaTextoServicioItem item = listaServicios.remove(position);
+        listaOriginal.remove(item);
+        notifyItemRemoved(position);
+    }
+
     public void notifyLikeChanged(int position) {
         if (position >= 0 && position < listaServicios.size()) notifyItemChanged(position);
     }

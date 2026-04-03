@@ -12,7 +12,7 @@
         android:title="Explorar" />
 
     <item
-        android:id="@+id/fragSubirObra"
+        android:id="@+id/fragPortafolio"
         android:icon="@drawable/ic_nav_subir_artistlan"
         android:title="Subir" />
 

@@ -83,6 +83,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         aplicarBlurSiSePuede();
         configurarDrawer();
         cargarHeaderDrawer();
+        configurarAdminDrawerSection();
         configurarNavegacion();
         configurarEventos();
         prepararAnimacionesIniciales();
@@ -258,6 +259,17 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         });
     }
 
+    private void configurarAdminDrawerSection() {
+        if (navigationView == null) return;
+
+        SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+        String rol = prefs.getString("rol", "USER");
+        boolean esAdmin = "ADMIN".equals(rol);
+
+        navigationView.getMenu().setGroupVisible(R.id.admin_group, esAdmin);
+        navigationView.getMenu().findItem(R.id.navAdminSection).setVisible(esAdmin);
+    }
+
     private void configurarNavegacion() {
         NavHostFragment navHostFragment =
                 (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);
@@ -360,6 +372,23 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         if (navigationView != null) {
             navigationView.setNavigationItemSelectedListener(item -> {
                 int itemId = item.getItemId();
+
+                if (itemId == R.id.navAdminGestionarUsuarios) {
+                    if (navController != null) navController.navigate(R.id.fragAdminGestionUsuarios);
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    return true;
+                }
+
+                if (itemId == R.id.navAdminEditarConvocatorias) {
+                    if (navController != null) navController.navigate(R.id.fragAdminConvocatorias);
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    return true;
+                }
+
+                if (itemId == R.id.navAdminModuloInformativo) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    return true;
+                }
 
                 if (itemId == R.id.navConfiguracion) {
                     startActivity(new Intent(ActFragmentoPrincipal.this, ActAjustesTema.class));
@@ -610,6 +639,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         themeManager = new ThemeManager(this);
         applyThemeOnlyColors();
         cargarHeaderDrawer();
+        configurarAdminDrawerSection();
     }
 
     @Override

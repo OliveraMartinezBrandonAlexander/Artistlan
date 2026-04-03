@@ -103,4 +103,23 @@
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
         app:popExitAnim="@anim/nav_pop_exit" />
+
+    <fragment
+        android:id="@+id/fragAdminGestionUsuarios"
+        android:name="com.example.artistlan.Fragments.FragAdminGestionUsuarios"
+        tools:layout="@layout/fragment_frag_admin_gestion_usuarios"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit" />
+
+    <fragment
+        android:id="@+id/fragAdminConvocatorias"
+        android:name="com.example.artistlan.Fragments.FragAdminConvocatorias"
+        tools:layout="@layout/fragment_frag_admin_convocatorias"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit" />
+
 </navigation>

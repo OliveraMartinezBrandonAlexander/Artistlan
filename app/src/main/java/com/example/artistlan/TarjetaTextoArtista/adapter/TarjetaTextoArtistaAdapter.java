@@ -3,6 +3,7 @@ package com.example.artistlan.TarjetaTextoArtista.adapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
+import android.view.animation.OvershootInterpolator;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -28,6 +29,7 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         void onLikeClick(TarjetaTextoArtistaItem artistaItem, int position);
     }
 
+    private static final long LIKE_BUTTON_COOLDOWN_MS = 500L;
     private OnLikeClickListener onLikeClickListener;
     private List<TarjetaTextoArtistaItem> listaArtistas;
     private List<TarjetaTextoArtistaItem> listaOriginal;
@@ -80,9 +82,13 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         holder.nombre.setText(artista.getNombre());
         holder.categoria.setText("Categoría: " + safeText(artista.getCategoria(), "Sin categoria"));
         holder.descripcion.setText((artista.getDescripcion() == null || artista.getDescripcion().trim().isEmpty()) ? descripcionDefaultPara(artista, position) : artista.getDescripcion());
-        holder.likes.setText("❤️ " + artista.getLikes());
+        holder.likes.setText(String.valueOf(artista.getLikes()));
         holder.btnLike.setImageResource(artista.isFavorito() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
         holder.btnLike.setOnClickListener(v -> {
+            v.setEnabled(false);
+            v.postDelayed(() -> v.setEnabled(true), LIKE_BUTTON_COOLDOWN_MS);
+            animateLikeButton(holder.btnLike, artista.isFavorito());
+
             int adapterPosition = holder.getAdapterPosition();
             if (onLikeClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
                 onLikeClickListener.onLikeClick(listaArtistas.get(adapterPosition), adapterPosition);
@@ -119,6 +125,29 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
     @Override
     public int getItemCount() {
         return listaArtistas.size();
+    }
+
+    private void animateLikeButton(ImageButton btnLike, boolean wasLiked) {
+        btnLike.animate().cancel();
+        btnLike.setScaleX(0.82f);
+        btnLike.setScaleY(0.82f);
+        btnLike.setAlpha(0.75f);
+
+        btnLike.animate()
+                .scaleX(1.24f)
+                .scaleY(1.24f)
+                .alpha(1f)
+                .setDuration(140)
+                .withEndAction(() -> {
+                    btnLike.setImageResource(wasLiked ? R.drawable.ic_heart_purple : R.drawable.ic_heart_red);
+                    btnLike.animate()
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .setDuration(220)
+                            .setInterpolator(new OvershootInterpolator(2.8f))
+                            .start();
+                })
+                .start();
     }
 
     private void animarVista(View v, boolean expandir) {
@@ -186,6 +215,14 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
         if (!nuevaLista.isEmpty()) notifyItemRangeInserted(0, nuevaLista.size());
     }
+
+    public void removeItemAt(int position) {
+        if (position < 0 || position >= listaArtistas.size()) return;
+        TarjetaTextoArtistaItem item = listaArtistas.remove(position);
+        listaOriginal.remove(item);
+        notifyItemRemoved(position);
+    }
+
     public void notifyLikeChanged(int position) {
         if (position >= 0 && position < listaArtistas.size()) notifyItemChanged(position);
     }

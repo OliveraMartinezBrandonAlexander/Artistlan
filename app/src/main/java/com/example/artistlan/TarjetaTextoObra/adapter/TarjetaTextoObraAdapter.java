@@ -5,6 +5,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.OvershootInterpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -27,9 +28,10 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         void onLikeClick(TarjetaTextoObraItem obraItem, int position);
     }
 
+    private static final long LIKE_BUTTON_COOLDOWN_MS = 500L;
     private OnLikeClickListener onLikeClickListener;
-    private List<TarjetaTextoObraItem> listaObras;
-    private List<TarjetaTextoObraItem> listaOriginal;
+    private final List<TarjetaTextoObraItem> listaObras;
+    private final List<TarjetaTextoObraItem> listaOriginal;
     private final Context context;
     private int tarjetaExpandida = -1;
 
@@ -63,10 +65,14 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.medidas.setText((obra.getMedidas() != null && !obra.getMedidas().isEmpty()) ? "Medidas: " + obra.getMedidas() + " cm" : "Medidas: N/A");
         holder.precio.setText(obra.getPrecio() != null ? "Precio: $ " + String.format("%,.2f", obra.getPrecio()) : "Precio: N/A");
         holder.categoria.setText("Categoría: " + obra.getNombreCategoria());
-        holder.likes.setText("❤️ " + obra.getLikes());
+        holder.likes.setText(String.valueOf(obra.getLikes()));
 
         holder.btnLike.setImageResource(obra.isUserLiked() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
         holder.btnLike.setOnClickListener(v -> {
+            v.setEnabled(false);
+            v.postDelayed(() -> v.setEnabled(true), LIKE_BUTTON_COOLDOWN_MS);
+            animateLikeButton(holder.btnLike, obra.isUserLiked());
+
             int adapterPosition = holder.getAdapterPosition();
             if (onLikeClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
                 onLikeClickListener.onLikeClick(listaObras.get(adapterPosition), adapterPosition);
@@ -105,6 +111,29 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     @Override
     public int getItemCount() {
         return listaObras.size();
+    }
+
+    private void animateLikeButton(ImageButton btnLike, boolean wasLiked) {
+        btnLike.animate().cancel();
+        btnLike.setScaleX(0.82f);
+        btnLike.setScaleY(0.82f);
+        btnLike.setAlpha(0.75f);
+
+        btnLike.animate()
+                .scaleX(1.24f)
+                .scaleY(1.24f)
+                .alpha(1f)
+                .setDuration(140)
+                .withEndAction(() -> {
+                    btnLike.setImageResource(wasLiked ? R.drawable.ic_heart_purple : R.drawable.ic_heart_red);
+                    btnLike.animate()
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .setDuration(220)
+                            .setInterpolator(new OvershootInterpolator(2.8f))
+                            .start();
+                })
+                .start();
     }
 
     private void animarVista(View view, boolean expandir) {
@@ -154,14 +183,14 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         }
     }
 
-    public void filtrar(String texto){
+    public void filtrar(String texto) {
         List<TarjetaTextoObraItem> listaFiltrada = new ArrayList<>();
 
-        if(texto == null || texto.isEmpty()) listaFiltrada.addAll(listaOriginal);
+        if (texto == null || texto.isEmpty()) listaFiltrada.addAll(listaOriginal);
         else {
             texto = texto.toLowerCase();
-            for(TarjetaTextoObraItem obra : listaOriginal){
-                if(obra.getTitulo() != null && obra.getTitulo().toLowerCase().contains(texto)) listaFiltrada.add(obra);
+            for (TarjetaTextoObraItem obra : listaOriginal) {
+                if (obra.getTitulo() != null && obra.getTitulo().toLowerCase().contains(texto)) listaFiltrada.add(obra);
             }
         }
         int oldSize = listaObras.size();
@@ -179,6 +208,12 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         listaObras.addAll(nuevaLista);
         if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
         if (!nuevaLista.isEmpty()) notifyItemRangeInserted(0, nuevaLista.size());
+    }
+    public void removeItemAt(int position) {
+        if (position < 0 || position >= listaObras.size()) return;
+        TarjetaTextoObraItem item = listaObras.remove(position);
+        listaOriginal.remove(item);
+        notifyItemRemoved(position);
     }
     public void notifyLikeChanged(int position) {
         if (position >= 0 && position < listaObras.size()) notifyItemChanged(position);

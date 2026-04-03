@@ -10,18 +10,14 @@
         <item
             android:id="@+id/fragPortafolio"
             android:icon="@drawable/ic_nav_portafolio_artistlan"
-            android:title="Portafolio de obras" />
+            android:title="Portafolio personal" />
 
         <item
-            android:id="@+id/fragMiArte"
+            android:id="@+id/fragSubirObra"
             android:icon="@drawable/ic_nav_arte_artistlan"
-            android:title="Mi arte" />
-
-        <item
-            android:id="@+id/fragFavoritos"
-            android:icon="@drawable/ic_nav_favoritos_artistlan"
-            android:title="Favoritos" />
+            android:title="Subir obra" />
     </group>
+
 
     <item android:title="Opciones">
         <menu>
@@ -49,6 +45,29 @@
                 android:id="@+id/navCerrarSesion"
                 android:icon="@drawable/ic_nav_cerrar_artistlan"
                 android:title="Cerrar sesión" />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/navAdminSection"
+        android:title="Funciones administrador">
+        <menu>
+            <group android:id="@+id/admin_group">
+                <item
+                    android:id="@+id/navAdminGestionarUsuarios"
+                    android:icon="@drawable/serport"
+                    android:title="Gestionar usuarios" />
+
+                <item
+                    android:id="@+id/navAdminEditarConvocatorias"
+                    android:icon="@drawable/ic_nav_calendario_artistlan"
+                    android:title="Editar convocatorias" />
+
+                <item
+                    android:id="@+id/navAdminModuloInformativo"
+                    android:icon="@drawable/ic_nav_mensajes_artistlan"
+                    android:title="Editar módulo informativo" />
+            </group>
         </menu>
     </item>
 

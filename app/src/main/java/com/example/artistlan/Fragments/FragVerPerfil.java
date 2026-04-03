@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
@@ -25,7 +26,6 @@ import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.api.ServicioApi;
 import com.example.artistlan.Conector.api.UsuarioApi;
-import com.example.artistlan.Conector.model.ArtistaDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
@@ -39,7 +39,6 @@ import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.List;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -112,6 +111,10 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         servicioAdapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
         artistaAdapter = new TarjetaTextoArtistaAdapter(new ArrayList<>(), requireContext());
 
+        obraAdapter.setOnLikeClickListener(this::eliminarFavoritoObra);
+        servicioAdapter.setOnLikeClickListener(this::eliminarFavoritoServicio);
+        artistaAdapter.setOnLikeClickListener(this::eliminarFavoritoArtista);
+
         setupTabs();
         cargarDatosUsuario();
     }
@@ -130,9 +133,18 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tabFavoritos.addTab(tabFavoritos.newTab().setText("Usuarios"));
         tabFavoritos.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
-            public void onTabSelected(TabLayout.Tab tab) { cargarFavoritosPorTab(tab.getPosition()); }
-            @Override public void onTabUnselected(TabLayout.Tab tab) {}
-            @Override public void onTabReselected(TabLayout.Tab tab) { cargarFavoritosPorTab(tab.getPosition()); }
+            public void onTabSelected(TabLayout.Tab tab) {
+                cargarFavoritosPorTab(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+                cargarFavoritosPorTab(tab.getPosition());
+            }
         });
     }
 
@@ -160,9 +172,6 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tvCategoria.setText(categoria.isEmpty() ? "Sin categoría" : categoria);
 
         adminActionsContainer.setVisibility("ADMIN".equals(rolUsuario) ? View.VISIBLE : View.GONE);
-        if ("MODERADOR".equals(rolUsuario)) {
-            // detección de rol reservada para lógica futura
-        }
 
         String fotoPerfil = prefs.getString("fotoPerfil", null);
         if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
@@ -177,6 +186,72 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
             imgFotoPerfil.setImageResource(R.drawable.fotoperfilprueba);
         }
     }
+
+    private void eliminarFavoritoObra(TarjetaTextoObraItem item, int position) {
+        FavoritoDTO dto = new FavoritoDTO();
+        dto.idUsuario = idUsuarioLogueado;
+        dto.idObra = item.getIdObra();
+        eliminarFavoritoDesdePerfil(dto, position, () -> obraAdapter.removeItemAt(position));
+    }
+
+    private void eliminarFavoritoServicio(TarjetaTextoServicioItem item, int position) {
+        if (item.getIdServicio() == null) return;
+        FavoritoDTO dto = new FavoritoDTO();
+        dto.idUsuario = idUsuarioLogueado;
+        dto.idServicio = item.getIdServicio();
+        eliminarFavoritoDesdePerfil(dto, position, () -> servicioAdapter.removeItemAt(position));
+    }
+
+    private void eliminarFavoritoArtista(TarjetaTextoArtistaItem item, int position) {
+        if (item.getIdArtista() == null) return;
+        FavoritoDTO dto = new FavoritoDTO();
+        dto.idUsuario = idUsuarioLogueado;
+        dto.idArtista = item.getIdArtista();
+        eliminarFavoritoDesdePerfil(dto, position, () -> artistaAdapter.removeItemAt(position));
+    }
+
+    private void eliminarFavoritoDesdePerfil(FavoritoDTO dto, int position, Runnable removeAction) {
+        favoritosApi.eliminarFavorito(dto).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (!response.isSuccessful()) {
+                    Toast.makeText(requireContext(), "No se pudo eliminar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                animateItemRemoval(position, removeAction);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                Toast.makeText(requireContext(), "Error de red al eliminar favorito", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void animateItemRemoval(int position, Runnable removeAction) {
+        RecyclerView.ViewHolder viewHolder = recyclerFavoritos.findViewHolderForAdapterPosition(position);
+        if (viewHolder == null || viewHolder.itemView == null) {
+            removeAction.run();
+            verificarFavoritosVacios();
+            return;
+        }
+
+        viewHolder.itemView.animate()
+                .alpha(0f)
+                .translationX(-viewHolder.itemView.getWidth() * 0.2f)
+                .setDuration(180)
+                .withEndAction(() -> {
+                    removeAction.run();
+                    verificarFavoritosVacios();
+                })
+                .start();
+    }
+
+    private void verificarFavoritosVacios() {
+        RecyclerView.Adapter<?> current = recyclerFavoritos.getAdapter();
+        tvFavoritosVacio.setVisibility(current == null || current.getItemCount() == 0 ? View.VISIBLE : View.GONE);
+    }
+
 
     private void cargarFavoritosPorTab(int tabIndex) {
         if (idUsuarioLogueado <= 0) return;
@@ -207,8 +282,12 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         final int[] total = {0};
         final int[] done = {0};
         for (FavoritoDTO fav : favoritos) if (fav.idObra != null) total[0]++;
-        if (total[0] == 0) { obraAdapter.actualizarLista(new ArrayList<>()); recyclerFavoritos.setAdapter(obraAdapter); tvFavoritosVacio.setVisibility(View.VISIBLE); return; }
-
+        if (total[0] == 0) {
+            obraAdapter.actualizarLista(new ArrayList<>());
+            recyclerFavoritos.setAdapter(obraAdapter);
+            tvFavoritosVacio.setVisibility(View.VISIBLE);
+            return;
+        }
         for (FavoritoDTO fav : favoritos) {
             if (fav.idObra == null) continue;
             obraApi.obtenerObraPorId(fav.idObra, idUsuarioLogueado).enqueue(new Callback<ObraDTO>() {
@@ -216,13 +295,19 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 public void onResponse(@NonNull Call<ObraDTO> call, @NonNull Response<ObraDTO> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         ObraDTO dto = response.body();
-                        items.add(new TarjetaTextoObraItem(dto.getIdObra(), dto.getTitulo(), dto.getDescripcion(), dto.getEstado(), dto.getPrecio(), dto.getImagen1(), dto.getImagen2(), dto.getImagen3(), dto.getTecnicas(), dto.getMedidas(), dto.getLikes() != null ? dto.getLikes() : 0, dto.getNombreAutor(), dto.getNombreCategoria(), dto.getFotoPerfilAutor(), Boolean.TRUE.equals(dto.getEsFavorito()), false));
+                        items.add(new TarjetaTextoObraItem(dto.getIdObra(), dto.getTitulo(), dto.getDescripcion(), dto.getEstado(), dto.getPrecio(), dto.getImagen1(), dto.getImagen2(), dto.getImagen3(), dto.getTecnicas(), dto.getMedidas(), dto.getLikes() != null ? dto.getLikes() : 0, dto.getNombreAutor(), dto.getNombreCategoria(), dto.getFotoPerfilAutor(), true, false));
                     }
                     done[0]++;
-                    if (done[0] == total[0]) { obraAdapter.actualizarLista(items); recyclerFavoritos.setAdapter(obraAdapter); tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE); }
+                    if (done[0] == total[0]) {
+                        obraAdapter.actualizarLista(items);
+                        recyclerFavoritos.setAdapter(obraAdapter);
+                        tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                    }
                 }
                 @Override
-                public void onFailure(@NonNull Call<ObraDTO> call, @NonNull Throwable t) { done[0]++; }
+                public void onFailure(@NonNull Call<ObraDTO> call, @NonNull Throwable t) {
+                    done[0]++;
+                }
             });
         }
     }
@@ -232,8 +317,12 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         final int[] total = {0};
         final int[] done = {0};
         for (FavoritoDTO fav : favoritos) if (fav.idServicio != null) total[0]++;
-        if (total[0] == 0) { servicioAdapter.actualizarLista(new ArrayList<>()); recyclerFavoritos.setAdapter(servicioAdapter); tvFavoritosVacio.setVisibility(View.VISIBLE); return; }
-
+        if (total[0] == 0) {
+            servicioAdapter.actualizarLista(new ArrayList<>());
+            recyclerFavoritos.setAdapter(servicioAdapter);
+            tvFavoritosVacio.setVisibility(View.VISIBLE);
+            return;
+        }
         for (FavoritoDTO fav : favoritos) {
             if (fav.idServicio == null) continue;
             servicioApi.obtenerPorId(fav.idServicio, idUsuarioLogueado).enqueue(new Callback<ServicioDTO>() {
@@ -241,13 +330,19 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 public void onResponse(@NonNull Call<ServicioDTO> call, @NonNull Response<ServicioDTO> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         ServicioDTO dto = response.body();
-                        items.add(new TarjetaTextoServicioItem(dto.getIdServicio(), dto.getTitulo(), dto.getDescripcion(), dto.getContacto(), dto.getTecnicas(), dto.getNombreUsuario(), dto.getCategoria(), dto.getFotoPerfilAutor(), dto.getLikes() != null ? dto.getLikes() : 0, Boolean.TRUE.equals(dto.getEsFavorito()), false));
+                        items.add(new TarjetaTextoServicioItem(dto.getIdServicio(), dto.getTitulo(), dto.getDescripcion(), dto.getContacto(), dto.getTecnicas(), dto.getNombreUsuario(), dto.getCategoria(), dto.getFotoPerfilAutor(), dto.getLikes() != null ? dto.getLikes() : 0, true, false));
                     }
                     done[0]++;
-                    if (done[0] == total[0]) { servicioAdapter.actualizarLista(items); recyclerFavoritos.setAdapter(servicioAdapter); tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE); }
+                    if (done[0] == total[0]) {
+                        servicioAdapter.actualizarLista(items);
+                        recyclerFavoritos.setAdapter(servicioAdapter);
+                        tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                    }
                 }
                 @Override
-                public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) { done[0]++; }
+                public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) {
+                    done[0]++;
+                }
             });
         }
     }
@@ -257,8 +352,12 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         final int[] total = {0};
         final int[] done = {0};
         for (FavoritoDTO fav : favoritos) if (fav.idArtista != null) total[0]++;
-        if (total[0] == 0) { artistaAdapter.actualizarLista(new ArrayList<>()); recyclerFavoritos.setAdapter(artistaAdapter); tvFavoritosVacio.setVisibility(View.VISIBLE); return; }
-
+        if (total[0] == 0) {
+            artistaAdapter.actualizarLista(new ArrayList<>());
+            recyclerFavoritos.setAdapter(artistaAdapter);
+            tvFavoritosVacio.setVisibility(View.VISIBLE);
+            return;
+        }
         for (FavoritoDTO fav : favoritos) {
             if (fav.idArtista == null) continue;
             usuarioApi.obtenerUsuarioPorId(fav.idArtista, idUsuarioLogueado).enqueue(new Callback<com.example.artistlan.Conector.model.UsuariosDTO>() {
@@ -266,13 +365,19 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 public void onResponse(@NonNull Call<com.example.artistlan.Conector.model.UsuariosDTO> call, @NonNull Response<com.example.artistlan.Conector.model.UsuariosDTO> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         com.example.artistlan.Conector.model.UsuariosDTO dto = response.body();
-                        items.add(new TarjetaTextoArtistaItem(dto.getIdUsuario(), dto.getUsuario(), dto.getCategoria(), dto.getDescripcion(), dto.getFotoPerfil(), new ArrayList<>(), dto.getLikes() != null ? dto.getLikes() : 0, Boolean.TRUE.equals(dto.getEsFavorito())));
+                        items.add(new TarjetaTextoArtistaItem(dto.getIdUsuario(), dto.getUsuario(), dto.getCategoria(), dto.getDescripcion(), dto.getFotoPerfil(), new ArrayList<>(), dto.getLikes() != null ? dto.getLikes() : 0, true));
                     }
                     done[0]++;
-                    if (done[0] == total[0]) { artistaAdapter.actualizarLista(items); recyclerFavoritos.setAdapter(artistaAdapter); tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE); }
+                    if (done[0] == total[0]) {
+                        artistaAdapter.actualizarLista(items);
+                        recyclerFavoritos.setAdapter(artistaAdapter);
+                        tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                    }
                 }
                 @Override
-                public void onFailure(@NonNull Call<com.example.artistlan.Conector.model.UsuariosDTO> call, @NonNull Throwable t) { done[0]++; }
+                public void onFailure(@NonNull Call<com.example.artistlan.Conector.model.UsuariosDTO> call, @NonNull Throwable t) {
+                    done[0]++;
+                }
             });
         }
     }
@@ -283,7 +388,8 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     }
 
     private void colapsarFicha() {
-        if (expandedSectionPerfil != null && expandedSectionPerfil.getVisibility() == View.VISIBLE) animarExpand(expandedSectionPerfil, false);
+        if (expandedSectionPerfil != null && expandedSectionPerfil.getVisibility() == View.VISIBLE)
+            animarExpand(expandedSectionPerfil, false);
     }
 
     private void animarExpand(View v, boolean expandir) {

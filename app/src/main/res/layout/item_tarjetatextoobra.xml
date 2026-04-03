@@ -48,8 +48,8 @@
             app:layout_constraintStart_toEndOf="@id/imgAutor"
             app:layout_constraintEnd_toStartOf="@id/categoria"
             android:layout_marginEnd="10dp"
-            app:layout_constraintTop_toTopOf="@id/imgAutor"
-            app:layout_constraintBottom_toBottomOf="@id/imgAutor" />
+            app:layout_constraintTop_toBottomOf="@id/categoria"
+            android:layout_marginTop="6dp" />
 
         <LinearLayout
             android:id="@+id/likeContainer"
@@ -58,14 +58,14 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/imgAutor"
-            app:layout_constraintBottom_toBottomOf="@id/imgAutor">
+            app:layout_constraintTop_toBottomOf="@id/categoria"
+            android:layout_marginTop="6dp">
 
             <TextView
                 android:id="@+id/likes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="❤️ 0"
+                android:text="0"
                 android:textColor="#111111"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -102,7 +102,7 @@
             android:layout_marginTop="14dp"
             android:background="@android:color/darker_gray"
             android:scaleType="centerCrop"
-            app:layout_constraintTop_toBottomOf="@id/imgAutor"
+            app:layout_constraintTop_toBottomOf="@id/likeContainer"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 

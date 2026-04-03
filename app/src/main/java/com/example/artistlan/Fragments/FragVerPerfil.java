@@ -50,7 +50,6 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private ImageButton btnEditarPefil;
     private CardView cardPerfilInfo;
     private View expandedSectionPerfil;
-    private View adminActionsContainer;
     private RecyclerView recyclerFavoritos;
     private TabLayout tabFavoritos;
 
@@ -100,8 +99,6 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tvFecNac = view.findViewById(R.id.VrpTxvFecNac);
         tvCategoria = view.findViewById(R.id.VrpTxvCategoria);
         imgFotoPerfil = view.findViewById(R.id.imgPerfil);
-
-        adminActionsContainer = view.findViewById(R.id.adminActionsContainer);
         recyclerFavoritos = view.findViewById(R.id.recyclerFavoritosPerfil);
         tvFavoritosVacio = view.findViewById(R.id.tvFavoritosVacio);
         tabFavoritos = view.findViewById(R.id.tabFavoritosPerfil);
@@ -171,7 +168,6 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tvFecNac.setText(fechaNac.isEmpty() ? "Sin fecha" : fechaNac);
         tvCategoria.setText(categoria.isEmpty() ? "Sin categoría" : categoria);
 
-        adminActionsContainer.setVisibility("ADMIN".equals(rolUsuario) ? View.VISIBLE : View.GONE);
 
         String fotoPerfil = prefs.getString("fotoPerfil", null);
         if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
@@ -365,7 +361,25 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 public void onResponse(@NonNull Call<com.example.artistlan.Conector.model.UsuariosDTO> call, @NonNull Response<com.example.artistlan.Conector.model.UsuariosDTO> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         com.example.artistlan.Conector.model.UsuariosDTO dto = response.body();
-                        items.add(new TarjetaTextoArtistaItem(dto.getIdUsuario(), dto.getUsuario(), dto.getCategoria(), dto.getDescripcion(), dto.getFotoPerfil(), new ArrayList<>(), dto.getLikes() != null ? dto.getLikes() : 0, true));
+                        ArtistaMiniObrasLoader.cargarMiniObrasPorUsuario(obraApi, dto.getIdUsuario(), miniObras -> {
+                            items.add(new TarjetaTextoArtistaItem(
+                                    dto.getIdUsuario(),
+                                    dto.getUsuario(),
+                                    dto.getCategoria(),
+                                    dto.getDescripcion(),
+                                    dto.getFotoPerfil(),
+                                    miniObras,
+                                    dto.getLikes() != null ? dto.getLikes() : 0,
+                                    true
+                            ));
+                            done[0]++;
+                            if (done[0] == total[0]) {
+                                artistaAdapter.actualizarLista(items);
+                                recyclerFavoritos.setAdapter(artistaAdapter);
+                                tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                            }
+                        });
+                        return;
                     }
                     done[0]++;
                     if (done[0] == total[0]) {

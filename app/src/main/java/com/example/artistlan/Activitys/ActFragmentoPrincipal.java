@@ -19,6 +19,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
+import androidx.navigation.NavDestination;
+import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
@@ -287,7 +289,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             bottomBar.setOnItemSelectedListener(item -> {
                 animarBottomNavTap(bottomBar);
                 animarItemActivoBottomNav(bottomBar);
-                return NavigationUI.onNavDestinationSelected(item, navController);
+                return navegarSinDuplicar(item.getItemId());
             });
         }
 
@@ -362,7 +364,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
                 if (navController != null) {
                     try {
-                        navController.navigate(R.id.fragFavoritos);
+                        navegarSinDuplicar(R.id.fragFavoritos);
                     } catch (Exception ignored) {
                     }
                 }
@@ -374,13 +376,13 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 int itemId = item.getItemId();
 
                 if (itemId == R.id.navAdminGestionarUsuarios) {
-                    if (navController != null) navController.navigate(R.id.fragAdminGestionUsuarios);
+                    if (navController != null) navegarSinDuplicar(R.id.fragAdminGestionUsuarios);
                     drawerLayout.closeDrawer(GravityCompat.START);
                     return true;
                 }
 
                 if (itemId == R.id.navAdminEditarConvocatorias) {
-                    if (navController != null) navController.navigate(R.id.fragAdminConvocatorias);
+                    if (navController != null) navegarSinDuplicar(R.id.fragAdminConvocatorias);
                     drawerLayout.closeDrawer(GravityCompat.START);
                     return true;
                 }
@@ -396,8 +398,14 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                     return true;
                 }
 
+                if (itemId == R.id.navCerrarSesion) {
+                    cerrarSesion();
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    return true;
+                }
+
                 if (navController != null) {
-                    boolean handled = NavigationUI.onNavDestinationSelected(item, navController);
+                    boolean handled = navegarSinDuplicar(itemId);
                     if (handled) {
                         drawerLayout.closeDrawer(GravityCompat.START);
                     }
@@ -632,6 +640,43 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         animarGlowsDrawer();
     }
+
+    private boolean navegarSinDuplicar(int destinationId) {
+        if (navController == null) return false;
+
+        NavDestination current = navController.getCurrentDestination();
+        if (current != null && current.getId() == destinationId) {
+            return true;
+        }
+
+        NavOptions navOptions = new NavOptions.Builder()
+                .setLaunchSingleTop(true)
+                .setPopUpTo(navController.getGraph().getStartDestinationId(), true)
+                .build();
+
+        try {
+            navController.navigate(destinationId, null, navOptions);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private void cerrarSesion() {
+        SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.remove("idUsuario");
+        editor.remove("usuario");
+        editor.remove("rol");
+        editor.clear();
+        editor.apply();
+
+        Intent irLogin = new Intent(this, MainActivity.class);
+        irLogin.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(irLogin);
+        finish();
+    }
+
 
     @Override
     protected void onResume() {

@@ -21,7 +21,6 @@ import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.ArtistaDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
-import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoArtista.adapter.TarjetaTextoArtistaAdapter;
 import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
@@ -42,6 +41,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     private List<TarjetaTextoArtistaItem> listaArtistas = new ArrayList<>();
     private int idUsuarioLogueado = -1;
     private FavoritosApi favoritosApi;
+    private ObraApi obraApi;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -61,6 +61,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
+        obraApi = RetrofitClient.getClient().create(ObraApi.class);
         configurarArtistas(view);
         cargarArtistas();
     }
@@ -180,29 +181,19 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     }
 
     private void obtenerMiniObras(ArtistaDTO artista) {
-        ObraApi obraApi = RetrofitClient.getClient().create(ObraApi.class);
-        obraApi.obtenerObrasDeUsuario(artista.getIdUsuario()).enqueue(new Callback<List<ObraDTO>>() {
-            @Override
-            public void onResponse(Call<List<ObraDTO>> call, Response<List<ObraDTO>> response) {
-                List<String> miniObras = new ArrayList<>();
-                if (response.isSuccessful() && response.body() != null) {
-                    List<ObraDTO> obras = response.body();
-                    for (int i = 0; i < Math.min(3, obras.size()); i++) {
-                        miniObras.add(obras.get(i).getImagen1());
-                    }
-                }
-                while (miniObras.size() < 3) {
-                    miniObras.add(null);
-                }
-                TarjetaTextoArtistaItem item = new TarjetaTextoArtistaItem(artista.getIdUsuario(), artista.getUsuario(), artista.getCategoria(), artista.getDescripcion(), artista.getFotoPerfil(), miniObras, artista.getLikes() != null ? artista.getLikes() : 0, Boolean.TRUE.equals(artista.getEsFavorito()));
-                        listaArtistas.add(item);
-                        adapter.actualizarLista(new ArrayList<>(listaArtistas));
-            }
-
-            @Override
-            public void onFailure(Call<List<ObraDTO>> call, Throwable t) {
-                t.printStackTrace();
-            }
+        ArtistaMiniObrasLoader.cargarMiniObrasPorUsuario(obraApi, artista.getIdUsuario(), miniObras -> {
+            TarjetaTextoArtistaItem item = new TarjetaTextoArtistaItem(
+                    artista.getIdUsuario(),
+                    artista.getUsuario(),
+                    artista.getCategoria(),
+                    artista.getDescripcion(),
+                    artista.getFotoPerfil(),
+                    miniObras,
+                    artista.getLikes() != null ? artista.getLikes() : 0,
+                    Boolean.TRUE.equals(artista.getEsFavorito())
+            );
+            listaArtistas.add(item);
+            adapter.actualizarLista(new ArrayList<>(listaArtistas));
         });
     }
 }

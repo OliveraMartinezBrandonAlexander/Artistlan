@@ -17,6 +17,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.artistlan.Activitys.ActFragmentoPrincipal;
 import com.example.artistlan.Admin.adapter.UsuarioAdminAdapter;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.UsuarioApi;
@@ -141,6 +142,7 @@ public class FragGestionUsuarios extends Fragment {
                     public void onResponse(@NonNull Call<UsuariosDTO> call, @NonNull Response<UsuariosDTO> response) {
                         mostrarLoading(false);
                         if (response.isSuccessful()) {
+                            actualizarSesionSiCorresponde(usuario, rolNuevo);
                             mostrarSnackbar("Rol actualizado a " + rolNuevo + ".");
                             cargarUsuarios();
                         } else if (response.code() == 403) {
@@ -162,6 +164,24 @@ public class FragGestionUsuarios extends Fragment {
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         return prefs.getInt("id", -1);
     }
+
+    private void actualizarSesionSiCorresponde(UsuariosDTO usuarioEditado, String rolNuevo) {
+        if (usuarioEditado == null || usuarioEditado.getIdUsuario() == null) return;
+
+        SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        int idSesion = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+        if (idSesion <= 0 || idSesion != usuarioEditado.getIdUsuario()) return;
+
+        prefs.edit()
+                .putString("rol", rolNuevo)
+                .putString("modo", rolNuevo)
+                .apply();
+
+        if (requireActivity() instanceof ActFragmentoPrincipal) {
+            ((ActFragmentoPrincipal) requireActivity()).refrescarUIRolActual();
+        }
+    }
+
 
     private void mostrarLoading(boolean loading) {
         progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);

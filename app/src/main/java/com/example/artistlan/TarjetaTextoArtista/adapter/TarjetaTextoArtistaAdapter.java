@@ -199,21 +199,20 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
                 if(artista.getNombre() != null && artista.getNombre().toLowerCase().contains(texto)) listaFiltrada.add(artista);
             }
         }
-        int oldSize = listaArtistas.size();
+
         listaArtistas.clear();
         listaArtistas.addAll(listaFiltrada);
-        if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
-        if (!listaFiltrada.isEmpty()) notifyItemRangeInserted(0, listaFiltrada.size());
+        tarjetaExpandida = -1;
+        notifyDataSetChanged();
     }
 
     public void actualizarLista(List<TarjetaTextoArtistaItem> nuevaLista) {
-        int oldSize = listaArtistas.size();
         listaOriginal.clear();
         listaOriginal.addAll(nuevaLista);
         listaArtistas.clear();
         listaArtistas.addAll(nuevaLista);
-        if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
-        if (!nuevaLista.isEmpty()) notifyItemRangeInserted(0, nuevaLista.size());
+        tarjetaExpandida = -1;
+        notifyDataSetChanged();
     }
 
     public void removeItemAt(int position) {

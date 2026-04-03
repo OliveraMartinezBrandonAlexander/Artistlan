@@ -8,7 +8,10 @@ import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
+import android.os.SystemClock;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageButton;
@@ -71,6 +74,9 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
     private ObjectAnimator drawerGlow1X, drawerGlow1Alpha;
     private ObjectAnimator drawerGlow2Y, drawerGlow2Alpha;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private static final long NAV_DEBOUNCE_MS = 400L;
+    private long ultimaAccionNavegacion = 0L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -287,6 +293,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             bottomBar.post(() -> animarItemActivoBottomNav(bottomBar));
 
             bottomBar.setOnItemSelectedListener(item -> {
+                if (!puedeEjecutarNavegacion()) return false;
                 animarBottomNavTap(bottomBar);
                 animarItemActivoBottomNav(bottomBar);
                 return navegarSinDuplicar(item.getItemId());
@@ -338,6 +345,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private void configurarEventos() {
         if (btnMenuLateral != null) {
             btnMenuLateral.setOnClickListener(v -> {
+                if (!puedeEjecutarNavegacion()) return;
                 v.animate()
                         .rotationBy(90f)
                         .setDuration(160)
@@ -352,6 +360,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         if (btnNotificaciones != null) {
             btnNotificaciones.setOnClickListener(v -> {
+                if (!puedeEjecutarNavegacion()) return;
                 v.animate()
                         .rotationBy(12f)
                         .setDuration(90)
@@ -373,6 +382,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         if (navigationView != null) {
             navigationView.setNavigationItemSelectedListener(item -> {
+                if (!puedeEjecutarNavegacion()) return true;
                 int itemId = item.getItemId();
 
                 if (itemId == R.id.navAdminGestionarUsuarios) {
@@ -388,6 +398,15 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 }
 
                 if (itemId == R.id.navAdminModuloInformativo) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    return true;
+                }
+                if (itemId == R.id.navCalendario) {
+                    if (navController != null) {
+                        Bundle args = new Bundle();
+                        args.putBoolean("scroll_to_convocatorias", true);
+                        navController.navigate(R.id.fragMain, args);
+                    }
                     drawerLayout.closeDrawer(GravityCompat.START);
                     return true;
                 }
@@ -627,13 +646,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         ThemeEffectsApplier.applyGlowIntensity(drawerGlow2, themeManager, ThemeKeys.GLOW_DRAWER_SECONDARY);
 
         if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
-            Glide.with(this)
-                    .load(fotoPerfil)
-                    .placeholder(R.drawable.cuenta)
-                    .error(R.drawable.cuenta)
-                    .skipMemoryCache(true)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .into(imgPerfilDrawer);
+            cargarImagenPerfilOptimizada(imgPerfilDrawer, fotoPerfil);
         } else {
             imgPerfilDrawer.setImageResource(R.drawable.cuenta);
         }
@@ -713,5 +726,48 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
     private void cancelAnimator(ObjectAnimator animator) {
         if (animator != null) animator.cancel();
+    }
+
+    private boolean puedeEjecutarNavegacion() {
+        long ahora = SystemClock.elapsedRealtime();
+        if (ahora - ultimaAccionNavegacion < NAV_DEBOUNCE_MS) {
+            return false;
+        }
+        ultimaAccionNavegacion = ahora;
+        return true;
+    }
+
+    private void cargarImagenPerfilOptimizada(ImageView imageView, String fotoPerfil) {
+        if (imageView == null) return;
+        int fallbackSize = (int) (72 * getResources().getDisplayMetrics().density);
+        int ancho = imageView.getWidth() > 0 ? imageView.getWidth() : fallbackSize;
+        int alto = imageView.getHeight() > 0 ? imageView.getHeight() : fallbackSize;
+
+        Glide.with(this)
+                .load(fotoPerfil)
+                .placeholder(R.drawable.cuenta)
+                .error(R.drawable.cuenta)
+                .override(ancho, alto)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .circleCrop()
+                .into(imageView);
+    }
+
+    public void refrescarUIRolActual() {
+        mainHandler.post(() -> {
+            cargarHeaderDrawer();
+            configurarAdminDrawerSection();
+
+            if (navController != null && navController.getCurrentDestination() != null) {
+                int currentId = navController.getCurrentDestination().getId();
+                if (currentId == R.id.fragAdminGestionUsuarios || currentId == R.id.fragAdminConvocatorias) {
+                    SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+                    String rol = prefs.getString("rol", "USER");
+                    if (!"ADMIN".equals(rol)) {
+                        navController.navigate(R.id.fragMain);
+                    }
+                }
+            }
+        });
     }
 }

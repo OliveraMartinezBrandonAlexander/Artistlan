@@ -5,6 +5,8 @@ import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,6 +49,7 @@ public class FragMain extends Fragment {
     private TextView tvConvocatoriasMainEstado;
 
     private ConvocatoriaHomeAdapter convocatoriaAdapter;
+    private final Handler uiHandler = new Handler(Looper.getMainLooper());
 
     @Nullable
     @Override
@@ -73,6 +76,7 @@ public class FragMain extends Fragment {
         cargarObrasCarrusel(obras, adapter);
         configurarConvocatoriasMain();
         cargarConvocatoriasMain();
+        manejarSolicitudScrollConvocatorias();
 
         btnDer.setOnClickListener(v -> {
             if (viewPager.getCurrentItem() < obras.size() - 1) {
@@ -134,6 +138,23 @@ public class FragMain extends Fragment {
             tvConvocatoriasMainEstado.setVisibility(View.VISIBLE);
             tvConvocatoriasMainEstado.setText(mensaje);
         }
+    }
+
+    private void manejarSolicitudScrollConvocatorias() {
+        Bundle args = getArguments();
+        if (args == null || !args.getBoolean("scroll_to_convocatorias", false)) return;
+
+        args.putBoolean("scroll_to_convocatorias", false);
+
+        uiHandler.post(() -> {
+            if (!isAdded() || getView() == null) return;
+
+            rvConvocatoriasMain.post(() -> {
+                if (rvConvocatoriasMain != null) {
+                    rvConvocatoriasMain.smoothScrollToPosition(0);
+                }
+            });
+        });
     }
 
     public void openWebPage(String url) {

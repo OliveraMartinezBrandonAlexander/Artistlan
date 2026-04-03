@@ -28,6 +28,7 @@ import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -42,6 +43,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     private int idUsuarioLogueado = -1;
     private FavoritosApi favoritosApi;
     private ObraApi obraApi;
+    private int cargaArtistasToken = 0;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -145,14 +147,15 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     }
 
     private void cargarArtistas() {
+        final int tokenActual = ++cargaArtistasToken;
         UsuarioApi api = RetrofitClient.getClient().create(UsuarioApi.class);
         api.getArtistas(idUsuarioLogueado > 0 ? idUsuarioLogueado : null).enqueue(new Callback<List<ArtistaDTO>>() {
             @Override
             public void onResponse(Call<List<ArtistaDTO>> call, Response<List<ArtistaDTO>> response) {
+                if (!isAdded() || tokenActual != cargaArtistasToken) return;
                 if (response.code() == 204) { adapter.actualizarLista(new ArrayList<>()); return; }
                 if (response.isSuccessful() && response.body() != null) {
-                    listaArtistas.clear();
-                    adapter.actualizarLista(new ArrayList<>());
+                    List<ArtistaDTO> artistasFiltrados = new ArrayList<>();
                     for (ArtistaDTO artista : response.body()) {
                         if (!profesionFiltroActual.isEmpty()) {
                             String profesionArtista = artista.getCategoria();
@@ -161,7 +164,38 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
                                 continue;
                             }
                         }
-                        obtenerMiniObras(artista);
+                        artistasFiltrados.add(artista);
+                    }
+
+                    if (artistasFiltrados.isEmpty()) {
+                        listaArtistas.clear();
+                        adapter.actualizarLista(new ArrayList<>());
+                        return;
+                    }
+
+                    List<TarjetaTextoArtistaItem> nuevaLista = new ArrayList<>();
+                    AtomicInteger pendientes = new AtomicInteger(artistasFiltrados.size());
+                    for (ArtistaDTO artista : artistasFiltrados) {
+                        obtenerMiniObras(artista, miniObras -> {
+                            if (!isAdded() || tokenActual != cargaArtistasToken) return;
+                            TarjetaTextoArtistaItem item = new TarjetaTextoArtistaItem(
+                                    artista.getIdUsuario(),
+                                    artista.getUsuario(),
+                                    artista.getCategoria(),
+                                    artista.getDescripcion(),
+                                    artista.getFotoPerfil(),
+                                    miniObras,
+                                    artista.getLikes() != null ? artista.getLikes() : 0,
+                                    Boolean.TRUE.equals(artista.getEsFavorito())
+                            );
+                            nuevaLista.add(item);
+
+                            if (pendientes.decrementAndGet() == 0) {
+                                listaArtistas.clear();
+                                listaArtistas.addAll(nuevaLista);
+                                adapter.actualizarLista(new ArrayList<>(listaArtistas));
+                            }
+                        });
                     }
                 } else {
                     Toast.makeText(getContext(),
@@ -172,6 +206,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
 
             @Override
             public void onFailure(Call<List<ArtistaDTO>> call, Throwable t) {
+                if (!isAdded() || tokenActual != cargaArtistasToken) return;
                 t.printStackTrace();
                 Toast.makeText(getContext(),
                         "Error de conexión al cargar artistas",
@@ -180,20 +215,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
         });
     }
 
-    private void obtenerMiniObras(ArtistaDTO artista) {
-        ArtistaMiniObrasLoader.cargarMiniObrasPorUsuario(obraApi, artista.getIdUsuario(), miniObras -> {
-            TarjetaTextoArtistaItem item = new TarjetaTextoArtistaItem(
-                    artista.getIdUsuario(),
-                    artista.getUsuario(),
-                    artista.getCategoria(),
-                    artista.getDescripcion(),
-                    artista.getFotoPerfil(),
-                    miniObras,
-                    artista.getLikes() != null ? artista.getLikes() : 0,
-                    Boolean.TRUE.equals(artista.getEsFavorito())
-            );
-            listaArtistas.add(item);
-            adapter.actualizarLista(new ArrayList<>(listaArtistas));
-        });
+    private void obtenerMiniObras(ArtistaDTO artista, ArtistaMiniObrasLoader.MiniObrasCallback callback) {
+        ArtistaMiniObrasLoader.cargarMiniObrasPorUsuario(obraApi, artista.getIdUsuario(), callback);
     }
 }

@@ -3,31 +3,29 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-
     android:layout_marginStart="6dp"
-    android:layout_marginEnd="6dp"
     android:layout_marginTop="12dp"
+    android:layout_marginEnd="6dp"
     android:layout_marginBottom="12dp"
-
-    app:cardElevation="10dp"
+    app:cardBackgroundColor="#F3E8FF"
     app:cardCornerRadius="22dp"
-    app:cardBackgroundColor="#F3E8FF">
+    app:cardElevation="10dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="18dp"
-        android:paddingEnd="18dp"
         android:paddingTop="18dp"
+        android:paddingEnd="18dp"
         android:paddingBottom="18dp">
 
         <ImageView
             android:id="@+id/imgAutor"
             android:layout_width="60dp"
             android:layout_height="60dp"
+            android:background="@android:color/transparent"
             android:scaleType="centerCrop"
             android:src="@null"
-            android:background="@android:color/transparent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -36,30 +34,30 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="10dp"
+            android:breakStrategy="high_quality"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:hyphenationFrequency="full"
+            android:maxLines="2"
             android:text="Autor"
             android:textColor="#111111"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:breakStrategy="high_quality"
-            android:hyphenationFrequency="full"
-            android:gravity="center_vertical"
-            app:layout_constraintStart_toEndOf="@id/imgAutor"
             app:layout_constraintEnd_toStartOf="@id/categoria"
-            android:layout_marginEnd="10dp"
-            app:layout_constraintTop_toBottomOf="@id/categoria"
-            android:layout_marginTop="6dp" />
+            app:layout_constraintStart_toEndOf="@id/imgAutor"
+            app:layout_constraintTop_toBottomOf="@id/categoria" />
 
         <LinearLayout
             android:id="@+id/likeContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_marginTop="6dp"
             android:gravity="center_vertical"
+            android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/categoria"
-            android:layout_marginTop="6dp">
+            app:layout_constraintTop_toBottomOf="@id/categoria">
 
             <TextView
                 android:id="@+id/likes"
@@ -83,17 +81,17 @@
             android:id="@+id/categoria"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ilustración"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingStart="10dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="6dp"
+            android:text="Ilustracion"
             android:textSize="12sp"
             android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/likeContainer" />
+            app:layout_constraintEnd_toStartOf="@id/likeContainer"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
             android:id="@+id/imgObra"
@@ -102,25 +100,25 @@
             android:layout_marginTop="14dp"
             android:background="@android:color/darker_gray"
             android:scaleType="centerCrop"
-            app:layout_constraintTop_toBottomOf="@id/likeContainer"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/likeContainer" />
 
         <TextView
             android:id="@+id/titulo"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:ellipsize="end"
             android:gravity="center"
-            android:text="TÍTULO"
+            android:maxLines="2"
+            android:text="TITULO"
             android:textColor="#111111"
             android:textSize="19sp"
             android:textStyle="bold"
-            android:maxLines="2"
-            android:ellipsize="end"
-            app:layout_constraintTop_toBottomOf="@id/imgObra"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/imgObra" />
 
         <View
             android:id="@+id/divider"
@@ -128,9 +126,9 @@
             android:layout_height="1dp"
             android:layout_marginTop="14dp"
             android:background="#22000000"
-            app:layout_constraintTop_toBottomOf="@id/titulo"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/titulo" />
 
         <LinearLayout
             android:id="@+id/expanded_section"
@@ -139,20 +137,19 @@
             android:layout_marginTop="14dp"
             android:orientation="vertical"
             android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/divider"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-
+            app:layout_constraintTop_toBottomOf="@id/divider">
 
             <TextView
                 android:id="@+id/descripcion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="Descripción completa"
+                android:lineSpacingExtra="3dp"
+                android:text="Descripcion completa"
                 android:textColor="#2A2A2A"
-                android:textSize="14sp"
-                android:lineSpacingExtra="3dp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/estado"
@@ -168,7 +165,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Técnica"
+                android:text="Tecnica"
                 android:textColor="#2A2A2A"
                 android:textSize="14sp" />
 
@@ -190,23 +187,32 @@
                 android:textColor="#2A2A2A"
                 android:textSize="14sp" />
 
-            <Button
-                android:id="@+id/btnVisitar"
+            <LinearLayout
+                android:id="@+id/actionsContainer"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Visitar"
-                android:textAllCaps="false"
-                android:backgroundTint="#A1BBCE" />
+                android:orientation="vertical"
+                android:visibility="gone">
 
-            <Button
-                android:id="@+id/btnComprar"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="12dp"
-                android:text="Comprar"
-                android:textAllCaps="false"
-                android:backgroundTint="#A1BBCE" />
+                <Button
+                    android:id="@+id/btnAccionPrincipal"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:backgroundTint="#A1BBCE"
+                    android:text="Accion principal"
+                    android:textAllCaps="false" />
+
+                <Button
+                    android:id="@+id/btnAccionSecundaria"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="10dp"
+                    android:backgroundTint="#D9C7EB"
+                    android:text="Accion secundaria"
+                    android:textAllCaps="false"
+                    android:visibility="gone" />
+            </LinearLayout>
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

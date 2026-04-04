@@ -10,13 +10,13 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.artistlan.R;
+import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 
 import java.util.ArrayList;
@@ -30,36 +30,69 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         void onLikeClick(TarjetaTextoObraItem obraItem, int position);
     }
 
+    public interface OnPrimaryActionClickListener {
+        void onPrimaryActionClick(TarjetaTextoObraItem obraItem, int position);
+    }
+
+    public interface OnSecondaryActionClickListener {
+        void onSecondaryActionClick(TarjetaTextoObraItem obraItem, int position);
+    }
+
     public interface OnComprarClickListener {
         void onComprarClick(TarjetaTextoObraItem obraItem, int position);
     }
 
     private static final long LIKE_BUTTON_COOLDOWN_MS = 500L;
+
     private OnLikeClickListener onLikeClickListener;
-    private OnComprarClickListener onComprarClickListener;
+    private OnPrimaryActionClickListener onPrimaryActionClickListener;
+    private OnSecondaryActionClickListener onSecondaryActionClickListener;
+
     private final List<TarjetaTextoObraItem> listaObras;
     private final List<TarjetaTextoObraItem> listaOriginal;
     private final Context context;
     private final Set<Integer> ownedObraIds = new HashSet<>();
+
+    private ModoTarjetaObra modoTarjeta;
     private int tarjetaExpandida = -1;
 
     public TarjetaTextoObraAdapter(List<TarjetaTextoObraItem> listaObras, Context context) {
+        this(listaObras, context, ModoTarjetaObra.EXPLORAR);
+    }
+
+    public TarjetaTextoObraAdapter(List<TarjetaTextoObraItem> listaObras, Context context, ModoTarjetaObra modoTarjeta) {
         this.listaObras = listaObras;
         this.listaOriginal = new ArrayList<>(listaObras);
         this.context = context;
+        this.modoTarjeta = modoTarjeta != null ? modoTarjeta : ModoTarjetaObra.EXPLORAR;
+    }
+
+    public void setModoTarjeta(ModoTarjetaObra modoTarjeta) {
+        this.modoTarjeta = modoTarjeta != null ? modoTarjeta : ModoTarjetaObra.EXPLORAR;
+        notifyDataSetChanged();
     }
 
     public void setOnLikeClickListener(OnLikeClickListener listener) {
         this.onLikeClickListener = listener;
     }
 
+    public void setOnPrimaryActionClickListener(OnPrimaryActionClickListener listener) {
+        this.onPrimaryActionClickListener = listener;
+    }
+
+    public void setOnSecondaryActionClickListener(OnSecondaryActionClickListener listener) {
+        this.onSecondaryActionClickListener = listener;
+    }
+
     public void setOnComprarClickListener(OnComprarClickListener listener) {
-        this.onComprarClickListener = listener;
+        this.onPrimaryActionClickListener = listener == null ? null : listener::onComprarClick;
     }
 
     public void setOwnedObraIds(Set<Integer> ownedObraIds) {
         this.ownedObraIds.clear();
-        if (ownedObraIds != null) this.ownedObraIds.addAll(ownedObraIds);
+        if (ownedObraIds != null) {
+            this.ownedObraIds.addAll(ownedObraIds);
+        }
         notifyDataSetChanged();
     }
 
@@ -78,11 +111,15 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.titulo.setText(obra.getTitulo());
         holder.autor.setText(obra.getNombreAutor());
         holder.descripcion.setText(obra.getDescripcion());
-        holder.estado.setText("Estado: " + obra.getEstado());
-        holder.tecnica.setText("Técnica: " + obra.getTecnicas());
-        holder.medidas.setText((obra.getMedidas() != null && !obra.getMedidas().isEmpty()) ? "Medidas: " + obra.getMedidas() + " cm" : "Medidas: N/A");
-        holder.precio.setText(obra.getPrecio() != null ? "Precio: $ " + String.format("%,.2f", obra.getPrecio()) : "Precio: N/A");
-        holder.categoria.setText("Categoría: " + obra.getNombreCategoria());
+        holder.estado.setText("Estado: " + safeText(obra.getEstado(), "N/A"));
+        holder.tecnica.setText("Tecnica: " + safeText(obra.getTecnicas(), "N/A"));
+        holder.medidas.setText((obra.getMedidas() != null && !obra.getMedidas().isEmpty())
+                ? "Medidas: " + obra.getMedidas() + " cm"
+                : "Medidas: N/A");
+        holder.precio.setText(obra.getPrecio() != null
+                ? "Precio: $ " + String.format("%,.2f", obra.getPrecio())
+                : "Precio: N/A");
+        holder.categoria.setText(safeText(obra.getNombreCategoria(), "Sin categoria"));
         holder.likes.setText(String.valueOf(obra.getLikes()));
 
         holder.btnLike.setImageResource(obra.isUserLiked() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
@@ -98,67 +135,113 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         });
 
         String fotoPerfil = obra.getFotoPerfilAutor();
-        Glide.with(context).load((fotoPerfil != null && !fotoPerfil.isEmpty()) ? fotoPerfil : R.drawable.fotoperfilprueba).placeholder(R.drawable.fotoperfilprueba).circleCrop().into(holder.imgAutor);
+        Glide.with(context)
+                .load((fotoPerfil != null && !fotoPerfil.isEmpty()) ? fotoPerfil : R.drawable.fotoperfilprueba)
+                .placeholder(R.drawable.fotoperfilprueba)
+                .circleCrop()
+                .into(holder.imgAutor);
 
         String imagenObra = obra.getImagen1();
         if (imagenObra != null && !imagenObra.isEmpty()) {
-            Glide.with(holder.itemView.getContext()).load(imagenObra).placeholder(R.drawable.imagencargaobras).error(R.drawable.imagencargaobras).into(holder.imgObra);
+            Glide.with(holder.itemView.getContext())
+                    .load(imagenObra)
+                    .placeholder(R.drawable.imagencargaobras)
+                    .error(R.drawable.imagencargaobras)
+                    .into(holder.imgObra);
         } else {
             holder.imgObra.setImageResource(R.drawable.imagencargaobras);
         }
 
-        boolean expandido = (position == tarjetaExpandida);
+        boolean expandido = position == tarjetaExpandida;
         animarVista(holder.expandedSection, expandido);
         obra.setExpandido(expandido);
 
-        boolean isOwnedByCurrentUser = ownedObraIds.contains(obra.getIdObra());
-        boolean hasPrice = obra.getPrecio() != null && obra.getPrecio() > 0;
-        String estado = obra.getEstado() != null ? obra.getEstado().trim() : "";
-        boolean isEnVenta = "En venta".equals(estado);
-        boolean isVendida = "VENDIDA".equals(estado);
-        boolean shouldShowComprar = !isOwnedByCurrentUser && hasPrice && isEnVenta && !isVendida;
-
-        holder.btnVisitar.setVisibility(View.VISIBLE);
-        holder.btnComprar.setVisibility(shouldShowComprar ? View.VISIBLE : View.GONE);
-        holder.btnComprar.setEnabled(shouldShowComprar);
-        holder.btnComprar.setText("Comprar");
-        holder.btnComprar.setAlpha(1f);
+        configurarBotones(holder, obra);
 
         holder.itemView.setOnClickListener(v -> {
             int previousExpanded = tarjetaExpandida;
             int currentPosition = holder.getAdapterPosition();
+            if (currentPosition == RecyclerView.NO_POSITION) {
+                return;
+            }
 
-            if (previousExpanded == currentPosition) tarjetaExpandida = -1;
-            else {
+            if (previousExpanded == currentPosition) {
+                tarjetaExpandida = -1;
+            } else {
                 tarjetaExpandida = currentPosition;
-                if (previousExpanded != -1) notifyItemChanged(previousExpanded);
+                if (previousExpanded != -1) {
+                    notifyItemChanged(previousExpanded);
+                }
             }
             notifyItemChanged(currentPosition);
         });
 
-        holder.btnVisitar.setOnClickListener(v ->
-                Toast.makeText(context, "Proximamente...", Toast.LENGTH_SHORT).show()
-        );
-
-        holder.btnComprar.setOnClickListener(v -> {
+        holder.btnAccionPrincipal.setOnClickListener(v -> {
             int adapterPosition = holder.getAdapterPosition();
-            if (adapterPosition == RecyclerView.NO_POSITION || onComprarClickListener == null) return;
-            if (ownedObraIds.contains(listaObras.get(adapterPosition).getIdObra())) return;
-            TarjetaTextoObraItem selectedObra = listaObras.get(adapterPosition);
-            String selectedEstado = selectedObra.getEstado() != null ? selectedObra.getEstado().trim() : "";
-            if (selectedObra.getPrecio() == null
-                    || selectedObra.getPrecio() <= 0
-                    || !"En venta".equals(selectedEstado)
-                    || "VENDIDA".equals(selectedEstado)) {
+            if (adapterPosition == RecyclerView.NO_POSITION || onPrimaryActionClickListener == null) {
                 return;
             }
-            onComprarClickListener.onComprarClick(selectedObra, adapterPosition);
+            TarjetaTextoObraItem selectedObra = listaObras.get(adapterPosition);
+            if (!debeMostrarBotonPrincipal(selectedObra)) {
+                return;
+            }
+            onPrimaryActionClickListener.onPrimaryActionClick(selectedObra, adapterPosition);
+        });
+
+        holder.btnAccionSecundaria.setOnClickListener(v -> {
+            int adapterPosition = holder.getAdapterPosition();
+            if (adapterPosition == RecyclerView.NO_POSITION || onSecondaryActionClickListener == null) {
+                return;
+            }
+            onSecondaryActionClickListener.onSecondaryActionClick(listaObras.get(adapterPosition), adapterPosition);
         });
     }
 
     @Override
     public int getItemCount() {
         return listaObras.size();
+    }
+
+    private void configurarBotones(ViewHolder holder, TarjetaTextoObraItem obra) {
+        boolean mostrarPrincipal = debeMostrarBotonPrincipal(obra);
+        boolean mostrarSecundario = modoTarjeta == ModoTarjetaObra.CARRITO;
+
+        holder.btnAccionPrincipal.setVisibility(mostrarPrincipal ? View.VISIBLE : View.GONE);
+        holder.btnAccionSecundaria.setVisibility(mostrarSecundario ? View.VISIBLE : View.GONE);
+
+        if (!mostrarPrincipal && !mostrarSecundario) {
+            holder.actionsContainer.setVisibility(View.GONE);
+            return;
+        }
+
+        holder.actionsContainer.setVisibility(View.VISIBLE);
+        holder.btnAccionPrincipal.setText(modoTarjeta == ModoTarjetaObra.CARRITO ? "Comprar" : "Agregar al carrito");
+        holder.btnAccionSecundaria.setText("Quitar del carrito");
+    }
+
+    private boolean debeMostrarBotonPrincipal(TarjetaTextoObraItem obra) {
+        boolean esPropia = ownedObraIds.contains(obra.getIdObra());
+        boolean puedeComprar = puedeComprarse(obra);
+
+        if (modoTarjeta == ModoTarjetaObra.MIS_OBRAS) {
+            return false;
+        }
+        if (modoTarjeta == ModoTarjetaObra.CARRITO) {
+            return !esPropia && puedeComprar;
+        }
+        return !esPropia && puedeComprar;
+    }
+
+    private boolean puedeComprarse(TarjetaTextoObraItem obra) {
+        if (obra == null || obra.getPrecio() == null || obra.getPrecio() <= 0) {
+            return false;
+        }
+        String estado = obra.getEstado() != null ? obra.getEstado().trim() : "";
+        return "En venta".equalsIgnoreCase(estado) && !"VENDIDA".equalsIgnoreCase(estado);
+    }
+
+    private String safeText(String value, String fallback) {
+        return value != null && !value.trim().isEmpty() ? value : fallback;
     }
 
     private void animateLikeButton(ImageButton btnLike, boolean wasLiked) {
@@ -209,9 +292,8 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         TextView titulo, descripcion, estado, tecnica, medidas, precio, categoria, likes, autor;
         ImageView imgAutor, imgObra;
         ImageButton btnLike;
-        View expandedSection;
-        Button btnVisitar;
-        Button btnComprar;
+        View expandedSection, actionsContainer;
+        Button btnAccionPrincipal, btnAccionSecundaria;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -228,26 +310,34 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             likes = itemView.findViewById(R.id.likes);
             btnLike = itemView.findViewById(R.id.btnLike);
             expandedSection = itemView.findViewById(R.id.expanded_section);
-            btnVisitar = itemView.findViewById(R.id.btnVisitar);
-            btnComprar = itemView.findViewById(R.id.btnComprar);
+            actionsContainer = itemView.findViewById(R.id.actionsContainer);
+            btnAccionPrincipal = itemView.findViewById(R.id.btnAccionPrincipal);
+            btnAccionSecundaria = itemView.findViewById(R.id.btnAccionSecundaria);
         }
     }
 
     public void filtrar(String texto) {
         List<TarjetaTextoObraItem> listaFiltrada = new ArrayList<>();
 
-        if (texto == null || texto.isEmpty()) listaFiltrada.addAll(listaOriginal);
-        else {
-            texto = texto.toLowerCase();
+        if (texto == null || texto.isEmpty()) {
+            listaFiltrada.addAll(listaOriginal);
+        } else {
+            String filtro = texto.toLowerCase();
             for (TarjetaTextoObraItem obra : listaOriginal) {
-                if (obra.getTitulo() != null && obra.getTitulo().toLowerCase().contains(texto)) listaFiltrada.add(obra);
+                if (obra.getTitulo() != null && obra.getTitulo().toLowerCase().contains(filtro)) {
+                    listaFiltrada.add(obra);
+                }
             }
         }
         int oldSize = listaObras.size();
         listaObras.clear();
         listaObras.addAll(listaFiltrada);
-        if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
-        if (!listaFiltrada.isEmpty()) notifyItemRangeInserted(0, listaFiltrada.size());
+        if (oldSize > 0) {
+            notifyItemRangeRemoved(0, oldSize);
+        }
+        if (!listaFiltrada.isEmpty()) {
+            notifyItemRangeInserted(0, listaFiltrada.size());
+        }
     }
 
     public void actualizarLista(List<TarjetaTextoObraItem> nuevaLista) {
@@ -256,16 +346,32 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         listaOriginal.addAll(nuevaLista);
         listaObras.clear();
         listaObras.addAll(nuevaLista);
-        if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
-        if (!nuevaLista.isEmpty()) notifyItemRangeInserted(0, nuevaLista.size());
+        tarjetaExpandida = -1;
+        if (oldSize > 0) {
+            notifyItemRangeRemoved(0, oldSize);
+        }
+        if (!nuevaLista.isEmpty()) {
+            notifyItemRangeInserted(0, nuevaLista.size());
+        }
     }
+
     public void removeItemAt(int position) {
-        if (position < 0 || position >= listaObras.size()) return;
+        if (position < 0 || position >= listaObras.size()) {
+            return;
+        }
         TarjetaTextoObraItem item = listaObras.remove(position);
         listaOriginal.remove(item);
+        if (tarjetaExpandida == position) {
+            tarjetaExpandida = -1;
+        } else if (tarjetaExpandida > position) {
+            tarjetaExpandida--;
+        }
         notifyItemRemoved(position);
     }
+
     public void notifyLikeChanged(int position) {
-        if (position >= 0 && position < listaObras.size()) notifyItemChanged(position);
+        if (position >= 0 && position < listaObras.size()) {
+            notifyItemChanged(position);
+        }
     }
 }

@@ -1,10 +1,7 @@
 package com.example.artistlan.Fragments;
 
-import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,17 +14,19 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.api.CarritoApi;
 import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.api.PagoPaypalApi;
 import com.example.artistlan.Conector.model.CapturarOrdenPaypalResponseDTO;
-import com.example.artistlan.Conector.model.CrearOrdenPaypalResponseDTO;
+import com.example.artistlan.Conector.model.CarritoDTO;
+import com.example.artistlan.Conector.model.CarritoRequestDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
+import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.pagos.PagoPaypalSessionManager;
 
@@ -48,9 +47,9 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     private String categoriaFiltroActual = "";
     private ObraApi obraApi;
     private FavoritosApi favoritosApi;
+    private CarritoApi carritoApi;
     private PagoPaypalApi pagoPaypalApi;
     private int idUsuarioLogueado = -1;
-    private boolean creandoOrden = false;
     private boolean capturandoPago = false;
 
     @Override
@@ -65,18 +64,22 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     }
 
     public void filtrarBusqueda(String texto) {
-        if (adapter != null) adapter.filtrar(texto);
+        if (adapter != null) {
+            adapter.filtrar(texto);
+        }
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        new BotonesMenuSuperior(this);
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+
         obraApi = RetrofitClient.getClient().create(ObraApi.class);
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
+        carritoApi = RetrofitClient.getClient().create(CarritoApi.class);
         pagoPaypalApi = RetrofitClient.getClient().create(PagoPaypalApi.class);
+
         configurarObras(view);
     }
 
@@ -124,74 +127,49 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         recyclerViewObras = view.findViewById(R.id.recyclerObras);
         recyclerViewObras.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        adapter = new TarjetaTextoObraAdapter(new ArrayList<>(), requireContext());
+        adapter = new TarjetaTextoObraAdapter(new ArrayList<>(), requireContext(), ModoTarjetaObra.EXPLORAR);
         adapter.setOnLikeClickListener(this::toggleLikeObra);
-        adapter.setOnComprarClickListener(this::iniciarCompraObra);
+        adapter.setOnPrimaryActionClickListener(this::agregarObraAlCarrito);
         recyclerViewObras.setAdapter(adapter);
+
         obtenerObrasDeAPI();
     }
 
-    private void iniciarCompraObra(TarjetaTextoObraItem obraItem, int position) {
-        if (creandoOrden || capturandoPago) return;
+    private void agregarObraAlCarrito(TarjetaTextoObraItem obraItem, int position) {
         if (idUsuarioLogueado <= 0) {
-            Toast.makeText(getContext(), "Debes iniciar sesion para comprar", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (obraItem.getPrecio() == null || obraItem.getPrecio() <= 0) {
-            Toast.makeText(getContext(), "Esta obra no esta disponible para compra", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Debes iniciar sesion para agregar al carrito", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        creandoOrden = true;
-        pagoPaypalApi.crearOrden(obraItem.getIdObra(), idUsuarioLogueado).enqueue(new Callback<CrearOrdenPaypalResponseDTO>() {
+        CarritoRequestDTO requestDTO = new CarritoRequestDTO(idUsuarioLogueado, obraItem.getIdObra());
+        carritoApi.agregarAlCarrito(requestDTO).enqueue(new Callback<CarritoDTO>() {
             @Override
-            public void onResponse(@NonNull Call<CrearOrdenPaypalResponseDTO> call, @NonNull Response<CrearOrdenPaypalResponseDTO> response) {
-                creandoOrden = false;
-                if (!isAdded()) return;
-                if (!response.isSuccessful() || response.body() == null) {
-                    Toast.makeText(getContext(), "No se pudo crear la orden de PayPal (" + response.code() + ")", Toast.LENGTH_LONG).show();
+            public void onResponse(@NonNull Call<CarritoDTO> call, @NonNull Response<CarritoDTO> response) {
+                if (!isAdded()) {
                     return;
                 }
 
-                CrearOrdenPaypalResponseDTO body = response.body();
-                String paypalOrderId = body.getPaypalOrderId();
-                String approveLink = body.getApproveLink();
-
-                if (paypalOrderId == null || paypalOrderId.trim().isEmpty() || approveLink == null || approveLink.trim().isEmpty()) {
-                    Toast.makeText(getContext(), "La respuesta del backend no contiene la orden de PayPal", Toast.LENGTH_LONG).show();
+                if (response.isSuccessful()) {
+                    Toast.makeText(getContext(), "Obra agregada al carrito", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                PagoPaypalSessionManager.savePendingOrder(requireContext(), paypalOrderId, obraItem.getIdObra(), idUsuarioLogueado);
-                abrirApproveLink(approveLink);
+                if (response.code() == 409) {
+                    Toast.makeText(getContext(), "Esta obra ya esta en tu carrito", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Toast.makeText(getContext(), "No se pudo agregar al carrito (" + response.code() + ")", Toast.LENGTH_LONG).show();
             }
 
             @Override
-            public void onFailure(@NonNull Call<CrearOrdenPaypalResponseDTO> call, @NonNull Throwable t) {
-                creandoOrden = false;
-                if (!isAdded()) return;
-                Toast.makeText(getContext(), "Error de red al crear la orden: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            public void onFailure(@NonNull Call<CarritoDTO> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                Toast.makeText(getContext(), "Error de red al agregar al carrito", Toast.LENGTH_LONG).show();
             }
         });
-    }
-
-    private void abrirApproveLink(String approveLink) {
-        try {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(approveLink));
-            intent.addCategory(Intent.CATEGORY_BROWSABLE);
-            PagoPaypalSessionManager.markApprovalOpened(requireContext());
-            startActivity(intent);
-        } catch (ActivityNotFoundException e) {
-            PagoPaypalSessionManager.clear(requireContext());
-            Toast.makeText(getContext(), "No se encontro una aplicacion para abrir PayPal", Toast.LENGTH_LONG).show();
-        } catch (Exception e) {
-            PagoPaypalSessionManager.clear(requireContext());
-            Toast.makeText(getContext(), "No se pudo abrir el enlace de aprobacion", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    public void procesarRetornoPaypalDeepLink() {
-        capturarPagoPendiente(true);
     }
 
     private void intentarCapturarPagoPendienteComoFallback() {
@@ -199,9 +177,15 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     }
 
     private void capturarPagoPendiente(boolean triggeredByDeepLink) {
-        if (!isAdded() || capturandoPago || creandoOrden) return;
-        if (!PagoPaypalSessionManager.shouldCaptureOnReturn(requireContext())) return;
-        if (!triggeredByDeepLink && !PagoPaypalSessionManager.hasApprovalFromDeepLink(requireContext())) return;
+        if (!isAdded() || capturandoPago) {
+            return;
+        }
+        if (!PagoPaypalSessionManager.shouldCaptureOnReturn(requireContext())) {
+            return;
+        }
+        if (!triggeredByDeepLink && !PagoPaypalSessionManager.hasApprovalFromDeepLink(requireContext())) {
+            return;
+        }
 
         String paypalOrderId = PagoPaypalSessionManager.getPendingOrderId(requireContext());
         if (paypalOrderId == null || paypalOrderId.trim().isEmpty()) {
@@ -214,7 +198,9 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
             @Override
             public void onResponse(@NonNull Call<CapturarOrdenPaypalResponseDTO> call, @NonNull Response<CapturarOrdenPaypalResponseDTO> response) {
                 capturandoPago = false;
-                if (!isAdded()) return;
+                if (!isAdded()) {
+                    return;
+                }
 
                 CapturarOrdenPaypalResponseDTO body = response.body();
                 String backendMessage = body != null ? body.resolveUserMessage() : null;
@@ -235,7 +221,9 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
             @Override
             public void onFailure(@NonNull Call<CapturarOrdenPaypalResponseDTO> call, @NonNull Throwable t) {
                 capturandoPago = false;
-                if (!isAdded()) return;
+                if (!isAdded()) {
+                    return;
+                }
                 PagoPaypalSessionManager.clear(requireContext());
                 Toast.makeText(getContext(), "Error de red al capturar el pago: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
@@ -243,7 +231,10 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     }
 
     private void toggleLikeObra(TarjetaTextoObraItem obraItem, int position) {
-        if (idUsuarioLogueado <= 0) return;
+        if (idUsuarioLogueado <= 0) {
+            return;
+        }
+
         final boolean favoritoAnterior = obraItem.isUserLiked();
         final int likesAnterior = obraItem.getLikes();
         obraItem.setUserLiked(!favoritoAnterior);
@@ -253,6 +244,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         FavoritoDTO dto = new FavoritoDTO();
         dto.idUsuario = idUsuarioLogueado;
         dto.idObra = obraItem.getIdObra();
+
         Call<Void> call = favoritoAnterior ? favoritosApi.eliminarFavorito(dto) : favoritosApi.agregarFavorito(dto);
         call.enqueue(new Callback<Void>() {
             @Override
@@ -279,6 +271,10 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         obraApi.obtenerTodasLasObras(idUsuarioLogueado > 0 ? idUsuarioLogueado : null).enqueue(new Callback<List<ObraDTO>>() {
             @Override
             public void onResponse(@NonNull Call<List<ObraDTO>> call, @NonNull Response<List<ObraDTO>> response) {
+                if (!isAdded()) {
+                    return;
+                }
+
                 if (response.code() == 204) {
                     adapter.actualizarLista(new ArrayList<>());
                     adapter.setOwnedObraIds(new HashSet<>());
@@ -292,7 +288,8 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                 List<TarjetaTextoObraItem> items = new ArrayList<>();
                 Set<Integer> ownedObraIds = new HashSet<>();
                 for (ObraDTO dto : response.body()) {
-                    if (!categoriaFiltroActual.isEmpty() && (dto.getNombreCategoria() == null || !categoriaFiltroActual.equalsIgnoreCase(dto.getNombreCategoria()))) {
+                    if (!categoriaFiltroActual.isEmpty()
+                            && (dto.getNombreCategoria() == null || !categoriaFiltroActual.equalsIgnoreCase(dto.getNombreCategoria()))) {
                         continue;
                     }
                     if (dto.getIdUsuario() != null && dto.getIdUsuario() == idUsuarioLogueado && dto.getIdObra() != null) {
@@ -316,12 +313,16 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                             Boolean.TRUE.equals(dto.getEsFavorito()),
                             false));
                 }
+
                 adapter.actualizarLista(items);
                 adapter.setOwnedObraIds(ownedObraIds);
             }
 
             @Override
             public void onFailure(@NonNull Call<List<ObraDTO>> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
                 Toast.makeText(getContext(), "Fallo: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });

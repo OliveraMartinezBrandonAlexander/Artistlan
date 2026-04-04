@@ -8,118 +8,127 @@
     <fragment
         android:id="@+id/fragMain"
         android:name="com.example.artistlan.Fragments.FragMain"
-        tools:layout="@layout/fragment_frag_main"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_main" />
 
     <fragment
         android:id="@+id/fragServicios"
         android:name="com.example.artistlan.Fragments.FragServicios"
-        tools:layout="@layout/fragment_frag_servicios"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_servicios" />
 
     <fragment
         android:id="@+id/fragExplorar"
         android:name="com.example.artistlan.Fragments.FragExplorar"
-        tools:layout="@layout/fragment_frag_explorar"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_explorar" />
 
     <fragment
         android:id="@+id/fragPortafolio"
         android:name="com.example.artistlan.Fragments.FragPortafolio"
-        tools:layout="@layout/fragment_frag_portafolio"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_portafolio" />
 
     <fragment
         android:id="@+id/fragArtistas"
         android:name="com.example.artistlan.Fragments.FragArtistas"
-        tools:layout="@layout/fragment_frag_artistas"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_artistas" />
 
     <fragment
         android:id="@+id/fragArte"
         android:name="com.example.artistlan.Fragments.FragArte"
-        tools:layout="@layout/fragment_frag_arte"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_arte" />
+
+    <fragment
+        android:id="@+id/fragCarrito"
+        android:name="com.example.artistlan.Fragments.FragCarrito"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_carrito" />
 
     <fragment
         android:id="@+id/fragFavoritos"
         android:name="com.example.artistlan.Fragments.FragFavoritos"
-        tools:layout="@layout/fragment_frag_favoritos"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_favoritos" />
 
     <fragment
         android:id="@+id/fragVerPerfil"
         android:name="com.example.artistlan.Fragments.FragVerPerfil"
-        tools:layout="@layout/fragment_frag_ver_perfil"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_ver_perfil" />
 
     <fragment
         android:id="@+id/fragSubirObra"
         android:name="com.example.artistlan.Fragments.FragSubirObra"
-        tools:layout="@layout/fragment_frag_subir_obra"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_subir_obra" />
 
     <fragment
         android:id="@+id/fragSubirServicio"
         android:name="com.example.artistlan.Fragments.FragSubirServicio"
-        tools:layout="@layout/fragment_frag_subir_servicio"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_subir_servicio" />
 
     <fragment
         android:id="@+id/fragMiArte"
         android:name="com.example.artistlan.Fragments.FragMiArte"
-        tools:layout="@layout/fragment_frag_mi_arte"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_mi_arte" />
 
     <fragment
         android:id="@+id/fragAdminGestionUsuarios"
         android:name="com.example.artistlan.Fragments.FragGestionUsuarios"
-        tools:layout="@layout/fragment_frag_admin_gestion_usuarios"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_admin_gestion_usuarios" />
 
     <fragment
         android:id="@+id/fragAdminConvocatorias"
         android:name="com.example.artistlan.Fragments.FragGestionConvocatorias"
-        tools:layout="@layout/fragment_frag_admin_convocatorias"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
-        app:popExitAnim="@anim/nav_pop_exit" />
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_admin_convocatorias" />
 
 </navigation>

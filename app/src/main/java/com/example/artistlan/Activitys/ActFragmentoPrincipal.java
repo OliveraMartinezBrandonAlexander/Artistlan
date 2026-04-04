@@ -18,6 +18,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
@@ -28,9 +29,13 @@ import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
-import com.example.artistlan.Fragments.FragArte;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.api.CarritoPaypalApi;
+import com.example.artistlan.Conector.api.PagoPaypalApi;
+import com.example.artistlan.Conector.model.CapturarOrdenPaypalCarritoResponseDTO;
+import com.example.artistlan.Conector.model.CapturarOrdenPaypalResponseDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ActAjustesTema;
 import com.example.artistlan.Theme.ThemeApplier;
@@ -48,8 +53,10 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private NavController navController;
 
     private ImageButton btnMenuLateral;
+    private ImageButton btnCarrito;
     private ImageButton btnNotificaciones;
 
+    private View cartContainer;
     private View topBar;
     private View bottomBarContainer;
     private View mainContent;
@@ -80,6 +87,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final long NAV_DEBOUNCE_MS = 400L;
     private long ultimaAccionNavegacion = 0L;
+    private boolean capturandoPagoDeepLink = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,8 +118,10 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         navigationView = findViewById(R.id.navigationView);
 
         btnMenuLateral = findViewById(R.id.btnMenuLateral);
+        btnCarrito = findViewById(R.id.btnCarrito);
         btnNotificaciones = findViewById(R.id.btnNotificaciones);
 
+        cartContainer = findViewById(R.id.cartContainer);
         topBar = findViewById(R.id.layoutBarraSuperior);
         bottomBarContainer = findViewById(R.id.MenuInferior);
         mainContent = findViewById(R.id.mainContent);
@@ -172,6 +182,12 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             bottomBar.setItemTextColor(textStates);
         }
 
+        if (btnCarrito != null) {
+            btnCarrito.setOnClickListener(v -> {
+                if (!puedeEjecutarNavegacion() || navController == null) return;
+                abrirCarrito();
+            });
+        }
         if (navigationView != null) {
             if (navigationView.getBackground() != null) {
                 navigationView.getBackground().setColorFilter(
@@ -197,6 +213,10 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         if (btnMenuLateral != null) {
             btnMenuLateral.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_ATOP);
+        }
+
+        if (btnCarrito != null) {
+            btnCarrito.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_ATOP);
         }
 
         if (btnNotificaciones != null) {
@@ -226,6 +246,12 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     }
 
     private void aplicarBlurSiSePuede() {
+        if (btnCarrito != null) {
+            btnCarrito.setOnClickListener(v -> {
+                if (!puedeEjecutarNavegacion() || navController == null) return;
+                abrirCarrito();
+            });
+        }
         if (navigationView != null) {
             navigationView.setAlpha(1f);
         }
@@ -289,6 +315,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         if (navHostFragment == null) return;
 
         navController = navHostFragment.getNavController();
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> actualizarBotonesTopBar(destination));
 
         BottomNavigationView bottomBar = findViewById(R.id.bottomBar);
         if (bottomBar != null) {
@@ -304,8 +331,27 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             });
         }
 
+        if (btnCarrito != null) {
+            btnCarrito.setOnClickListener(v -> {
+                if (!puedeEjecutarNavegacion() || navController == null) return;
+                abrirCarrito();
+            });
+        }
         if (navigationView != null) {
             NavigationUI.setupWithNavController(navigationView, navController);
+        }
+    }
+
+    private void actualizarBotonesTopBar(NavDestination destination) {
+        boolean mostrarCarrito = destination != null && destination.getId() == R.id.fragExplorar;
+        if (cartContainer == null) return;
+
+        if (mostrarCarrito) {
+            cartContainer.setVisibility(View.VISIBLE);
+            cartContainer.setAlpha(0f);
+            cartContainer.animate().alpha(1f).setDuration(150).start();
+        } else {
+            cartContainer.setVisibility(View.GONE);
         }
     }
 
@@ -362,6 +408,10 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             });
         }
 
+        if (btnCarrito != null) {
+            btnCarrito.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_ATOP);
+        }
+
         if (btnNotificaciones != null) {
             btnNotificaciones.setOnClickListener(v -> {
                 if (!puedeEjecutarNavegacion()) return;
@@ -384,6 +434,12 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             });
         }
 
+        if (btnCarrito != null) {
+            btnCarrito.setOnClickListener(v -> {
+                if (!puedeEjecutarNavegacion() || navController == null) return;
+                abrirCarrito();
+            });
+        }
         if (navigationView != null) {
             navigationView.setNavigationItemSelectedListener(item -> {
                 if (!puedeEjecutarNavegacion()) return true;
@@ -438,6 +494,17 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 return false;
             });
         }
+    }
+
+    private void abrirCarrito() {
+        if (navController == null || navController.getCurrentDestination() == null) return;
+        if (navController.getCurrentDestination().getId() == R.id.fragCarrito) return;
+
+        NavOptions navOptions = new NavOptions.Builder()
+                .setLaunchSingleTop(true)
+                .build();
+
+        navController.navigate(R.id.fragCarrito, null, navOptions);
     }
 
     private void prepararAnimacionesIniciales() {
@@ -709,6 +776,9 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         applyThemeOnlyColors();
         cargarHeaderDrawer();
         configurarAdminDrawerSection();
+        if (navController != null) {
+            actualizarBotonesTopBar(navController.getCurrentDestination());
+        }
     }
 
     @Override
@@ -796,7 +866,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             if (paypalOrderId == null || paypalOrderId.trim().isEmpty()) return;
 
             PagoPaypalSessionManager.markApprovalReceivedFromDeepLink(this, paypalOrderId);
-            irAFragArteYProcesarDeepLink();
+            capturarPagoPaypalDesdeDeepLink(paypalOrderId);
             intent.setData(null);
             return;
         }
@@ -807,21 +877,90 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         }
     }
 
-    private void irAFragArteYProcesarDeepLink() {
-        if (navController == null) return;
+    private void capturarPagoPaypalDesdeDeepLink(String paypalOrderId) {
+        if (capturandoPagoDeepLink) return;
+        if (paypalOrderId == null || paypalOrderId.trim().isEmpty()) {
+            PagoPaypalSessionManager.clear(this);
+            return;
+        }
 
-        navegarSinDuplicar(R.id.fragArte);
+        capturandoPagoDeepLink = true;
+        int obraIdPendiente = PagoPaypalSessionManager.getPendingObraId(this);
 
-        mainHandler.post(() -> {
-            NavHostFragment navHostFragment =
-                    (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);
-            if (navHostFragment == null) return;
+        if (obraIdPendiente == -1) {
+            CarritoPaypalApi carritoPaypalApi = RetrofitClient.getClient().create(CarritoPaypalApi.class);
+            carritoPaypalApi.capturarOrdenCarrito(paypalOrderId.trim()).enqueue(new retrofit2.Callback<CapturarOrdenPaypalCarritoResponseDTO>() {
+                @Override
+                public void onResponse(retrofit2.Call<CapturarOrdenPaypalCarritoResponseDTO> call, retrofit2.Response<CapturarOrdenPaypalCarritoResponseDTO> response) {
+                    capturandoPagoDeepLink = false;
+                    CapturarOrdenPaypalCarritoResponseDTO body = response.body();
+                    String backendMessage = body != null ? body.resolveUserMessage() : null;
+                    PagoPaypalSessionManager.clear(ActFragmentoPrincipal.this);
 
-            androidx.fragment.app.Fragment current =
-                    navHostFragment.getChildFragmentManager().getPrimaryNavigationFragment();
+                    if (response.isSuccessful()) {
+                        Toast.makeText(
+                                ActFragmentoPrincipal.this,
+                                backendMessage != null ? backendMessage : "Pago capturado correctamente",
+                                Toast.LENGTH_LONG
+                        ).show();
+                        return;
+                    }
 
-            if (current instanceof FragArte) {
-                ((FragArte) current).procesarRetornoPaypalDeepLink();
+                    Toast.makeText(
+                            ActFragmentoPrincipal.this,
+                            backendMessage != null ? backendMessage : "No se pudo capturar el pago (" + response.code() + ")",
+                            Toast.LENGTH_LONG
+                    ).show();
+                }
+
+                @Override
+                public void onFailure(retrofit2.Call<CapturarOrdenPaypalCarritoResponseDTO> call, Throwable t) {
+                    capturandoPagoDeepLink = false;
+                    PagoPaypalSessionManager.clear(ActFragmentoPrincipal.this);
+                    Toast.makeText(
+                            ActFragmentoPrincipal.this,
+                            "Error de red al capturar el pago: " + t.getMessage(),
+                            Toast.LENGTH_LONG
+                    ).show();
+                }
+            });
+            return;
+        }
+
+        PagoPaypalApi pagoPaypalApi = RetrofitClient.getClient().create(PagoPaypalApi.class);
+        pagoPaypalApi.capturarOrden(paypalOrderId.trim()).enqueue(new retrofit2.Callback<CapturarOrdenPaypalResponseDTO>() {
+            @Override
+            public void onResponse(retrofit2.Call<CapturarOrdenPaypalResponseDTO> call, retrofit2.Response<CapturarOrdenPaypalResponseDTO> response) {
+                capturandoPagoDeepLink = false;
+                CapturarOrdenPaypalResponseDTO body = response.body();
+                String backendMessage = body != null ? body.resolveUserMessage() : null;
+                PagoPaypalSessionManager.clear(ActFragmentoPrincipal.this);
+
+                if (response.isSuccessful()) {
+                    Toast.makeText(
+                            ActFragmentoPrincipal.this,
+                            backendMessage != null ? backendMessage : "Pago capturado correctamente",
+                            Toast.LENGTH_LONG
+                    ).show();
+                    return;
+                }
+
+                Toast.makeText(
+                        ActFragmentoPrincipal.this,
+                        backendMessage != null ? backendMessage : "No se pudo capturar el pago (" + response.code() + ")",
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<CapturarOrdenPaypalResponseDTO> call, Throwable t) {
+                capturandoPagoDeepLink = false;
+                PagoPaypalSessionManager.clear(ActFragmentoPrincipal.this);
+                Toast.makeText(
+                        ActFragmentoPrincipal.this,
+                        "Error de red al capturar el pago: " + t.getMessage(),
+                        Toast.LENGTH_LONG
+                ).show();
             }
         });
     }

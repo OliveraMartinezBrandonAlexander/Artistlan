@@ -20,6 +20,7 @@ import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
+import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public class FragMiArte extends Fragment {
 
         recyclerMisObras = view.findViewById(R.id.recyclerMiArte);
         recyclerMisObras.setLayoutManager(new LinearLayoutManager(requireContext()));
-        adapter = new TarjetaTextoObraAdapter(new ArrayList<>(), requireContext());
+        adapter = new TarjetaTextoObraAdapter(new ArrayList<>(), requireContext(), ModoTarjetaObra.MIS_OBRAS);
         adapter.setOnLikeClickListener(this::toggleLikeObra);
         recyclerMisObras.setAdapter(adapter);
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
@@ -87,6 +88,18 @@ public class FragMiArte extends Fragment {
         }
 
         return items;
+    }
+
+    private Set<Integer> extraerOwnedObraIds(List<ObraDTO> dtoList) {
+        Set<Integer> ownedObraIds = new HashSet<>();
+        if (dtoList == null) return ownedObraIds;
+
+        for (ObraDTO dto : dtoList) {
+            if (dto != null && dto.getIdObra() != null) {
+                ownedObraIds.add(dto.getIdObra());
+            }
+        }
+        return ownedObraIds;
     }
 
     private boolean isLikeActionBlocked(int idObra) {
@@ -193,11 +206,14 @@ public class FragMiArte extends Fragment {
                 List<ObraDTO> dtos = response.body();
                 if (dtos == null || dtos.isEmpty()) {
                     adapter.actualizarLista(new ArrayList<>());
+                    adapter.setOwnedObraIds(new HashSet<>());
                     return;
                 }
                 cargarFavoritosObrasDeUsuario(obrasFavoritas -> {
                     List<TarjetaTextoObraItem> items = convertirDTOaItem(dtos, obrasFavoritas);
+                    Set<Integer> ownedObraIds = extraerOwnedObraIds(dtos);
                     adapter.actualizarLista(items);
+                    adapter.setOwnedObraIds(ownedObraIds);
                     refreshLikeCounts(items);
                 });
             }
@@ -236,3 +252,5 @@ public class FragMiArte extends Fragment {
         });
     }
 }
+
+

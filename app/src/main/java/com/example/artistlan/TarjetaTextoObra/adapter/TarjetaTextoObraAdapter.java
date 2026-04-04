@@ -20,7 +20,9 @@ import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoObraAdapter.ViewHolder> {
 
@@ -28,11 +30,17 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         void onLikeClick(TarjetaTextoObraItem obraItem, int position);
     }
 
+    public interface OnComprarClickListener {
+        void onComprarClick(TarjetaTextoObraItem obraItem, int position);
+    }
+
     private static final long LIKE_BUTTON_COOLDOWN_MS = 500L;
     private OnLikeClickListener onLikeClickListener;
+    private OnComprarClickListener onComprarClickListener;
     private final List<TarjetaTextoObraItem> listaObras;
     private final List<TarjetaTextoObraItem> listaOriginal;
     private final Context context;
+    private final Set<Integer> ownedObraIds = new HashSet<>();
     private int tarjetaExpandida = -1;
 
     public TarjetaTextoObraAdapter(List<TarjetaTextoObraItem> listaObras, Context context) {
@@ -43,6 +51,16 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
     public void setOnLikeClickListener(OnLikeClickListener listener) {
         this.onLikeClickListener = listener;
+    }
+
+    public void setOnComprarClickListener(OnComprarClickListener listener) {
+        this.onComprarClickListener = listener;
+    }
+
+    public void setOwnedObraIds(Set<Integer> ownedObraIds) {
+        this.ownedObraIds.clear();
+        if (ownedObraIds != null) this.ownedObraIds.addAll(ownedObraIds);
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -93,6 +111,19 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         animarVista(holder.expandedSection, expandido);
         obra.setExpandido(expandido);
 
+        boolean isOwnedByCurrentUser = ownedObraIds.contains(obra.getIdObra());
+        boolean hasPrice = obra.getPrecio() != null && obra.getPrecio() > 0;
+        String estado = obra.getEstado() != null ? obra.getEstado().trim() : "";
+        boolean isEnVenta = "En venta".equals(estado);
+        boolean isVendida = "VENDIDA".equals(estado);
+        boolean shouldShowComprar = !isOwnedByCurrentUser && hasPrice && isEnVenta && !isVendida;
+
+        holder.btnVisitar.setVisibility(View.VISIBLE);
+        holder.btnComprar.setVisibility(shouldShowComprar ? View.VISIBLE : View.GONE);
+        holder.btnComprar.setEnabled(shouldShowComprar);
+        holder.btnComprar.setText("Comprar");
+        holder.btnComprar.setAlpha(1f);
+
         holder.itemView.setOnClickListener(v -> {
             int previousExpanded = tarjetaExpandida;
             int currentPosition = holder.getAdapterPosition();
@@ -105,7 +136,24 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             notifyItemChanged(currentPosition);
         });
 
-        holder.btnVisitar.setOnClickListener(v -> Toast.makeText(context, "Proximamente...", Toast.LENGTH_SHORT).show());
+        holder.btnVisitar.setOnClickListener(v ->
+                Toast.makeText(context, "Proximamente...", Toast.LENGTH_SHORT).show()
+        );
+
+        holder.btnComprar.setOnClickListener(v -> {
+            int adapterPosition = holder.getAdapterPosition();
+            if (adapterPosition == RecyclerView.NO_POSITION || onComprarClickListener == null) return;
+            if (ownedObraIds.contains(listaObras.get(adapterPosition).getIdObra())) return;
+            TarjetaTextoObraItem selectedObra = listaObras.get(adapterPosition);
+            String selectedEstado = selectedObra.getEstado() != null ? selectedObra.getEstado().trim() : "";
+            if (selectedObra.getPrecio() == null
+                    || selectedObra.getPrecio() <= 0
+                    || !"En venta".equals(selectedEstado)
+                    || "VENDIDA".equals(selectedEstado)) {
+                return;
+            }
+            onComprarClickListener.onComprarClick(selectedObra, adapterPosition);
+        });
     }
 
     @Override
@@ -163,6 +211,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         ImageButton btnLike;
         View expandedSection;
         Button btnVisitar;
+        Button btnComprar;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -180,6 +229,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             btnLike = itemView.findViewById(R.id.btnLike);
             expandedSection = itemView.findViewById(R.id.expanded_section);
             btnVisitar = itemView.findViewById(R.id.btnVisitar);
+            btnComprar = itemView.findViewById(R.id.btnComprar);
         }
     }
 

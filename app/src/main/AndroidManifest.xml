@@ -38,9 +38,23 @@
 
         <activity
             android:name=".Activitys.ActFragmentoPrincipal"
-            android:exported="false"
+            android:exported="true"
             android:theme="@style/Theme.Artistlan"
-            android:windowSoftInputMode="adjustPan" />
+            android:windowSoftInputMode="adjustPan">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="artistlan"
+                    android:host="paypal-return" />
+                <data
+                    android:scheme="artistlan"
+                    android:host="paypal-cancel" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".Activitys.ActIniciarSesion"

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,6 +28,7 @@ import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
+import com.example.artistlan.Fragments.FragArte;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.artistlan.R;
@@ -35,6 +37,7 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.pagos.PagoPaypalSessionManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 
@@ -93,6 +96,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         cargarHeaderDrawer();
         configurarAdminDrawerSection();
         configurarNavegacion();
+        handlePaypalDeepLinkIntent(getIntent());
         configurarEventos();
         prepararAnimacionesIniciales();
         animarEntradaUI();
@@ -692,6 +696,13 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handlePaypalDeepLinkIntent(intent);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         themeManager = new ThemeManager(this);
@@ -767,6 +778,50 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                         navController.navigate(R.id.fragMain);
                     }
                 }
+            }
+        });
+    }
+
+    private void handlePaypalDeepLinkIntent(Intent intent) {
+        if (intent == null) return;
+        Uri data = intent.getData();
+        if (data == null) return;
+
+        String scheme = data.getScheme();
+        String host = data.getHost();
+        if (!"artistlan".equalsIgnoreCase(scheme)) return;
+
+        if ("paypal-return".equalsIgnoreCase(host)) {
+            String paypalOrderId = data.getQueryParameter("token");
+            if (paypalOrderId == null || paypalOrderId.trim().isEmpty()) return;
+
+            PagoPaypalSessionManager.markApprovalReceivedFromDeepLink(this, paypalOrderId);
+            irAFragArteYProcesarDeepLink();
+            intent.setData(null);
+            return;
+        }
+
+        if ("paypal-cancel".equalsIgnoreCase(host)) {
+            PagoPaypalSessionManager.clear(this);
+            intent.setData(null);
+        }
+    }
+
+    private void irAFragArteYProcesarDeepLink() {
+        if (navController == null) return;
+
+        navegarSinDuplicar(R.id.fragArte);
+
+        mainHandler.post(() -> {
+            NavHostFragment navHostFragment =
+                    (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);
+            if (navHostFragment == null) return;
+
+            androidx.fragment.app.Fragment current =
+                    navHostFragment.getChildFragmentManager().getPrimaryNavigationFragment();
+
+            if (current instanceof FragArte) {
+                ((FragArte) current).procesarRetornoPaypalDeepLink();
             }
         });
     }

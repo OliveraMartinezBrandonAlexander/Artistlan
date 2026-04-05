@@ -25,6 +25,12 @@ public class ThemeItemAdapter extends RecyclerView.Adapter<ThemeItemAdapter.Item
     public ThemeItemAdapter(List<ThemeItem> items, OnThemeItemClick listener) {
         this.items = items;
         this.listener = listener;
+        setHasStableIds(true);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return items.get(position).getKey().hashCode();
     }
 
     @NonNull
@@ -38,6 +44,7 @@ public class ThemeItemAdapter extends RecyclerView.Adapter<ThemeItemAdapter.Item
     @Override
     public void onBindViewHolder(@NonNull ItemVH holder, int position) {
         ThemeItem item = items.get(position);
+
         holder.title.setText(item.getTitle());
         holder.desc.setText(item.getDescription());
         holder.hex.setText(String.format(Locale.US, "#%08X", item.getColor()));

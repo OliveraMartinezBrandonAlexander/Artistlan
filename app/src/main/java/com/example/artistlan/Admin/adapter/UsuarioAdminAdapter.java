@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,9 +50,17 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         UsuariosDTO item = items.get(position);
+
         holder.tvNombre.setText(item.getNombreCompleto() == null ? "Sin nombre" : item.getNombreCompleto());
         holder.tvUsuario.setText(item.getUsuario() == null ? "Sin usuario" : item.getUsuario());
         holder.tvRol.setText(item.getRol() == null ? "USER" : item.getRol());
+
+        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
+        ThemeApplier.applyTextPrimary(holder.tvNombre, tm);
+        ThemeApplier.applyTextSecondary(holder.tvUsuario, tm);
+        ThemeApplier.applyTextSecondary(holder.tvRol, tm);
+        ThemeApplier.applyPrimaryButton(holder.btnCambiarRol, tm);
+
         holder.btnCambiarRol.setOnClickListener(v -> listener.onCambiarRol(item));
 
         String fotoPerfil = item.getFotoPerfil();
@@ -67,12 +77,12 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
         }
     }
 
-
     @Override
     public void onViewRecycled(@NonNull ViewHolder holder) {
         super.onViewRecycled(holder);
         Glide.with(holder.itemView.getContext()).clear(holder.imgUsuario);
     }
+
     @Override
     public int getItemCount() {
         return items.size();

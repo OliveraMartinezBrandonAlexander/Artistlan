@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -9,6 +10,7 @@
     <include layout="@layout/layout_menu_superior" />
 
     <View
+        android:id="@+id/IsTopDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@android:color/black" />
@@ -59,6 +61,7 @@
                     android:textStyle="bold" />
 
                 <View
+                    android:id="@+id/IsCardDivider"
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginTop="5dp"
@@ -74,15 +77,16 @@
                     android:padding="5dp"
                     android:text="Ingresa la siguiente información:"
                     android:textSize="16sp" />
+
                 <TextView
-                android:id="@+id/IsTxtindicacion"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:gravity="center"
-                android:padding="5dp"
-                android:text=" Campos marcados con * son obligatorios"
-                android:textSize="16sp" />
+                    android:id="@+id/IsTxtindicacion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:gravity="center"
+                    android:padding="5dp"
+                    android:text=" Campos marcados con * son obligatorios"
+                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/tvCorreo"
@@ -109,7 +113,6 @@
                     android:enabled="false"
                     android:focusable="false"
                     android:clickable="false" />
-
 
                 <TextView
                     android:id="@+id/tvUsuario"
@@ -183,6 +186,7 @@
                     android:paddingBottom="8dp"
                     android:textColor="#202020"
                     android:inputType="textPersonName" />
+
                 <TextView
                     android:id="@+id/tvDescripcion"
                     android:layout_width="match_parent"
@@ -204,6 +208,7 @@
                     android:minLines="3"
                     android:padding="10dp"
                     android:textColor="#202020" />
+
                 <TextView
                     android:id="@+id/lsTxtCategoria"
                     android:layout_width="match_parent"
@@ -315,7 +320,6 @@
                     android:layout_gravity="center_horizontal"
                     android:backgroundTint="#B00020"
                     android:textColor="#FFFFFF" />
-
 
             </LinearLayout>
         </ScrollView>

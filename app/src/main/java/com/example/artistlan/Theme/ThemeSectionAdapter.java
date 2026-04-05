@@ -26,6 +26,13 @@ public class ThemeSectionAdapter extends RecyclerView.Adapter<ThemeSectionAdapte
     public ThemeSectionAdapter(List<ThemeSection> sections, OnThemeColorRequested listener) {
         this.sections = sections;
         this.listener = listener;
+        setHasStableIds(true);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        ThemeSection section = sections.get(position);
+        return section.getTitle().hashCode();
     }
 
     @NonNull
@@ -43,14 +50,26 @@ public class ThemeSectionAdapter extends RecyclerView.Adapter<ThemeSectionAdapte
         holder.title.setText(section.getTitle());
         holder.subtitle.setText(section.getSubtitle());
 
-        holder.recyclerItems.setLayoutManager(new LinearLayoutManager(holder.itemView.getContext()));
-        holder.recyclerItems.setNestedScrollingEnabled(false);
-        holder.recyclerItems.setHasFixedSize(false);
-        holder.recyclerItems.setItemAnimator(null);
-        holder.recyclerItems.setAdapter(new ThemeItemAdapter(section.getItems(), (item, itemPos) -> listener.onPickColor(item)));
+        if (holder.recyclerItems.getLayoutManager() == null) {
+            holder.recyclerItems.setLayoutManager(new LinearLayoutManager(holder.itemView.getContext()));
+            holder.recyclerItems.setNestedScrollingEnabled(false);
+            holder.recyclerItems.setHasFixedSize(false);
+            holder.recyclerItems.setItemAnimator(null);
+        }
+
+        ThemeItemAdapter adapter = (ThemeItemAdapter) holder.recyclerItems.getAdapter();
+        if (adapter == null) {
+            adapter = new ThemeItemAdapter(section.getItems(), (item, itemPos) -> listener.onPickColor(item));
+            holder.recyclerItems.setAdapter(adapter);
+        } else {
+            adapter.notifyDataSetChanged();
+        }
 
         holder.recyclerItems.setVisibility(section.isExpanded() ? View.VISIBLE : View.GONE);
-        holder.chevron.animate().rotation(section.isExpanded() ? 180f : 0f).setDuration(180).start();
+        holder.chevron.animate()
+                .rotation(section.isExpanded() ? 180f : 0f)
+                .setDuration(180)
+                .start();
 
         holder.header.setOnClickListener(v -> {
             section.toggle();

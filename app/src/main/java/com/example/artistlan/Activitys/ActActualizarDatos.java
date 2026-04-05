@@ -1,50 +1,61 @@
 package com.example.artistlan.Activitys;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.Manifest;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.*;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import com.bumptech.glide.Glide;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.CategoriaApi;
-import com.example.artistlan.Conector.api.CategoriaUsuariosApi;
 import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.CategoriaDTO;
-import com.example.artistlan.Conector.model.CategoriaUsuariosDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.Conector.repository.FirebaseImageRepository;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeEffectsApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ActActualizarDatos extends AppCompatActivity implements View.OnClickListener {
 
-    private Button btnActualizarDatos;
+    private Button btnActualizarDatos, btnEliminarCuenta;
     private ImageButton IsbtnRegresar;
-    private EditText etCorreo, etNombre, etDescripcion, etRedes, etTelefono, etFecha, etUsuario, etContra;
+    private EditText etCorreo, etNombre, etDescripcion, etRedes, etTelefono, etFecha, etUsuario;
     private ImageView btnCambiarFoto, imgFotoPerfil;
     private Spinner spinnerCategoriaUsuario;
     private String contrasenaOriginal;
@@ -56,12 +67,38 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     private ActivityResultLauncher<Void> tomarFotoPerfilLauncher;
     private ActivityResultLauncher<String> permisoCamaraPerfilLauncher;
     private Uri imageUri = null;
-    private Button btnEliminarCuenta;
+
+    // Theme
+    private ThemeManager themeManager;
+    private View rootMain, topDivider, cardDivider, cardContainer;
+    private TextView txtTitulo, txtDesc, txtIndicacion, tvCorreo, tvUsuario, tvFotoPerfil,
+            tvNombre, tvDescripcion, tvCategoria, tvRedes, tvTelefono, tvFecha;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_act_actualizar_datos);
+
+        themeManager = new ThemeManager(this);
+
+        // Theme refs
+        rootMain = findViewById(R.id.main);
+        topDivider = findViewById(R.id.IsTopDivider);
+        cardDivider = findViewById(R.id.IsCardDivider);
+        cardContainer = findViewById(R.id.IsLayCard);
+
+        txtTitulo = findViewById(R.id.IsTxtTitulo);
+        txtDesc = findViewById(R.id.IsTxtDesc);
+        txtIndicacion = findViewById(R.id.IsTxtindicacion);
+        tvCorreo = findViewById(R.id.tvCorreo);
+        tvUsuario = findViewById(R.id.tvUsuario);
+        tvFotoPerfil = findViewById(R.id.tvFotoPerfil);
+        tvNombre = findViewById(R.id.tvNombre);
+        tvDescripcion = findViewById(R.id.tvDescripcion);
+        tvCategoria = findViewById(R.id.lsTxtCategoria);
+        tvRedes = findViewById(R.id.tvRedes);
+        tvTelefono = findViewById(R.id.tvTelefono);
+        tvFecha = findViewById(R.id.tvFecha);
 
         // Enlazar XML
         etCorreo = findViewById(R.id.correo);
@@ -79,21 +116,19 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         btnCambiarFoto = findViewById(R.id.btnCambiarFoto);
         btnEliminarCuenta = findViewById(R.id.btnEliminarCuenta);
 
-        btnEliminarCuenta.setOnClickListener(this);
+        applyThemeOnlyColors();
 
+        btnEliminarCuenta.setOnClickListener(this);
         btnActualizarDatos.setOnClickListener(this);
         IsbtnRegresar.setOnClickListener(this);
 
         api = RetrofitClient.getClient().create(UsuarioApi.class);
 
-        // Campos bloqueados
         etCorreo.setEnabled(false);
         etUsuario.setEnabled(false);
 
-        // DatePicker
         etFecha.setOnClickListener(v -> mostrarDatePicker());
 
-        // Selector de imagen
         seleccionarImagenperfilLauncher =
                 registerForActivityResult(
                         new androidx.activity.result.contract.ActivityResultContracts.GetContent(),
@@ -104,6 +139,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                             }
                         }
                 );
+
         tomarFotoPerfilLauncher =
                 registerForActivityResult(
                         new androidx.activity.result.contract.ActivityResultContracts.TakePicturePreview(),
@@ -134,9 +170,74 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
         btnCambiarFoto.setOnClickListener(v -> mostrarOpcionesFotoPerfil());
 
-        // Cargar datos del usuario y categorías
         cargarDatosUsuario();
         cargarCategoriasDesdeApi();
+    }
+
+    private void applyThemeOnlyColors() {
+        ThemeApplier.applySystemBars(this, themeManager);
+
+        if (rootMain != null) {
+            rootMain.setBackgroundColor(themeManager.color(ThemeKeys.BG_BOTTOM));
+        }
+
+        if (cardContainer != null && cardContainer.getBackground() != null) {
+            cardContainer.getBackground().setColorFilter(
+                    themeManager.color(ThemeKeys.ACCOUNT_GLASS_PANEL),
+                    PorterDuff.Mode.SRC_ATOP
+            );
+            cardContainer.setAlpha(0.96f);
+        }
+
+        ThemeApplier.applyTextPrimary(txtTitulo, themeManager);
+        ThemeApplier.applyTextSecondary(txtDesc, themeManager);
+        ThemeApplier.applyTextSecondary(txtIndicacion, themeManager);
+
+        ThemeApplier.applyTextPrimary(tvCorreo, themeManager);
+        ThemeApplier.applyTextPrimary(tvUsuario, themeManager);
+        ThemeApplier.applyTextPrimary(tvFotoPerfil, themeManager);
+        ThemeApplier.applyTextPrimary(tvNombre, themeManager);
+        ThemeApplier.applyTextPrimary(tvDescripcion, themeManager);
+        ThemeApplier.applyTextPrimary(tvCategoria, themeManager);
+        ThemeApplier.applyTextPrimary(tvRedes, themeManager);
+        ThemeApplier.applyTextPrimary(tvTelefono, themeManager);
+        ThemeApplier.applyTextPrimary(tvFecha, themeManager);
+
+        ThemeApplier.applyInput(etCorreo, themeManager);
+        ThemeApplier.applyInput(etUsuario, themeManager);
+        ThemeApplier.applyInput(etNombre, themeManager);
+        ThemeApplier.applyInput(etDescripcion, themeManager);
+        ThemeApplier.applyInput(etRedes, themeManager);
+        ThemeApplier.applyInput(etTelefono, themeManager);
+        ThemeApplier.applyInput(etFecha, themeManager);
+
+        if (spinnerCategoriaUsuario != null && spinnerCategoriaUsuario.getBackground() != null) {
+            spinnerCategoriaUsuario.getBackground().setColorFilter(
+                    themeManager.color(ThemeKeys.INPUT_BG),
+                    PorterDuff.Mode.SRC_ATOP
+            );
+        }
+
+        ThemeApplier.applyPrimaryButton(btnActualizarDatos, themeManager);
+        ThemeApplier.applySecondaryButton(btnEliminarCuenta, themeManager);
+
+        if (IsbtnRegresar != null) {
+            IsbtnRegresar.setColorFilter(themeManager.color(ThemeKeys.ICON_ACTIVE), PorterDuff.Mode.SRC_ATOP);
+        }
+
+        if (btnCambiarFoto != null) {
+            btnCambiarFoto.setColorFilter(themeManager.color(ThemeKeys.ICON_ACTIVE), PorterDuff.Mode.SRC_ATOP);
+        }
+
+        if (topDivider != null && topDivider.getBackground() != null) {
+            topDivider.getBackground().setColorFilter(themeManager.color(ThemeKeys.ACCOUNT_DIVIDER), PorterDuff.Mode.SRC_ATOP);
+        }
+
+        if (cardDivider != null && cardDivider.getBackground() != null) {
+            cardDivider.getBackground().setColorFilter(themeManager.color(ThemeKeys.ACCOUNT_DIVIDER), PorterDuff.Mode.SRC_ATOP);
+        }
+
+        ThemeEffectsApplier.applyPanelGlass(cardContainer, themeManager);
     }
 
     private void mostrarOpcionesFotoPerfil() {
@@ -184,7 +285,6 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         }
     }
 
-
     private void mostrarDatePicker() {
         Calendar calendar = Calendar.getInstance();
         int anio = calendar.get(Calendar.YEAR);
@@ -211,6 +311,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         etTelefono.setText(prefs.getString("telefono", ""));
         etFecha.setText(prefs.getString("fechaNac", ""));
         contrasenaOriginal = prefs.getString("contrasena", "");
+
         String foto = prefs.getString("fotoPerfil", "");
         if (!foto.isEmpty()) {
             Glide.with(this).load(foto).centerCrop().into(imgFotoPerfil);
@@ -228,19 +329,21 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                 if (response.isSuccessful() && response.body() != null) {
                     listaCategorias.clear();
                     List<String> nombresCategorias = new ArrayList<>();
-                    nombresCategorias.add("Ninguna"); // posición 0
+                    nombresCategorias.add("Ninguna");
 
                     for (CategoriaDTO c : response.body()) {
                         int id = c.getIdCategoria();
-
                         if (id >= 19 && id <= 37) {
                             listaCategorias.add(c);
                             nombresCategorias.add(c.getNombreCategoria());
                         }
                     }
 
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(ActActualizarDatos.this,
-                            android.R.layout.simple_spinner_item, nombresCategorias);
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                            ActActualizarDatos.this,
+                            android.R.layout.simple_spinner_item,
+                            nombresCategorias
+                    );
                     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                     spinnerCategoriaUsuario.setAdapter(adapter);
 
@@ -270,13 +373,12 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     }
 
     private void mostrarDialogoEliminarCuenta() {
-        // Primer diálogo: confirmar intención
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Eliminar cuenta")
                 .setMessage("Esta acción es permanente y eliminará tu cuenta y toda tu información. ¿Deseas continuar?")
                 .setPositiveButton("Sí, eliminar", (dialog, which) -> {
                     dialog.dismiss();
-                    // Segundo diálogo: pedir contraseña
+
                     View view = LayoutInflater.from(this).inflate(R.layout.dialog_ingresar_password, null);
                     EditText etPassword = view.findViewById(R.id.etPasswordDialog);
 
@@ -284,7 +386,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                             .setTitle("Confirma tu contraseña")
                             .setView(view)
                             .setCancelable(false)
-                            .setPositiveButton("Eliminar", null) // sobreescribimos más abajo
+                            .setPositiveButton("Eliminar", null)
                             .setNegativeButton("Cancelar", (d, w) -> d.dismiss())
                             .create();
 
@@ -325,11 +427,11 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             Toast.makeText(this, "Error: sesión no válida", Toast.LENGTH_SHORT).show();
             return;
         }
+
         api.eliminarUsuario(idUsuario).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
-
                     prefs.edit().clear().apply();
 
                     Toast.makeText(ActActualizarDatos.this,
@@ -346,6 +448,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                             Toast.LENGTH_LONG).show();
                 }
             }
+
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 Toast.makeText(ActActualizarDatos.this,
@@ -354,9 +457,6 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             }
         });
     }
-
-
-
 
     private void actualizarUsuario() {
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
@@ -424,23 +524,17 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         usuarioActualizado.setFotoPerfil(prefs.getString("fotoPerfil", ""));
         usuarioActualizado.setContrasena(contrasenaOriginal);
 
-
         api.actualizarUsuario(idUsuario, usuarioActualizado).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
-
-                    // Actualizar SharedPreferences con los datos básicos
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putString("nombreCompleto", usuarioActualizado.getNombreCompleto());
                     editor.putString("descripcion", usuarioActualizado.getDescripcion());
                     editor.putString("redes", usuarioActualizado.getRedesSociales());
                     editor.putString("telefono", usuarioActualizado.getTelefono());
                     editor.putString("fechaNac", usuarioActualizado.getFechaNacimiento());
-
                     editor.putString("categoria", spinnerCategoriaUsuario.getSelectedItem().toString());
-
-
                     editor.apply();
 
                     Toast.makeText(ActActualizarDatos.this, "Datos actualizados correctamente", Toast.LENGTH_SHORT).show();
@@ -459,4 +553,10 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        themeManager = new ThemeManager(this);
+        applyThemeOnlyColors();
+    }
 }

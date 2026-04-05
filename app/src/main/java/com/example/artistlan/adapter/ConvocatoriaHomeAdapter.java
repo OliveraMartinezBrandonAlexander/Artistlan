@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.artistlan.Conector.model.ConvocatoriaDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,9 +48,16 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ConvocatoriaDTO item = items.get(position);
+
         holder.tvTitulo.setText(item.getTitulo() == null ? "Sin título" : item.getTitulo());
         holder.tvDescripcion.setText(item.getDescripcion() == null ? "Sin descripción" : item.getDescripcion());
         holder.tvFecha.setText(item.getFecha() == null ? "Sin fecha" : "Fecha: " + item.getFecha());
+
+        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
+        ThemeApplier.applyTextPrimary(holder.tvTitulo, tm);
+        ThemeApplier.applyTextSecondary(holder.tvDescripcion, tm);
+        ThemeApplier.applyTextSecondary(holder.tvFecha, tm);
+        ThemeApplier.applyPrimaryButton(holder.btnVerMas, tm);
 
         String enlace = item.getEnlace();
         boolean enlaceValido = !TextUtils.isEmpty(enlace) && (enlace.startsWith("http://") || enlace.startsWith("https://"));

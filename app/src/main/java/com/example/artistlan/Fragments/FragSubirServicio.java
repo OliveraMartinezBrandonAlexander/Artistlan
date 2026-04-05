@@ -21,13 +21,12 @@ import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.CategoriaApi;
-import com.example.artistlan.Conector.api.CategoriaServiciosApi;
 import com.example.artistlan.Conector.api.ServicioApi;
 import com.example.artistlan.Conector.model.CategoriaDTO;
-import com.example.artistlan.Conector.model.CategoriaServiciosDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.R;
 
@@ -41,6 +40,9 @@ import retrofit2.Response;
 
 public class FragSubirServicio extends Fragment {
 
+    public static final String ARG_MODO_EDICION = "modo_edicion";
+    public static final String ARG_SERVICIO_ID = "servicio_id";
+
     private Spinner spinnerCategoriaServicio;
     private EditText etTituloServicio;
     private EditText etDescripcionServicio;
@@ -51,8 +53,22 @@ public class FragSubirServicio extends Fragment {
 
     private final List<CategoriaDTO> listaCategoriasProfesiones = new ArrayList<>();
     private ArrayAdapter<String> categoriasAdapter;
+    private boolean modoEdicion = false;
+    private int idServicioEditar = -1;
+    private ServicioDTO servicioActual;
+    private String categoriaPendiente;
 
     public FragSubirServicio() {
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Bundle args = getArguments();
+        if (args != null) {
+            modoEdicion = args.getBoolean(ARG_MODO_EDICION, false);
+            idServicioEditar = args.getInt(ARG_SERVICIO_ID, -1);
+        }
     }
 
     @Nullable
@@ -86,11 +102,15 @@ public class FragSubirServicio extends Fragment {
         spinnerCategoriaServicio.setFocusableInTouchMode(false);
 
         cargarCategoriasDesdeBD();
+        configurarModoPantalla(view);
+        if (modoEdicion) {
+            cargarServicioParaEditar();
+        }
 
         btnPublicarServicio.setOnClickListener(v -> validarYMostrarDialogo());
 
         btnRegresarServicio.setOnClickListener(v ->
-                requireActivity().getSupportFragmentManager().popBackStack()
+                NavHostFragment.findNavController(this).popBackStack()
         );
 
         return view;
@@ -190,12 +210,85 @@ public class FragSubirServicio extends Fragment {
         categoriasAdapter.clear();
         categoriasAdapter.addAll(nombres);
         categoriasAdapter.notifyDataSetChanged();
+        seleccionarCategoriaPendiente();
+    }
+
+    private void configurarModoPantalla(View view) {
+        if (!modoEdicion) {
+            return;
+        }
+
+        TextView titulo = view.findViewById(R.id.lsTxtTitulo);
+        TextView descripcion = view.findViewById(R.id.lsTxtDesc);
+        titulo.setText("Editar Servicio");
+        descripcion.setText("Actualiza la información de tu servicio:");
+        btnPublicarServicio.setText("GUARDAR CAMBIOS");
+    }
+
+    private void cargarServicioParaEditar() {
+        int idUsuario = obtenerIdUsuarioLogueado();
+        if (idUsuario <= 0 || idServicioEditar <= 0) {
+            Toast.makeText(getContext(), "No se pudo cargar el servicio.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        ServicioApi api = RetrofitClient.getClient().create(ServicioApi.class);
+        api.obtenerPorId(idServicioEditar, idUsuario).enqueue(new Callback<ServicioDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<ServicioDTO> call, @NonNull Response<ServicioDTO> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (!response.isSuccessful() || response.body() == null) {
+                    Toast.makeText(getContext(), "No se pudo cargar el servicio.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                servicioActual = response.body();
+                precargarServicio(servicioActual);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    Toast.makeText(getContext(), "Error de red al cargar el servicio.", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    private void precargarServicio(ServicioDTO servicio) {
+        etTituloServicio.setText(servicio.getTitulo());
+        etDescripcionServicio.setText(servicio.getDescripcion());
+        etTecnicaServicio.setText(servicio.getTecnicas());
+        etContactoServicio.setText(servicio.getContacto());
+        categoriaPendiente = servicio.getCategoria();
+        seleccionarCategoriaPendiente();
+    }
+
+    private void seleccionarCategoriaPendiente() {
+        if (categoriaPendiente == null || categoriaPendiente.trim().isEmpty() || listaCategoriasProfesiones.isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < listaCategoriasProfesiones.size(); i++) {
+            String nombre = listaCategoriasProfesiones.get(i).getNombreCategoria();
+            if (nombre != null && nombre.equalsIgnoreCase(categoriaPendiente)) {
+                spinnerCategoriaServicio.setSelection(i + 1);
+                categoriaPendiente = null;
+                return;
+            }
+        }
+    }
+
+    private int obtenerIdUsuarioLogueado() {
+        SharedPreferences prefs = requireActivity()
+                .getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        return prefs.getInt("idUsuario", prefs.getInt("id", -1));
     }
 
     private void validarYPublicarServicio() {
-        SharedPreferences prefs = requireActivity()
-                .getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
-        int idUsuario = prefs.getInt("id", -1);
+        int idUsuario = obtenerIdUsuarioLogueado();
 
         if (idUsuario == -1) {
             Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
@@ -252,14 +345,12 @@ public class FragSubirServicio extends Fragment {
         servicio.setIdUsuario(idUsuario);
         servicio.setCategoria(categoriaSeleccionada.getNombreCategoria());
 
-        guardarServicioEnBD(idUsuario, categoriaSeleccionada.getIdCategoria(), servicio);
+        guardarServicioEnBD(idUsuario, servicio);
     }
 
     private void validarYMostrarDialogo() {
 
-        SharedPreferences prefs = requireActivity()
-                .getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
-        int idUsuario = prefs.getInt("id", -1);
+        int idUsuario = obtenerIdUsuarioLogueado();
 
         if (idUsuario == -1) {
             Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
@@ -349,7 +440,7 @@ public class FragSubirServicio extends Fragment {
         btnPublicar.setOnClickListener(v -> {
 
             btnPublicar.setEnabled(false);
-            btnPublicar.setText("Publicando...");
+            btnPublicar.setText(modoEdicion ? "Guardando..." : "Publicando...");
             dialog.dismiss();
 
             ServicioDTO servicio = new ServicioDTO();
@@ -358,18 +449,23 @@ public class FragSubirServicio extends Fragment {
             servicio.setTecnicas(tecnica);
             servicio.setContacto(contacto);
             servicio.setIdUsuario(idUsuario);
+            servicio.setIdCategoria(categoria.getIdCategoria());
             servicio.setCategoria(categoria.getNombreCategoria());
 
-            guardarServicioEnBD(idUsuario, categoria.getIdCategoria(), servicio);
+            guardarServicio(idUsuario, servicio);
         });
 
         dialog.show();
     }
+    private void guardarServicio(int idUsuario, ServicioDTO servicio) {
+        if (modoEdicion) {
+            actualizarServicioEnBD(idUsuario, servicio);
+        } else {
+            guardarServicioEnBD(idUsuario, servicio);
+        }
+    }
 
-
-
-
-    private void guardarServicioEnBD(int idUsuario, int idCategoria, ServicioDTO servicio) {
+    private void guardarServicioEnBD(int idUsuario, ServicioDTO servicio) {
         ServicioApi servicioApi = RetrofitClient.getClient().create(ServicioApi.class);
 
         Call<ServicioDTO> call = servicioApi.crearServicioDeUsuario(idUsuario, servicio);
@@ -380,11 +476,9 @@ public class FragSubirServicio extends Fragment {
                                    @NonNull Response<ServicioDTO> response) {
 
                 if (response.isSuccessful() && response.body() != null) {
-                    ServicioDTO creado = response.body();
-                    Toast.makeText(getContext(), "¡Servicio subido con éxito! " , Toast.LENGTH_LONG).show();
-
-
-                    crearRelacionCategoriaServicio(creado.getIdServicio(), idCategoria);
+                    Toast.makeText(getContext(), "¡Servicio subido con éxito!", Toast.LENGTH_LONG).show();
+                    limpiarFormulario();
+                    NavHostFragment.findNavController(FragSubirServicio.this).popBackStack();
                 } else {
                     Toast.makeText(getContext(),
                             "Error al insertar servicio " + response.code(),
@@ -402,33 +496,32 @@ public class FragSubirServicio extends Fragment {
         });
     }
 
-    private void crearRelacionCategoriaServicio(Integer idServicio, Integer idCategoria) {
-        CategoriaServiciosApi api = RetrofitClient.getClient().create(CategoriaServiciosApi.class);
+    private void actualizarServicioEnBD(int idUsuario, ServicioDTO servicio) {
+        if (idServicioEditar <= 0) {
+            Toast.makeText(getContext(), "No se pudo actualizar el servicio.", Toast.LENGTH_LONG).show();
+            return;
+        }
 
-        CategoriaServiciosDTO dto = new CategoriaServiciosDTO();
-        dto.setIdServicio(idServicio);
-        dto.setIdCategoria(idCategoria);
-
-        api.crear(dto).enqueue(new Callback<CategoriaServiciosDTO>() {
+        ServicioApi servicioApi = RetrofitClient.getClient().create(ServicioApi.class);
+        servicioApi.actualizarServicioUsuario(idUsuario, idServicioEditar, servicio).enqueue(new Callback<ServicioDTO>() {
             @Override
-            public void onResponse(@NonNull Call<CategoriaServiciosDTO> call,
-                                   @NonNull Response<CategoriaServiciosDTO> response) {
+            public void onResponse(@NonNull Call<ServicioDTO> call, @NonNull Response<ServicioDTO> response) {
+                if (!isAdded()) {
+                    return;
+                }
                 if (response.isSuccessful()) {
-                    limpiarFormulario();
-                    requireActivity().getSupportFragmentManager().popBackStack();
+                    Toast.makeText(getContext(), "Servicio actualizado con éxito", Toast.LENGTH_LONG).show();
+                    NavHostFragment.findNavController(FragSubirServicio.this).popBackStack();
                 } else {
-                    Toast.makeText(getContext(),
-                            "Servicio ok, pero falló al guardar la categoría. Código " + response.code(),
-                            Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Error al actualizar servicio " + response.code(), Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
-            public void onFailure(@NonNull Call<CategoriaServiciosDTO> call, @NonNull Throwable t) {
-                Toast.makeText(getContext(),
-                        "Servicio ok, pero error de red al guardar categoría: " + t.getMessage(),
-                        Toast.LENGTH_LONG).show();
-                t.printStackTrace();
+            public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    Toast.makeText(getContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                }
             }
         });
     }

@@ -5,14 +5,15 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.OvershootInterpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -28,8 +29,18 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         void onLikeClick(TarjetaTextoServicioItem servicioItem, int position);
     }
 
+    public interface OnEditClickListener {
+        void onEditClick(TarjetaTextoServicioItem servicioItem, int position);
+    }
+
+    public interface OnDeleteClickListener {
+        void onDeleteClick(TarjetaTextoServicioItem servicioItem, int position);
+    }
+
     private static final long LIKE_BUTTON_COOLDOWN_MS = 500L;
     private OnLikeClickListener onLikeClickListener;
+    private OnEditClickListener onEditClickListener;
+    private OnDeleteClickListener onDeleteClickListener;
     private final List<TarjetaTextoServicioItem> listaServicios;
     private final List<TarjetaTextoServicioItem> listaOriginal;
     private final Context context;
@@ -43,6 +54,16 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
     public void setOnLikeClickListener(OnLikeClickListener onLikeClickListener) {
         this.onLikeClickListener = onLikeClickListener;
+    }
+
+    public void setOnEditClickListener(OnEditClickListener onEditClickListener) {
+        this.onEditClickListener = onEditClickListener;
+        notifyDataSetChanged();
+    }
+
+    public void setOnDeleteClickListener(OnDeleteClickListener onDeleteClickListener) {
+        this.onDeleteClickListener = onDeleteClickListener;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -83,10 +104,15 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
         boolean expandido = (tarjetaExpandida == position);
         animarVista(holder.expandedSection, expandido);
+        configurarMenuOpciones(holder);
 
         holder.itemView.setOnClickListener(v -> {
             int previous = tarjetaExpandida;
             int currentPosition = holder.getAdapterPosition();
+
+            if (currentPosition == RecyclerView.NO_POSITION) {
+                return;
+            }
 
             if (previous == currentPosition) tarjetaExpandida = -1;
             else {
@@ -97,13 +123,56 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         });
 
         holder.btnVisitar.setOnClickListener(v -> {
-            Toast.makeText(context, "Proximamente...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Próximamente...", Toast.LENGTH_SHORT).show();
         });
     }
 
     @Override
     public int getItemCount() {
         return listaServicios != null ? listaServicios.size() : 0;
+    }
+
+    private void configurarMenuOpciones(ViewHolder holder) {
+        boolean mostrarMenu = onEditClickListener != null || onDeleteClickListener != null;
+        holder.btnMoreOptions.setVisibility(mostrarMenu ? View.VISIBLE : View.GONE);
+        if (!mostrarMenu) {
+            holder.btnMoreOptions.setOnClickListener(null);
+            return;
+        }
+
+        holder.btnMoreOptions.setOnClickListener(v -> {
+            int adapterPosition = holder.getAdapterPosition();
+            if (adapterPosition == RecyclerView.NO_POSITION) {
+                return;
+            }
+
+            PopupMenu popupMenu = new PopupMenu(context, holder.btnMoreOptions);
+            if (onEditClickListener != null) {
+                popupMenu.getMenu().add(0, 1, 0, "Modificar");
+            }
+            if (onDeleteClickListener != null) {
+                popupMenu.getMenu().add(0, 2, 1, "Eliminar");
+            }
+
+            popupMenu.setOnMenuItemClickListener(item -> {
+                int currentPosition = holder.getAdapterPosition();
+                if (currentPosition == RecyclerView.NO_POSITION) {
+                    return false;
+                }
+
+                TarjetaTextoServicioItem servicio = listaServicios.get(currentPosition);
+                if (item.getItemId() == 1 && onEditClickListener != null) {
+                    onEditClickListener.onEditClick(servicio, currentPosition);
+                    return true;
+                }
+                if (item.getItemId() == 2 && onDeleteClickListener != null) {
+                    onDeleteClickListener.onDeleteClick(servicio, currentPosition);
+                    return true;
+                }
+                return false;
+            });
+            popupMenu.show();
+        });
     }
 
     private void animateLikeButton(ImageButton btnLike, boolean wasLiked) {
@@ -151,6 +220,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         listaOriginal.addAll(nuevaLista);
         listaServicios.clear();
         listaServicios.addAll(nuevaLista);
+        tarjetaExpandida = -1;
         if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
         if (!nuevaLista.isEmpty()) notifyItemRangeInserted(0, nuevaLista.size());
     }
@@ -159,6 +229,11 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         if (position < 0 || position >= listaServicios.size()) return;
         TarjetaTextoServicioItem item = listaServicios.remove(position);
         listaOriginal.remove(item);
+        if (tarjetaExpandida == position) {
+            tarjetaExpandida = -1;
+        } else if (tarjetaExpandida > position) {
+            tarjetaExpandida--;
+        }
         notifyItemRemoved(position);
     }
 
@@ -192,7 +267,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
         TextView titulo, descripcion, contacto, tecnicas, autor, categoria, likes;
         ImageView imgAutor;
-        ImageButton btnLike;
+        ImageButton btnLike, btnMoreOptions;
         View expandedSection;
         Button btnVisitar;
 
@@ -206,6 +281,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             categoria = itemView.findViewById(R.id.categoria);
             likes = itemView.findViewById(R.id.likes);
             btnLike = itemView.findViewById(R.id.btnLike);
+            btnMoreOptions = itemView.findViewById(R.id.btnMoreOptions);
             expandedSection = itemView.findViewById(R.id.expanded_section);
             btnVisitar = itemView.findViewById(R.id.btnVisitar);
             imgAutor = itemView.findViewById(R.id.imgAutor);

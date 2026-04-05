@@ -8,9 +8,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.artistlan.Conector.RetrofitClient;
@@ -41,6 +44,10 @@ public class FragMisServicios extends Fragment {
     private FavoritosApi favoritosApi;
     private int idUsuarioLogueado = -1;
     private final Map<Integer, Long> lastLikeClickByServicio = new HashMap<>();
+    private boolean debeRecargarEnResume = false;
+
+    public static final String ARG_MODO_EDICION = "modo_edicion";
+    public static final String ARG_SERVICIO_ID = "servicio_id";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -56,10 +63,21 @@ public class FragMisServicios extends Fragment {
         recyclerMisServicios.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
         adapter.setOnLikeClickListener(this::toggleLikeServicio);
+        adapter.setOnEditClickListener(this::editarServicio);
+        adapter.setOnDeleteClickListener(this::confirmarEliminacionServicio);
         recyclerMisServicios.setAdapter(adapter);
 
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
         cargarServiciosDelUsuario();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (debeRecargarEnResume && isAdded()) {
+            debeRecargarEnResume = false;
+            cargarServiciosDelUsuario();
+        }
     }
 
     private List<TarjetaTextoServicioItem> convertirDTOaItem(List<ServicioDTO> dtoList, Set<Integer> serviciosFavoritos) {
@@ -167,6 +185,76 @@ public class FragMisServicios extends Fragment {
         }
     }
 
+    private void editarServicio(TarjetaTextoServicioItem servicioItem, int position) {
+        if (!isAdded() || servicioItem.getIdServicio() == null) {
+            return;
+        }
+
+        debeRecargarEnResume = true;
+        Bundle args = new Bundle();
+        args.putBoolean(ARG_MODO_EDICION, true);
+        args.putInt(ARG_SERVICIO_ID, servicioItem.getIdServicio());
+        NavHostFragment.findNavController(this).navigate(R.id.fragSubirServicio, args);
+    }
+
+    private void confirmarEliminacionServicio(TarjetaTextoServicioItem servicioItem, int position) {
+        if (!isAdded()) {
+            return;
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Eliminar")
+                .setMessage("¿Deseas eliminar este servicio?")
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Eliminar", (dialog, which) -> eliminarServicio(servicioItem, position))
+                .show();
+    }
+
+    private void eliminarServicio(TarjetaTextoServicioItem servicioItem, int position) {
+        Integer idServicio = servicioItem.getIdServicio();
+        if (idUsuarioLogueado <= 0 || idServicio == null) {
+            Toast.makeText(requireContext(), "Error de usuario.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        ServicioApi api = RetrofitClient.getClient().create(ServicioApi.class);
+        api.eliminarServicioUsuario(idUsuarioLogueado, idServicio).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (!isAdded()) {
+                    return;
+                }
+
+                int code = response.code();
+                if (code == 204) {
+                    adapter.removeItemAt(position);
+                    Toast.makeText(requireContext(), "Servicio eliminado correctamente", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (code == 403) {
+                    Toast.makeText(requireContext(), "No puedes eliminar este servicio", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                if (code == 404) {
+                    Toast.makeText(requireContext(), "El servicio ya no existe", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                if (code == 409) {
+                    Toast.makeText(requireContext(), "No se puede eliminar este servicio porque tiene relaciones asociadas", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                Toast.makeText(requireContext(), "No se pudo eliminar el servicio (" + code + ")", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    Toast.makeText(requireContext(), "Error de conexión al eliminar el servicio", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
     private void cargarServiciosDelUsuario() {
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
@@ -180,7 +268,14 @@ public class FragMisServicios extends Fragment {
         call.enqueue(new Callback<List<ServicioDTO>>() {
             @Override
             public void onResponse(@NonNull Call<List<ServicioDTO>> call, @NonNull Response<List<ServicioDTO>> response) {
-                if (!isAdded() || !response.isSuccessful() || response.body() == null) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.code() == 204) {
+                    adapter.actualizarLista(new ArrayList<>());
+                    return;
+                }
+                if (!response.isSuccessful() || response.body() == null) {
                     return;
                 }
 

@@ -38,9 +38,16 @@ public interface ServicioApi {
     @POST("portafolioPersonal/{usuarioId}")
     Call<ServicioDTO> crearServicioDeUsuario(@Path("usuarioId") int usuarioId, @Body ServicioDTO servicio);
 
-    @PUT("portafolioPersonal/{idServicio}")
-    Call<ServicioDTO> actualizarServicioUsuario(@Path("idServicio") int idServicio,
-                                                @Body ServicioDTO servicio);
-    @DELETE("portafolioPersonal/{idServicio}")
-    Call<Void> eliminarServicioUsuario(@Path("idServicio") int idServicio);
+    @PUT("portafolioPersonal/{usuarioId}/{idServicio}")
+    Call<ServicioDTO> actualizarServicioUsuario(
+            @Path("usuarioId") int usuarioId,
+            @Path("idServicio") int idServicio,
+            @Body ServicioDTO servicio
+    );
+
+    @DELETE("portafolioPersonal/{usuarioId}/{idServicio}")
+    Call<Void> eliminarServicioUsuario(
+            @Path("usuarioId") int usuarioId,
+            @Path("idServicio") int idServicio
+    );
 }

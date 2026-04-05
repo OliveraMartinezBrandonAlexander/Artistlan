@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -42,11 +43,21 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         void onComprarClick(TarjetaTextoObraItem obraItem, int position);
     }
 
+    public interface OnEditClickListener {
+        void onEditClick(TarjetaTextoObraItem obraItem, int position);
+    }
+
+    public interface OnDeleteClickListener {
+        void onDeleteClick(TarjetaTextoObraItem obraItem, int position);
+    }
+
     private static final long LIKE_BUTTON_COOLDOWN_MS = 500L;
 
     private OnLikeClickListener onLikeClickListener;
     private OnPrimaryActionClickListener onPrimaryActionClickListener;
     private OnSecondaryActionClickListener onSecondaryActionClickListener;
+    private OnEditClickListener onEditClickListener;
+    private OnDeleteClickListener onDeleteClickListener;
 
     private final List<TarjetaTextoObraItem> listaObras;
     private final List<TarjetaTextoObraItem> listaOriginal;
@@ -88,6 +99,16 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         this.onPrimaryActionClickListener = listener == null ? null : listener::onComprarClick;
     }
 
+    public void setOnEditClickListener(OnEditClickListener listener) {
+        this.onEditClickListener = listener;
+        notifyDataSetChanged();
+    }
+
+    public void setOnDeleteClickListener(OnDeleteClickListener listener) {
+        this.onDeleteClickListener = listener;
+        notifyDataSetChanged();
+    }
+
     public void setOwnedObraIds(Set<Integer> ownedObraIds) {
         this.ownedObraIds.clear();
         if (ownedObraIds != null) {
@@ -112,14 +133,14 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.autor.setText(obra.getNombreAutor());
         holder.descripcion.setText(obra.getDescripcion());
         holder.estado.setText("Estado: " + safeText(obra.getEstado(), "N/A"));
-        holder.tecnica.setText("Tecnica: " + safeText(obra.getTecnicas(), "N/A"));
+        holder.tecnica.setText("Técnica: " + safeText(obra.getTecnicas(), "N/A"));
         holder.medidas.setText((obra.getMedidas() != null && !obra.getMedidas().isEmpty())
                 ? "Medidas: " + obra.getMedidas() + " cm"
                 : "Medidas: N/A");
         holder.precio.setText(obra.getPrecio() != null
                 ? "Precio: $ " + String.format("%,.2f", obra.getPrecio())
                 : "Precio: N/A");
-        holder.categoria.setText(safeText(obra.getNombreCategoria(), "Sin categoria"));
+        holder.categoria.setText(safeText(obra.getNombreCategoria(), "Sin categoría"));
         holder.likes.setText(String.valueOf(obra.getLikes()));
 
         holder.btnLike.setImageResource(obra.isUserLiked() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
@@ -157,6 +178,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         obra.setExpandido(expandido);
 
         configurarBotones(holder, obra);
+        configurarMenuOpciones(holder);
 
         holder.itemView.setOnClickListener(v -> {
             int previousExpanded = tarjetaExpandida;
@@ -217,6 +239,51 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.actionsContainer.setVisibility(View.VISIBLE);
         holder.btnAccionPrincipal.setText(modoTarjeta == ModoTarjetaObra.CARRITO ? "Comprar" : "Agregar al carrito");
         holder.btnAccionSecundaria.setText("Quitar del carrito");
+    }
+
+    private void configurarMenuOpciones(ViewHolder holder) {
+        boolean mostrarMenu = modoTarjeta == ModoTarjetaObra.MIS_OBRAS
+                && (onEditClickListener != null || onDeleteClickListener != null);
+
+        holder.btnMoreOptions.setVisibility(mostrarMenu ? View.VISIBLE : View.GONE);
+        if (!mostrarMenu) {
+            holder.btnMoreOptions.setOnClickListener(null);
+            return;
+        }
+
+        holder.btnMoreOptions.setOnClickListener(v -> {
+            int adapterPosition = holder.getAdapterPosition();
+            if (adapterPosition == RecyclerView.NO_POSITION) {
+                return;
+            }
+
+            PopupMenu popupMenu = new PopupMenu(context, holder.btnMoreOptions);
+            if (onEditClickListener != null) {
+                popupMenu.getMenu().add(0, 1, 0, "Modificar");
+            }
+            if (onDeleteClickListener != null) {
+                popupMenu.getMenu().add(0, 2, 1, "Eliminar");
+            }
+
+            popupMenu.setOnMenuItemClickListener(item -> {
+                int currentPosition = holder.getAdapterPosition();
+                if (currentPosition == RecyclerView.NO_POSITION) {
+                    return false;
+                }
+
+                TarjetaTextoObraItem obra = listaObras.get(currentPosition);
+                if (item.getItemId() == 1 && onEditClickListener != null) {
+                    onEditClickListener.onEditClick(obra, currentPosition);
+                    return true;
+                }
+                if (item.getItemId() == 2 && onDeleteClickListener != null) {
+                    onDeleteClickListener.onDeleteClick(obra, currentPosition);
+                    return true;
+                }
+                return false;
+            });
+            popupMenu.show();
+        });
     }
 
     private boolean debeMostrarBotonPrincipal(TarjetaTextoObraItem obra) {
@@ -291,7 +358,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView titulo, descripcion, estado, tecnica, medidas, precio, categoria, likes, autor;
         ImageView imgAutor, imgObra;
-        ImageButton btnLike;
+        ImageButton btnLike, btnMoreOptions;
         View expandedSection, actionsContainer;
         Button btnAccionPrincipal, btnAccionSecundaria;
 
@@ -309,6 +376,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             categoria = itemView.findViewById(R.id.categoria);
             likes = itemView.findViewById(R.id.likes);
             btnLike = itemView.findViewById(R.id.btnLike);
+            btnMoreOptions = itemView.findViewById(R.id.btnMoreOptions);
             expandedSection = itemView.findViewById(R.id.expanded_section);
             actionsContainer = itemView.findViewById(R.id.actionsContainer);
             btnAccionPrincipal = itemView.findViewById(R.id.btnAccionPrincipal);

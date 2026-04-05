@@ -34,6 +34,19 @@ public interface ObraApi {
     @PUT("obras/{id}")
     Call<ObraDTO> actualizarObra(@Path("id") int idObra, @Body ObraDTO obra);
 
+    @PUT("obrasDeUsuario/{usuarioId}/{obraId}")
+    Call<ObraDTO> actualizarObraDeUsuario(
+            @Path("usuarioId") int usuarioId,
+            @Path("obraId") int obraId,
+            @Body ObraDTO obra
+    );
+
+    @DELETE("obrasDeUsuario/{usuarioId}/{obraId}")
+    Call<Void> eliminarObraDeUsuario(
+            @Path("usuarioId") int usuarioId,
+            @Path("obraId") int obraId
+    );
+
     @PUT("obras/{id}/imagen1")
     Call<ObraDTO> actualizarImagen1(
             @Path("id") int idObra,

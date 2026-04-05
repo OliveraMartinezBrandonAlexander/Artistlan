@@ -18,6 +18,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -54,6 +55,9 @@ import retrofit2.Response;
 
 public class FragSubirObra extends Fragment implements View.OnClickListener {
 
+    public static final String ARG_MODO_EDICION = "modo_edicion";
+    public static final String ARG_OBRA_ID = "obra_id";
+
     private Button btnSubirImg;
     private Button btnSubirObra;
     private ImageButton btnRegresar;
@@ -69,10 +73,25 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private android.widget.RadioGroup rgOpciones;
     private Spinner spinnerCategoria;
     private List<CategoriaDTO> listaCategorias = new ArrayList<>();
+    private boolean modoEdicion = false;
+    private int idObraEditar = -1;
+    private ObraDTO obraActual;
+    private String imagenActualUrl;
+    private Integer categoriaPendienteId;
+    private String categoriaPendienteNombre;
+    private TextView txtTituloPantalla;
+    private TextView txtDescripcionPantalla;
+    private TextView txtPrecio;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Bundle args = getArguments();
+        if (args != null) {
+            modoEdicion = args.getBoolean(ARG_MODO_EDICION, false);
+            idObraEditar = args.getInt(ARG_OBRA_ID, -1);
+        }
 
         firebaseRepo = new FirebaseImageRepository();
 
@@ -132,6 +151,8 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         etPrecio      = view.findViewById(R.id.precio);
         etMedidas     = view.findViewById(R.id.medidas);
         etTecnicas    = view.findViewById(R.id.edit_text_tecnica);
+        txtTituloPantalla = view.findViewById(R.id.IsTxtTitulo);
+        txtDescripcionPantalla = view.findViewById(R.id.IsTxtDesc);
 
         spinnerCategoria = view.findViewById(R.id.categoria);
         cargarCategorias();
@@ -147,10 +168,14 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         );
 
 
-        TextView txtPrecio = view.findViewById(R.id.IsTxtPrecio);
+        txtPrecio = view.findViewById(R.id.IsTxtPrecio);
 
         txtPrecio.setVisibility(View.GONE);
         etPrecio.setVisibility(View.GONE);
+        configurarModoPantalla();
+        if (modoEdicion) {
+            cargarObraParaEditar();
+        }
 
         rgOpciones.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.rbdventa) {
@@ -277,6 +302,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinnerCategoria.setAdapter(adapter);
+                seleccionarCategoriaPendiente();
             }
 
             @Override
@@ -284,6 +310,107 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                 Toast.makeText(getContext(), "Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void configurarModoPantalla() {
+        if (!modoEdicion) {
+            return;
+        }
+        txtTituloPantalla.setText("Editar Obra");
+        txtDescripcionPantalla.setText("Actualiza la información de tu obra:");
+        btnSubirImg.setText("CAMBIAR IMAGEN");
+        btnSubirObra.setText("GUARDAR CAMBIOS");
+    }
+
+    private void cargarObraParaEditar() {
+        int idUsuario = obtenerIdUsuarioLogueado();
+        if (idUsuario <= 0 || idObraEditar <= 0) {
+            Toast.makeText(getContext(), "No se pudo cargar la obra.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
+        api.obtenerObraPorId(idObraEditar, idUsuario).enqueue(new Callback<ObraDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<ObraDTO> call, @NonNull Response<ObraDTO> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (!response.isSuccessful() || response.body() == null) {
+                    Toast.makeText(getContext(), "No se pudo cargar la obra.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                obraActual = response.body();
+                precargarObra(obraActual);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ObraDTO> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    Toast.makeText(getContext(), "Error de red al cargar la obra.", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    private void precargarObra(ObraDTO obra) {
+        etTituloObra.setText(obra.getTitulo());
+        etDescripcion.setText(obra.getDescripcion());
+        etMedidas.setText(obra.getMedidas());
+        etTecnicas.setText(obra.getTecnicas());
+
+        String estado = obra.getEstado();
+        if (estado != null && estado.equalsIgnoreCase("En venta")) {
+            rgOpciones.check(R.id.rbdventa);
+            if (obra.getPrecio() != null) {
+                etPrecio.setText(String.valueOf(obra.getPrecio()));
+            }
+            txtPrecio.setVisibility(View.VISIBLE);
+            etPrecio.setVisibility(View.VISIBLE);
+        } else {
+            rgOpciones.check(R.id.rbexhibicion);
+            txtPrecio.setVisibility(View.GONE);
+            etPrecio.setVisibility(View.GONE);
+        }
+
+        imagenActualUrl = obra.getImagen1();
+        if (imagenActualUrl != null && !imagenActualUrl.isEmpty()) {
+            Glide.with(this)
+                    .load(imagenActualUrl)
+                    .placeholder(R.drawable.imagensubirobra)
+                    .into(imgPreviewObra);
+        }
+
+        categoriaPendienteId = obra.getIdCategoria();
+        categoriaPendienteNombre = obra.getNombreCategoria();
+        seleccionarCategoriaPendiente();
+    }
+
+    private void seleccionarCategoriaPendiente() {
+        if (listaCategorias.isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < listaCategorias.size(); i++) {
+            CategoriaDTO categoria = listaCategorias.get(i);
+            boolean coincideId = categoriaPendienteId != null && categoriaPendienteId.equals(categoria.getIdCategoria());
+            boolean coincideNombre = categoriaPendienteNombre != null
+                    && categoria.getNombreCategoria() != null
+                    && categoria.getNombreCategoria().equalsIgnoreCase(categoriaPendienteNombre);
+            if (coincideId || coincideNombre) {
+                spinnerCategoria.setSelection(i + 1);
+                categoriaPendienteId = null;
+                categoriaPendienteNombre = null;
+                return;
+            }
+        }
+    }
+
+    private int obtenerIdUsuarioLogueado() {
+        SharedPreferences prefs = requireActivity()
+                .getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        return prefs.getInt("idUsuario", prefs.getInt("id", -1));
     }
 
 
@@ -321,21 +448,19 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btnRegresar) {
-            requireActivity().getSupportFragmentManager().popBackStack();
+            NavHostFragment.findNavController(this).popBackStack();
         }
     }
 
 
     private void validarYMostrarDialogoObra() {
 
-        if (uriImagenObra == null) {
+        if (uriImagenObra == null && (!modoEdicion || imagenActualUrl == null || imagenActualUrl.trim().isEmpty())) {
             Toast.makeText(getContext(), "Selecciona una imagen.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        SharedPreferences prefs = requireActivity()
-                .getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
-        int idUsuario = prefs.getInt("id", -1);
+        int idUsuario = obtenerIdUsuarioLogueado();
 
         if (idUsuario == -1) {
             Toast.makeText(getContext(), "Error de usuario.", Toast.LENGTH_LONG).show();
@@ -439,11 +564,11 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
         btnPublicar.setOnClickListener(v -> {
             btnPublicar.setEnabled(false);
-            btnPublicar.setText("Publicando...");
+            btnPublicar.setText(modoEdicion ? "Guardando..." : "Publicando...");
 
             dialog.dismiss();
 
-            subirObraCompleta();
+            guardarObra();
         });
 
         dialog.show();
@@ -538,6 +663,94 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         });
     }
 
+    private void guardarObra() {
+        int idUsuario = obtenerIdUsuarioLogueado();
+        if (idUsuario == -1) {
+            Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (uriImagenObra != null) {
+            Toast.makeText(getContext(), "Cargando....", Toast.LENGTH_SHORT).show();
+            firebaseRepo.subirImagenSolo(idUsuario, uriImagenObra, new FirebaseImageRepository.ImagenListener() {
+                @Override
+                public void onSuccess(String imageUrl) {
+                    persistirObra(idUsuario, imageUrl);
+                }
+
+                @Override
+                public void onError(String mensajeError) {
+                    Toast.makeText(getContext(), "Error al subir imagen: " + mensajeError, Toast.LENGTH_LONG).show();
+                }
+            });
+            return;
+        }
+
+        persistirObra(idUsuario, imagenActualUrl);
+    }
+
+    private void persistirObra(int idUsuario, String imageUrl) {
+        String titulo = etTituloObra.getText().toString().trim();
+        String descripcion = etDescripcion.getText().toString().trim();
+        String precioStr = etPrecio.getText().toString().trim();
+        String medidas = etMedidas.getText().toString().trim();
+        String tecnica = etTecnicas.getText().toString().trim();
+        int pos = spinnerCategoria.getSelectedItemPosition();
+        int radioId = rgOpciones.getCheckedRadioButtonId();
+
+        if (pos == 0) {
+            Toast.makeText(getContext(), "Selecciona una categoría válida.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (titulo.isEmpty() || descripcion.isEmpty() || radioId == -1 || tecnica.isEmpty()) {
+            Toast.makeText(getContext(), "Completa todos los campos obligatorios", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Double precioDouble = null;
+        if (!precioStr.isEmpty()) {
+            try {
+                precioDouble = Double.parseDouble(precioStr);
+                if (precioDouble < 0) {
+                    Toast.makeText(getContext(), "El precio no puede ser negativo.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                Toast.makeText(getContext(), "Formato de precio invalido.", Toast.LENGTH_LONG).show();
+                return;
+            }
+        }
+
+        RadioButton rb = rgOpciones.findViewById(radioId);
+        String estado = rb.getText().toString();
+        int categoriaId = listaCategorias.get(pos - 1).getIdCategoria();
+
+        ObraDTO obra = new ObraDTO();
+        obra.setTitulo(titulo);
+        obra.setDescripcion(descripcion);
+        obra.setEstado(estado);
+        obra.setTecnicas(tecnica);
+        obra.setPrecio(precioDouble);
+        obra.setMedidas(medidas);
+        obra.setIdCategoria(categoriaId);
+        obra.setImagen1(imageUrl);
+        obra.setIdUsuario(idUsuario);
+
+        if (obraActual != null) {
+            obra.setImagen2(obraActual.getImagen2());
+            obra.setImagen3(obraActual.getImagen3());
+            obra.setLikes(obraActual.getLikes() != null ? obraActual.getLikes() : 0);
+        } else {
+            obra.setLikes(0);
+        }
+
+        if (modoEdicion) {
+            actualizarObraEnBD(idUsuario, obra);
+        } else {
+            insertarObraEnBD(idUsuario, obra);
+        }
+    }
+
     private void insertarObraEnBD(int idUsuario, ObraDTO obra) {
         ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
         Call<ObraDTO> call = api.subirObra(idUsuario, obra);
@@ -546,8 +759,8 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             @Override
             public void onResponse(@NonNull Call<ObraDTO> call, @NonNull Response<ObraDTO> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    Toast.makeText(getContext(), "¡Obra subida con éxito! " , Toast.LENGTH_LONG).show();
-                    requireActivity().getSupportFragmentManager().popBackStack();
+                    Toast.makeText(getContext(), "¡Obra subida con éxito!", Toast.LENGTH_LONG).show();
+                    NavHostFragment.findNavController(FragSubirObra.this).popBackStack();
                 } else {
                     Toast.makeText(getContext(), "Error al insertar obra. Código " + response.code(), Toast.LENGTH_LONG).show();
                 }
@@ -557,6 +770,36 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             public void onFailure(@NonNull Call<ObraDTO> call, @NonNull Throwable t) {
                 Toast.makeText(getContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 t.printStackTrace();
+            }
+        });
+    }
+
+    private void actualizarObraEnBD(int idUsuario, ObraDTO obra) {
+        if (idObraEditar <= 0) {
+            Toast.makeText(getContext(), "No se pudo actualizar la obra.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
+        api.actualizarObraDeUsuario(idUsuario, idObraEditar, obra).enqueue(new Callback<ObraDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<ObraDTO> call, @NonNull Response<ObraDTO> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful()) {
+                    Toast.makeText(getContext(), "Obra actualizada con éxito", Toast.LENGTH_LONG).show();
+                    NavHostFragment.findNavController(FragSubirObra.this).popBackStack();
+                } else {
+                    Toast.makeText(getContext(), "Error al actualizar obra. Código " + response.code(), Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ObraDTO> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    Toast.makeText(getContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                }
             }
         });
     }

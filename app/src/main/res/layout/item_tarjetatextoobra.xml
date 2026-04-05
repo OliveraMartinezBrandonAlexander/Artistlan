@@ -29,25 +29,17 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/autor"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
-            android:layout_marginTop="6dp"
-            android:layout_marginEnd="10dp"
-            android:breakStrategy="high_quality"
-            android:ellipsize="end"
-            android:gravity="center_vertical"
-            android:hyphenationFrequency="full"
-            android:maxLines="2"
-            android:text="Autor"
-            android:textColor="#111111"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/categoria"
-            app:layout_constraintStart_toEndOf="@id/imgAutor"
-            app:layout_constraintTop_toBottomOf="@id/categoria" />
+        <ImageButton
+            android:id="@+id/btnMoreOptions"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Opciones"
+            android:padding="4dp"
+            android:src="@drawable/ic_edit"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
             android:id="@+id/likeContainer"
@@ -57,7 +49,7 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/categoria">
+            app:layout_constraintTop_toBottomOf="@id/btnMoreOptions">
 
             <TextView
                 android:id="@+id/likes"
@@ -78,20 +70,50 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/categoria"
-            android:layout_width="wrap_content"
+            android:id="@+id/autor"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="12dp"
+            android:breakStrategy="high_quality"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:hyphenationFrequency="full"
+            android:maxLines="2"
+            android:text="Autor"
+            android:textColor="#111111"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@id/imgAutor"
+            app:layout_constraintTop_toTopOf="@id/imgAutor"
+            app:layout_constraintEnd_toStartOf="@id/likeContainer" />
+
+        <TextView
+            android:id="@+id/categoria"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="12dp"
             android:ellipsize="end"
             android:maxLines="1"
             android:paddingStart="10dp"
             android:paddingTop="6dp"
             android:paddingEnd="10dp"
             android:paddingBottom="6dp"
-            android:text="Ilustracion"
+            android:text="Ilustración"
             android:textSize="12sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/likeContainer"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toEndOf="@id/imgAutor"
+            app:layout_constraintTop_toBottomOf="@id/autor"
+            app:layout_constraintEnd_toStartOf="@id/likeContainer" />
+
+        <androidx.constraintlayout.widget.Barrier
+            android:id="@+id/headerBottomBarrier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:barrierDirection="bottom"
+            app:constraint_referenced_ids="imgAutor,autor,categoria,likeContainer,btnMoreOptions" />
 
         <ImageView
             android:id="@+id/imgObra"
@@ -100,9 +122,9 @@
             android:layout_marginTop="14dp"
             android:background="@android:color/darker_gray"
             android:scaleType="centerCrop"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/headerBottomBarrier"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/likeContainer" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <TextView
             android:id="@+id/titulo"
@@ -116,9 +138,9 @@
             android:textColor="#111111"
             android:textSize="19sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/imgObra"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/imgObra" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <View
             android:id="@+id/divider"
@@ -126,9 +148,9 @@
             android:layout_height="1dp"
             android:layout_marginTop="14dp"
             android:background="#22000000"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/titulo"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/titulo" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <LinearLayout
             android:id="@+id/expanded_section"
@@ -137,9 +159,9 @@
             android:layout_marginTop="14dp"
             android:orientation="vertical"
             android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/divider"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/divider">
+            app:layout_constraintEnd_toEndOf="parent">
 
             <TextView
                 android:id="@+id/descripcion"
@@ -147,7 +169,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:lineSpacingExtra="3dp"
-                android:text="Descripcion completa"
+                android:text="Descripción completa"
                 android:textColor="#2A2A2A"
                 android:textSize="14sp" />
 
@@ -165,7 +187,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Tecnica"
+                android:text="Técnica"
                 android:textColor="#2A2A2A"
                 android:textSize="14sp" />
 
@@ -200,7 +222,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:backgroundTint="#A1BBCE"
-                    android:text="Accion principal"
+                    android:text="Acción principal"
                     android:textAllCaps="false" />
 
                 <Button
@@ -209,7 +231,7 @@
                     android:layout_height="48dp"
                     android:layout_marginTop="10dp"
                     android:backgroundTint="#D9C7EB"
-                    android:text="Accion secundaria"
+                    android:text="Acción secundaria"
                     android:textAllCaps="false"
                     android:visibility="gone" />
             </LinearLayout>

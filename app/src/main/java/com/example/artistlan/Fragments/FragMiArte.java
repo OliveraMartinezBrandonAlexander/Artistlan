@@ -8,9 +8,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.artistlan.Conector.RetrofitClient;
@@ -41,6 +44,10 @@ public class FragMiArte extends Fragment {
     private FavoritosApi favoritosApi;
     private int idUsuarioLogueado = -1;
     private final Map<Integer, Long> lastLikeClickByObra = new HashMap<>();
+    private boolean debeRecargarEnResume = false;
+
+    public static final String ARG_MODO_EDICION = "modo_edicion";
+    public static final String ARG_OBRA_ID = "obra_id";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -56,9 +63,20 @@ public class FragMiArte extends Fragment {
         recyclerMisObras.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new TarjetaTextoObraAdapter(new ArrayList<>(), requireContext(), ModoTarjetaObra.MIS_OBRAS);
         adapter.setOnLikeClickListener(this::toggleLikeObra);
+        adapter.setOnEditClickListener(this::editarObra);
+        adapter.setOnDeleteClickListener(this::confirmarEliminacionObra);
         recyclerMisObras.setAdapter(adapter);
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
         cargarObrasDelUsuario();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (debeRecargarEnResume && isAdded()) {
+            debeRecargarEnResume = false;
+            cargarObrasDelUsuario();
+        }
     }
 
     private List<TarjetaTextoObraItem> convertirDTOaItem(List<ObraDTO> dtoList, Set<Integer> obrasFavoritas) {
@@ -178,6 +196,74 @@ public class FragMiArte extends Fragment {
         for (int i = 0; i < items.size(); i++) {
             refreshLikeCount(items.get(i), i);
         }
+    }
+
+    private void editarObra(TarjetaTextoObraItem obraItem, int position) {
+        if (!isAdded()) {
+            return;
+        }
+        debeRecargarEnResume = true;
+        Bundle args = new Bundle();
+        args.putBoolean(ARG_MODO_EDICION, true);
+        args.putInt(ARG_OBRA_ID, obraItem.getIdObra());
+        NavHostFragment.findNavController(this).navigate(R.id.fragSubirObra, args);
+    }
+
+    private void confirmarEliminacionObra(TarjetaTextoObraItem obraItem, int position) {
+        if (!isAdded()) {
+            return;
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Eliminar")
+                .setMessage("¿Deseas eliminar esta obra?")
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Eliminar", (dialog, which) -> eliminarObra(obraItem, position))
+                .show();
+    }
+
+    private void eliminarObra(TarjetaTextoObraItem obraItem, int position) {
+        if (idUsuarioLogueado <= 0) {
+            Toast.makeText(requireContext(), "Error de usuario.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
+        api.eliminarObraDeUsuario(idUsuarioLogueado, obraItem.getIdObra()).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (!isAdded()) {
+                    return;
+                }
+
+                int code = response.code();
+                if (code == 204) {
+                    adapter.removeItemAt(position);
+                    Toast.makeText(requireContext(), "Obra eliminada correctamente", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (code == 403) {
+                    Toast.makeText(requireContext(), "No puedes eliminar esta obra", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                if (code == 404) {
+                    Toast.makeText(requireContext(), "La obra ya no existe", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                if (code == 409) {
+                    Toast.makeText(requireContext(), "No se puede eliminar esta obra porque tiene relaciones asociadas", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                Toast.makeText(requireContext(), "No se pudo eliminar la obra (" + code + ")", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    Toast.makeText(requireContext(), "Error de conexión al eliminar la obra", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
     }
 
 

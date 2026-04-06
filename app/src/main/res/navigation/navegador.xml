@@ -42,6 +42,15 @@
         tools:layout="@layout/fragment_frag_portafolio" />
 
     <fragment
+        android:id="@+id/fragTransacciones"
+        android:name="com.example.artistlan.Fragments.FragTransacciones"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_transacciones" />
+
+    <fragment
         android:id="@+id/fragArtistas"
         android:name="com.example.artistlan.Fragments.FragArtistas"
         app:enterAnim="@anim/nav_enter"

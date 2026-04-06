@@ -7,6 +7,20 @@
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+    <string name="menu_mis_transacciones">Mis transacciones</string>
+    <string name="tab_mis_compras">MIS COMPRAS</string>
+    <string name="tab_mis_ventas">MIS VENTAS</string>
+    <string name="transacciones_sin_sesion">Debes iniciar sesión para ver tus transacciones</string>
+    <string name="transacciones_vacias_compras">Aún no has realizado compras</string>
+    <string name="transacciones_vacias_ventas">Aún no has realizado ventas</string>
+    <string name="transacciones_error_compras">No se pudieron cargar tus compras</string>
+    <string name="transacciones_error_ventas">No se pudieron cargar tus ventas</string>
+    <string name="transaccion_label_vendedor">Vendedor</string>
+    <string name="transaccion_label_comprador">Comprador</string>
+    <string name="transaccion_persona_fallback">Usuario no disponible</string>
+    <string name="transaccion_titulo_fallback">Obra sin título</string>
+    <string name="transaccion_fecha_fallback">Fecha no disponible</string>
+    <string name="transaccion_precio_fallback">Precio no disponible</string>
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris

@@ -13,7 +13,7 @@ public class CarritoDTO {
     @SerializedName(value = "obra", alternate = {"obraDTO", "detalleObra"})
     private ObraDTO obra;
 
-    @SerializedName(value = "titulo", alternate = {"nombreObra"})
+    @SerializedName(value = "titulo", alternate = {"tituloObra", "nombreObra"})
     private String titulo;
     private String descripcion;
     private String estado;

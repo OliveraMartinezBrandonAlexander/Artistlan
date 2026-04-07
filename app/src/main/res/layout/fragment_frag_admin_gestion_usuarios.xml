@@ -28,6 +28,17 @@
         app:layout_constraintStart_toEndOf="@id/btnRegresarAdminUsuarios"
         app:layout_constraintTop_toTopOf="@id/btnRegresarAdminUsuarios" />
 
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchUsuariosAdmin"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:queryHint="Buscar por usuario"
+        app:iconifiedByDefault="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTituloGestionUsuarios" />
+
     <ProgressBar
         android:id="@+id/pbUsuarios"
         android:layout_width="wrap_content"
@@ -36,7 +47,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTituloGestionUsuarios" />
+        app:layout_constraintTop_toBottomOf="@id/searchUsuariosAdmin" />
 
     <TextView
         android:id="@+id/tvEstadoUsuarios"
@@ -48,7 +59,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTituloGestionUsuarios" />
+        app:layout_constraintTop_toBottomOf="@id/searchUsuariosAdmin" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvUsuariosAdmin"
@@ -58,6 +69,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTituloGestionUsuarios" />
+        app:layout_constraintTop_toBottomOf="@id/searchUsuariosAdmin" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

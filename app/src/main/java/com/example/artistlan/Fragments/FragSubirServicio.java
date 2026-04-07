@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.CategoriaApi;
 import com.example.artistlan.Conector.api.ServicioApi;
@@ -33,21 +35,18 @@ import com.example.artistlan.R;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FragSubirServicio extends Fragment {
-
     public static final String ARG_MODO_EDICION = "modo_edicion";
     public static final String ARG_SERVICIO_ID = "servicio_id";
 
-    private Spinner spinnerCategoriaServicio;
-    private EditText etTituloServicio;
-    private EditText etDescripcionServicio;
-    private EditText etTecnicaServicio;
-    private EditText etContactoServicio;
+    private Spinner spinnerCategoriaServicio, spinnerTipoContacto;
+    private EditText etTituloServicio, etDescripcionServicio, etTecnicaServicio, etContactoServicio, etPrecioMinServicio, etPrecioMaxServicio;
     private Button btnPublicarServicio;
     private ImageButton btnRegresarServicio;
 
@@ -55,8 +54,8 @@ public class FragSubirServicio extends Fragment {
     private ArrayAdapter<String> categoriasAdapter;
     private boolean modoEdicion = false;
     private int idServicioEditar = -1;
-    private ServicioDTO servicioActual;
     private String categoriaPendiente;
+    private ServicioDTO servicioActual;
 
     public FragSubirServicio() {
     }
@@ -81,25 +80,24 @@ public class FragSubirServicio extends Fragment {
         View view = inflater.inflate(R.layout.fragment_frag_subir_servicio, container, false);
 
         spinnerCategoriaServicio = view.findViewById(R.id.spinnerCategoriaServicio);
-        etTituloServicio        = view.findViewById(R.id.etTituloServicio);
-        etDescripcionServicio   = view.findViewById(R.id.etDescripcionServicio);
-        etTecnicaServicio       = view.findViewById(R.id.etTecnicaServicio);
-        etContactoServicio      = view.findViewById(R.id.etContactoServicio);
-        btnPublicarServicio     = view.findViewById(R.id.btnPublicarServicio);
-        btnRegresarServicio     = view.findViewById(R.id.btnRegresarServicio);
+        spinnerTipoContacto = view.findViewById(R.id.spinnerTipoContacto);
+        etTituloServicio = view.findViewById(R.id.etTituloServicio);
+        etDescripcionServicio = view.findViewById(R.id.etDescripcionServicio);
+        etTecnicaServicio = view.findViewById(R.id.etTecnicaServicio);
+        etContactoServicio = view.findViewById(R.id.etContactoServicio);
+        etPrecioMinServicio = view.findViewById(R.id.etPrecioMinServicio);
+        etPrecioMaxServicio = view.findViewById(R.id.etPrecioMaxServicio);
+        btnPublicarServicio = view.findViewById(R.id.btnPublicarServicio);
+        btnRegresarServicio = view.findViewById(R.id.btnRegresarServicio);
 
-        categoriasAdapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                new ArrayList<>()
-        );
+        categoriasAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, new ArrayList<>());
         categoriasAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCategoriaServicio.setAdapter(categoriasAdapter);
 
-        spinnerCategoriaServicio.setEnabled(true);
-        spinnerCategoriaServicio.setClickable(true);
-        spinnerCategoriaServicio.setFocusable(true);
-        spinnerCategoriaServicio.setFocusableInTouchMode(false);
+        ArrayAdapter<String> tipoContactoAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item,
+                Arrays.asList("Seleccione tipo de contacto", "EMAIL", "WHATSAPP", "INSTAGRAM", "TELEFONO", "OTRO"));
+        tipoContactoAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerTipoContacto.setAdapter(tipoContactoAdapter);
 
         cargarCategoriasDesdeBD();
         configurarModoPantalla(view);
@@ -119,9 +117,7 @@ public class FragSubirServicio extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         ScrollView scrollView = view.findViewById(R.id.fragScrollSubirServicio);
-
         ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
             int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
 
@@ -133,65 +129,54 @@ public class FragSubirServicio extends Fragment {
             );
             return insets;
         });
-
-
-        View bottomBar = requireActivity().findViewById(R.id.bottomBar);
-        if (bottomBar != null) {
-            bottomBar.setVisibility(View.GONE);
+        View menuInferior = requireActivity().findViewById(R.id.MenuInferior);
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.GONE);
         }
-    }
 
-    private int dpToPx(int dp) {
-        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
-        View bottomBar = requireActivity().findViewById(R.id.bottomBar);
-        if (bottomBar != null) {
-            bottomBar.setVisibility(View.VISIBLE);
+        if (getActivity() == null) return;
+        View menuInferior = getActivity().findViewById(R.id.MenuInferior);
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.VISIBLE);
         }
+    }
+
+    private int dpToPx(int dp) { return Math.round(dp * getResources().getDisplayMetrics().density); }
+
+    private void configurarModoPantalla(View view) {
+        if (!modoEdicion) return;
+        ((TextView) view.findViewById(R.id.lsTxtTitulo)).setText("Editar Servicio");
+        ((TextView) view.findViewById(R.id.lsTxtDesc)).setText("Actualiza la informacion de tu servicio. El precio no se puede editar.");
+        btnPublicarServicio.setText("GUARDAR CAMBIOS");
+        etPrecioMinServicio.setEnabled(false);
+        etPrecioMaxServicio.setEnabled(false);
+        etPrecioMinServicio.setFocusable(false);
+        etPrecioMaxServicio.setFocusable(false);
+        etPrecioMinServicio.setFocusableInTouchMode(false);
+        etPrecioMaxServicio.setFocusableInTouchMode(false);
     }
 
     private void cargarCategoriasDesdeBD() {
         CategoriaApi api = RetrofitClient.getClient().create(CategoriaApi.class);
-
         api.obtenerCategorias().enqueue(new Callback<List<CategoriaDTO>>() {
             @Override
-            public void onResponse(Call<List<CategoriaDTO>> call,
-                                   Response<List<CategoriaDTO>> response) {
-                if (!response.isSuccessful() || response.body() == null) {
-                    Toast.makeText(getContext(), "No se pudieron obtener las categorías", Toast.LENGTH_LONG).show();
-                    return;
-                }
-
-                List<CategoriaDTO> todas = response.body();
-
-                List<String> profesiones = Arrays.asList(
-                        "pintor", "escultor", "fotógrafo", "ilustrador",
-                        "diseñador gráfico", "diseñador industrial", "diseñador de moda",
-                        "caricaturista", "animador", "artesano", "ceramista", "grabador",
-                        "artista digital", "artista plástico", "maquetador", "decorador",
-                        "restaurador de arte", "graffitero", "modelador 3d"
-                );
-
+            public void onResponse(Call<List<CategoriaDTO>> call, Response<List<CategoriaDTO>> response) {
+                if (!response.isSuccessful() || response.body() == null) return;
                 listaCategoriasProfesiones.clear();
 
-                for (CategoriaDTO c : todas) {
-                    String nombre = c.getNombreCategoria();
-                    if (nombre == null) continue;
-
-                    String nombreNormalizado = nombre.trim().toLowerCase();
-                    if (profesiones.contains(nombreNormalizado)) {
+                for (CategoriaDTO c : response.body()) {
+                    int id = c.getIdCategoria();
+                    if (id >= 19 && id <= 37) {
                         listaCategoriasProfesiones.add(c);
                     }
                 }
-
                 actualizarSpinnerCategorias();
             }
-
             @Override
             public void onFailure(Call<List<CategoriaDTO>> call, Throwable t) {
                 Toast.makeText(getContext(), "Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
@@ -203,67 +188,41 @@ public class FragSubirServicio extends Fragment {
         List<String> nombres = new ArrayList<>();
         nombres.add("Seleccione una categoría");
 
-        for (CategoriaDTO c : listaCategoriasProfesiones) {
-            nombres.add(c.getNombreCategoria());
-        }
-
-        categoriasAdapter.clear();
-        categoriasAdapter.addAll(nombres);
-        categoriasAdapter.notifyDataSetChanged();
+        for (CategoriaDTO c : listaCategoriasProfesiones) nombres.add(c.getNombreCategoria());
+        categoriasAdapter.clear(); categoriasAdapter.addAll(nombres); categoriasAdapter.notifyDataSetChanged();
         seleccionarCategoriaPendiente();
     }
 
-    private void configurarModoPantalla(View view) {
-        if (!modoEdicion) {
-            return;
-        }
-
-        TextView titulo = view.findViewById(R.id.lsTxtTitulo);
-        TextView descripcion = view.findViewById(R.id.lsTxtDesc);
-        titulo.setText("Editar Servicio");
-        descripcion.setText("Actualiza la información de tu servicio:");
-        btnPublicarServicio.setText("GUARDAR CAMBIOS");
-    }
 
     private void cargarServicioParaEditar() {
         int idUsuario = obtenerIdUsuarioLogueado();
-        if (idUsuario <= 0 || idServicioEditar <= 0) {
-            Toast.makeText(getContext(), "No se pudo cargar el servicio.", Toast.LENGTH_LONG).show();
-            return;
-        }
+        if (idUsuario <= 0 || idServicioEditar <= 0) return;
 
         ServicioApi api = RetrofitClient.getClient().create(ServicioApi.class);
         api.obtenerPorId(idServicioEditar, idUsuario).enqueue(new Callback<ServicioDTO>() {
-            @Override
-            public void onResponse(@NonNull Call<ServicioDTO> call, @NonNull Response<ServicioDTO> response) {
-                if (!isAdded()) {
-                    return;
-                }
-                if (!response.isSuccessful() || response.body() == null) {
-                    Toast.makeText(getContext(), "No se pudo cargar el servicio.", Toast.LENGTH_LONG).show();
-                    return;
-                }
-
-                servicioActual = response.body();
-                precargarServicio(servicioActual);
+            @Override public void onResponse(@NonNull Call<ServicioDTO> call, @NonNull Response<ServicioDTO> response) {
+                if (!isAdded() || !response.isSuccessful() || response.body() == null) return;
+                ServicioDTO s = response.body();
+                servicioActual = s;
+                etTituloServicio.setText(s.getTitulo());
+                etDescripcionServicio.setText(s.getDescripcion());
+                etTecnicaServicio.setText(s.getTecnicas());
+                etContactoServicio.setText(s.getContacto());
+                etPrecioMinServicio.setText(s.getPrecioMin() != null ? String.valueOf(s.getPrecioMin()) : "");
+                etPrecioMaxServicio.setText(s.getPrecioMax() != null ? String.valueOf(s.getPrecioMax()) : "");
+                categoriaPendiente = s.getCategoria();
+                seleccionarCategoriaPendiente();
+                setSpinnerValue(spinnerTipoContacto, s.getTipoContacto());
             }
-
-            @Override
-            public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    Toast.makeText(getContext(), "Error de red al cargar el servicio.", Toast.LENGTH_LONG).show();
-                }
-            }
+            @Override public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) {}
         });
     }
 
-    private void precargarServicio(ServicioDTO servicio) {
-        etTituloServicio.setText(servicio.getTitulo());
-        etDescripcionServicio.setText(servicio.getDescripcion());
-        etTecnicaServicio.setText(servicio.getTecnicas());
-        etContactoServicio.setText(servicio.getContacto());
-        categoriaPendiente = servicio.getCategoria();
-        seleccionarCategoriaPendiente();
+    private void setSpinnerValue(Spinner spinner, String value) {
+        if (value == null) return;
+        for (int i = 0; i < spinner.getCount(); i++) {
+            if (value.equalsIgnoreCase(String.valueOf(spinner.getItemAtPosition(i)))) { spinner.setSelection(i); return; }
+        }
     }
 
     private void seleccionarCategoriaPendiente() {
@@ -272,8 +231,7 @@ public class FragSubirServicio extends Fragment {
         }
 
         for (int i = 0; i < listaCategoriasProfesiones.size(); i++) {
-            String nombre = listaCategoriasProfesiones.get(i).getNombreCategoria();
-            if (nombre != null && nombre.equalsIgnoreCase(categoriaPendiente)) {
+            if (categoriaPendiente.equalsIgnoreCase(listaCategoriasProfesiones.get(i).getNombreCategoria())) {
                 spinnerCategoriaServicio.setSelection(i + 1);
                 categoriaPendiente = null;
                 return;
@@ -287,160 +245,115 @@ public class FragSubirServicio extends Fragment {
         return prefs.getInt("idUsuario", prefs.getInt("id", -1));
     }
 
-    private void validarYPublicarServicio() {
-        int idUsuario = obtenerIdUsuarioLogueado();
-
-        if (idUsuario == -1) {
-            Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        String titulo      = etTituloServicio.getText().toString().trim();
-        String descripcion = etDescripcionServicio.getText().toString().trim();
-        String tecnica     = etTecnicaServicio.getText().toString().trim();
-        String contacto    = etContactoServicio.getText().toString().trim();
-
-        if (listaCategoriasProfesiones.isEmpty()) {
-            Toast.makeText(requireContext(), "Primero carga las categorías", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (TextUtils.isEmpty(titulo)) {
-            etTituloServicio.setError("Ingresa un título");
-            etTituloServicio.requestFocus();
-            return;
-        }
-
-        if (TextUtils.isEmpty(descripcion)) {
-            etDescripcionServicio.setError("Ingresa una descripción");
-            etDescripcionServicio.requestFocus();
-            return;
-        }
-
-        if (TextUtils.isEmpty(tecnica)) {
-            etTecnicaServicio.setError("Indica la técnica que manejas");
-            etTecnicaServicio.requestFocus();
-            return;
-        }
-
-        if (TextUtils.isEmpty(contacto)) {
-            etContactoServicio.setError("Ingresa un medio de contacto");
-            etContactoServicio.requestFocus();
-            return;
-        }
-
-        int posicionSeleccionada = spinnerCategoriaServicio.getSelectedItemPosition();
-        if (posicionSeleccionada <= 0 || posicionSeleccionada > listaCategoriasProfesiones.size()) {
-            Toast.makeText(requireContext(), "Selecciona una categoría válida", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        CategoriaDTO categoriaSeleccionada = listaCategoriasProfesiones.get(posicionSeleccionada - 1);
-
-        ServicioDTO servicio = new ServicioDTO();
-        servicio.setTitulo(titulo);
-        servicio.setDescripcion(descripcion);
-        servicio.setTecnicas(tecnica);
-        servicio.setContacto(contacto);
-        servicio.setIdUsuario(idUsuario);
-        servicio.setCategoria(categoriaSeleccionada.getNombreCategoria());
-
-        guardarServicioEnBD(idUsuario, servicio);
-    }
-
     private void validarYMostrarDialogo() {
-
         int idUsuario = obtenerIdUsuarioLogueado();
-
-        if (idUsuario == -1) {
-            Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        String titulo      = etTituloServicio.getText().toString().trim();
+        if (idUsuario <= 0) return;
+        String titulo = etTituloServicio.getText().toString().trim();
         String descripcion = etDescripcionServicio.getText().toString().trim();
-        String tecnica     = etTecnicaServicio.getText().toString().trim();
-        String contacto    = etContactoServicio.getText().toString().trim();
+        String tecnica = etTecnicaServicio.getText().toString().trim();
+        String contacto = etContactoServicio.getText().toString().trim();
+        String tipoContacto = String.valueOf(spinnerTipoContacto.getSelectedItem());
+        String minTxt = etPrecioMinServicio.getText().toString().trim();
+        String maxTxt = etPrecioMaxServicio.getText().toString().trim();
 
-        if (TextUtils.isEmpty(titulo)) {
-            etTituloServicio.setError("Ingresa un título");
-            etTituloServicio.requestFocus();
-            return;
+        if (TextUtils.isEmpty(titulo)) { etTituloServicio.setError("Ingresa un titulo"); return; }
+        if (TextUtils.isEmpty(descripcion)) { etDescripcionServicio.setError("Ingresa una descripcion"); return; }
+        if (TextUtils.isEmpty(tecnica)) { etTecnicaServicio.setError("Indica tecnica"); return; }
+
+        int posCategoria = spinnerCategoriaServicio.getSelectedItemPosition();
+        if (posCategoria <= 0 || posCategoria > listaCategoriasProfesiones.size()) {
+            if (!(modoEdicion && servicioActual != null && servicioActual.getIdCategoria() != null)) {
+                Toast.makeText(requireContext(), "Selecciona una categoria valida", Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
 
-        if (TextUtils.isEmpty(descripcion)) {
-            etDescripcionServicio.setError("Ingresa una descripción");
-            etDescripcionServicio.requestFocus();
+        if (spinnerTipoContacto.getSelectedItemPosition() <= 0) {
+            Toast.makeText(requireContext(), "Selecciona un tipo de contacto", Toast.LENGTH_SHORT).show();
             return;
         }
+        if (!validarContacto(tipoContacto, contacto)) return;
 
-        if (TextUtils.isEmpty(tecnica)) {
-            etTecnicaServicio.setError("Indica la técnica que manejas");
-            etTecnicaServicio.requestFocus();
-            return;
+        Double min;
+        Double max;
+        if (modoEdicion) {
+            min = servicioActual != null ? servicioActual.getPrecioMin() : null;
+            max = servicioActual != null ? servicioActual.getPrecioMax() : null;
+        } else {
+            min = parsePrecio(minTxt, etPrecioMinServicio, "Precio minimo invalido");
+            max = parsePrecio(maxTxt, etPrecioMaxServicio, "Precio maximo invalido");
+            if ((min != null && max != null) && min >= max) {
+                etPrecioMaxServicio.setError("El precio maximo debe ser mayor al minimo");
+                etPrecioMaxServicio.requestFocus();
+                return;
+            }
         }
 
-        if (TextUtils.isEmpty(contacto)) {
-            etContactoServicio.setError("Ingresa un medio de contacto");
-            etContactoServicio.requestFocus();
-            return;
+        CategoriaDTO categoriaSeleccionada = null;
+        if (posCategoria > 0 && posCategoria <= listaCategoriasProfesiones.size()) {
+            categoriaSeleccionada = listaCategoriasProfesiones.get(posCategoria - 1);
+        } else if (modoEdicion && servicioActual != null && servicioActual.getIdCategoria() != null) {
+            categoriaSeleccionada = new CategoriaDTO();
+            categoriaSeleccionada.setIdCategoria(servicioActual.getIdCategoria());
+            categoriaSeleccionada.setNombreCategoria(servicioActual.getCategoria());
         }
 
-        int pos = spinnerCategoriaServicio.getSelectedItemPosition();
-        if (pos <= 0 || pos > listaCategoriasProfesiones.size()) {
-            Toast.makeText(requireContext(), "Selecciona una categoría válida", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        CategoriaDTO categoriaSeleccionada = listaCategoriasProfesiones.get(pos - 1);
-
-        mostrarDialogConfirmacion(
-                idUsuario,
-                categoriaSeleccionada,
-                titulo,
-                descripcion,
-                tecnica,
-                contacto
-        );
+        mostrarDialogConfirmacion(idUsuario, categoriaSeleccionada, titulo, descripcion, tecnica, contacto, tipoContacto, min, max);
     }
 
-    private void mostrarDialogConfirmacion(
-            int idUsuario,
-            CategoriaDTO categoria,
-            String titulo,
-            String descripcion,
-            String tecnica,
-            String contacto
-    ) {
+    private boolean validarContacto(String tipo, String contacto) {
+        if (TextUtils.isEmpty(contacto)) { etContactoServicio.setError("Ingresa un contacto"); return false; }
+        String v = contacto.trim();
+        switch (tipo.toUpperCase(Locale.ROOT)) {
+            case "EMAIL":
+                if (!Patterns.EMAIL_ADDRESS.matcher(v).matches()) { etContactoServicio.setError("Email inválido"); return false; }
+                break;
+            case "WHATSAPP":
+            case "TELEFONO":
+                if (!v.matches("^[+]?\\d{7,15}$")) { etContactoServicio.setError("Número inválido"); return false; }
+                break;
+            case "INSTAGRAM":
+                if (v.length() < 2) { etContactoServicio.setError("Usuario de Instagram inválido"); return false; }
+                break;
+            default:
+                if (v.length() < 2) { etContactoServicio.setError("Contacto invÃ¡lido"); return false; }
+        }
+        return true;
+        }
+    private Double parsePrecio(String txt, EditText target, String error) {
+        if (TextUtils.isEmpty(txt)) return null;
+        try {
+            double value = Double.parseDouble(txt);
+            if (value < 0) throw new NumberFormatException();
+            return value;
+        } catch (Exception ex) {
+            target.setError(error);
+            target.requestFocus();
+            return null;
+        }
 
-        View view = LayoutInflater.from(getContext())
-                .inflate(R.layout.dialog_confirmar_servicio, null);
+    }
+
+    private void mostrarDialogConfirmacion(int idUsuario, CategoriaDTO categoria, String titulo, String descripcion, String tecnica, String contacto, String tipoContacto, Double min, Double max) {
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_confirmar_servicio, null);
 
         TextView txtResumen = view.findViewById(R.id.txtResumenServicio);
         Button btnEditar = view.findViewById(R.id.btnEditar);
         Button btnPublicar = view.findViewById(R.id.btnConfirmarPublicar);
 
-        String resumen =
-                "📌 Título:\n" + titulo + "\n\n" +
-                        "📝 Descripción:\n" + descripcion + "\n\n" +
-                        "🎨 Técnica:\n" + tecnica + "\n\n" +
-                        "📞 Contacto:\n" + contacto + "\n\n" +
-                        "🏷 Categoría:\n" + categoria.getNombreCategoria();
+        String categoriaTxt = categoria != null ? categoria.getNombreCategoria() : "Sin cambio";
+        String precioTxt = (min == null && max == null) ? "A convenir" : ((min != null ? min : "-") + " / " + (max != null ? max : "-"));
+        txtResumen.setText("Titulo:\n" + titulo
+                + "\n\nDescripcion:\n" + descripcion
+                + "\n\nTecnica:\n" + tecnica
+                + "\n\nContacto:\n" + tipoContacto + " - " + contacto
+                + "\n\nPrecio:\n" + precioTxt
+                + "\n\nCategoria:\n" + categoriaTxt);
 
-        txtResumen.setText(resumen);
-
-        androidx.appcompat.app.AlertDialog dialog =
-                new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                        .setView(view)
-                        .setCancelable(false)
-                        .create();
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext()).setView(view).setCancelable(false).create();
 
         btnEditar.setOnClickListener(v -> dialog.dismiss());
-
         btnPublicar.setOnClickListener(v -> {
-
-            btnPublicar.setEnabled(false);
-            btnPublicar.setText(modoEdicion ? "Guardando..." : "Publicando...");
             dialog.dismiss();
 
             ServicioDTO servicio = new ServicioDTO();
@@ -448,91 +361,67 @@ public class FragSubirServicio extends Fragment {
             servicio.setDescripcion(descripcion);
             servicio.setTecnicas(tecnica);
             servicio.setContacto(contacto);
+            servicio.setTipoContacto(tipoContacto);
+            if (!modoEdicion) {
+                servicio.setPrecioMin(min);
+                servicio.setPrecioMax(max);
+            }
             servicio.setIdUsuario(idUsuario);
-            servicio.setIdCategoria(categoria.getIdCategoria());
-            servicio.setCategoria(categoria.getNombreCategoria());
-
+            boolean enviarCategoria = categoria != null;
+            if (modoEdicion && categoria != null && servicioActual != null && servicioActual.getIdCategoria() != null) {
+                enviarCategoria = !servicioActual.getIdCategoria().equals(categoria.getIdCategoria());
+            }
+            if (enviarCategoria) {
+                servicio.setIdCategoria(categoria.getIdCategoria());
+                servicio.setCategoria(categoria.getNombreCategoria());
+            }
             guardarServicio(idUsuario, servicio);
         });
-
         dialog.show();
     }
     private void guardarServicio(int idUsuario, ServicioDTO servicio) {
-        if (modoEdicion) {
-            actualizarServicioEnBD(idUsuario, servicio);
-        } else {
-            guardarServicioEnBD(idUsuario, servicio);
-        }
+        if (modoEdicion) actualizarServicioEnBD(idUsuario, servicio);
+        else guardarServicioEnBD(idUsuario, servicio);
     }
 
     private void guardarServicioEnBD(int idUsuario, ServicioDTO servicio) {
         ServicioApi servicioApi = RetrofitClient.getClient().create(ServicioApi.class);
-
-        Call<ServicioDTO> call = servicioApi.crearServicioDeUsuario(idUsuario, servicio);
-
-        call.enqueue(new Callback<ServicioDTO>() {
-            @Override
-            public void onResponse(@NonNull Call<ServicioDTO> call,
-                                   @NonNull Response<ServicioDTO> response) {
-
-                if (response.isSuccessful() && response.body() != null) {
-                    Toast.makeText(getContext(), "¡Servicio subido con éxito!", Toast.LENGTH_LONG).show();
-                    limpiarFormulario();
+        servicioApi.crearServicioDeUsuario(idUsuario, servicio).enqueue(new Callback<ServicioDTO>() {
+            @Override public void onResponse(@NonNull Call<ServicioDTO> call, @NonNull Response<ServicioDTO> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(getContext(), "Servicio subido con exito", Toast.LENGTH_LONG).show();
                     NavHostFragment.findNavController(FragSubirServicio.this).popBackStack();
-                } else {
-                    Toast.makeText(getContext(),
-                            "Error al insertar servicio " + response.code(),
-                            Toast.LENGTH_LONG).show();
+                    return;
                 }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) {
+                String backendMessage = ApiErrorParser.extractMessage(response);
                 Toast.makeText(getContext(),
-                        "Error de red: " + t.getMessage(),
+                        backendMessage != null ? backendMessage : "Error al insertar servicio " + response.code(),
                         Toast.LENGTH_LONG).show();
-                t.printStackTrace();
             }
+            @Override public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) { Toast.makeText(getContext(), "Error de red", Toast.LENGTH_LONG).show(); }
         });
     }
 
     private void actualizarServicioEnBD(int idUsuario, ServicioDTO servicio) {
-        if (idServicioEditar <= 0) {
-            Toast.makeText(getContext(), "No se pudo actualizar el servicio.", Toast.LENGTH_LONG).show();
-            return;
-        }
-
+        if (idServicioEditar <= 0) return;
         ServicioApi servicioApi = RetrofitClient.getClient().create(ServicioApi.class);
         servicioApi.actualizarServicioUsuario(idUsuario, idServicioEditar, servicio).enqueue(new Callback<ServicioDTO>() {
-            @Override
-            public void onResponse(@NonNull Call<ServicioDTO> call, @NonNull Response<ServicioDTO> response) {
-                if (!isAdded()) {
+
+            @Override public void onResponse(@NonNull Call<ServicioDTO> call, @NonNull Response<ServicioDTO> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(getContext(), "Servicio actualizado con exito", Toast.LENGTH_LONG).show();
+                    NavHostFragment.findNavController(FragSubirServicio.this).popBackStack();
                     return;
                 }
-                if (response.isSuccessful()) {
-                    Toast.makeText(getContext(), "Servicio actualizado con éxito", Toast.LENGTH_LONG).show();
-                    NavHostFragment.findNavController(FragSubirServicio.this).popBackStack();
-                } else {
-                    Toast.makeText(getContext(), "Error al actualizar servicio " + response.code(), Toast.LENGTH_LONG).show();
-                }
+                String backendMessage = ApiErrorParser.extractMessage(response);
+                Toast.makeText(getContext(),
+                        backendMessage != null ? backendMessage : "Error al actualizar servicio " + response.code(),
+                        Toast.LENGTH_LONG).show();
             }
-
-            @Override
-            public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    Toast.makeText(getContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
-                }
-            }
+            @Override public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) { Toast.makeText(getContext(), "Error de red", Toast.LENGTH_LONG).show(); }
         });
     }
-
-    private void limpiarFormulario() {
-        etTituloServicio.setText("");
-        etDescripcionServicio.setText("");
-        etTecnicaServicio.setText("");
-        etContactoServicio.setText("");
-        if (!listaCategoriasProfesiones.isEmpty()) {
-            spinnerCategoriaServicio.setSelection(0);
-        }
-    }
 }
+
+
+

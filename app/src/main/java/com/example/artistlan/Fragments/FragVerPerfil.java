@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
@@ -29,6 +30,7 @@ import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
+import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoArtista.adapter.TarjetaTextoArtistaAdapter;
 import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
@@ -38,14 +40,16 @@ import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAd
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
-    private TextView tvNombre, tvUsuario, tvCorreo, tvDescripcion, tvTelefono, tvRedes, tvFecNac, tvCategoria, tvFavoritosVacio;
+    private TextView tvNombre, tvUsuario, tvCorreo, tvDescripcion, tvTelefono, tvRedes, tvFecNac, tvCategoria, tvUbicacion, tvFavoritosVacio;
     private ImageView imgFotoPerfil;
     private ImageButton btnEditarPefil;
     private CardView cardPerfilInfo;
@@ -98,6 +102,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tvRedes = view.findViewById(R.id.VrpTxvRedes);
         tvFecNac = view.findViewById(R.id.VrpTxvFecNac);
         tvCategoria = view.findViewById(R.id.VrpTxvCategoria);
+        tvUbicacion = view.findViewById(R.id.VrpTxvUbicacion);
         imgFotoPerfil = view.findViewById(R.id.imgPerfil);
         recyclerFavoritos = view.findViewById(R.id.recyclerFavoritosPerfil);
         tvFavoritosVacio = view.findViewById(R.id.tvFavoritosVacio);
@@ -107,19 +112,24 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         obraAdapter = new TarjetaTextoObraAdapter(new ArrayList<>(), requireContext());
         servicioAdapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
         artistaAdapter = new TarjetaTextoArtistaAdapter(new ArrayList<>(), requireContext());
+        servicioAdapter.setCurrentUserId(idUsuarioLogueado);
+        artistaAdapter.setCurrentUserId(idUsuarioLogueado);
 
         obraAdapter.setOnLikeClickListener(this::eliminarFavoritoObra);
         servicioAdapter.setOnLikeClickListener(this::eliminarFavoritoServicio);
         artistaAdapter.setOnLikeClickListener(this::eliminarFavoritoArtista);
+        artistaAdapter.setOnVisitarClickListener(this::abrirPerfilPublicoDesdeFavoritos);
 
         setupTabs();
         cargarDatosUsuario();
+        refrescarDatosPerfilDesdeApi();
     }
 
     @Override
     public void onResume() {
         super.onResume();
         cargarDatosUsuario();
+        refrescarDatosPerfilDesdeApi();
         cargarFavoritosPorTab(0);
     }
 
@@ -149,6 +159,12 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
         rolUsuario = prefs.getString("rol", "USER");
+        if (servicioAdapter != null) {
+            servicioAdapter.setCurrentUserId(idUsuarioLogueado);
+        }
+        if (artistaAdapter != null) {
+            artistaAdapter.setCurrentUserId(idUsuarioLogueado);
+        }
 
         String nombre = prefs.getString("nombreCompleto", "Nombre no disponible");
         String usuario = prefs.getString("usuario", "usuario");
@@ -157,17 +173,18 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         String telefono = prefs.getString("telefono", "");
         String redes = prefs.getString("redes", "");
         String fechaNac = prefs.getString("fechaNac", "");
-        String categoria = prefs.getString("categoria", "Sin categoría");
+        String categoria = prefs.getString("ocupacion", prefs.getString("categoria", "Sin ocupación"));
+        String ubicacion = prefs.getString("ubicacion", "");
 
-        tvNombre.setText(nombre.isEmpty() ? "Nombre no disponible" : nombre);
-        tvUsuario.setText(usuario.isEmpty() ? "usuario" : usuario);
+        tvNombre.setText(usuario.isEmpty() ? "usuario" : usuario);
+        tvUsuario.setText(nombre.isEmpty() ? "Nombre no disponible" : nombre);
         tvCorreo.setText(correo.isEmpty() ? "correo no disponible" : correo);
-        tvDescripcion.setText(descripcion.isEmpty() ? "Sin descripción" : descripcion);
+        tvDescripcion.setText(descripcion.isEmpty() ? "Sin descripcion" : descripcion);
         tvTelefono.setText(telefono.isEmpty() ? "No disponible" : telefono);
         tvRedes.setText(redes.isEmpty() ? "Sin redes" : redes);
         tvFecNac.setText(fechaNac.isEmpty() ? "Sin fecha" : fechaNac);
-        tvCategoria.setText(categoria.isEmpty() ? "Sin categoría" : categoria);
-
+        tvCategoria.setText(categoria.isEmpty() ? "Sin ocupación" : categoria);
+        tvUbicacion.setText(ubicacion.isEmpty() ? "No disponible" : ubicacion);
 
         String fotoPerfil = prefs.getString("fotoPerfil", null);
         if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
@@ -181,6 +198,78 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         } else {
             imgFotoPerfil.setImageResource(R.drawable.fotoperfilprueba);
         }
+    }
+
+    private void refrescarDatosPerfilDesdeApi() {
+        if (idUsuarioLogueado <= 0 || usuarioApi == null) {
+            return;
+        }
+
+        usuarioApi.obtenerUsuarioPorId(idUsuarioLogueado, idUsuarioLogueado).enqueue(new Callback<UsuariosDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<UsuariosDTO> call, @NonNull Response<UsuariosDTO> response) {
+                if (!isAdded() || !response.isSuccessful() || response.body() == null) {
+                    return;
+                }
+
+                UsuariosDTO user = response.body();
+                String usuario = textoSeguro(user.getUsuario(), "usuario");
+                String nombreCompleto = textoSeguro(user.getNombreCompleto(), "Nombre no disponible");
+                String correo = textoSeguro(user.getCorreo(), "correo no disponible");
+                String descripcion = textoSeguro(user.getDescripcion(), "Sin descripcion");
+                String telefono = textoSeguro(user.getTelefono(), "No disponible");
+                String redes = textoSeguro(user.getRedesSociales(), "Sin redes");
+                String fechaNac = textoSeguro(user.getFechaNacimiento(), "Sin fecha");
+                String ocupacion = textoSeguro(user.getCategoria(), "Sin ocupación");
+                String ubicacion = textoSeguro(user.getUbicacion(), "No disponible");
+
+                tvNombre.setText(usuario);
+                tvUsuario.setText(nombreCompleto);
+                tvCorreo.setText(correo);
+                tvDescripcion.setText(descripcion);
+                tvTelefono.setText(telefono);
+                tvRedes.setText(redes);
+                tvFecNac.setText(fechaNac);
+                tvCategoria.setText(ocupacion);
+                tvUbicacion.setText(ubicacion);
+
+                SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+                prefs.edit()
+                        .putString("usuario", usuario)
+                        .putString("nombreCompleto", nombreCompleto)
+                        .putString("correo", correo)
+                        .putString("descripcion", descripcion)
+                        .putString("telefono", user.getTelefono() != null ? user.getTelefono() : "")
+                        .putString("redes", user.getRedesSociales() != null ? user.getRedesSociales() : "")
+                        .putString("fechaNac", user.getFechaNacimiento() != null ? user.getFechaNacimiento() : "")
+                        .putString("categoria", ocupacion)
+                        .putString("ocupacion", ocupacion)
+                        .putString("ubicacion", user.getUbicacion() != null ? user.getUbicacion() : "")
+                        .apply();
+
+                String fotoPerfil = user.getFotoPerfil();
+                if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+                    Glide.with(FragVerPerfil.this)
+                            .load(fotoPerfil)
+                            .placeholder(R.drawable.fotoperfilprueba)
+                            .error(R.drawable.fotoperfilprueba)
+                            .skipMemoryCache(true)
+                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                            .into(imgFotoPerfil);
+                } else {
+                    imgFotoPerfil.setImageResource(R.drawable.fotoperfilprueba);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<UsuariosDTO> call, @NonNull Throwable t) {
+                // si falla red, mantenemos los datos ya renderizados desde preferencias.
+            }
+        });
+    }
+
+    private String textoSeguro(String value, String fallback) {
+        return value != null && !value.trim().isEmpty() ? value.trim() : fallback;
     }
 
     private void eliminarFavoritoObra(TarjetaTextoObraItem item, int position) {
@@ -204,6 +293,15 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         dto.idUsuario = idUsuarioLogueado;
         dto.idArtista = item.getIdArtista();
         eliminarFavoritoDesdePerfil(dto, position, () -> artistaAdapter.removeItemAt(position));
+    }
+
+    private void abrirPerfilPublicoDesdeFavoritos(TarjetaTextoArtistaItem artistaItem, int position) {
+        if (!isAdded() || artistaItem == null || artistaItem.getIdArtista() == null) {
+            return;
+        }
+        Bundle args = new Bundle();
+        args.putInt("idArtista", artistaItem.getIdArtista());
+        NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfilPublico, args);
     }
 
     private void eliminarFavoritoDesdePerfil(FavoritoDTO dto, int position, Runnable removeAction) {
@@ -275,11 +373,13 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     private void cargarObrasFavoritas(List<FavoritoDTO> favoritos) {
         List<TarjetaTextoObraItem> items = new ArrayList<>();
+        Set<Integer> obrasPropias = new HashSet<>();
         final int[] total = {0};
         final int[] done = {0};
         for (FavoritoDTO fav : favoritos) if (fav.idObra != null) total[0]++;
         if (total[0] == 0) {
             obraAdapter.actualizarLista(new ArrayList<>());
+            obraAdapter.setOwnedObraIds(new HashSet<>());
             recyclerFavoritos.setAdapter(obraAdapter);
             tvFavoritosVacio.setVisibility(View.VISIBLE);
             return;
@@ -291,11 +391,36 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 public void onResponse(@NonNull Call<ObraDTO> call, @NonNull Response<ObraDTO> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         ObraDTO dto = response.body();
-                        items.add(new TarjetaTextoObraItem(dto.getIdObra(), dto.getTitulo(), dto.getDescripcion(), dto.getEstado(), dto.getPrecio(), dto.getImagen1(), dto.getImagen2(), dto.getImagen3(), dto.getTecnicas(), dto.getMedidas(), dto.getLikes() != null ? dto.getLikes() : 0, dto.getNombreAutor(), dto.getNombreCategoria(), dto.getFotoPerfilAutor(), true, false));
+                        TarjetaTextoObraItem item = new TarjetaTextoObraItem(
+                                dto.getIdObra(),
+                                dto.getTitulo(),
+                                dto.getDescripcion(),
+                                dto.getEstado(),
+                                dto.getPrecio(),
+                                dto.getImagen1(),
+                                dto.getImagen2(),
+                                dto.getImagen3(),
+                                dto.getTecnicas(),
+                                dto.getMedidas(),
+                                dto.getLikes() != null ? dto.getLikes() : 0,
+                                dto.getNombreAutor(),
+                                dto.getNombreCategoria(),
+                                dto.getFotoPerfilAutor(),
+                                true,
+                                false
+                        );
+                        item.setEditable(!Boolean.FALSE.equals(dto.getEditable()));
+                        item.setEliminable(!Boolean.FALSE.equals(dto.getEliminable()));
+                        item.setPuedeSolicitarCompra(Boolean.TRUE.equals(dto.getPuedeSolicitarCompra()));
+                        items.add(item);
+                        if (dto.getIdUsuario() != null && dto.getIdUsuario() == idUsuarioLogueado && dto.getIdObra() != null) {
+                            obrasPropias.add(dto.getIdObra());
+                        }
                     }
                     done[0]++;
                     if (done[0] == total[0]) {
                         obraAdapter.actualizarLista(items);
+                        obraAdapter.setOwnedObraIds(obrasPropias);
                         recyclerFavoritos.setAdapter(obraAdapter);
                         tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
                     }
@@ -326,7 +451,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 public void onResponse(@NonNull Call<ServicioDTO> call, @NonNull Response<ServicioDTO> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         ServicioDTO dto = response.body();
-                        items.add(new TarjetaTextoServicioItem(dto.getIdServicio(), dto.getTitulo(), dto.getDescripcion(), dto.getContacto(), dto.getTecnicas(), dto.getNombreUsuario(), dto.getCategoria(), dto.getFotoPerfilAutor(), dto.getLikes() != null ? dto.getLikes() : 0, true, false));
+                        items.add(new TarjetaTextoServicioItem(dto.getIdServicio(), dto.getIdUsuario(), dto.getTitulo(), dto.getDescripcion(), dto.getContacto(), dto.getTipoContacto(), dto.getTecnicas(), dto.getNombreUsuario(), dto.getCategoria(), dto.getFotoPerfilAutor(), dto.getPrecioMin(), dto.getPrecioMax(), dto.getLikes() != null ? dto.getLikes() : 0, true, false));
                     }
                     done[0]++;
                     if (done[0] == total[0]) {

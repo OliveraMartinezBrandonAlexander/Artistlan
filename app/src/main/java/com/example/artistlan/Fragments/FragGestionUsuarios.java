@@ -10,6 +10,7 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.SearchView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -43,6 +44,7 @@ public class FragGestionUsuarios extends Fragment {
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private TextView tvEstado;
+    private SearchView searchUsuarios;
     private View menuInferior;
 
     @Nullable
@@ -61,6 +63,7 @@ public class FragGestionUsuarios extends Fragment {
         recyclerView = view.findViewById(R.id.rvUsuariosAdmin);
         progressBar = view.findViewById(R.id.pbUsuarios);
         tvEstado = view.findViewById(R.id.tvEstadoUsuarios);
+        searchUsuarios = view.findViewById(R.id.searchUsuariosAdmin);
 
         menuInferior = requireActivity().findViewById(R.id.MenuInferior);
         if (menuInferior != null) menuInferior.setVisibility(View.GONE);
@@ -74,6 +77,7 @@ public class FragGestionUsuarios extends Fragment {
         adapter = new UsuarioAdminAdapter(this::mostrarDialogoRoles);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
+        configurarBuscadorUsuarios();
 
         cargarUsuarios();
     }
@@ -97,6 +101,11 @@ public class FragGestionUsuarios extends Fragment {
 
                 List<UsuariosDTO> lista = response.body();
                 adapter.actualizar(lista);
+                if (searchUsuarios != null) {
+                    String query = searchUsuarios.getQuery() != null ? searchUsuarios.getQuery().toString() : "";
+                    adapter.filtrarPorUsuario(query);
+                    actualizarEstadoPorFiltro(query);
+                }
                 boolean vacio = lista.isEmpty();
                 tvEstado.setVisibility(vacio ? View.VISIBLE : View.GONE);
                 tvEstado.setText(vacio ? "No hay usuarios para gestionar." : "");
@@ -108,6 +117,42 @@ public class FragGestionUsuarios extends Fragment {
                 mostrarError("Error de conexión al listar usuarios.");
             }
         });
+    }
+
+    private void configurarBuscadorUsuarios() {
+        if (searchUsuarios == null) {
+            return;
+        }
+        searchUsuarios.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                adapter.filtrarPorUsuario(query);
+                actualizarEstadoPorFiltro(query);
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                adapter.filtrarPorUsuario(newText);
+                actualizarEstadoPorFiltro(newText);
+                return true;
+            }
+        });
+    }
+
+    private void actualizarEstadoPorFiltro(String query) {
+        if (adapter == null || tvEstado == null) {
+            return;
+        }
+        if (adapter.getItemCount() > 0) {
+            tvEstado.setVisibility(View.GONE);
+            return;
+        }
+
+        if (query != null && !query.trim().isEmpty()) {
+            tvEstado.setText("No se encontraron usuarios para \"" + query.trim() + "\".");
+            tvEstado.setVisibility(View.VISIBLE);
+        }
     }
 
     private void mostrarDialogoRoles(UsuariosDTO usuario) {

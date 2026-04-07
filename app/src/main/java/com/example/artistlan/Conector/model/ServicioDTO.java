@@ -6,6 +6,9 @@ public class ServicioDTO {
     private String titulo;
     private String descripcion;
     private String contacto;
+    private String tipoContacto;
+    private Double precioMin;
+    private Double precioMax;
     private String tecnicas;
     private Integer idUsuario;
     private String nombreUsuario;
@@ -54,6 +57,29 @@ public class ServicioDTO {
 
     public void setTecnicas(String tecnicas) {
         this.tecnicas = tecnicas;
+    }
+    public String getTipoContacto() {
+        return tipoContacto;
+    }
+
+    public void setTipoContacto(String tipoContacto) {
+        this.tipoContacto = tipoContacto;
+    }
+
+    public Double getPrecioMin() {
+        return precioMin;
+    }
+
+    public void setPrecioMin(Double precioMin) {
+        this.precioMin = precioMin;
+    }
+
+    public Double getPrecioMax() {
+        return precioMax;
+    }
+
+    public void setPrecioMax(Double precioMax) {
+        this.precioMax = precioMax;
     }
 
     public Integer getIdUsuario() {

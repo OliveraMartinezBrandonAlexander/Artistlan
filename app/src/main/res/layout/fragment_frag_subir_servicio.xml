@@ -165,6 +165,22 @@
                     android:textColor="#202020" />
 
                 <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Tipo de contacto"
+                    android:textSize="14sp" />
+
+                <Spinner
+                    android:id="@+id/spinnerTipoContacto"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/editredondo"
+                    android:padding="10dp" />
+
+                <TextView
                     android:id="@+id/lsTxtContacto"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -179,13 +195,55 @@
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="20dp"
                     android:background="@drawable/editredondo"
-                    android:hint="Correo, teléfono o @usuario para que te contacten"
+                    android:hint="Medio de contacto"
                     android:inputType="textEmailAddress|textPersonName|textVisiblePassword"
                     android:paddingStart="20dp"
                     android:paddingTop="10dp"
                     android:paddingEnd="20dp"
                     android:paddingBottom="10dp"
                     android:textColor="#202020" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Precio mínimo"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etPrecioMinServicio"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/editredondo"
+                    android:hint="Opcional"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="20dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="10dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Precio máximo"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etPrecioMaxServicio"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="20dp"
+                    android:background="@drawable/editredondo"
+                    android:hint="Opcional"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="20dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="10dp" />
 
                 <Button
                     android:id="@+id/btnPublicarServicio"

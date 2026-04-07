@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Conector.RetrofitClient;
@@ -111,8 +112,16 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
         recyclerViewArtistas = view.findViewById(R.id.recyclerArtistas);
         recyclerViewArtistas.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new TarjetaTextoArtistaAdapter(listaArtistas, requireContext());
+        adapter.setCurrentUserId(idUsuarioLogueado);
         adapter.setOnLikeClickListener(this::toggleLikeArtista);
+        adapter.setOnVisitarClickListener(this::abrirPerfilPublico);
         recyclerViewArtistas.setAdapter(adapter);
+    }
+    private void abrirPerfilPublico(TarjetaTextoArtistaItem artistaItem, int position) {
+        if (!isAdded() || artistaItem.getIdArtista() == null) return;
+        Bundle args = new Bundle();
+        args.putInt("idArtista", artistaItem.getIdArtista());
+        NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfilPublico, args);
     }
     private void toggleLikeArtista(TarjetaTextoArtistaItem artistaItem, int position) {
         if (idUsuarioLogueado <= 0 || artistaItem.getIdArtista() == null) return;

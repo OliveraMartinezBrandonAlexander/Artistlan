@@ -19,11 +19,37 @@ public class ObraDTO
     private String nombreCategoria;
     private String nombreAutor;
     private String fotoPerfilAutor;
-
+    private Boolean puedeSolicitarCompra;
+    private Boolean editable;
+    private Boolean eliminable;
 
 
     public String getNombreCategoria() {
         return nombreCategoria;
+    }
+
+    public Boolean getPuedeSolicitarCompra() {
+        return puedeSolicitarCompra;
+    }
+
+    public void setPuedeSolicitarCompra(Boolean puedeSolicitarCompra) {
+        this.puedeSolicitarCompra = puedeSolicitarCompra;
+    }
+
+    public Boolean getEditable() {
+        return editable;
+    }
+
+    public void setEditable(Boolean editable) {
+        this.editable = editable;
+    }
+
+    public Boolean getEliminable() {
+        return eliminable;
+    }
+
+    public void setEliminable(Boolean eliminable) {
+        this.eliminable = eliminable;
     }
 
     public void setNombreCategoria(String nombreCategoria) {

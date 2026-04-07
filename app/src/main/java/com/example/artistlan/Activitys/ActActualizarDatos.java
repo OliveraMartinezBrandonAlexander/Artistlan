@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,8 +27,11 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
+import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.CategoriaApi;
 import com.example.artistlan.Conector.api.UsuarioApi;
@@ -43,9 +47,13 @@ import com.example.artistlan.Theme.ThemeManager;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -55,7 +63,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
     private Button btnActualizarDatos, btnEliminarCuenta;
     private ImageButton IsbtnRegresar;
-    private EditText etCorreo, etNombre, etDescripcion, etRedes, etTelefono, etFecha, etUsuario;
+    private EditText etCorreo, etNombre, etDescripcion, etRedes, etTelefono, etFecha, etUsuario, etUbicacion;
     private ImageView btnCambiarFoto, imgFotoPerfil;
     private Spinner spinnerCategoriaUsuario;
     private String contrasenaOriginal;
@@ -72,7 +80,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     private ThemeManager themeManager;
     private View rootMain, topDivider, cardDivider, cardContainer;
     private TextView txtTitulo, txtDesc, txtIndicacion, tvCorreo, tvUsuario, tvFotoPerfil,
-            tvNombre, tvDescripcion, tvCategoria, tvRedes, tvTelefono, tvFecha;
+            tvNombre, tvDescripcion, tvCategoria, tvRedes, tvTelefono, tvFecha, tvUbicacion;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +107,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         tvRedes = findViewById(R.id.tvRedes);
         tvTelefono = findViewById(R.id.tvTelefono);
         tvFecha = findViewById(R.id.tvFecha);
+        tvUbicacion = findViewById(R.id.tvUbicacion);
 
         // Enlazar XML
         etCorreo = findViewById(R.id.correo);
@@ -108,6 +117,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         etTelefono = findViewById(R.id.telefono);
         etFecha = findViewById(R.id.CrcEdtFecha);
         etUsuario = findViewById(R.id.usuario);
+        etUbicacion = findViewById(R.id.ubicacion);
         spinnerCategoriaUsuario = findViewById(R.id.spinnerCategoriaUsuario);
 
         btnActualizarDatos = findViewById(R.id.btnActualizarDatos);
@@ -121,6 +131,17 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         btnEliminarCuenta.setOnClickListener(this);
         btnActualizarDatos.setOnClickListener(this);
         IsbtnRegresar.setOnClickListener(this);
+        ScrollView scrollView = findViewById(R.id.scrollActualizarDatos);
+        ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
+            int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            v.setPadding(
+                    v.getPaddingLeft(),
+                    v.getPaddingTop(),
+                    v.getPaddingRight(),
+                    imeHeight
+            );
+            return insets;
+        });
 
         api = RetrofitClient.getClient().create(UsuarioApi.class);
 
@@ -163,7 +184,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                             if (isGranted) {
                                 tomarFotoPerfilLauncher.launch(null);
                             } else {
-                                Toast.makeText(this, "Debes conceder permiso de cámara para tomar fotos", Toast.LENGTH_LONG).show();
+                                Toast.makeText(this, "Debes conceder permiso de cÃ¡mara para tomar fotos", Toast.LENGTH_LONG).show();
                             }
                         }
                 );
@@ -202,6 +223,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         ThemeApplier.applyTextPrimary(tvRedes, themeManager);
         ThemeApplier.applyTextPrimary(tvTelefono, themeManager);
         ThemeApplier.applyTextPrimary(tvFecha, themeManager);
+        ThemeApplier.applyTextPrimary(tvUbicacion, themeManager);
 
         ThemeApplier.applyInput(etCorreo, themeManager);
         ThemeApplier.applyInput(etUsuario, themeManager);
@@ -210,6 +232,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         ThemeApplier.applyInput(etRedes, themeManager);
         ThemeApplier.applyInput(etTelefono, themeManager);
         ThemeApplier.applyInput(etFecha, themeManager);
+        ThemeApplier.applyInput(etUbicacion, themeManager);
 
         if (spinnerCategoriaUsuario != null && spinnerCategoriaUsuario.getBackground() != null) {
             spinnerCategoriaUsuario.getBackground().setColorFilter(
@@ -241,10 +264,10 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     }
 
     private void mostrarOpcionesFotoPerfil() {
-        String[] opciones = {"Elegir de galería", "Tomar foto con cámara"};
+        String[] opciones = {"Elegir de galerÃ­a", "Tomar foto con cÃ¡mara"};
 
         new AlertDialog.Builder(this)
-                .setTitle("Selecciona una opción")
+                .setTitle("Selecciona una opciÃ³n")
                 .setItems(opciones, (dialog, which) -> {
                     if (which == 0) {
                         seleccionarImagenperfilLauncher.launch("image/*");
@@ -310,6 +333,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         etRedes.setText(prefs.getString("redes", ""));
         etTelefono.setText(prefs.getString("telefono", ""));
         etFecha.setText(prefs.getString("fechaNac", ""));
+        etUbicacion.setText(prefs.getString("ubicacion", ""));
         contrasenaOriginal = prefs.getString("contrasena", "");
 
         String foto = prefs.getString("fotoPerfil", "");
@@ -348,7 +372,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                     spinnerCategoriaUsuario.setAdapter(adapter);
 
                     SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
-                    String categoriaActual = prefs.getString("categoria", "Ninguna");
+                    String categoriaActual = prefs.getString("ocupacion", prefs.getString("categoria", "Ninguna"));
                     int posicion = nombresCategorias.indexOf(categoriaActual);
                     spinnerCategoriaUsuario.setSelection(posicion >= 0 ? posicion : 0);
                 }
@@ -356,7 +380,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
             @Override
             public void onFailure(Call<List<CategoriaDTO>> call, Throwable t) {
-                Toast.makeText(ActActualizarDatos.this, "Error al cargar categorías: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(ActActualizarDatos.this, "Error al cargar categorÃ­as: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -375,15 +399,15 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     private void mostrarDialogoEliminarCuenta() {
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Eliminar cuenta")
-                .setMessage("Esta acción es permanente y eliminará tu cuenta y toda tu información. ¿Deseas continuar?")
-                .setPositiveButton("Sí, eliminar", (dialog, which) -> {
+                .setMessage("Esta acciÃ³n es permanente y eliminarÃ¡ tu cuenta y toda tu informaciÃ³n. Â¿Deseas continuar?")
+                .setPositiveButton("SÃ­, eliminar", (dialog, which) -> {
                     dialog.dismiss();
 
                     View view = LayoutInflater.from(this).inflate(R.layout.dialog_ingresar_password, null);
                     EditText etPassword = view.findViewById(R.id.etPasswordDialog);
 
                     AlertDialog dialogPassword = new AlertDialog.Builder(this)
-                            .setTitle("Confirma tu contraseña")
+                            .setTitle("Confirma tu contraseÃ±a")
                             .setView(view)
                             .setCancelable(false)
                             .setPositiveButton("Eliminar", null)
@@ -395,7 +419,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                         btnEliminar.setOnClickListener(v2 -> {
                             String passwordIngresada = etPassword.getText().toString().trim();
                             if (passwordIngresada.isEmpty()) {
-                                etPassword.setError("Ingresa tu contraseña");
+                                etPassword.setError("Ingresa tu contraseÃ±a");
                                 etPassword.requestFocus();
                                 return;
                             }
@@ -407,7 +431,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                                 dialogPassword.dismiss();
                                 eliminarCuentaConApi();
                             } else {
-                                etPassword.setError("Contraseña incorrecta");
+                                etPassword.setError("ContraseÃ±a incorrecta");
                                 etPassword.requestFocus();
                             }
                         });
@@ -421,10 +445,10 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
     private void eliminarCuentaConApi() {
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
-        int idUsuario = prefs.getInt("id", -1);
+        int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
 
         if (idUsuario == -1) {
-            Toast.makeText(this, "Error: sesión no válida", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error: sesiÃ³n no vÃ¡lida", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -444,7 +468,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
                 } else {
                     Toast.makeText(ActActualizarDatos.this,
-                            "Error al eliminar la cuenta (Código: " + response.code() + ")",
+                            "Error al eliminar la cuenta (CÃ³digo: " + response.code() + ")",
                             Toast.LENGTH_LONG).show();
                 }
             }
@@ -452,7 +476,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 Toast.makeText(ActActualizarDatos.this,
-                        "Error de conexión: " + t.getMessage(),
+                        "Error de conexiÃ³n: " + t.getMessage(),
                         Toast.LENGTH_LONG).show();
             }
         });
@@ -460,9 +484,9 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
     private void actualizarUsuario() {
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
-        int idUsuario = prefs.getInt("id", -1);
+        int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
         if (idUsuario == -1) {
-            Toast.makeText(this, "Error: No se encontró sesión activa", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error: No se encontrÃ³ sesiÃ³n activa", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -470,11 +494,23 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         String fechaNac = etFecha.getText().toString().trim();
         if (nombre.isEmpty()) {
             etNombre.requestFocus();
-            Toast.makeText(this, "El nombre no puede estar vacío.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "El nombre no puede estar vacÃ­o.", Toast.LENGTH_SHORT).show();
             return;
         }
         if (fechaNac.isEmpty()) {
             Toast.makeText(this, "Por favor elige tu fecha de nacimiento.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!esMayorDeEdad(fechaNac)) {
+            Toast.makeText(this, "Debes ser mayor de edad para usar Artistlan.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String telefono = etTelefono.getText().toString().trim();
+        if (!telefono.isEmpty() && !esTelefonoValido(telefono)) {
+            etTelefono.setError("Telefono invalido");
+            etTelefono.requestFocus();
             return;
         }
 
@@ -508,9 +544,16 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
         int posicionSeleccionada = spinnerCategoriaUsuario.getSelectedItemPosition();
         Integer idCategoria = null;
+        String ocupacionActual = prefs.getString("ocupacion", prefs.getString("categoria", ""));
 
         if (posicionSeleccionada > 0) {
-            idCategoria = listaCategorias.get(posicionSeleccionada - 1).getIdCategoria();
+            CategoriaDTO categoriaSeleccionada = listaCategorias.get(posicionSeleccionada - 1);
+            String nombreSeleccionado = categoriaSeleccionada.getNombreCategoria();
+            boolean cambioCategoria = ocupacionActual == null
+                    || !ocupacionActual.trim().equalsIgnoreCase(nombreSeleccionado != null ? nombreSeleccionado.trim() : "");
+            if (cambioCategoria) {
+                idCategoria = categoriaSeleccionada.getIdCategoria();
+            }
         }
         usuarioActualizado.setIdCategoria(idCategoria);
 
@@ -521,8 +564,13 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         usuarioActualizado.setRedesSociales(etRedes.getText().toString().trim());
         usuarioActualizado.setTelefono(etTelefono.getText().toString().trim());
         usuarioActualizado.setFechaNacimiento(etFecha.getText().toString().trim());
+        usuarioActualizado.setUbicacion(etUbicacion.getText().toString().trim());
         usuarioActualizado.setFotoPerfil(prefs.getString("fotoPerfil", ""));
         usuarioActualizado.setContrasena(contrasenaOriginal);
+        String rolActual = prefs.getString("rol", null);
+        if (rolActual != null && !rolActual.trim().isEmpty()) {
+            usuarioActualizado.setRol(rolActual);
+        }
 
         api.actualizarUsuario(idUsuario, usuarioActualizado).enqueue(new Callback<Void>() {
             @Override
@@ -534,23 +582,54 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                     editor.putString("redes", usuarioActualizado.getRedesSociales());
                     editor.putString("telefono", usuarioActualizado.getTelefono());
                     editor.putString("fechaNac", usuarioActualizado.getFechaNacimiento());
-                    editor.putString("categoria", spinnerCategoriaUsuario.getSelectedItem().toString());
+                    editor.putString("ubicacion", usuarioActualizado.getUbicacion());
+                    String ocupacionSeleccionada = ocupacionActual;
+                    if (posicionSeleccionada > 0 && posicionSeleccionada <= listaCategorias.size()) {
+                        ocupacionSeleccionada = listaCategorias.get(posicionSeleccionada - 1).getNombreCategoria();
+                    }
+                    if (ocupacionSeleccionada != null) {
+                        editor.putString("categoria", ocupacionSeleccionada);
+                        editor.putString("ocupacion", ocupacionSeleccionada);
+                    }
                     editor.apply();
 
                     Toast.makeText(ActActualizarDatos.this, "Datos actualizados correctamente", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
+                    String backendMessage = ApiErrorParser.extractMessage(response);
                     Toast.makeText(ActActualizarDatos.this,
-                            "Error al actualizar (Código: " + response.code() + ")",
+                            backendMessage != null ? backendMessage : "Error al actualizar (Codigo: " + response.code() + ")",
                             Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(ActActualizarDatos.this, "Fallo de conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(ActActualizarDatos.this, "Fallo de conexiÃ³n: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private boolean esTelefonoValido(String telefono) {
+        String limpio = telefono == null ? "" : telefono.trim();
+        return limpio.matches("^\\+?\\d{10,15}$");
+    }
+
+    private boolean esMayorDeEdad(String fechaNac) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            sdf.setLenient(false);
+            Date nacimiento = sdf.parse(fechaNac);
+            if (nacimiento == null) return false;
+            Calendar nac = Calendar.getInstance();
+            nac.setTime(nacimiento);
+            Calendar hoy = Calendar.getInstance();
+            int edad = hoy.get(Calendar.YEAR) - nac.get(Calendar.YEAR);
+            if (hoy.get(Calendar.DAY_OF_YEAR) < nac.get(Calendar.DAY_OF_YEAR)) edad--;
+            return edad >= 18;
+        } catch (ParseException e) {
+            return false;
+        }
     }
 
     @Override
@@ -560,3 +639,5 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         applyThemeOnlyColors();
     }
 }
+
+

@@ -18,6 +18,7 @@ public class UsuariosDTO
     private Integer likes;
     private Boolean esFavorito;
     private String rol;
+    private String ubicacion;
 
     public Integer getIdCategoria() {
         return idCategoria;
@@ -140,5 +141,12 @@ public class UsuariosDTO
 
     public void setRol(String rol) {
         this.rol = rol;
+    }
+    public String getUbicacion() {
+        return ubicacion;
+    }
+
+    public void setUbicacion(String ubicacion) {
+        this.ubicacion = ubicacion;
     }
 }

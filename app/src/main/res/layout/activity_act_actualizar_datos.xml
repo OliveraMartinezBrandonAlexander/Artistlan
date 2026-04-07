@@ -26,6 +26,7 @@
         android:paddingBottom="30dp">
 
         <ScrollView
+            android:id="@+id/scrollActualizarDatos"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true">
@@ -215,7 +216,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:fontFamily="sans-serif-black"
-                    android:text="Categoría"
+                    android:text="Ocupación"
                     android:textSize="14sp" />
 
                 <Spinner
@@ -272,6 +273,29 @@
                     android:textColor="#202020"
                     android:inputType="phone"
                     android:maxLength="10" />
+
+                <TextView
+                    android:id="@+id/tvUbicacion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Ubicación"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/ubicacion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/editredondo"
+                    android:hint="Opcional"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="#202020"
+                    android:inputType="textCapSentences" />
 
                 <TextView
                     android:id="@+id/tvFecha"

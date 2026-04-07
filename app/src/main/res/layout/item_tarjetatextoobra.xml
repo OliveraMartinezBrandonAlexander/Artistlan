@@ -108,12 +108,33 @@
             app:layout_constraintTop_toBottomOf="@id/autor"
             app:layout_constraintEnd_toStartOf="@id/likeContainer" />
 
+        <TextView
+            android:id="@+id/estadoResumen"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="12dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingStart="10dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="6dp"
+            android:text="Estado: N/A"
+            android:textColor="#4E2A00"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@id/imgAutor"
+            app:layout_constraintTop_toBottomOf="@id/categoria"
+            app:layout_constraintEnd_toStartOf="@id/likeContainer" />
+
         <androidx.constraintlayout.widget.Barrier
             android:id="@+id/headerBottomBarrier"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:barrierDirection="bottom"
-            app:constraint_referenced_ids="imgAutor,autor,categoria,likeContainer,btnMoreOptions" />
+            app:constraint_referenced_ids="imgAutor,autor,categoria,estadoResumen,likeContainer,btnMoreOptions" />
 
         <ImageView
             android:id="@+id/imgObra"

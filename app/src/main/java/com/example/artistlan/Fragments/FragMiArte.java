@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.api.ObraApi;
@@ -85,7 +86,7 @@ public class FragMiArte extends Fragment {
         for (ObraDTO dto : dtoList) {
             int idObra = dto.getIdObra();
             boolean esFavoritoReal = obrasFavoritas.contains(idObra);
-            items.add(new TarjetaTextoObraItem(
+            TarjetaTextoObraItem item = new TarjetaTextoObraItem(
                     idObra,
                     dto.getTitulo(),
                     dto.getDescripcion(),
@@ -102,7 +103,11 @@ public class FragMiArte extends Fragment {
                     dto.getFotoPerfilAutor(),
                     esFavoritoReal,
                     false
-            ));
+            );
+            item.setEditable(!Boolean.FALSE.equals(dto.getEditable()));
+            item.setEliminable(!Boolean.FALSE.equals(dto.getEliminable()));
+            item.setPuedeSolicitarCompra(Boolean.TRUE.equals(dto.getPuedeSolicitarCompra()));
+            items.add(item);
         }
 
         return items;
@@ -202,6 +207,10 @@ public class FragMiArte extends Fragment {
         if (!isAdded()) {
             return;
         }
+        if (!obraItem.isEditable()) {
+            Toast.makeText(requireContext(), "Esta obra no se puede editar", Toast.LENGTH_SHORT).show();
+            return;
+        }
         debeRecargarEnResume = true;
         Bundle args = new Bundle();
         args.putBoolean(ARG_MODO_EDICION, true);
@@ -225,6 +234,10 @@ public class FragMiArte extends Fragment {
     private void eliminarObra(TarjetaTextoObraItem obraItem, int position) {
         if (idUsuarioLogueado <= 0) {
             Toast.makeText(requireContext(), "Error de usuario.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!obraItem.isEliminable()) {
+            Toast.makeText(requireContext(), "Esta obra no se puede eliminar", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -251,10 +264,16 @@ public class FragMiArte extends Fragment {
                     return;
                 }
                 if (code == 409) {
-                    Toast.makeText(requireContext(), "No se puede eliminar esta obra porque tiene relaciones asociadas", Toast.LENGTH_LONG).show();
+                    String backendMessage = ApiErrorParser.extractMessage(response);
+                    Toast.makeText(requireContext(),
+                            backendMessage != null ? backendMessage : "No se puede eliminar esta obra",
+                            Toast.LENGTH_LONG).show();
                     return;
                 }
-                Toast.makeText(requireContext(), "No se pudo eliminar la obra (" + code + ")", Toast.LENGTH_LONG).show();
+                String backendMessage = ApiErrorParser.extractMessage(response);
+                Toast.makeText(requireContext(),
+                        backendMessage != null ? backendMessage : "No se pudo eliminar la obra (" + code + ")",
+                        Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -278,7 +297,7 @@ public class FragMiArte extends Fragment {
         }
 
         ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
-        Call<List<ObraDTO>> call = api.obtenerObrasDeUsuario(idUsuarioLogueado);
+        Call<List<ObraDTO>> call = api.obtenerObrasDeUsuario(idUsuarioLogueado, idUsuarioLogueado);
         call.enqueue(new Callback<List<ObraDTO>>() {
             @Override
             public void onResponse(@NonNull Call<List<ObraDTO>> call, @NonNull Response<List<ObraDTO>> response) {

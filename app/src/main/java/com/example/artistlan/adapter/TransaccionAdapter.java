@@ -64,7 +64,7 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
 
         String estado = item.getEstado();
         if (estado != null && !estado.trim().isEmpty()) {
-            holder.tvEstado.setText(estado.trim());
+            holder.tvEstado.setText(formatearEstadoVisual(estado));
             holder.tvEstado.setVisibility(View.VISIBLE);
         } else {
             holder.tvEstado.setVisibility(View.GONE);
@@ -213,6 +213,26 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
 
     private String textoSeguro(String value, String fallback) {
         return value != null && !value.trim().isEmpty() ? value.trim() : fallback;
+    }
+
+    private String formatearEstadoVisual(String estadoRaw) {
+        String estado = estadoRaw == null ? "" : estadoRaw.trim().toLowerCase(Locale.ROOT).replace("_", " ");
+        if (estado.isEmpty()) {
+            return "";
+        }
+        if (estado.contains("exhib")) {
+            return "En exhibicion";
+        }
+        if (estado.contains("venta")) {
+            return "En venta";
+        }
+        if (estado.contains("reservad")) {
+            return "Reservada";
+        }
+        if (estado.contains("vendid")) {
+            return "Vendida";
+        }
+        return Character.toUpperCase(estado.charAt(0)) + estado.substring(1);
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

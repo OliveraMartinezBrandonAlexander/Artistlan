@@ -27,6 +27,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.CheckBox;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -34,6 +35,7 @@ import android.widget.Toast;
 import android.widget.RadioButton;
 
 import com.bumptech.glide.Glide;
+import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.CategoriaApi;
@@ -46,7 +48,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import retrofit2.Call;
@@ -69,7 +70,8 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private ActivityResultLauncher<Void> tomarFotoLauncher;
     private ActivityResultLauncher<String> permisoCamaraLauncher;
 
-    private android.widget.EditText etTituloObra, etDescripcion, etPrecio, etMedidas, etTecnicas;
+    private android.widget.EditText etTituloObra, etDescripcion, etPrecio, etMedidaAncho, etMedidaAlto, etTecnicas;
+    private CheckBox cbAutoriaObra;
     private android.widget.RadioGroup rgOpciones;
     private Spinner spinnerCategoria;
     private List<CategoriaDTO> listaCategorias = new ArrayList<>();
@@ -149,8 +151,10 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         rgOpciones   = view.findViewById(R.id.radioGroupOpciones);
         etDescripcion = view.findViewById(R.id.descripcion);
         etPrecio      = view.findViewById(R.id.precio);
-        etMedidas     = view.findViewById(R.id.medidas);
+        etMedidaAncho = view.findViewById(R.id.medidaAncho);
+        etMedidaAlto = view.findViewById(R.id.medidaAlto);
         etTecnicas    = view.findViewById(R.id.edit_text_tecnica);
+        cbAutoriaObra = view.findViewById(R.id.checkAutoriaObra);
         txtTituloPantalla = view.findViewById(R.id.IsTxtTitulo);
         txtDescripcionPantalla = view.findViewById(R.id.IsTxtDesc);
 
@@ -177,26 +181,9 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             cargarObraParaEditar();
         }
 
-        rgOpciones.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.rbdventa) {
-                // En venta → mostrar precio
-                txtPrecio.setVisibility(View.VISIBLE);
-                etPrecio.setVisibility(View.VISIBLE);
-                etPrecio.setEnabled(true);
-
-                etPrecio.animate().alpha(1f).setDuration(200);
-                txtPrecio.animate().alpha(1f).setDuration(200);
-
-            } else if (checkedId == R.id.rbexhibicion) {
-                // En exhibición → ocultar precio
-                txtPrecio.setVisibility(View.GONE);
-                etPrecio.setVisibility(View.GONE);
-                etPrecio.setText("");
-
-                etPrecio.animate().alpha(0f).setDuration(200);
-                txtPrecio.animate().alpha(0f).setDuration(200);
-            }
-        });
+        rgOpciones.setOnCheckedChangeListener((group, checkedId) ->
+                actualizarBloquePrecioSegunEstado(checkedId)
+        );
 
         return view;
     }
@@ -268,19 +255,11 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
                 listaCategorias = response.body();
 
-                List<String> profesiones = Arrays.asList(
-                        "pintor", "escultor", "fotógrafo", "ilustrador",
-                        "diseñador gráfico", "diseñador industrial", "diseñador de moda",
-                        "caricaturista", "animador", "artesano", "ceramista", "grabador",
-                        "artista digital", "artista plástico", "maquetador", "decorador",
-                        "restaurador de arte", "graffitero", "modelador 3d"
-                );
-
                 List<CategoriaDTO> filtradas = new ArrayList<>();
 
                 for (CategoriaDTO c : listaCategorias) {
-                    String nombre = c.getNombreCategoria().trim().toLowerCase();
-                    if (!profesiones.contains(nombre)) {
+                    int id = c.getIdCategoria();
+                    if (id >= 1 && id <= 18) {
                         filtradas.add(c);
                     }
                 }
@@ -317,7 +296,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             return;
         }
         txtTituloPantalla.setText("Editar Obra");
-        txtDescripcionPantalla.setText("Actualiza la información de tu obra:");
+        txtDescripcionPantalla.setText("Actualiza la información de tu obra. El precio solo se puede asignar una vez al pasar de exhibición a venta.");
         btnSubirImg.setText("CAMBIAR IMAGEN");
         btnSubirObra.setText("GUARDAR CAMBIOS");
     }
@@ -357,21 +336,23 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private void precargarObra(ObraDTO obra) {
         etTituloObra.setText(obra.getTitulo());
         etDescripcion.setText(obra.getDescripcion());
-        etMedidas.setText(obra.getMedidas());
+        cargarCamposDeMedidas(obra.getMedidas());
         etTecnicas.setText(obra.getTecnicas());
 
         String estado = obra.getEstado();
-        if (estado != null && estado.equalsIgnoreCase("En venta")) {
+        String estadoNormalizado = estado != null ? estado.trim().toLowerCase().replace("_", " ") : "";
+        if (obra.getPrecio() != null) {
+            etPrecio.setText(String.valueOf(obra.getPrecio()));
+        } else {
+            etPrecio.setText("");
+        }
+
+        if (estadoNormalizado.contains("venta")) {
             rgOpciones.check(R.id.rbdventa);
-            if (obra.getPrecio() != null) {
-                etPrecio.setText(String.valueOf(obra.getPrecio()));
-            }
-            txtPrecio.setVisibility(View.VISIBLE);
-            etPrecio.setVisibility(View.VISIBLE);
+            actualizarBloquePrecioSegunEstado(R.id.rbdventa);
         } else {
             rgOpciones.check(R.id.rbexhibicion);
-            txtPrecio.setVisibility(View.GONE);
-            etPrecio.setVisibility(View.GONE);
+            actualizarBloquePrecioSegunEstado(R.id.rbexhibicion);
         }
 
         imagenActualUrl = obra.getImagen1();
@@ -407,6 +388,55 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         }
     }
 
+    private void cargarCamposDeMedidas(String medidas) {
+        if (medidas == null) {
+            etMedidaAncho.setText("");
+            etMedidaAlto.setText("");
+            return;
+        }
+
+        String limpio = medidas.toLowerCase().replace("cm", "").trim();
+        String[] partes = limpio.split("[xX]");
+        if (partes.length >= 2) {
+            etMedidaAncho.setText(partes[0].trim());
+            etMedidaAlto.setText(partes[1].trim());
+            return;
+        }
+
+        etMedidaAncho.setText(limpio);
+        etMedidaAlto.setText("");
+    }
+
+    private String construirMedidas() {
+        String ancho = normalizarCampoMedida(etMedidaAncho.getText().toString());
+        String alto = normalizarCampoMedida(etMedidaAlto.getText().toString());
+        if (ancho.isEmpty() || alto.isEmpty()) {
+            return "";
+        }
+        return ancho + " x " + alto + " cm";
+    }
+
+    private String normalizarCampoMedida(String valor) {
+        if (valor == null) return "";
+        return valor.replace("cm", "").trim();
+    }
+
+    private CategoriaDTO obtenerCategoriaSeleccionada() {
+        int pos = spinnerCategoria.getSelectedItemPosition();
+        if (pos > 0 && pos <= listaCategorias.size()) {
+            return listaCategorias.get(pos - 1);
+        }
+
+        if (modoEdicion && obraActual != null && obraActual.getIdCategoria() != null) {
+            CategoriaDTO categoria = new CategoriaDTO();
+            categoria.setIdCategoria(obraActual.getIdCategoria());
+            categoria.setNombreCategoria(obraActual.getNombreCategoria());
+            return categoria;
+        }
+
+        return null;
+    }
+
     private int obtenerIdUsuarioLogueado() {
         SharedPreferences prefs = requireActivity()
                 .getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
@@ -431,7 +461,10 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             return insets;
         });
 
-        requireActivity().findViewById(R.id.MenuInferior).setVisibility(View.GONE);
+        View menuInferior = requireActivity().findViewById(R.id.MenuInferior);
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.GONE);
+        }
 
         btnRegresar = view.findViewById(R.id.btnRegresar);
         btnRegresar.setOnClickListener(this);
@@ -442,7 +475,11 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        requireActivity().findViewById(R.id.MenuInferior).setVisibility(View.VISIBLE);
+        if (getActivity() == null) return;
+        View menuInferior = getActivity().findViewById(R.id.MenuInferior);
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -460,8 +497,12 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             return;
         }
 
-        int idUsuario = obtenerIdUsuarioLogueado();
+        if (!modoEdicion && (cbAutoriaObra == null || !cbAutoriaObra.isChecked())) {
+            Toast.makeText(getContext(), "Debes confirmar la autoria de la obra.", Toast.LENGTH_LONG).show();
+            return;
+        }
 
+        int idUsuario = obtenerIdUsuarioLogueado();
         if (idUsuario == -1) {
             Toast.makeText(getContext(), "Error de usuario.", Toast.LENGTH_LONG).show();
             return;
@@ -470,28 +511,29 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         String titulo = etTituloObra.getText().toString().trim();
         String descripcion = etDescripcion.getText().toString().trim();
         String precioStr = etPrecio.getText().toString().trim();
-        String medidas = etMedidas.getText().toString().trim();
+        String medidas = construirMedidas();
         String tecnica = etTecnicas.getText().toString().trim();
 
         int radioId = rgOpciones.getCheckedRadioButtonId();
-        if (titulo.isEmpty() || descripcion.isEmpty() || tecnica.isEmpty()
-                || medidas.isEmpty() || radioId == -1) {
+        if (titulo.isEmpty() || descripcion.isEmpty() || tecnica.isEmpty() || medidas.isEmpty() || radioId == -1) {
             Toast.makeText(getContext(), "Completa los campos obligatorios", Toast.LENGTH_LONG).show();
             return;
         }
 
-        int pos = spinnerCategoria.getSelectedItemPosition();
-        if (pos == 0) {
-            Toast.makeText(getContext(), "Selecciona una categoría.", Toast.LENGTH_LONG).show();
+        CategoriaDTO categoria = obtenerCategoriaSeleccionada();
+        if (categoria == null) {
+            Toast.makeText(getContext(), "Selecciona una categoria.", Toast.LENGTH_LONG).show();
             return;
         }
 
         RadioButton rb = rgOpciones.findViewById(radioId);
         String estado = rb.getText().toString();
+        String estadoNormalizado = estado.trim().toLowerCase().replace("_", " ");
+        boolean esVenta = estadoNormalizado.contains("venta");
 
-        Double precio = null;
-
-        if (estado.equalsIgnoreCase("En venta")) {
+        Double precio = modoEdicion && obraActual != null ? obraActual.getPrecio() : null;
+        boolean puedeAsignarPrecioEnEdicion = puedeAsignarPrecioPrimeraVezEnEdicion();
+        if (esVenta && (!modoEdicion || puedeAsignarPrecioEnEdicion)) {
             if (precioStr.isEmpty()) {
                 Toast.makeText(getContext(), "Debes ingresar un precio para obras en venta.", Toast.LENGTH_LONG).show();
                 return;
@@ -503,16 +545,10 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                     return;
                 }
             } catch (NumberFormatException e) {
-                Toast.makeText(getContext(), "Precio inválido.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "Precio invalido.", Toast.LENGTH_LONG).show();
                 return;
             }
-        } else {
-            precio = null;
         }
-
-
-
-        CategoriaDTO categoria = listaCategorias.get(pos - 1);
 
         mostrarDialogConfirmacionObra(
                 idUsuario, titulo, descripcion, estado,
@@ -539,19 +575,19 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         Button btnPublicar = view.findViewById(R.id.btnConfirmarPublicar);
 
         String resumen =
-                "🖼 Título:\n" + titulo + "\n\n" +
-                        "📝 Descripción:\n" + descripcion + "\n\n" +
-                        "📌 Estado:\n" + estado + "\n\n" +
-                        "🎨 Técnica:\n" + tecnica + "\n\n" +
+                "Título:\n" + titulo + "\n\n" +
+                        "Descripción:\n" + descripcion + "\n\n" +
+                        "Estado:\n" + estado + "\n\n" +
+                        "Técnica:\n" + tecnica + "\n\n" +
                         (precio != null
-                                ? "💰 Precio:\n$" + precio + "\n\n"
+                                ? "Precio:\n$" + precio + "\n\n"
                                 : ""
                         ) +
                         (!medidas.isEmpty()
-                                ? "📐 Medidas:\n" + medidas + " cm " + "\n\n"
+                                ? "Medidas:\n" + medidas + "\n\n"
                                 : ""
                         ) +
-                        "🏷 Categoría:\n" + categoria.getNombreCategoria();
+                        "Categoría:\n" + categoria.getNombreCategoria();
 
         txtResumen.setText(resumen);
 
@@ -593,7 +629,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         String titulo = etTituloObra.getText().toString().trim();
         String descripcion = etDescripcion.getText().toString().trim();
         String precioStr = etPrecio.getText().toString().trim();
-        String medidas = etMedidas.getText().toString().trim();
+        String medidas = construirMedidas();
         String tecnica = etTecnicas.getText().toString().trim();
 
         int pos = spinnerCategoria.getSelectedItemPosition();
@@ -621,7 +657,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                     return;
                 }
             } catch (NumberFormatException e) {
-                Toast.makeText(getContext(), "Formato de precio inválido.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "Formato de precio invÃ¡lido.", Toast.LENGTH_LONG).show();
                 return;
             }
         }
@@ -693,46 +729,65 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         String titulo = etTituloObra.getText().toString().trim();
         String descripcion = etDescripcion.getText().toString().trim();
         String precioStr = etPrecio.getText().toString().trim();
-        String medidas = etMedidas.getText().toString().trim();
+        String medidas = construirMedidas();
         String tecnica = etTecnicas.getText().toString().trim();
-        int pos = spinnerCategoria.getSelectedItemPosition();
         int radioId = rgOpciones.getCheckedRadioButtonId();
 
-        if (pos == 0) {
-            Toast.makeText(getContext(), "Selecciona una categoría válida.", Toast.LENGTH_LONG).show();
+        CategoriaDTO categoria = obtenerCategoriaSeleccionada();
+        if (categoria == null || categoria.getIdCategoria() <= 0) {
+            Toast.makeText(getContext(), "Selecciona una categoria valida.", Toast.LENGTH_LONG).show();
             return;
         }
-        if (titulo.isEmpty() || descripcion.isEmpty() || radioId == -1 || tecnica.isEmpty()) {
+        if (titulo.isEmpty() || descripcion.isEmpty() || medidas.isEmpty() || radioId == -1 || tecnica.isEmpty()) {
             Toast.makeText(getContext(), "Completa todos los campos obligatorios", Toast.LENGTH_LONG).show();
             return;
         }
 
-        Double precioDouble = null;
-        if (!precioStr.isEmpty()) {
-            try {
-                precioDouble = Double.parseDouble(precioStr);
-                if (precioDouble < 0) {
-                    Toast.makeText(getContext(), "El precio no puede ser negativo.", Toast.LENGTH_LONG).show();
-                    return;
-                }
-            } catch (NumberFormatException e) {
-                Toast.makeText(getContext(), "Formato de precio invalido.", Toast.LENGTH_LONG).show();
-                return;
-            }
-        }
-
         RadioButton rb = rgOpciones.findViewById(radioId);
         String estado = rb.getText().toString();
-        int categoriaId = listaCategorias.get(pos - 1).getIdCategoria();
+        String estadoNormalizado = estado.trim().toLowerCase().replace("_", " ");
+        boolean esVenta = estadoNormalizado.contains("venta");
+
+        Double precioDouble = null;
+        boolean puedeAsignarPrecioEnEdicion = puedeAsignarPrecioPrimeraVezEnEdicion();
+        if (!modoEdicion || puedeAsignarPrecioEnEdicion) {
+            if (esVenta && precioStr.isEmpty()) {
+                Toast.makeText(getContext(), "Debes ingresar un precio para obras en venta.", Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (!precioStr.isEmpty()) {
+                try {
+                    precioDouble = Double.parseDouble(precioStr);
+                    if (precioDouble < 0) {
+                        Toast.makeText(getContext(), "El precio no puede ser negativo.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    Toast.makeText(getContext(), "Formato de precio invalido.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+            }
+        }
+        Integer categoriaIdParaEnviar = null;
+        if (!modoEdicion) {
+            categoriaIdParaEnviar = categoria.getIdCategoria();
+        } else if (obraActual == null || obraActual.getIdCategoria() == null
+                || !obraActual.getIdCategoria().equals(categoria.getIdCategoria())) {
+            categoriaIdParaEnviar = categoria.getIdCategoria();
+        }
 
         ObraDTO obra = new ObraDTO();
         obra.setTitulo(titulo);
         obra.setDescripcion(descripcion);
         obra.setEstado(estado);
         obra.setTecnicas(tecnica);
-        obra.setPrecio(precioDouble);
+        if (!modoEdicion || puedeAsignarPrecioEnEdicion) {
+            obra.setPrecio(precioDouble);
+        }
         obra.setMedidas(medidas);
-        obra.setIdCategoria(categoriaId);
+        if (categoriaIdParaEnviar != null) {
+            obra.setIdCategoria(categoriaIdParaEnviar);
+        }
         obra.setImagen1(imageUrl);
         obra.setIdUsuario(idUsuario);
 
@@ -751,6 +806,51 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         }
     }
 
+    private void actualizarBloquePrecioSegunEstado(int checkedId) {
+        boolean esVenta = checkedId == R.id.rbdventa;
+        if (esVenta) {
+            txtPrecio.setVisibility(View.VISIBLE);
+            etPrecio.setVisibility(View.VISIBLE);
+
+            boolean editable = !modoEdicion || puedeAsignarPrecioPrimeraVezEnEdicion();
+            etPrecio.setEnabled(editable);
+            etPrecio.setFocusable(editable);
+            etPrecio.setFocusableInTouchMode(editable);
+            aplicarIndicadorBloqueoPrecio(!editable);
+
+            etPrecio.animate().alpha(1f).setDuration(200);
+            txtPrecio.animate().alpha(1f).setDuration(200);
+            return;
+        }
+
+        txtPrecio.setVisibility(View.GONE);
+        etPrecio.setVisibility(View.GONE);
+        aplicarIndicadorBloqueoPrecio(false);
+        if (!modoEdicion) {
+            etPrecio.setText("");
+        }
+        etPrecio.animate().alpha(0f).setDuration(200);
+        txtPrecio.animate().alpha(0f).setDuration(200);
+    }
+
+    private boolean puedeAsignarPrecioPrimeraVezEnEdicion() {
+        if (!modoEdicion || obraActual == null) {
+            return false;
+        }
+        Double precioActual = obraActual.getPrecio();
+        return precioActual == null || precioActual <= 0d;
+    }
+
+    private void aplicarIndicadorBloqueoPrecio(boolean bloqueado) {
+        if (txtPrecio == null || etPrecio == null) {
+            return;
+        }
+        txtPrecio.setText(bloqueado
+                ? "Precio en pesos mxn (bloqueado)"
+                : "Precio en pesos mxn");
+        etPrecio.setAlpha(bloqueado ? 0.65f : 1f);
+    }
+
     private void insertarObraEnBD(int idUsuario, ObraDTO obra) {
         ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
         Call<ObraDTO> call = api.subirObra(idUsuario, obra);
@@ -759,10 +859,13 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             @Override
             public void onResponse(@NonNull Call<ObraDTO> call, @NonNull Response<ObraDTO> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    Toast.makeText(getContext(), "¡Obra subida con éxito!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Obra subida con exito", Toast.LENGTH_LONG).show();
                     NavHostFragment.findNavController(FragSubirObra.this).popBackStack();
                 } else {
-                    Toast.makeText(getContext(), "Error al insertar obra. Código " + response.code(), Toast.LENGTH_LONG).show();
+                    String backendMessage = ApiErrorParser.extractMessage(response);
+                    Toast.makeText(getContext(),
+                            backendMessage != null ? backendMessage : "Error al insertar obra. Codigo " + response.code(),
+                            Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -788,10 +891,13 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                     return;
                 }
                 if (response.isSuccessful()) {
-                    Toast.makeText(getContext(), "Obra actualizada con éxito", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Obra actualizada con exito", Toast.LENGTH_LONG).show();
                     NavHostFragment.findNavController(FragSubirObra.this).popBackStack();
                 } else {
-                    Toast.makeText(getContext(), "Error al actualizar obra. Código " + response.code(), Toast.LENGTH_LONG).show();
+                    String backendMessage = ApiErrorParser.extractMessage(response);
+                    Toast.makeText(getContext(),
+                            backendMessage != null ? backendMessage : "Error al actualizar obra. Codigo " + response.code(),
+                            Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -804,3 +910,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         });
     }
 }
+
+
+
+

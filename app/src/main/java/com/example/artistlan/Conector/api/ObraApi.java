@@ -56,6 +56,12 @@ public interface ObraApi {
     @GET("obrasDeUsuario/{idUsuario}")
     Call<List<ObraDTO>> obtenerObrasDeUsuario(@Path("idUsuario") int idUsuario);
 
+    @GET("obrasDeUsuario/{idUsuario}")
+    Call<List<ObraDTO>> obtenerObrasDeUsuario(
+            @Path("idUsuario") int idUsuario,
+            @Query("usuarioIdConsulta") Integer usuarioIdConsulta
+    );
+
     @DELETE("usuarios")
     Call<Void> eliminarTodos();
 }

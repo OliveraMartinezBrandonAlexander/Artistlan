@@ -504,6 +504,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                                 SharedPreferences.Editor editor = prefs.edit();
                                 String categoria = userConCategoria.getCategoria();
                                 editor.putString("categoria", categoria != null ? categoria : "Sin categoría");
+                                editor.putString("ocupacion", categoria != null ? categoria : "Sin categoría");
                                 editor.apply();
                             }
                         }
@@ -513,6 +514,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                             SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
                             SharedPreferences.Editor editor = prefs.edit();
                             editor.putString("categoria", "Sin categoría");
+                            editor.putString("ocupacion", "Sin categoría");
                             editor.apply();
                         }
                     });
@@ -544,6 +546,8 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         editor.putString("descripcion", usuario.getDescripcion());
         editor.putString("redes", usuario.getRedesSociales());
         editor.putString("fechaNac", usuario.getFechaNacimiento());
+        editor.putString("ubicacion", usuario.getUbicacion() != null ? usuario.getUbicacion() : "");
+        editor.putString("ocupacion", usuario.getCategoria() != null ? usuario.getCategoria() : "");
         String rol = (usuario.getRol() != null && !usuario.getRol().trim().isEmpty()) ? usuario.getRol() : "USER";
         editor.putString("rol", rol);
         String foto = usuario.getFotoPerfil();

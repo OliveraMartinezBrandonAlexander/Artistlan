@@ -140,4 +140,13 @@
         app:popExitAnim="@anim/nav_pop_exit"
         tools:layout="@layout/fragment_frag_admin_convocatorias" />
 
+    <fragment
+        android:id="@+id/fragVerPerfilPublico"
+        android:name="com.example.artistlan.Fragments.FragVerPerfilPublico"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_ver_perfil_publico" />
+
 </navigation>

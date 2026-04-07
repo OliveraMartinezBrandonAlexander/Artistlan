@@ -205,20 +205,59 @@
                     android:text="Medidas en cm "
                     android:textSize="14sp" />
 
-                <EditText
-                    android:id="@+id/medidas"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
-                    android:hint="Ej. 50cm x 70cm"
-                    android:inputType="text"
-                    android:paddingStart="20dp"
-                    android:paddingTop="10dp"
-                    android:paddingEnd="20dp"
-                    android:paddingBottom="10dp"
-                    android:textColor="#202020" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <EditText
+                        android:id="@+id/medidaAncho"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/editredondo"
+                        android:hint="Ancho"
+                        android:inputType="numberDecimal"
+                        android:paddingStart="16dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="10dp"
+                        android:textColor="#202020" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:text="x"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <EditText
+                        android:id="@+id/medidaAlto"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/editredondo"
+                        android:hint="Alto"
+                        android:inputType="numberDecimal"
+                        android:paddingStart="16dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="10dp"
+                        android:textColor="#202020" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="cm"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
                 <TextView
                     android:id="@+id/IsTxtTecnica"
                     android:layout_width="match_parent"
@@ -253,9 +292,17 @@
                     android:id="@+id/categoria"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
+                    android:layout_marginBottom="10dp"
                     android:background="@drawable/editredondo"
                     android:padding="10dp" />
+
+                <CheckBox
+                    android:id="@+id/checkAutoriaObra"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="18dp"
+                    android:text="Confirmo que esta obra es de mi autoria y asumo la responsabilidad de su publicacion."
+                    android:textColor="#202020" />
 
 
 

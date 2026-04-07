@@ -29,12 +29,18 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         void onLikeClick(TarjetaTextoArtistaItem artistaItem, int position);
     }
 
+    public interface OnVisitarClickListener {
+        void onVisitarClick(TarjetaTextoArtistaItem artistaItem, int position);
+    }
+
     private static final long LIKE_BUTTON_COOLDOWN_MS = 500L;
     private OnLikeClickListener onLikeClickListener;
+    private OnVisitarClickListener onVisitarClickListener;
     private List<TarjetaTextoArtistaItem> listaArtistas;
     private List<TarjetaTextoArtistaItem> listaOriginal;
     private Context context;
     private int tarjetaExpandida = -1;
+    private Integer currentUserId;
 
     private static final String[] DEFAULT_DESCRIPCIONES = new String[] {
             "Hola, estoy usando Artistlan",
@@ -53,6 +59,13 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
 
     public void setOnLikeClickListener(OnLikeClickListener onLikeClickListener) {
         this.onLikeClickListener = onLikeClickListener;
+    }
+    public void setOnVisitarClickListener(OnVisitarClickListener onVisitarClickListener) {
+        this.onVisitarClickListener = onVisitarClickListener;
+    }
+    public void setCurrentUserId(Integer currentUserId) {
+        this.currentUserId = currentUserId;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -117,8 +130,22 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             notifyItemChanged(currentPosition);
         });
 
+        boolean esPerfilPropio = artista.getIdArtista() != null
+                && currentUserId != null
+                && artista.getIdArtista().equals(currentUserId);
+        holder.btnVisitar.setVisibility(esPerfilPropio ? View.GONE : View.VISIBLE);
+        holder.btnVisitar.setEnabled(!esPerfilPropio);
+
         holder.btnVisitar.setOnClickListener(v -> {
-            Toast.makeText(context, "Proximamente...", Toast.LENGTH_SHORT).show();
+            if (esPerfilPropio) {
+                return;
+            }
+            int adapterPosition = holder.getAdapterPosition();
+            if (onVisitarClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                onVisitarClickListener.onVisitarClick(listaArtistas.get(adapterPosition), adapterPosition);
+            } else {
+                Toast.makeText(context, "Perfil no disponible", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 

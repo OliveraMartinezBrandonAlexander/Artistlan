@@ -137,7 +137,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
 
     private void agregarObraAlCarrito(TarjetaTextoObraItem obraItem, int position) {
         if (idUsuarioLogueado <= 0) {
-            Toast.makeText(getContext(), "Debes iniciar sesion para agregar al carrito", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Debes iniciar sesion para solicitar compra", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -150,16 +150,16 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                 }
 
                 if (response.isSuccessful()) {
-                    Toast.makeText(getContext(), "Obra agregada al carrito", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Solicitud de compra enviada", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 if (response.code() == 409) {
-                    Toast.makeText(getContext(), "Esta obra ya esta en tu carrito", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Esta obra ya tiene una solicitud activa", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                Toast.makeText(getContext(), "No se pudo agregar al carrito (" + response.code() + ")", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "No se pudo solicitar compra (" + response.code() + ")", Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -167,7 +167,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                 if (!isAdded()) {
                     return;
                 }
-                Toast.makeText(getContext(), "Error de red al agregar al carrito", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "Error de red al solicitar compra", Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -295,7 +295,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                     if (dto.getIdUsuario() != null && dto.getIdUsuario() == idUsuarioLogueado && dto.getIdObra() != null) {
                         ownedObraIds.add(dto.getIdObra());
                     }
-                    items.add(new TarjetaTextoObraItem(
+                    TarjetaTextoObraItem item = new TarjetaTextoObraItem(
                             dto.getIdObra(),
                             dto.getTitulo(),
                             dto.getDescripcion(),
@@ -311,7 +311,11 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                             dto.getNombreCategoria(),
                             dto.getFotoPerfilAutor(),
                             Boolean.TRUE.equals(dto.getEsFavorito()),
-                            false));
+                            false);
+                    item.setEditable(!Boolean.FALSE.equals(dto.getEditable()));
+                    item.setEliminable(!Boolean.FALSE.equals(dto.getEliminable()));
+                    item.setPuedeSolicitarCompra(Boolean.TRUE.equals(dto.getPuedeSolicitarCompra()));
+                    items.add(item);
                 }
 
                 adapter.actualizarLista(items);

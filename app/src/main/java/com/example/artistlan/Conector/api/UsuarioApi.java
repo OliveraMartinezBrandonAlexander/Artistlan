@@ -5,6 +5,7 @@ import com.example.artistlan.Conector.model.ArtistaDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.Conector.model.CambiarRolRequestDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
+import com.example.artistlan.Conector.model.PerfilPublicoArtistaDTO;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -69,5 +70,10 @@ public interface UsuarioApi {
             @Path("id") int idUsuario,
             @Query("adminId") int adminId,
             @Body CambiarRolRequestDTO body
+    );
+    @GET("artistas/{idArtista}/publico")
+    Call<PerfilPublicoArtistaDTO> obtenerPerfilPublicoArtista(
+            @Path("idArtista") int idArtista,
+            @Query("usuarioConsulta") Integer usuarioConsulta
     );
 }

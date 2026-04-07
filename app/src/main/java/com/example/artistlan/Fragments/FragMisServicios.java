@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.api.ServicioApi;
@@ -62,6 +63,7 @@ public class FragMisServicios extends Fragment {
         recyclerMisServicios = view.findViewById(R.id.recyclerMisServicios);
         recyclerMisServicios.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
+        adapter.setCurrentUserId(idUsuarioLogueado);
         adapter.setOnLikeClickListener(this::toggleLikeServicio);
         adapter.setOnEditClickListener(this::editarServicio);
         adapter.setOnDeleteClickListener(this::confirmarEliminacionServicio);
@@ -88,13 +90,17 @@ public class FragMisServicios extends Fragment {
             boolean esFavoritoReal = idServicio != null && serviciosFavoritos.contains(idServicio);
             items.add(new TarjetaTextoServicioItem(
                     idServicio,
+                    dto.getIdUsuario(),
                     dto.getTitulo(),
                     dto.getDescripcion(),
                     dto.getContacto(),
+                    dto.getTipoContacto(),
                     dto.getTecnicas(),
                     dto.getNombreUsuario(),
                     dto.getCategoria(),
                     dto.getFotoPerfilAutor(),
+                    dto.getPrecioMin(),
+                    dto.getPrecioMax(),
                     dto.getLikes() != null ? dto.getLikes() : 0,
                     esFavoritoReal,
                     false
@@ -240,10 +246,16 @@ public class FragMisServicios extends Fragment {
                     return;
                 }
                 if (code == 409) {
-                    Toast.makeText(requireContext(), "No se puede eliminar este servicio porque tiene relaciones asociadas", Toast.LENGTH_LONG).show();
+                    String backendMessage = ApiErrorParser.extractMessage(response);
+                    Toast.makeText(requireContext(),
+                            backendMessage != null ? backendMessage : "No se puede eliminar este servicio",
+                            Toast.LENGTH_LONG).show();
                     return;
                 }
-                Toast.makeText(requireContext(), "No se pudo eliminar el servicio (" + code + ")", Toast.LENGTH_LONG).show();
+                String backendMessage = ApiErrorParser.extractMessage(response);
+                Toast.makeText(requireContext(),
+                        backendMessage != null ? backendMessage : "No se pudo eliminar el servicio (" + code + ")",
+                        Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -258,6 +270,9 @@ public class FragMisServicios extends Fragment {
     private void cargarServiciosDelUsuario() {
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+        if (adapter != null) {
+            adapter.setCurrentUserId(idUsuarioLogueado);
+        }
 
         if (idUsuarioLogueado == -1) {
             return;

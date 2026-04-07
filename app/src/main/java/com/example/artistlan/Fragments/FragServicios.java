@@ -127,6 +127,7 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
         recyclerServicios = view.findViewById(R.id.recyclerServicios);
         recyclerServicios.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
+        adapter.setCurrentUserId(idUsuarioLogueado);
         adapter.setOnLikeClickListener(this::toggleLikeServicio);
         recyclerServicios.setAdapter(adapter);
     }
@@ -190,7 +191,7 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
     private List<TarjetaTextoServicioItem> convertir(List<ServicioDTO> dtoList) {
         List<TarjetaTextoServicioItem> lista = new ArrayList<>();
         for (ServicioDTO dto : dtoList) {
-            lista.add(new TarjetaTextoServicioItem(dto.getIdServicio(), dto.getTitulo(), dto.getDescripcion(), dto.getContacto(), dto.getTecnicas(), dto.getNombreUsuario(), dto.getCategoria(), dto.getFotoPerfilAutor(), dto.getLikes() != null ? dto.getLikes() : 0, Boolean.TRUE.equals(dto.getEsFavorito()), false));
+            lista.add(new TarjetaTextoServicioItem(dto.getIdServicio(), dto.getIdUsuario(), dto.getTitulo(), dto.getDescripcion(), dto.getContacto(), dto.getTipoContacto(), dto.getTecnicas(), dto.getNombreUsuario(), dto.getCategoria(), dto.getFotoPerfilAutor(), dto.getPrecioMin(), dto.getPrecioMax(), dto.getLikes() != null ? dto.getLikes() : 0, Boolean.TRUE.equals(dto.getEsFavorito()), false));
         }
 
         return lista;

@@ -2,6 +2,9 @@ package com.example.artistlan.TarjetaTextoServicio.adapter;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,20 +25,13 @@ import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTextoServicioAdapter.ViewHolder> {
 
-    public interface OnLikeClickListener {
-        void onLikeClick(TarjetaTextoServicioItem servicioItem, int position);
-    }
-
-    public interface OnEditClickListener {
-        void onEditClick(TarjetaTextoServicioItem servicioItem, int position);
-    }
-
-    public interface OnDeleteClickListener {
-        void onDeleteClick(TarjetaTextoServicioItem servicioItem, int position);
-    }
+    public interface OnLikeClickListener { void onLikeClick(TarjetaTextoServicioItem servicioItem, int position); }
+    public interface OnEditClickListener { void onEditClick(TarjetaTextoServicioItem servicioItem, int position); }
+    public interface OnDeleteClickListener { void onDeleteClick(TarjetaTextoServicioItem servicioItem, int position); }
 
     private static final long LIKE_BUTTON_COOLDOWN_MS = 500L;
     private OnLikeClickListener onLikeClickListener;
@@ -45,6 +41,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     private final List<TarjetaTextoServicioItem> listaOriginal;
     private final Context context;
     private int tarjetaExpandida = -1;
+    private Integer currentUserId;
 
     public TarjetaTextoServicioAdapter(List<TarjetaTextoServicioItem> listaServicios, Context context) {
         this.listaServicios = listaServicios;
@@ -52,17 +49,11 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         this.context = context;
     }
 
-    public void setOnLikeClickListener(OnLikeClickListener onLikeClickListener) {
-        this.onLikeClickListener = onLikeClickListener;
-    }
-
-    public void setOnEditClickListener(OnEditClickListener onEditClickListener) {
-        this.onEditClickListener = onEditClickListener;
-        notifyDataSetChanged();
-    }
-
-    public void setOnDeleteClickListener(OnDeleteClickListener onDeleteClickListener) {
-        this.onDeleteClickListener = onDeleteClickListener;
+    public void setOnLikeClickListener(OnLikeClickListener onLikeClickListener) { this.onLikeClickListener = onLikeClickListener; }
+    public void setOnEditClickListener(OnEditClickListener onEditClickListener) { this.onEditClickListener = onEditClickListener; notifyDataSetChanged(); }
+    public void setOnDeleteClickListener(OnDeleteClickListener onDeleteClickListener) { this.onDeleteClickListener = onDeleteClickListener; notifyDataSetChanged(); }
+    public void setCurrentUserId(Integer currentUserId) {
+        this.currentUserId = currentUserId;
         notifyDataSetChanged();
     }
 
@@ -77,13 +68,14 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
         TarjetaTextoServicioItem servicio = listaServicios.get(position);
-
-        holder.autor.setText(servicio.getAutor());
-        holder.titulo.setText(servicio.getTitulo());
-        holder.descripcion.setText("Descripción: " + servicio.getDescripcion());
-        holder.contacto.setText("Contacto: " + servicio.getContacto());
-        holder.tecnicas.setText("Técnicas: " + servicio.getTecnicas());
-        holder.categoria.setText("Categoría: " + servicio.getCategoria());
+        holder.autor.setText(safe(servicio.getAutor(), "Autor"));
+        holder.titulo.setText(safe(servicio.getTitulo(), "Servicio"));
+        holder.descripcion.setText("Descripción: " + safe(servicio.getDescripcion(), "Sin descripción"));
+        holder.contacto.setText("Contacto: " + safe(servicio.getContacto(), "No disponible"));
+        holder.tipoContacto.setText("Tipo de contacto: " + safe(servicio.getTipoContacto(), "N/A"));
+        holder.tecnicas.setText("Técnicas: " + safe(servicio.getTecnicas(), "No especificadas"));
+        holder.precioRango.setText(formatearPrecioRango(servicio.getPrecioMin(), servicio.getPrecioMax()));
+        holder.categoria.setText("Categoría: " + safe(servicio.getCategoria(), "Sin categoría"));
         holder.likes.setText(String.valueOf(servicio.getLikes()));
         holder.btnLike.setImageResource(servicio.isFavorito() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
         holder.btnLike.setOnClickListener(v -> {
@@ -106,14 +98,18 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         animarVista(holder.expandedSection, expandido);
         configurarMenuOpciones(holder);
 
+        boolean esServicioPropio = servicio.getIdUsuario() != null
+                && currentUserId != null
+                && servicio.getIdUsuario().equals(currentUserId);
+        holder.btnContactar.setVisibility(esServicioPropio ? View.GONE : View.VISIBLE);
+        holder.btnContactar.setEnabled(!esServicioPropio && !TextUtils.isEmpty(servicio.getContacto()));
+        holder.btnContactar.setOnClickListener(v -> contactar(servicio));
+
         holder.itemView.setOnClickListener(v -> {
             int previous = tarjetaExpandida;
             int currentPosition = holder.getAdapterPosition();
 
-            if (currentPosition == RecyclerView.NO_POSITION) {
-                return;
-            }
-
+            if (currentPosition == RecyclerView.NO_POSITION) return;
             if (previous == currentPosition) tarjetaExpandida = -1;
             else {
                 tarjetaExpandida = currentPosition;
@@ -121,39 +117,63 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             }
             notifyItemChanged(currentPosition);
         });
-
-        holder.btnVisitar.setOnClickListener(v -> {
-            Toast.makeText(context, "Próximamente...", Toast.LENGTH_SHORT).show();
-        });
     }
 
-    @Override
-    public int getItemCount() {
-        return listaServicios != null ? listaServicios.size() : 0;
+    private String formatearPrecioRango(Double min, Double max) {
+        if (min == null && max == null) return "Precio: A convenir";
+        if (min != null && max != null) return String.format(Locale.getDefault(), "Precio: $%,.2f - $%,.2f", min, max);
+        if (min != null) return String.format(Locale.getDefault(), "Precio desde: $%,.2f", min);
+        return String.format(Locale.getDefault(), "Precio hasta: $%,.2f", max);
     }
+
+    private void contactar(TarjetaTextoServicioItem servicio) {
+        String tipo = safe(servicio.getTipoContacto(), "OTRO").toUpperCase(Locale.ROOT);
+        String contacto = safe(servicio.getContacto(), "").trim();
+        if (contacto.isEmpty()) {
+            Toast.makeText(context, "Este servicio no tiene contacto disponible", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            Intent intent;
+            switch (tipo) {
+                case "EMAIL":
+                    intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + contacto));
+                    break;
+                case "WHATSAPP":
+                    intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/" + contacto.replaceAll("[^0-9]", "")));
+                    break;
+                case "TELEFONO":
+                    intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + contacto));
+                    break;
+                case "INSTAGRAM":
+                    String user = contacto.startsWith("@") ? contacto.substring(1) : contacto;
+                    intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://instagram.com/" + user));
+                    break;
+                default:
+                    intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"));
+                    intent.putExtra(Intent.EXTRA_TEXT, "Contacto de servicio: " + contacto);
+                    break;
+            }
+            context.startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(context, "No se pudo abrir la app de contacto", Toast.LENGTH_SHORT).show();
+        }
+    }
+    @Override public int getItemCount() { return listaServicios != null ? listaServicios.size() : 0; }
+
+    private String safe(String v, String def) { return (v == null || v.trim().isEmpty()) ? def : v; }
+
 
     private void configurarMenuOpciones(ViewHolder holder) {
         boolean mostrarMenu = onEditClickListener != null || onDeleteClickListener != null;
         holder.btnMoreOptions.setVisibility(mostrarMenu ? View.VISIBLE : View.GONE);
-        if (!mostrarMenu) {
-            holder.btnMoreOptions.setOnClickListener(null);
-            return;
-        }
-
+        if (!mostrarMenu) { holder.btnMoreOptions.setOnClickListener(null); return; }
         holder.btnMoreOptions.setOnClickListener(v -> {
             int adapterPosition = holder.getAdapterPosition();
-            if (adapterPosition == RecyclerView.NO_POSITION) {
-                return;
-            }
-
+            if (adapterPosition == RecyclerView.NO_POSITION) return;
             PopupMenu popupMenu = new PopupMenu(context, holder.btnMoreOptions);
-            if (onEditClickListener != null) {
-                popupMenu.getMenu().add(0, 1, 0, "Modificar");
-            }
-            if (onDeleteClickListener != null) {
-                popupMenu.getMenu().add(0, 2, 1, "Eliminar");
-            }
-
+            if (onEditClickListener != null) popupMenu.getMenu().add(0, 1, 0, "Modificar");
+            if (onDeleteClickListener != null) popupMenu.getMenu().add(0, 2, 1, "Eliminar");
             popupMenu.setOnMenuItemClickListener(item -> {
                 int currentPosition = holder.getAdapterPosition();
                 if (currentPosition == RecyclerView.NO_POSITION) {
@@ -265,11 +285,11 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView titulo, descripcion, contacto, tecnicas, autor, categoria, likes;
+        TextView titulo, descripcion, contacto, tipoContacto, tecnicas, autor, categoria, precioRango, likes;
         ImageView imgAutor;
         ImageButton btnLike, btnMoreOptions;
         View expandedSection;
-        Button btnVisitar;
+        Button btnContactar;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -277,14 +297,16 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             titulo = itemView.findViewById(R.id.titulo);
             descripcion = itemView.findViewById(R.id.descripcion);
             contacto = itemView.findViewById(R.id.contacto);
+            tipoContacto = itemView.findViewById(R.id.tipoContacto);
             tecnicas = itemView.findViewById(R.id.tecnicas);
             categoria = itemView.findViewById(R.id.categoria);
+            precioRango = itemView.findViewById(R.id.precioRango);
+            imgAutor = itemView.findViewById(R.id.imgAutor);
             likes = itemView.findViewById(R.id.likes);
             btnLike = itemView.findViewById(R.id.btnLike);
             btnMoreOptions = itemView.findViewById(R.id.btnMoreOptions);
             expandedSection = itemView.findViewById(R.id.expanded_section);
-            btnVisitar = itemView.findViewById(R.id.btnVisitar);
-            imgAutor = itemView.findViewById(R.id.imgAutor);
+            btnContactar = itemView.findViewById(R.id.btnContactar);
         }
     }
 }

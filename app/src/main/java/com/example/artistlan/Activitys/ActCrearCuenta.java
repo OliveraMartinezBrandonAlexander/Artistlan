@@ -465,6 +465,11 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
             edtFecha.requestFocus();
             return false;
         }
+        if (!esMayorDeEdad(fecha)) {
+            edtFecha.setError("Debes ser mayor de 18 años");
+            edtFecha.requestFocus();
+            return false;
+        }
         if (usuario.isEmpty()) {
             edtUsuario.setError("Ingresa usuario");
             edtUsuario.requestFocus();
@@ -484,6 +489,20 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         return true;
     }
 
+    private boolean esMayorDeEdad(String fechaIso) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            sdf.setLenient(false);
+            Calendar nac = Calendar.getInstance();
+            nac.setTime(sdf.parse(fechaIso));
+            Calendar hoy = Calendar.getInstance();
+            int edad = hoy.get(Calendar.YEAR) - nac.get(Calendar.YEAR);
+            if (hoy.get(Calendar.DAY_OF_YEAR) < nac.get(Calendar.DAY_OF_YEAR)) edad--;
+            return edad >= 18;
+        } catch (Exception e) {
+            return false;
+        }
+    }
     private boolean validarContrasena(String pass) {
         if (pass == null) return false;
         if (pass.length() < 8) return false;

@@ -8,8 +8,6 @@
     android:orientation="vertical"
     tools:context=".Fragments.FragVerPerfilPublico">
 
-
-
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
@@ -26,7 +24,6 @@
             android:orientation="vertical"
             android:padding="12dp">
 
-            <!-- CARD PERFIL -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardPerfilPublico"
                 android:layout_width="match_parent"
@@ -45,7 +42,6 @@
                     android:orientation="vertical"
                     android:padding="14dp">
 
-                    <!-- Foto + Nombre centrados -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -67,15 +63,12 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
                             android:gravity="center"
-                            android:text="Usuario"
+                            android:text="usuario"
                             android:textStyle="bold"
                             android:textSize="18sp"
-                            android:textColor="@android:color/black"
-                            android:maxLines="2"
-                            android:ellipsize="end"/>
+                            android:textColor="@android:color/black"/>
                     </LinearLayout>
 
-                    <!-- Descripción (siempre visible) -->
                     <TextView
                         android:id="@+id/tvDescripcionPublico"
                         android:layout_width="match_parent"
@@ -88,7 +81,6 @@
                         android:backgroundTint="#A1BBCE"
                         android:padding="12dp"/>
 
-                    <!-- Sección expandible -->
                     <LinearLayout
                         android:id="@+id/expandedInfoPublico"
                         android:layout_width="match_parent"
@@ -101,19 +93,19 @@
                         android:padding="12dp">
 
                         <TextView
-                            android:id="@+id/tvCorreoPublico"
+                            android:id="@+id/tvNombreCompletoPublico"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Correo: ---"
+                            android:text="Nombre: ---"
                             android:textColor="@android:color/black"
                             android:textSize="14sp" />
 
                         <TextView
-                            android:id="@+id/tvTelefonoPublico"
+                            android:id="@+id/tvUbicacionPublico"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:text="Teléfono: ---"
+                            android:text="Ubicación: ---"
                             android:textColor="@android:color/black"
                             android:textSize="14sp" />
 
@@ -140,7 +132,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:text="Categoría: ---"
+                            android:text="Ocupación: ---"
                             android:textColor="@android:color/black"
                             android:textSize="14sp" />
                     </LinearLayout>
@@ -148,7 +140,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Tabs estilo bonito (como Mis Obras / Mis Servicios) -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardTabs"
                 android:layout_width="match_parent"
@@ -163,16 +154,14 @@
                     android:layout_height="match_parent"
                     android:padding="6dp">
 
-                    <!-- Indicador -->
                     <View
                         android:id="@+id/tabIndicator"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_gravity="start"
                         android:background="@drawable/editredondo"
-                        android:backgroundTint="#2F6FED" />
+                        android:backgroundTint="#25002F" />
 
-                    <!-- Botones -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
@@ -202,13 +191,22 @@
                 </FrameLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Contenedor para los fragments hijos -->
-            <FrameLayout
-                android:id="@+id/contenedorFragmentsPerfilPublico"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerPublico"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:minHeight="420dp" />
+                android:nestedScrollingEnabled="false" />
+
+            <TextView
+                android:id="@+id/tvPublicoVacio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:gravity="center"
+                android:text="Sin contenido"
+                android:textColor="#5E5E5E"
+                android:visibility="gone" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

@@ -32,6 +32,10 @@ public class FragTransacciones extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         new BotonesMenuSuperior(this);
+        View menuInferior = requireActivity().findViewById(R.id.MenuInferior);
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.GONE);
+        }
 
         tabLayout = view.findViewById(R.id.tabLayoutTransacciones);
         viewPager = view.findViewById(R.id.viewPagerTransacciones);
@@ -42,6 +46,16 @@ public class FragTransacciones extends Fragment {
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
             tab.setText(position == 0 ? R.string.tab_mis_compras : R.string.tab_mis_ventas);
         }).attach();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (getActivity() == null) return;
+        View menuInferior = getActivity().findViewById(R.id.MenuInferior);
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.VISIBLE);
+        }
     }
 
     private static class TransaccionesPagerAdapter extends FragmentStateAdapter {

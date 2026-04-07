@@ -27,6 +27,7 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
     }
 
     private final List<UsuariosDTO> items = new ArrayList<>();
+    private final List<UsuariosDTO> itemsOriginal = new ArrayList<>();
     private final OnCambiarRolListener listener;
 
     public UsuarioAdminAdapter(OnCambiarRolListener listener) {
@@ -34,8 +35,26 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
     }
 
     public void actualizar(List<UsuariosDTO> nuevos) {
+        itemsOriginal.clear();
+        if (nuevos != null) itemsOriginal.addAll(nuevos);
+        filtrarPorUsuario("");
+    }
+
+    public void filtrarPorUsuario(String query) {
         items.clear();
-        if (nuevos != null) items.addAll(nuevos);
+        if (query == null || query.trim().isEmpty()) {
+            items.addAll(itemsOriginal);
+            notifyDataSetChanged();
+            return;
+        }
+
+        String filtro = query.trim().toLowerCase();
+        for (UsuariosDTO usuario : itemsOriginal) {
+            String username = usuario.getUsuario() != null ? usuario.getUsuario().toLowerCase() : "";
+            if (username.contains(filtro)) {
+                items.add(usuario);
+            }
+        }
         notifyDataSetChanged();
     }
 
@@ -51,8 +70,8 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         UsuariosDTO item = items.get(position);
 
-        holder.tvNombre.setText(item.getNombreCompleto() == null ? "Sin nombre" : item.getNombreCompleto());
-        holder.tvUsuario.setText(item.getUsuario() == null ? "Sin usuario" : item.getUsuario());
+        holder.tvNombre.setText(item.getUsuario() == null ? "Sin usuario" : item.getUsuario());
+        holder.tvUsuario.setText(item.getNombreCompleto() == null ? "Sin nombre" : item.getNombreCompleto());
         holder.tvRol.setText(item.getRol() == null ? "USER" : item.getRol());
 
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());

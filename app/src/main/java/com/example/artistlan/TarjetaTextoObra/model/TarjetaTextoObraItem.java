@@ -18,6 +18,9 @@ public class TarjetaTextoObraItem {
     private String fotoPerfilAutor;
     private boolean userLiked;
     private boolean expandido = false;
+    private boolean editable = true;
+    private boolean eliminable = true;
+    private boolean puedeSolicitarCompra = false;
 
 
     public TarjetaTextoObraItem(int idObra, String titulo, String descripcion, String estado, Double precio, String imagen1, String imagen2, String imagen3, String tecnicas, String medidas, int likes, String nombreAutor, String nombreCategoria,String fotoPerfilAutor, boolean userLiked, boolean expandido) {
@@ -116,5 +119,29 @@ public class TarjetaTextoObraItem {
 
     public void setIdObra(int idObra) {
         this.idObra = idObra;
+    }
+
+    public boolean isEditable() {
+        return editable;
+    }
+
+    public void setEditable(boolean editable) {
+        this.editable = editable;
+    }
+
+    public boolean isEliminable() {
+        return eliminable;
+    }
+
+    public void setEliminable(boolean eliminable) {
+        this.eliminable = eliminable;
+    }
+
+    public boolean isPuedeSolicitarCompra() {
+        return puedeSolicitarCompra;
+    }
+
+    public void setPuedeSolicitarCompra(boolean puedeSolicitarCompra) {
+        this.puedeSolicitarCompra = puedeSolicitarCompra;
     }
 }

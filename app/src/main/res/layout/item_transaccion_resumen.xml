@@ -50,30 +50,58 @@
             android:textColor="@color/black"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/tvTransaccionTipo"
             app:layout_constraintStart_toEndOf="@id/cardImagenTransaccion"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvTransaccionTipo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_transaccion_chip"
+            android:paddingStart="8dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="4dp"
+            android:text="Compra"
+            android:textColor="@color/GRIS"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/imgTransaccionPersona"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/cuenta"
+            app:layout_constraintStart_toEndOf="@id/cardImagenTransaccion"
+            app:layout_constraintTop_toBottomOf="@id/tvTransaccionTitulo" />
 
         <TextView
             android:id="@+id/tvTransaccionRolPersona"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="0dp"
             android:text="@string/transaccion_label_vendedor"
             android:textAllCaps="true"
             android:textColor="@color/GRIS"
             android:textSize="11sp"
             android:textStyle="bold"
-            app:layout_constraintStart_toEndOf="@id/cardImagenTransaccion"
-            app:layout_constraintTop_toBottomOf="@id/tvTransaccionTitulo" />
+            app:layout_constraintBottom_toBottomOf="@id/imgTransaccionPersona"
+            app:layout_constraintStart_toEndOf="@id/imgTransaccionPersona"
+            app:layout_constraintTop_toTopOf="@id/imgTransaccionPersona" />
 
         <TextView
             android:id="@+id/tvTransaccionNombrePersona"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="4dp"
             android:ellipsize="end"
             android:maxLines="1"
             android:text="@string/transaccion_persona_fallback"
@@ -82,7 +110,7 @@
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/cardImagenTransaccion"
-            app:layout_constraintTop_toBottomOf="@id/tvTransaccionRolPersona" />
+            app:layout_constraintTop_toBottomOf="@id/imgTransaccionPersona" />
 
         <TextView
             android:id="@+id/tvTransaccionFecha"

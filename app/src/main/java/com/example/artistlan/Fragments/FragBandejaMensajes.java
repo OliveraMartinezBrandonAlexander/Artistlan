@@ -28,8 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -227,36 +225,47 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
         detalle.append(MensajeUiUtils.formatearMensajeConMotivo(item.getMensajeSeguro())).append("\n\n")
                 .append("Fecha: ").append(MensajeUiUtils.formatearFechaCorta(item.getFecha())).append("\n")
                 .append("Origen: ").append(origenVisual);
-        if (item.getReferenciaTipo() != null && !item.getReferenciaTipo().trim().isEmpty() && item.getReferenciaId() != null) {
-            detalle.append("\n").append(MensajeUiUtils.etiquetaReferencia(item.getReferenciaTipo(), item.getReferenciaId()));
-        }
 
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(item.getTituloSeguro())
                 .setMessage(detalle.toString())
                 .setPositiveButton("Cerrar", null);
 
-        Integer destino = resolverDestinoReferencia(item.getReferenciaTipo(), item.getReferenciaId());
-        if (destino != null) {
-            builder.setNeutralButton("Ir a referencia", (dialog, which) -> navegarADestinoSeguro(destino));
+        String ctaTexto = MensajeUiUtils.obtenerTextoCtaSemantico(item);
+        Integer destino = MensajeUiUtils.obtenerDestinoSemantico(item);
+        if (ctaTexto != null && destino != null) {
+            builder.setNeutralButton(ctaTexto, (dialog, which) -> navegarSemantico(item, destino));
         }
         builder.show();
     }
 
-    private Integer resolverDestinoReferencia(String referenciaTipo, Integer referenciaId) {
-        if (referenciaTipo == null || referenciaTipo.trim().isEmpty() || referenciaId == null) {
-            return null;
+    @Override
+    public void onNavegar(@NonNull NotificacionDTO item) {
+        Integer destino = MensajeUiUtils.obtenerDestinoSemantico(item);
+        if (destino == null) {
+            onDetalle(item);
+            return;
         }
-        String tipo = referenciaTipo.trim().toLowerCase(Locale.ROOT);
-        if (tipo.contains("obra")) {
-            return R.id.fragArte;
-        }
-        return null;
+        navegarSemantico(item, destino);
     }
 
-    private void navegarADestinoSeguro(int destinationId) {
+    private void navegarSemantico(@NonNull NotificacionDTO item, int destinationId) {
+        if (MensajeUiUtils.destinoSemanticoRequiereSolicitudesTab(item)) {
+            if (getParentFragment() instanceof FragCentroMensajes) {
+                ((FragCentroMensajes) getParentFragment()).seleccionarTab(1);
+                return;
+            }
+            if (getActivity() instanceof ActFragmentoPrincipal) {
+                ((ActFragmentoPrincipal) getActivity()).abrirCentroMensajes(1);
+                return;
+            }
+        }
+        navegarADestinoSeguro(destinationId, null);
+    }
+
+    private void navegarADestinoSeguro(int destinationId, @Nullable Bundle args) {
         if (getActivity() instanceof ActFragmentoPrincipal) {
-            ((ActFragmentoPrincipal) getActivity()).navegarDesdeCentroMensajes(destinationId, null);
+            ((ActFragmentoPrincipal) getActivity()).navegarDesdeCentroMensajes(destinationId, args);
         }
     }
 

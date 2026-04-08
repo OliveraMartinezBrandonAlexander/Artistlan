@@ -29,16 +29,27 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
         VENTAS
     }
 
+    public interface OnTransaccionClickListener {
+        void onTransaccionClick(TransaccionResumenDTO item, int position);
+    }
+
     private final Context context;
     private final TipoLista tipoLista;
     private final List<TransaccionResumenDTO> transacciones;
+    private final OnTransaccionClickListener onTransaccionClickListener;
     private final NumberFormat currencyFormatter;
     private final Locale localeSalida = new Locale("es", "MX");
 
-    public TransaccionAdapter(Context context, TipoLista tipoLista, List<TransaccionResumenDTO> transacciones) {
+    public TransaccionAdapter(
+            Context context,
+            TipoLista tipoLista,
+            List<TransaccionResumenDTO> transacciones,
+            OnTransaccionClickListener onTransaccionClickListener
+    ) {
         this.context = context;
         this.tipoLista = tipoLista;
         this.transacciones = transacciones != null ? transacciones : new ArrayList<>();
+        this.onTransaccionClickListener = onTransaccionClickListener;
         this.currencyFormatter = NumberFormat.getCurrencyInstance(localeSalida);
     }
 
@@ -54,13 +65,14 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
         TransaccionResumenDTO item = transacciones.get(position);
 
         holder.tvTituloObra.setText(textoSeguro(item.getTituloObra(), context.getString(R.string.transaccion_titulo_fallback)));
-        holder.tvNombrePersona.setText(obtenerNombreRelacionado(item));
+        holder.tvNombrePersona.setText(obtenerUsuarioRelacionado(item));
         holder.tvFecha.setText(formatearFecha(item.getFechaTransaccion()));
         holder.tvPrecio.setText(formatearPrecio(item.getPrecio()));
 
         holder.tvRolPersona.setText(tipoLista == TipoLista.COMPRAS
                 ? context.getString(R.string.transaccion_label_vendedor)
                 : context.getString(R.string.transaccion_label_comprador));
+        holder.tvTipo.setText(tipoLista == TipoLista.COMPRAS ? "Compra" : "Venta");
 
         String estado = item.getEstado();
         if (estado != null && !estado.trim().isEmpty()) {
@@ -76,6 +88,21 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
                 .error(R.drawable.imagencargaobras)
                 .centerCrop()
                 .into(holder.imgObra);
+
+        Glide.with(holder.itemView)
+                .load(obtenerFotoRelacionado(item))
+                .placeholder(R.drawable.cuenta)
+                .error(R.drawable.cuenta)
+                .circleCrop()
+                .into(holder.imgPersona);
+
+        holder.itemView.setOnClickListener(v -> {
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (adapterPosition == RecyclerView.NO_POSITION || onTransaccionClickListener == null) {
+                return;
+            }
+            onTransaccionClickListener.onTransaccionClick(transacciones.get(adapterPosition), adapterPosition);
+        });
     }
 
     @Override
@@ -91,12 +118,21 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
         notifyDataSetChanged();
     }
 
-    private String obtenerNombreRelacionado(TransaccionResumenDTO item) {
-        String nombre = tipoLista == TipoLista.COMPRAS
+    private String obtenerUsuarioRelacionado(TransaccionResumenDTO item) {
+        String usuario = tipoLista == TipoLista.COMPRAS
+                ? primerTexto(item.getUsuarioVendedor())
+                : primerTexto(item.getUsuarioComprador());
+        if (usuario != null) {
+            return usuario;
+        }
+        String nombreFallback = tipoLista == TipoLista.COMPRAS
                 ? primerTexto(item.getNombreVendedor(), item.getNombreArtista())
                 : primerTexto(item.getNombreComprador(), item.getNombreArtista());
+        return textoSeguro(nombreFallback, context.getString(R.string.transaccion_persona_fallback));
+    }
 
-        return textoSeguro(nombre, context.getString(R.string.transaccion_persona_fallback));
+    private String obtenerFotoRelacionado(TransaccionResumenDTO item) {
+        return tipoLista == TipoLista.COMPRAS ? item.getFotoVendedor() : item.getFotoComprador();
     }
 
     private String primerTexto(String... candidatos) {
@@ -243,6 +279,8 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
         private final TextView tvFecha;
         private final TextView tvPrecio;
         private final TextView tvEstado;
+        private final TextView tvTipo;
+        private final ImageView imgPersona;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -253,6 +291,8 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
             tvFecha = itemView.findViewById(R.id.tvTransaccionFecha);
             tvPrecio = itemView.findViewById(R.id.tvTransaccionPrecio);
             tvEstado = itemView.findViewById(R.id.tvTransaccionEstado);
+            tvTipo = itemView.findViewById(R.id.tvTransaccionTipo);
+            imgPersona = itemView.findViewById(R.id.imgTransaccionPersona);
         }
     }
 }

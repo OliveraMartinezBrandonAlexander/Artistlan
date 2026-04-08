@@ -37,7 +37,9 @@ import com.example.artistlan.Conector.api.CarritoPaypalApi;
 import com.example.artistlan.Conector.api.PagoPaypalApi;
 import com.example.artistlan.Conector.model.CapturarOrdenPaypalCarritoResponseDTO;
 import com.example.artistlan.Conector.model.CapturarOrdenPaypalResponseDTO;
+import com.example.artistlan.Fragments.FragCarrito;
 import com.example.artistlan.Fragments.FragCentroMensajes;
+import com.example.artistlan.Fragments.FragTransacciones;
 import com.example.artistlan.Fragments.MensajesBadgeManager;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ActAjustesTema;
@@ -46,6 +48,7 @@ import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.pagos.PagoPaypalSessionManager;
+import com.example.artistlan.pagos.PagoSyncManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 
@@ -926,6 +929,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         if ("paypal-cancel".equalsIgnoreCase(host)) {
             PagoPaypalSessionManager.clear(this);
+            onPagoPaypalCancelado();
             intent.setData(null);
         }
     }
@@ -951,6 +955,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                     PagoPaypalSessionManager.clear(ActFragmentoPrincipal.this);
 
                     if (response.isSuccessful()) {
+                        onPagoCapturadoExitoso();
                         Toast.makeText(
                                 ActFragmentoPrincipal.this,
                                 backendMessage != null ? backendMessage : "Pago capturado correctamente",
@@ -990,6 +995,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 PagoPaypalSessionManager.clear(ActFragmentoPrincipal.this);
 
                 if (response.isSuccessful()) {
+                    onPagoCapturadoExitoso();
                     Toast.makeText(
                             ActFragmentoPrincipal.this,
                             backendMessage != null ? backendMessage : "Pago capturado correctamente",
@@ -1016,5 +1022,37 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 ).show();
             }
         });
+    }
+
+    private void onPagoCapturadoExitoso() {
+        PagoSyncManager.markCaptureSuccess(this);
+        refrescarBadgeMensajes();
+
+        NavHostFragment navHostFragment =
+                (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);
+        if (navHostFragment == null) {
+            return;
+        }
+
+        Fragment currentFragment = navHostFragment.getChildFragmentManager().getPrimaryNavigationFragment();
+        if (currentFragment instanceof FragCarrito) {
+            ((FragCarrito) currentFragment).recargarDespuesDePago();
+            return;
+        }
+        if (currentFragment instanceof FragTransacciones) {
+            ((FragTransacciones) currentFragment).recargarDespuesDePago();
+        }
+    }
+
+    private void onPagoPaypalCancelado() {
+        NavHostFragment navHostFragment =
+                (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);
+        if (navHostFragment == null) {
+            return;
+        }
+        Fragment currentFragment = navHostFragment.getChildFragmentManager().getPrimaryNavigationFragment();
+        if (currentFragment instanceof FragCarrito) {
+            ((FragCarrito) currentFragment).recargarDespuesDePago();
+        }
     }
 }

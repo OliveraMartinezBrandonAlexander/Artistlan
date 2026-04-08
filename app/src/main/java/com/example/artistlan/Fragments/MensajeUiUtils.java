@@ -1,5 +1,7 @@
 package com.example.artistlan.Fragments;
 
+import com.example.artistlan.Conector.model.NotificacionDTO;
+import com.example.artistlan.R;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -98,6 +100,56 @@ public final class MensajeUiUtils {
         return "Ref: " + tipo + " #" + referenciaId;
     }
 
+    public static String obtenerTextoCtaSemantico(NotificacionDTO item) {
+        if (item == null) {
+            return null;
+        }
+        String tipo = normalizar(item.getTipo());
+        if (tipo.contains("obra_vendida") || tipo.contains("compra_confirmada")) {
+            return "Ir a historial";
+        }
+        if (tipo.contains("solicitud_aceptada")
+                || tipo.contains("reserva_liberada")
+                || tipo.contains("reserva_expirada")
+                || tipo.contains("reserva_cancelada")
+                || tipo.contains("carrito")) {
+            return "Ir al carrito";
+        }
+        if (tipo.contains("solicitud")) {
+            return "Ir a solicitudes";
+        }
+        return null;
+    }
+
+    public static Integer obtenerDestinoSemantico(NotificacionDTO item) {
+        if (item == null) {
+            return null;
+        }
+        String tipo = normalizar(item.getTipo());
+        if (tipo.contains("obra_vendida") || tipo.contains("compra_confirmada")) {
+            return R.id.fragTransacciones;
+        }
+        if (tipo.contains("solicitud_aceptada")
+                || tipo.contains("reserva_liberada")
+                || tipo.contains("reserva_expirada")
+                || tipo.contains("reserva_cancelada")
+                || tipo.contains("carrito")) {
+            return R.id.fragCarrito;
+        }
+        if (tipo.contains("solicitud")) {
+            return R.id.fragCentroMensajes;
+        }
+        return null;
+    }
+
+    public static boolean destinoSemanticoRequiereSolicitudesTab(NotificacionDTO item) {
+        if (item == null) {
+            return false;
+        }
+        String tipo = normalizar(item.getTipo());
+        return tipo.contains("solicitud");
+    }
+
     public static String formatearMensajeConMotivo(String mensajeRaw) {
         if (mensajeRaw == null) {
             return "";
@@ -146,5 +198,12 @@ public final class MensajeUiUtils {
             }
         }
         return null;
+    }
+
+    private static String normalizar(String valor) {
+        if (valor == null) {
+            return "";
+        }
+        return valor.trim().toLowerCase(Locale.ROOT);
     }
 }

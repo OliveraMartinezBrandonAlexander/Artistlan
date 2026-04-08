@@ -25,6 +25,8 @@ public class NotificacionesAdapter extends RecyclerView.Adapter<NotificacionesAd
     public interface Listener {
         void onDetalle(@NonNull NotificacionDTO item);
 
+        void onNavegar(@NonNull NotificacionDTO item);
+
         void onMarcarLeida(@NonNull NotificacionDTO item);
 
         void onEliminar(@NonNull NotificacionDTO item);
@@ -63,16 +65,7 @@ public class NotificacionesAdapter extends RecyclerView.Adapter<NotificacionesAd
                 ? R.drawable.bg_chip_mensaje_sistema
                 : R.drawable.bg_chip_mensaje_usuario);
 
-        boolean tieneReferenciaNavegable = item.getReferenciaTipo() != null
-                && !item.getReferenciaTipo().trim().isEmpty()
-                && item.getReferenciaId() != null;
-        String referencia = MensajeUiUtils.etiquetaReferencia(item.getReferenciaTipo(), item.getReferenciaId());
-        if (!tieneReferenciaNavegable || referencia.isEmpty()) {
-            holder.tvReferencia.setVisibility(View.GONE);
-        } else {
-            holder.tvReferencia.setVisibility(View.VISIBLE);
-            holder.tvReferencia.setText(referencia);
-        }
+        holder.tvReferencia.setVisibility(View.GONE);
 
         holder.unreadDot.setVisibility(item.isLeida() ? View.GONE : View.VISIBLE);
         holder.btnMarcarLeida.setVisibility(item.isLeida() ? View.GONE : View.VISIBLE);
@@ -93,8 +86,16 @@ public class NotificacionesAdapter extends RecyclerView.Adapter<NotificacionesAd
                 .circleCrop()
                 .into(holder.ivOrigen);
 
+        String ctaTexto = MensajeUiUtils.obtenerTextoCtaSemantico(item);
+        if (ctaTexto == null || ctaTexto.trim().isEmpty()) {
+            holder.btnVerDetalle.setText("Ver detalle");
+            holder.btnVerDetalle.setOnClickListener(v -> listener.onDetalle(item));
+        } else {
+            holder.btnVerDetalle.setText(ctaTexto);
+            holder.btnVerDetalle.setOnClickListener(v -> listener.onNavegar(item));
+        }
+
         holder.cardRoot.setOnClickListener(v -> listener.onDetalle(item));
-        holder.btnVerDetalle.setOnClickListener(v -> listener.onDetalle(item));
         holder.btnMarcarLeida.setOnClickListener(v -> listener.onMarcarLeida(item));
         holder.btnEliminar.setOnClickListener(v -> listener.onEliminar(item));
     }

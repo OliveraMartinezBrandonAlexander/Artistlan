@@ -2,9 +2,14 @@ package com.example.artistlan.Conector.model;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Locale;
+
 public class TransaccionResumenDTO {
 
     private Integer idTransaccion;
+
+    @SerializedName(value = "tipoOrigen", alternate = {"tipo", "origen", "sourceType"})
+    private String tipoOrigen;
 
     @SerializedName(value = "idObra", alternate = {"obraId"})
     private Integer idObra;
@@ -39,6 +44,18 @@ public class TransaccionResumenDTO {
     @SerializedName(value = "nombreVendedor", alternate = {"nombrePropietario"})
     private String nombreVendedor;
 
+    @SerializedName(value = "usuarioComprador", alternate = {"compradorUsuario", "usernameComprador", "loginComprador"})
+    private String usuarioComprador;
+
+    @SerializedName(value = "usuarioVendedor", alternate = {"vendedorUsuario", "usernameVendedor", "loginVendedor"})
+    private String usuarioVendedor;
+
+    @SerializedName(value = "fotoComprador", alternate = {"avatarComprador", "compradorFoto", "fotoPerfilComprador"})
+    private String fotoComprador;
+
+    @SerializedName(value = "fotoVendedor", alternate = {"avatarVendedor", "vendedorFoto", "fotoPerfilVendedor"})
+    private String fotoVendedor;
+
     @SerializedName(value = "obra", alternate = {"obraDTO", "detalleObra"})
     private ObraDTO obra;
 
@@ -47,6 +64,20 @@ public class TransaccionResumenDTO {
 
     public Integer getIdTransaccion() {
         return idTransaccion;
+    }
+
+    public String getTipoOrigen() {
+        if (tipoOrigen == null || tipoOrigen.trim().isEmpty()) {
+            return null;
+        }
+        String valor = tipoOrigen.trim().toUpperCase(Locale.ROOT);
+        if (valor.contains("OBRA")) {
+            return "OBRA_DIRECTA";
+        }
+        if (valor.contains("CARRITO")) {
+            return "CARRITO";
+        }
+        return valor;
     }
 
     public Integer getIdObra() {
@@ -113,5 +144,33 @@ public class TransaccionResumenDTO {
             return vendedor.getNombreCompleto();
         }
         return getNombreArtista();
+    }
+
+    public String getUsuarioComprador() {
+        if (usuarioComprador != null && !usuarioComprador.trim().isEmpty()) {
+            return usuarioComprador.trim();
+        }
+        return comprador != null ? comprador.getUsuario() : null;
+    }
+
+    public String getUsuarioVendedor() {
+        if (usuarioVendedor != null && !usuarioVendedor.trim().isEmpty()) {
+            return usuarioVendedor.trim();
+        }
+        return vendedor != null ? vendedor.getUsuario() : null;
+    }
+
+    public String getFotoComprador() {
+        if (fotoComprador != null && !fotoComprador.trim().isEmpty()) {
+            return fotoComprador.trim();
+        }
+        return comprador != null ? comprador.getFotoPerfil() : null;
+    }
+
+    public String getFotoVendedor() {
+        if (fotoVendedor != null && !fotoVendedor.trim().isEmpty()) {
+            return fotoVendedor.trim();
+        }
+        return vendedor != null ? vendedor.getFotoPerfil() : null;
     }
 }

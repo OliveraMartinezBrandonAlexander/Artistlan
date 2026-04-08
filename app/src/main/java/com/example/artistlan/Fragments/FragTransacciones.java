@@ -16,6 +16,8 @@ import com.example.artistlan.R;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import java.util.List;
+
 public class FragTransacciones extends Fragment {
 
     private TabLayout tabLayout;
@@ -55,6 +57,18 @@ public class FragTransacciones extends Fragment {
         View menuInferior = getActivity().findViewById(R.id.MenuInferior);
         if (menuInferior != null) {
             menuInferior.setVisibility(View.VISIBLE);
+        }
+    }
+
+    public void recargarDespuesDePago() {
+        if (!isAdded()) {
+            return;
+        }
+        List<Fragment> children = getChildFragmentManager().getFragments();
+        for (Fragment fragment : children) {
+            if (fragment instanceof BaseTransaccionesFragment) {
+                ((BaseTransaccionesFragment) fragment).recargarDespuesDePago();
+            }
         }
     }
 

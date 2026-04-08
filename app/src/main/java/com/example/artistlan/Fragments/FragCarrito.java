@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,9 +31,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.CarritoApi;
+import com.example.artistlan.Conector.api.CarritoPaypalApi;
+import com.example.artistlan.Conector.api.PagoPaypalApi;
 import com.example.artistlan.Conector.model.CarritoDTO;
+import com.example.artistlan.Conector.model.CrearOrdenPaypalCarritoResponseDTO;
+import com.example.artistlan.Conector.model.CrearOrdenPaypalResponseDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.adapter.CarritoObraAdapter;
+import com.example.artistlan.pagos.PagoPaypalSessionManager;
+import com.example.artistlan.pagos.PagoSyncManager;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -61,8 +68,14 @@ public class FragCarrito extends Fragment {
     private ProgressBar progressCarrito;
     private CarritoObraAdapter adapter;
     private CarritoApi carritoApi;
+    private PagoPaypalApi pagoPaypalApi;
+    private CarritoPaypalApi carritoPaypalApi;
     private int idUsuarioLogueado = -1;
     private final Set<Integer> obrasEnEliminacion = new HashSet<>();
+    private boolean compraEnProceso = false;
+    private long ultimaVersionPagoRefrescada = 0L;
+    private long ultimoIntentoCompraMs = 0L;
+    private static final long COMPRA_TAP_GUARD_MS = 1200L;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -77,6 +90,9 @@ public class FragCarrito extends Fragment {
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
 
         carritoApi = RetrofitClient.getClient().create(CarritoApi.class);
+        pagoPaypalApi = RetrofitClient.getClient().create(PagoPaypalApi.class);
+        carritoPaypalApi = RetrofitClient.getClient().create(CarritoPaypalApi.class);
+        ultimaVersionPagoRefrescada = PagoSyncManager.getLastCaptureAt(requireContext());
 
         btnVolverExplorar = view.findViewById(R.id.btnVolverExplorar);
         btnComprarCarrito = view.findViewById(R.id.btnComprarCarrito);
@@ -110,6 +126,14 @@ public class FragCarrito extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        if (PagoPaypalSessionManager.shouldCaptureOnReturn(requireContext())
+                && !PagoPaypalSessionManager.hasApprovalFromDeepLink(requireContext())) {
+            PagoPaypalSessionManager.clear(requireContext());
+        }
+        long ultimaVersionCaptura = PagoSyncManager.getLastCaptureAt(requireContext());
+        if (ultimaVersionCaptura > ultimaVersionPagoRefrescada) {
+            ultimaVersionPagoRefrescada = ultimaVersionCaptura;
+        }
         cargarCarrito();
     }
 
@@ -505,7 +529,11 @@ public class FragCarrito extends Fragment {
     }
 
     private void prepararCompraObra(CarritoDTO item, int position) {
-        Toast.makeText(requireContext(), "Compra de obra disponible en el siguiente bloque", Toast.LENGTH_SHORT).show();
+        if (item == null || item.getIdObra() == null || item.getIdObra() <= 0) {
+            Toast.makeText(requireContext(), "No se pudo identificar la obra a comprar", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        mostrarDialogoConfirmarCompra(() -> iniciarCompraObra(item));
     }
 
     private void prepararCompraCarrito() {
@@ -513,7 +541,190 @@ public class FragCarrito extends Fragment {
             Toast.makeText(requireContext(), "Tu carrito esta vacio", Toast.LENGTH_SHORT).show();
             return;
         }
-        Toast.makeText(requireContext(), "Compra de carrito disponible en el siguiente bloque", Toast.LENGTH_SHORT).show();
+        mostrarDialogoConfirmarCompra(this::iniciarCompraCarrito);
+    }
+
+    public void recargarDespuesDePago() {
+        if (!isAdded()) {
+            return;
+        }
+        ultimaVersionPagoRefrescada = PagoSyncManager.getLastCaptureAt(requireContext());
+        cargarCarrito();
+    }
+
+    private void mostrarDialogoConfirmarCompra(Runnable onConfirmar) {
+        if (!isAdded()) {
+            return;
+        }
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Confirmar compra")
+                .setMessage("Estas a punto de comprar esta obra.\n\nEl pago se realizara mediante PayPal.\nTe recomendamos haber acordado previamente los detalles de entrega con el vendedor.\n\nDeseas continuar?")
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Continuar", (dialog, which) -> {
+                    if (onConfirmar != null) {
+                        onConfirmar.run();
+                    }
+                })
+                .show();
+    }
+
+    private void iniciarCompraObra(CarritoDTO item) {
+        if (!puedeLanzarCompraAhora()) {
+            return;
+        }
+        if (compraEnProceso) {
+            Toast.makeText(requireContext(), "Ya estamos procesando una compra", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (idUsuarioLogueado <= 0) {
+            Toast.makeText(requireContext(), "Debes iniciar sesion para comprar", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Integer idObra = item.getIdObra();
+        if (idObra == null || idObra <= 0) {
+            Toast.makeText(requireContext(), "No se pudo identificar la obra a comprar", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        setCompraEnProceso(true);
+        pagoPaypalApi.crearOrden(idObra, idUsuarioLogueado).enqueue(new Callback<CrearOrdenPaypalResponseDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<CrearOrdenPaypalResponseDTO> call, @NonNull Response<CrearOrdenPaypalResponseDTO> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (!response.isSuccessful() || response.body() == null) {
+                    setCompraEnProceso(false);
+                    String backendMessage = resolveCompraErrorMessage(response, "No se pudo iniciar la compra de la obra");
+                    Toast.makeText(requireContext(), backendMessage, Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                CrearOrdenPaypalResponseDTO body = response.body();
+                String orderId = safe(body.getPaypalOrderId(), "");
+                String approveLink = safe(body.getApproveLink(), "");
+                if (orderId.isEmpty() || approveLink.isEmpty()) {
+                    setCompraEnProceso(false);
+                    Toast.makeText(requireContext(), "No se recibio un enlace valido de PayPal", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                PagoPaypalSessionManager.savePendingOrder(requireContext(), orderId, idObra, idUsuarioLogueado);
+                PagoPaypalSessionManager.markApprovalOpened(requireContext());
+                abrirPaypal(approveLink);
+                setCompraEnProceso(false);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<CrearOrdenPaypalResponseDTO> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                setCompraEnProceso(false);
+                Toast.makeText(requireContext(), "Error de red al iniciar compra: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void iniciarCompraCarrito() {
+        if (!puedeLanzarCompraAhora()) {
+            return;
+        }
+        if (compraEnProceso) {
+            Toast.makeText(requireContext(), "Ya estamos procesando una compra", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (idUsuarioLogueado <= 0) {
+            Toast.makeText(requireContext(), "Debes iniciar sesion para comprar", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        setCompraEnProceso(true);
+        carritoPaypalApi.crearOrdenCarrito(idUsuarioLogueado).enqueue(new Callback<CrearOrdenPaypalCarritoResponseDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<CrearOrdenPaypalCarritoResponseDTO> call, @NonNull Response<CrearOrdenPaypalCarritoResponseDTO> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (!response.isSuccessful() || response.body() == null) {
+                    setCompraEnProceso(false);
+                    String backendMessage = resolveCompraErrorMessage(response, "No se pudo iniciar la compra del carrito");
+                    Toast.makeText(requireContext(), backendMessage, Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                CrearOrdenPaypalCarritoResponseDTO body = response.body();
+                String orderId = safe(body.getPaypalOrderId(), "");
+                String approveLink = safe(body.getApproveLink(), "");
+                if (orderId.isEmpty() || approveLink.isEmpty()) {
+                    setCompraEnProceso(false);
+                    Toast.makeText(requireContext(), "No se recibio un enlace valido de PayPal", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                PagoPaypalSessionManager.savePendingOrder(requireContext(), orderId, -1, idUsuarioLogueado);
+                PagoPaypalSessionManager.markApprovalOpened(requireContext());
+                abrirPaypal(approveLink);
+                setCompraEnProceso(false);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<CrearOrdenPaypalCarritoResponseDTO> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                setCompraEnProceso(false);
+                Toast.makeText(requireContext(), "Error de red al iniciar compra: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void abrirPaypal(String approveLink) {
+        if (!isAdded()) {
+            return;
+        }
+        ultimoIntentoCompraMs = SystemClock.elapsedRealtime();
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(approveLink));
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(requireContext(), "No se pudo abrir PayPal en este dispositivo", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void setCompraEnProceso(boolean enProceso) {
+        compraEnProceso = enProceso;
+        progressCarrito.setVisibility(enProceso ? View.VISIBLE : View.GONE);
+        btnComprarCarrito.setEnabled(!enProceso && adapter != null && adapter.getItemCount() > 0);
+        btnComprarCarrito.setAlpha(btnComprarCarrito.isEnabled() ? 1f : 0.55f);
+    }
+
+    private boolean puedeLanzarCompraAhora() {
+        long ahora = SystemClock.elapsedRealtime();
+        if (ahora - ultimoIntentoCompraMs < COMPRA_TAP_GUARD_MS) {
+            Toast.makeText(requireContext(), "Espera un momento antes de volver a intentar", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
+    private String resolveCompraErrorMessage(Response<?> response, String fallback) {
+        String backendMessage = ApiErrorParser.extractMessage(response);
+        if (backendMessage != null && !backendMessage.trim().isEmpty()) {
+            return backendMessage;
+        }
+        int code = response != null ? response.code() : -1;
+        if (code == 404) {
+            return "La reserva ya no esta disponible para esta obra";
+        }
+        if (code == 409) {
+            return "No se pudo completar la compra por un conflicto de estado de reserva";
+        }
+        if (code >= 500) {
+            return "El servidor no pudo procesar la compra en este momento";
+        }
+        return fallback + (code > 0 ? " (" + code + ")" : "");
     }
 
     private void actualizarEstadoVacio(boolean mostrarVacio, String titulo, String subtitulo) {

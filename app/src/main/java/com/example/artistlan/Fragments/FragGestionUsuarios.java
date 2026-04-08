@@ -14,6 +14,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -69,8 +70,14 @@ public class FragGestionUsuarios extends Fragment {
         if (menuInferior != null) menuInferior.setVisibility(View.GONE);
 
         btnRegresar.setOnClickListener(v -> {
-            if (!NavHostFragment.findNavController(this).navigateUp()) {
-                requireActivity().onBackPressed();
+            NavController navController = NavHostFragment.findNavController(this);
+            boolean regreso = navController.popBackStack();
+            if (!regreso) {
+                try {
+                    navController.navigate(R.id.fragMain);
+                } catch (Exception ignored) {
+                    // evitar cierre abrupto de activity por fallback de back global
+                }
             }
         });
 

@@ -1,23 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:paddingStart="12dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="12dp"
+    android:paddingBottom="10dp">
 
-    <ImageButton
-        android:id="@+id/btnVolverExplorar"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="@android:color/transparent"
-        android:contentDescription="Volver a explorar"
-        android:scaleType="centerInside"
-        android:src="@drawable/regresarimg" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btnVolverExplorar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_back_bubble"
+            android:contentDescription="Volver a explorar"
+            android:padding="8dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/regresarimg" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="Carrito"
+            android:textColor="#1C1C1C"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="8dp"
         android:layout_weight="1">
 
         <androidx.recyclerview.widget.RecyclerView
@@ -25,19 +46,44 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingBottom="12dp" />
+            android:paddingBottom="10dp" />
 
-        <TextView
-            android:id="@+id/tvCarritoVacio"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
+        <LinearLayout
+            android:id="@+id/layoutCarritoVacio"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:gravity="center"
-            android:text="Tu carrito esta vacio"
-            android:textColor="#1B1B1B"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:visibility="gone" />
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:alpha="0.8"
+                android:src="@drawable/ic_carrito_artistlan" />
+
+            <TextView
+                android:id="@+id/tvCarritoVacio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:text="Tu carrito esta vacio"
+                android:textColor="#1B1B1B"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvCarritoVacioSub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:text="Agrega obras reservadas para verlas aqui."
+                android:textColor="#666666"
+                android:textSize="14sp" />
+        </LinearLayout>
 
         <ProgressBar
             android:id="@+id/progressCarrito"
@@ -48,14 +94,46 @@
 
     </FrameLayout>
 
-    <Button
-        android:id="@+id/btnComprarCarrito"
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="12dp"
-        android:backgroundTint="#A1BBCE"
-        android:text="Comprar"
-        android:textAllCaps="false"
-        android:visibility="gone" />
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="#F3E8FF"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvResumenCantidad"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Items: 0"
+                android:textColor="#2F2F2F"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvResumenTotal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Total: $ 0.00"
+                android:textColor="#181818"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnComprarCarrito"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="#A1BBCE"
+                android:text="Comprar todo"
+                android:textAllCaps="false" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
 </LinearLayout>

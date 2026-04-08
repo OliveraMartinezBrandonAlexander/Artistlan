@@ -17,6 +17,12 @@ public class CarritoDTO {
     private String titulo;
     private String descripcion;
     private String estado;
+    @SerializedName(value = "fechaExpiracionReserva", alternate = {"reservadaHasta", "reservaHasta", "fechaReservaHasta", "fechaFinReserva", "fechaExpiracion"})
+    private String fechaExpiracionReserva;
+    @SerializedName(value = "tiempoRestanteReserva", alternate = {"reservaTiempoRestante", "tiempoRestante", "restanteReserva"})
+    private String tiempoRestanteReserva;
+    @SerializedName(value = "minutosRestantesReserva", alternate = {"minutosRestantes", "restanteMinutos"})
+    private Integer minutosRestantesReserva;
     private Double precio;
     private String imagen1;
     private String imagen2;
@@ -70,6 +76,18 @@ public class CarritoDTO {
             return estado;
         }
         return obra != null ? obra.getEstado() : null;
+    }
+
+    public String getFechaExpiracionReserva() {
+        return fechaExpiracionReserva;
+    }
+
+    public String getTiempoRestanteReserva() {
+        return tiempoRestanteReserva;
+    }
+
+    public Integer getMinutosRestantesReserva() {
+        return minutosRestantesReserva;
     }
 
     public Double getPrecio() {

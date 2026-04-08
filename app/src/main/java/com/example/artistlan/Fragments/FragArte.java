@@ -15,20 +15,21 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.artistlan.Conector.RetrofitClient;
-import com.example.artistlan.Conector.api.CarritoApi;
 import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.api.PagoPaypalApi;
+import com.example.artistlan.Conector.api.SolicitudesApi;
 import com.example.artistlan.Conector.model.CapturarOrdenPaypalResponseDTO;
-import com.example.artistlan.Conector.model.CarritoDTO;
-import com.example.artistlan.Conector.model.CarritoRequestDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
+import com.example.artistlan.Conector.model.SolicitudCompraCrearRequestDTO;
+import com.example.artistlan.Conector.model.SolicitudDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
 import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.pagos.PagoPaypalSessionManager;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,7 +48,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     private String categoriaFiltroActual = "";
     private ObraApi obraApi;
     private FavoritosApi favoritosApi;
-    private CarritoApi carritoApi;
+    private SolicitudesApi solicitudesApi;
     private PagoPaypalApi pagoPaypalApi;
     private int idUsuarioLogueado = -1;
     private boolean capturandoPago = false;
@@ -77,7 +78,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
 
         obraApi = RetrofitClient.getClient().create(ObraApi.class);
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
-        carritoApi = RetrofitClient.getClient().create(CarritoApi.class);
+        solicitudesApi = RetrofitClient.getClient().create(SolicitudesApi.class);
         pagoPaypalApi = RetrofitClient.getClient().create(PagoPaypalApi.class);
 
         configurarObras(view);
@@ -136,40 +137,13 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     }
 
     private void agregarObraAlCarrito(TarjetaTextoObraItem obraItem, int position) {
-        if (idUsuarioLogueado <= 0) {
-            Toast.makeText(getContext(), "Debes iniciar sesion para solicitar compra", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        CarritoRequestDTO requestDTO = new CarritoRequestDTO(idUsuarioLogueado, obraItem.getIdObra());
-        carritoApi.agregarAlCarrito(requestDTO).enqueue(new Callback<CarritoDTO>() {
-            @Override
-            public void onResponse(@NonNull Call<CarritoDTO> call, @NonNull Response<CarritoDTO> response) {
-                if (!isAdded()) {
-                    return;
-                }
-
-                if (response.isSuccessful()) {
-                    Toast.makeText(getContext(), "Solicitud de compra enviada", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (response.code() == 409) {
-                    Toast.makeText(getContext(), "Esta obra ya tiene una solicitud activa", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                Toast.makeText(getContext(), "No se pudo solicitar compra (" + response.code() + ")", Toast.LENGTH_LONG).show();
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<CarritoDTO> call, @NonNull Throwable t) {
-                if (!isAdded()) {
-                    return;
-                }
-                Toast.makeText(getContext(), "Error de red al solicitar compra", Toast.LENGTH_LONG).show();
-            }
-        });
+        SolicitudCompraUiHelper.mostrarDialogoSolicitudCompra(
+                this,
+                idUsuarioLogueado,
+                solicitudesApi,
+                obraItem,
+                this::obtenerObrasDeAPI
+        );
     }
 
     private void intentarCapturarPagoPendienteComoFallback() {

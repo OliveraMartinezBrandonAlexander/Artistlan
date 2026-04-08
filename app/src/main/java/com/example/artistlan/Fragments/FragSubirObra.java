@@ -190,11 +190,15 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
     private void mostrarOpcionesImagen() {
         if (!isAdded()) return;
+        if (modoEdicion) {
+            Toast.makeText(getContext(), "Las imagenes no se pueden modificar despues de publicar la obra.", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         String[] opciones = {"Elegir de galería", "Tomar foto con cámara"};
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("Selecciona una opción")
+                .setTitle("Selecciona una opcion")
                 .setItems(opciones, (dialog, which) -> {
                     if (which == 0) {
                         seleccionarImagenObraLauncher.launch("image/*");
@@ -296,8 +300,9 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             return;
         }
         txtTituloPantalla.setText("Editar Obra");
-        txtDescripcionPantalla.setText("Actualiza la información de tu obra. El precio solo se puede asignar una vez al pasar de exhibición a venta.");
-        btnSubirImg.setText("CAMBIAR IMAGEN");
+        txtDescripcionPantalla.setText("Actualiza la informacion de tu obra. Las imagenes no pueden modificarse tras su publicacion.");
+        btnSubirImg.setVisibility(View.GONE);
+        btnSubirImg.setEnabled(false);
         btnSubirObra.setText("GUARDAR CAMBIOS");
     }
 
@@ -491,6 +496,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
 
     private void validarYMostrarDialogoObra() {
+        limpiarErroresValidacionObra();
 
         if (uriImagenObra == null && (!modoEdicion || imagenActualUrl == null || imagenActualUrl.trim().isEmpty())) {
             Toast.makeText(getContext(), "Selecciona una imagen.", Toast.LENGTH_SHORT).show();
@@ -498,7 +504,10 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         }
 
         if (!modoEdicion && (cbAutoriaObra == null || !cbAutoriaObra.isChecked())) {
-            Toast.makeText(getContext(), "Debes confirmar la autoria de la obra.", Toast.LENGTH_LONG).show();
+            if (cbAutoriaObra != null) {
+                cbAutoriaObra.setError("Debes confirmar la autoria de la obra.");
+                cbAutoriaObra.requestFocus();
+            }
             return;
         }
 
@@ -515,14 +524,13 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         String tecnica = etTecnicas.getText().toString().trim();
 
         int radioId = rgOpciones.getCheckedRadioButtonId();
-        if (titulo.isEmpty() || descripcion.isEmpty() || tecnica.isEmpty() || medidas.isEmpty() || radioId == -1) {
-            Toast.makeText(getContext(), "Completa los campos obligatorios", Toast.LENGTH_LONG).show();
+        if (!validarCamposObligatoriosObra(titulo, descripcion, tecnica, medidas, radioId)) {
             return;
         }
 
         CategoriaDTO categoria = obtenerCategoriaSeleccionada();
         if (categoria == null) {
-            Toast.makeText(getContext(), "Selecciona una categoria.", Toast.LENGTH_LONG).show();
+            marcarErrorCategoria("Selecciona una categoria.");
             return;
         }
 
@@ -535,17 +543,20 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         boolean puedeAsignarPrecioEnEdicion = puedeAsignarPrecioPrimeraVezEnEdicion();
         if (esVenta && (!modoEdicion || puedeAsignarPrecioEnEdicion)) {
             if (precioStr.isEmpty()) {
-                Toast.makeText(getContext(), "Debes ingresar un precio para obras en venta.", Toast.LENGTH_LONG).show();
+                etPrecio.setError("Debes ingresar un precio para obras en venta.");
+                etPrecio.requestFocus();
                 return;
             }
             try {
                 precio = Double.parseDouble(precioStr);
                 if (precio < 0) {
-                    Toast.makeText(getContext(), "El precio no puede ser negativo.", Toast.LENGTH_LONG).show();
+                    etPrecio.setError("El precio no puede ser negativo.");
+                    etPrecio.requestFocus();
                     return;
                 }
             } catch (NumberFormatException e) {
-                Toast.makeText(getContext(), "Precio invalido.", Toast.LENGTH_LONG).show();
+                etPrecio.setError("Precio invalido.");
+                etPrecio.requestFocus();
                 return;
             }
         }
@@ -579,8 +590,10 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                         "Descripción:\n" + descripcion + "\n\n" +
                         "Estado:\n" + estado + "\n\n" +
                         "Técnica:\n" + tecnica + "\n\n" +
-                        (precio != null
-                                ? "Precio:\n$" + precio + "\n\n"
+                        (esEstadoVenta(estado)
+                                ? "Precio (este campo no se puede actualizar):\n"
+                                + (precio != null ? "$" + precio : "Sin precio")
+                                + "\n\n"
                                 : ""
                         ) +
                         (!medidas.isEmpty()
@@ -610,6 +623,104 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         dialog.show();
     }
 
+    private void limpiarErroresValidacionObra() {
+        if (etTituloObra != null) etTituloObra.setError(null);
+        if (etDescripcion != null) etDescripcion.setError(null);
+        if (etTecnicas != null) etTecnicas.setError(null);
+        if (etMedidaAncho != null) etMedidaAncho.setError(null);
+        if (etMedidaAlto != null) etMedidaAlto.setError(null);
+        if (etPrecio != null) etPrecio.setError(null);
+        if (cbAutoriaObra != null) cbAutoriaObra.setError(null);
+
+        View root = getView();
+        if (root != null) {
+            RadioButton rbVenta = root.findViewById(R.id.rbdventa);
+            RadioButton rbExhibicion = root.findViewById(R.id.rbexhibicion);
+            if (rbVenta != null) rbVenta.setError(null);
+            if (rbExhibicion != null) rbExhibicion.setError(null);
+        }
+
+        View selected = spinnerCategoria != null ? spinnerCategoria.getSelectedView() : null;
+        if (selected instanceof TextView) {
+            ((TextView) selected).setError(null);
+        }
+    }
+
+    private boolean validarCamposObligatoriosObra(
+            String titulo,
+            String descripcion,
+            String tecnica,
+            String medidas,
+            int radioId
+    ) {
+        boolean hayError = false;
+
+        if (titulo.isEmpty()) {
+            etTituloObra.setError("Ingresa un titulo");
+            etTituloObra.requestFocus();
+            hayError = true;
+        }
+
+        if (descripcion.isEmpty()) {
+            etDescripcion.setError("Ingresa una descripcion");
+            if (!hayError) etDescripcion.requestFocus();
+            hayError = true;
+        }
+
+        if (tecnica.isEmpty()) {
+            etTecnicas.setError("Ingresa una tecnica");
+            if (!hayError) etTecnicas.requestFocus();
+            hayError = true;
+        }
+
+        if (medidas.isEmpty()) {
+            String ancho = normalizarCampoMedida(etMedidaAncho.getText().toString());
+            String alto = normalizarCampoMedida(etMedidaAlto.getText().toString());
+            if (ancho.isEmpty()) {
+                etMedidaAncho.setError("Ingresa el ancho");
+                if (!hayError) etMedidaAncho.requestFocus();
+                hayError = true;
+            }
+            if (alto.isEmpty()) {
+                etMedidaAlto.setError("Ingresa el alto");
+                if (!hayError) etMedidaAlto.requestFocus();
+                hayError = true;
+            }
+        }
+
+        if (radioId == -1) {
+            View root = getView();
+            if (root != null) {
+                RadioButton rbVenta = root.findViewById(R.id.rbdventa);
+                if (rbVenta != null) {
+                    rbVenta.setError("Selecciona un estado");
+                    if (!hayError) rbVenta.requestFocus();
+                }
+            }
+            hayError = true;
+        }
+
+        return !hayError;
+    }
+
+    private void marcarErrorCategoria(String mensaje) {
+        if (spinnerCategoria == null) return;
+        View selected = spinnerCategoria.getSelectedView();
+        if (selected instanceof TextView) {
+            TextView selectedText = (TextView) selected;
+            selectedText.setError(mensaje);
+            selectedText.requestFocus();
+            return;
+        }
+        Toast.makeText(getContext(), mensaje, Toast.LENGTH_LONG).show();
+    }
+
+    private boolean esEstadoVenta(String estado) {
+        if (estado == null) return false;
+        String estadoNormalizado = estado.trim().toLowerCase().replace("_", " ");
+        return estadoNormalizado.contains("venta");
+    }
+
 
     private void subirObraCompleta() {
         if (uriImagenObra == null) {
@@ -622,7 +733,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         int idUsuario = prefs.getInt("id", -1);
 
         if (idUsuario == -1) {
-            Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Error: No se encontrÃ³ ID de usuario.", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -634,7 +745,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
         int pos = spinnerCategoria.getSelectedItemPosition();
         if (pos == 0) {
-            Toast.makeText(getContext(), "Selecciona una categoría válida.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Selecciona una categorÃ­a vÃ¡lida.", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -657,7 +768,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                     return;
                 }
             } catch (NumberFormatException e) {
-                Toast.makeText(getContext(), "Formato de precio invÃ¡lido.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "Formato de precio invÃƒÂ¡lido.", Toast.LENGTH_LONG).show();
                 return;
             }
         }
@@ -702,11 +813,11 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private void guardarObra() {
         int idUsuario = obtenerIdUsuarioLogueado();
         if (idUsuario == -1) {
-            Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Error: No se encontrÃ³ ID de usuario.", Toast.LENGTH_LONG).show();
             return;
         }
 
-        if (uriImagenObra != null) {
+        if (!modoEdicion && uriImagenObra != null) {
             Toast.makeText(getContext(), "Cargando....", Toast.LENGTH_SHORT).show();
             firebaseRepo.subirImagenSolo(idUsuario, uriImagenObra, new FirebaseImageRepository.ImagenListener() {
                 @Override

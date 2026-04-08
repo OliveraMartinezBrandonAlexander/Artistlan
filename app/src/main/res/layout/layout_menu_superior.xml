@@ -89,14 +89,23 @@
                     android:scaleType="centerInside"
                     android:src="@drawable/ic_notificaciones_artistlan" />
 
-                <View
+                <TextView
                     android:id="@+id/notiBadge"
-                    android:layout_width="10dp"
-                    android:layout_height="10dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="18dp"
                     android:layout_gravity="top|end"
                     android:layout_marginTop="7dp"
                     android:layout_marginEnd="6dp"
-                    android:background="@drawable/bg_notification_badge" />
+                    android:background="@drawable/bg_notification_badge"
+                    android:gravity="center"
+                    android:minWidth="18dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:text="0"
+                    android:textColor="@android:color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
             </FrameLayout>
         </LinearLayout>
 

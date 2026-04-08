@@ -20,6 +20,7 @@ import com.bumptech.glide.Glide;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.FavoritosApi;
+import com.example.artistlan.Conector.api.SolicitudesApi;
 import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
@@ -67,6 +68,7 @@ public class FragVerPerfilPublico extends Fragment {
     private TarjetaTextoObraAdapter obraAdapter;
     private TarjetaTextoServicioAdapter servicioAdapter;
     private FavoritosApi favoritosApi;
+    private SolicitudesApi solicitudesApi;
     private UsuarioApi usuarioApi;
 
     private List<TarjetaTextoObraItem> obras = new ArrayList<>();
@@ -87,6 +89,7 @@ public class FragVerPerfilPublico extends Fragment {
         idArtista = getArguments() != null ? getArguments().getInt("idArtista", -1) : -1;
 
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
+        solicitudesApi = RetrofitClient.getClient().create(SolicitudesApi.class);
         usuarioApi = RetrofitClient.getClient().create(UsuarioApi.class);
 
         bindViews();
@@ -121,7 +124,18 @@ public class FragVerPerfilPublico extends Fragment {
         servicioAdapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
         servicioAdapter.setCurrentUserId(idUsuarioLogueado);
         obraAdapter.setOnLikeClickListener(this::toggleLikeObra);
+        obraAdapter.setOnPrimaryActionClickListener(this::solicitarCompraDesdePerfilPublico);
         servicioAdapter.setOnLikeClickListener(this::toggleLikeServicio);
+    }
+
+    private void solicitarCompraDesdePerfilPublico(TarjetaTextoObraItem obraItem, int position) {
+        SolicitudCompraUiHelper.mostrarDialogoSolicitudCompra(
+                this,
+                idUsuarioLogueado,
+                solicitudesApi,
+                obraItem,
+                this::cargarPerfilPublico
+        );
     }
 
     private void toggleLikeObra(TarjetaTextoObraItem item, int position) {
@@ -424,4 +438,3 @@ public class FragVerPerfilPublico extends Fragment {
         return (value == null || value.trim().isEmpty()) ? fallback : value;
     }
 }
-

@@ -224,8 +224,11 @@ public class FragMiArte extends Fragment {
         }
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("Eliminar")
-                .setMessage("¿Deseas eliminar esta obra?")
+                .setTitle("Eliminar obra")
+                .setMessage("Esta accion eliminara la obra de forma permanente.\n\n"
+                        + "Si hay solicitudes activas relacionadas, pueden cancelarse y "
+                        + "se notificara a compradores afectados.\n\n"
+                        + "Deseas continuar?")
                 .setNegativeButton("Cancelar", null)
                 .setPositiveButton("Eliminar", (dialog, which) -> eliminarObra(obraItem, position))
                 .show();
@@ -279,7 +282,7 @@ public class FragMiArte extends Fragment {
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 if (isAdded()) {
-                    Toast.makeText(requireContext(), "Error de conexión al eliminar la obra", Toast.LENGTH_LONG).show();
+                    Toast.makeText(requireContext(), "Error de conexion al eliminar la obra", Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -357,5 +360,6 @@ public class FragMiArte extends Fragment {
         });
     }
 }
+
 
 

@@ -184,7 +184,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                             if (isGranted) {
                                 tomarFotoPerfilLauncher.launch(null);
                             } else {
-                                Toast.makeText(this, "Debes conceder permiso de cÃ¡mara para tomar fotos", Toast.LENGTH_LONG).show();
+                                Toast.makeText(this, "Debes conceder permiso de cámara para tomar fotos", Toast.LENGTH_LONG).show();
                             }
                         }
                 );
@@ -264,10 +264,10 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     }
 
     private void mostrarOpcionesFotoPerfil() {
-        String[] opciones = {"Elegir de galerÃ­a", "Tomar foto con cÃ¡mara"};
+        String[] opciones = {"Elegir de galería", "Tomar foto con cámara"};
 
         new AlertDialog.Builder(this)
-                .setTitle("Selecciona una opciÃ³n")
+                .setTitle("Selecciona una opción")
                 .setItems(opciones, (dialog, which) -> {
                     if (which == 0) {
                         seleccionarImagenperfilLauncher.launch("image/*");
@@ -380,7 +380,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
             @Override
             public void onFailure(Call<List<CategoriaDTO>> call, Throwable t) {
-                Toast.makeText(ActActualizarDatos.this, "Error al cargar categorÃ­as: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(ActActualizarDatos.this, "Error al cargar categorías: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -399,15 +399,15 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     private void mostrarDialogoEliminarCuenta() {
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Eliminar cuenta")
-                .setMessage("Esta acciÃ³n es permanente y eliminarÃ¡ tu cuenta y toda tu informaciÃ³n. Â¿Deseas continuar?")
-                .setPositiveButton("SÃ­, eliminar", (dialog, which) -> {
+                .setMessage("Esta acción es permanente y eliminará tu cuenta y toda tu información. ¿Deseas continuar?")
+                .setPositiveButton("Sí, eliminar", (dialog, which) -> {
                     dialog.dismiss();
 
                     View view = LayoutInflater.from(this).inflate(R.layout.dialog_ingresar_password, null);
                     EditText etPassword = view.findViewById(R.id.etPasswordDialog);
 
                     AlertDialog dialogPassword = new AlertDialog.Builder(this)
-                            .setTitle("Confirma tu contraseÃ±a")
+                            .setTitle("Confirma tu contraseña")
                             .setView(view)
                             .setCancelable(false)
                             .setPositiveButton("Eliminar", null)
@@ -419,7 +419,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                         btnEliminar.setOnClickListener(v2 -> {
                             String passwordIngresada = etPassword.getText().toString().trim();
                             if (passwordIngresada.isEmpty()) {
-                                etPassword.setError("Ingresa tu contraseÃ±a");
+                                etPassword.setError("Ingresa tu contraseña");
                                 etPassword.requestFocus();
                                 return;
                             }
@@ -431,7 +431,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                                 dialogPassword.dismiss();
                                 eliminarCuentaConApi();
                             } else {
-                                etPassword.setError("ContraseÃ±a incorrecta");
+                                etPassword.setError("Contraseña incorrecta");
                                 etPassword.requestFocus();
                             }
                         });
@@ -448,7 +448,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
 
         if (idUsuario == -1) {
-            Toast.makeText(this, "Error: sesiÃ³n no vÃ¡lida", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error: sesión no válida", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -468,7 +468,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
                 } else {
                     Toast.makeText(ActActualizarDatos.this,
-                            "Error al eliminar la cuenta (CÃ³digo: " + response.code() + ")",
+                            "Error al eliminar la cuenta (Código: " + response.code() + ")",
                             Toast.LENGTH_LONG).show();
                 }
             }
@@ -476,7 +476,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 Toast.makeText(ActActualizarDatos.this,
-                        "Error de conexiÃ³n: " + t.getMessage(),
+                        "Error de conexión: " + t.getMessage(),
                         Toast.LENGTH_LONG).show();
             }
         });
@@ -486,7 +486,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
         int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
         if (idUsuario == -1) {
-            Toast.makeText(this, "Error: No se encontrÃ³ sesiÃ³n activa", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error: No se encontró sesión activa", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -494,7 +494,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         String fechaNac = etFecha.getText().toString().trim();
         if (nombre.isEmpty()) {
             etNombre.requestFocus();
-            Toast.makeText(this, "El nombre no puede estar vacÃ­o.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "El nombre no puede estar vacío.", Toast.LENGTH_SHORT).show();
             return;
         }
         if (fechaNac.isEmpty()) {
@@ -605,7 +605,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(ActActualizarDatos.this, "Fallo de conexiÃ³n: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(ActActualizarDatos.this, "Fallo de conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }

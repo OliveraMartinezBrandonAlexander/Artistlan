@@ -23,6 +23,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
 import androidx.navigation.NavOptions;
@@ -36,6 +37,8 @@ import com.example.artistlan.Conector.api.CarritoPaypalApi;
 import com.example.artistlan.Conector.api.PagoPaypalApi;
 import com.example.artistlan.Conector.model.CapturarOrdenPaypalCarritoResponseDTO;
 import com.example.artistlan.Conector.model.CapturarOrdenPaypalResponseDTO;
+import com.example.artistlan.Fragments.FragCentroMensajes;
+import com.example.artistlan.Fragments.MensajesBadgeManager;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ActAjustesTema;
 import com.example.artistlan.Theme.ThemeApplier;
@@ -67,7 +70,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private View menuGlowTop, menuGlowCenter, menuGlowBottom;
 
     // Badge campana
-    private View notiBadge;
+    private TextView notiBadge;
 
     // Glows del header drawer
     private View drawerGlow1, drawerGlow2;
@@ -110,7 +113,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         animarEntradaUI();
         animarCampana();
         animarGlows();
-        mostrarBadgeDemo(true);
+        refrescarBadgeMensajes();
     }
 
     private void initViews() {
@@ -423,14 +426,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                         )
                         .start();
 
-                mostrarBadgeDemo(false);
-
-                if (navController != null) {
-                    try {
-                        navegarSinDuplicar(R.id.fragFavoritos);
-                    } catch (Exception ignored) {
-                    }
-                }
+                abrirCentroMensajes(0);
             });
         }
 
@@ -477,6 +473,18 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                     return true;
                 }
 
+                if (itemId == R.id.navMensajes) {
+                    abrirCentroMensajes(0);
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    return true;
+                }
+
+                if (itemId == R.id.navNotificaciones) {
+                    abrirCentroMensajes(1);
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    return true;
+                }
+
                 if (itemId == R.id.navCerrarSesion) {
                     cerrarSesion();
                     drawerLayout.closeDrawer(GravityCompat.START);
@@ -505,6 +513,38 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 .build();
 
         navController.navigate(R.id.fragCarrito, null, navOptions);
+    }
+
+    public void abrirCentroMensajes(int tabInicial) {
+        if (navController == null) return;
+
+        Bundle args = new Bundle();
+        args.putInt(FragCentroMensajes.ARG_TAB_INICIAL, Math.max(0, Math.min(1, tabInicial)));
+
+        NavDestination current = navController.getCurrentDestination();
+        if (current != null && current.getId() == R.id.fragCentroMensajes) {
+            NavHostFragment navHostFragment =
+                    (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);
+            if (navHostFragment != null) {
+                Fragment currentFragment = navHostFragment.getChildFragmentManager().getPrimaryNavigationFragment();
+                if (currentFragment instanceof FragCentroMensajes) {
+                    ((FragCentroMensajes) currentFragment).seleccionarTab(tabInicial);
+                    return;
+                }
+            }
+        }
+
+        navegarSinDuplicar(R.id.fragCentroMensajes, args);
+    }
+
+    public void refrescarBadgeMensajes() {
+        SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+        int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+        MensajesBadgeManager.refrescarBadge(idUsuario, this::actualizarBadgeMensajesVisual);
+    }
+
+    public boolean navegarDesdeCentroMensajes(int destinationId, Bundle args) {
+        return navegarSinDuplicar(destinationId, args);
     }
 
     private void prepararAnimacionesIniciales() {
@@ -556,12 +596,20 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         }, 750);
     }
 
-    private void mostrarBadgeDemo(boolean visible) {
+    private void actualizarBadgeMensajesVisual(int totalPendientes) {
         if (notiBadge == null) return;
 
-        notiBadge.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (totalPendientes <= 0) {
+            notiBadge.setVisibility(View.GONE);
+            return;
+        }
 
-        if (visible) {
+        String badgeText = totalPendientes > 99 ? "99+" : String.valueOf(totalPendientes);
+        boolean animarEntrada = notiBadge.getVisibility() != View.VISIBLE;
+        notiBadge.setText(badgeText);
+        notiBadge.setVisibility(View.VISIBLE);
+
+        if (animarEntrada) {
             notiBadge.setScaleX(0.7f);
             notiBadge.setScaleY(0.7f);
             notiBadge.setAlpha(0f);
@@ -726,6 +774,10 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     }
 
     private boolean navegarSinDuplicar(int destinationId) {
+        return navegarSinDuplicar(destinationId, null);
+    }
+
+    private boolean navegarSinDuplicar(int destinationId, Bundle args) {
         if (navController == null) return false;
 
         NavDestination current = navController.getCurrentDestination();
@@ -739,7 +791,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 .build();
 
         try {
-            navController.navigate(destinationId, null, navOptions);
+            navController.navigate(destinationId, args, navOptions);
             return true;
         } catch (IllegalArgumentException e) {
             return false;
@@ -776,6 +828,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         applyThemeOnlyColors();
         cargarHeaderDrawer();
         configurarAdminDrawerSection();
+        refrescarBadgeMensajes();
         if (navController != null) {
             actualizarBotonesTopBar(navController.getCurrentDestination());
         }

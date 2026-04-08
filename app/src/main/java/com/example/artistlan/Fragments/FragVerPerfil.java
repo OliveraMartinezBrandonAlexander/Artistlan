@@ -26,6 +26,7 @@ import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.api.ServicioApi;
+import com.example.artistlan.Conector.api.SolicitudesApi;
 import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
@@ -63,6 +64,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private FavoritosApi favoritosApi;
     private ObraApi obraApi;
     private ServicioApi servicioApi;
+    private SolicitudesApi solicitudesApi;
     private UsuarioApi usuarioApi;
 
     private TarjetaTextoObraAdapter obraAdapter;
@@ -82,6 +84,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
         obraApi = RetrofitClient.getClient().create(ObraApi.class);
         servicioApi = RetrofitClient.getClient().create(ServicioApi.class);
+        solicitudesApi = RetrofitClient.getClient().create(SolicitudesApi.class);
         usuarioApi = RetrofitClient.getClient().create(UsuarioApi.class);
 
         View root = view.findViewById(R.id.rootPerfil);
@@ -116,6 +119,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         artistaAdapter.setCurrentUserId(idUsuarioLogueado);
 
         obraAdapter.setOnLikeClickListener(this::eliminarFavoritoObra);
+        obraAdapter.setOnPrimaryActionClickListener(this::solicitarCompraDesdeFavoritos);
         servicioAdapter.setOnLikeClickListener(this::eliminarFavoritoServicio);
         artistaAdapter.setOnLikeClickListener(this::eliminarFavoritoArtista);
         artistaAdapter.setOnVisitarClickListener(this::abrirPerfilPublicoDesdeFavoritos);
@@ -277,6 +281,20 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         dto.idUsuario = idUsuarioLogueado;
         dto.idObra = item.getIdObra();
         eliminarFavoritoDesdePerfil(dto, position, () -> obraAdapter.removeItemAt(position));
+    }
+
+    private void solicitarCompraDesdeFavoritos(TarjetaTextoObraItem item, int position) {
+        SolicitudCompraUiHelper.mostrarDialogoSolicitudCompra(
+                this,
+                idUsuarioLogueado,
+                solicitudesApi,
+                item,
+                () -> cargarFavoritosPorTab(
+                        tabFavoritos != null && tabFavoritos.getSelectedTabPosition() >= 0
+                                ? tabFavoritos.getSelectedTabPosition()
+                                : 0
+                )
+        );
     }
 
     private void eliminarFavoritoServicio(TarjetaTextoServicioItem item, int position) {

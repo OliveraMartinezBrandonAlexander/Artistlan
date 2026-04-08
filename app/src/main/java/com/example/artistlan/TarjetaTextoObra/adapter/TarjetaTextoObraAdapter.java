@@ -306,6 +306,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
     private boolean debeMostrarBotonPrincipal(TarjetaTextoObraItem obra) {
         boolean esPropia = ownedObraIds.contains(obra.getIdObra());
+        boolean cumpleReglas = cumpleReglasVisualesSolicitud(obra);
         boolean puedeComprar = obra != null && obra.isPuedeSolicitarCompra();
         if (!puedeComprar) {
             puedeComprar = puedeComprarse(obra);
@@ -315,9 +316,19 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             return false;
         }
         if (modoTarjeta == ModoTarjetaObra.CARRITO) {
-            return !esPropia && puedeComprar;
+            return !esPropia && cumpleReglas && puedeComprar;
         }
-        return !esPropia && puedeComprar;
+        return !esPropia && cumpleReglas && puedeComprar;
+    }
+
+    private boolean cumpleReglasVisualesSolicitud(TarjetaTextoObraItem obra) {
+        String estado = normalizarEstado(obra != null ? obra.getEstado() : null);
+        if (estado.isEmpty()) {
+            return true;
+        }
+        return !estado.contains("exhib")
+                && !estado.contains("reservad")
+                && !estado.contains("vendid");
     }
 
     private boolean puedeComprarse(TarjetaTextoObraItem obra) {

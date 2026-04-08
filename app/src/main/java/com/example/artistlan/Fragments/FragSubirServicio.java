@@ -280,9 +280,22 @@ public class FragSubirServicio extends Fragment {
             min = servicioActual != null ? servicioActual.getPrecioMin() : null;
             max = servicioActual != null ? servicioActual.getPrecioMax() : null;
         } else {
+            if (TextUtils.isEmpty(minTxt)) {
+                etPrecioMinServicio.setError("Ingresa un precio minimo");
+                etPrecioMinServicio.requestFocus();
+                return;
+            }
+            if (TextUtils.isEmpty(maxTxt)) {
+                etPrecioMaxServicio.setError("Ingresa un precio maximo");
+                etPrecioMaxServicio.requestFocus();
+                return;
+            }
             min = parsePrecio(minTxt, etPrecioMinServicio, "Precio minimo invalido");
             max = parsePrecio(maxTxt, etPrecioMaxServicio, "Precio maximo invalido");
-            if ((min != null && max != null) && min >= max) {
+            if (min == null || max == null) {
+                return;
+            }
+            if (min >= max) {
                 etPrecioMaxServicio.setError("El precio maximo debe ser mayor al minimo");
                 etPrecioMaxServicio.requestFocus();
                 return;
@@ -347,7 +360,7 @@ public class FragSubirServicio extends Fragment {
                 + "\n\nDescripcion:\n" + descripcion
                 + "\n\nTecnica:\n" + tecnica
                 + "\n\nContacto:\n" + tipoContacto + " - " + contacto
-                + "\n\nPrecio:\n" + precioTxt
+                + "\n\nRango de precio (este campo no se puede actualizar):\n" + precioTxt
                 + "\n\nCategoria:\n" + categoriaTxt);
 
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext()).setView(view).setCancelable(false).create();

@@ -87,6 +87,21 @@
         tools:layout="@layout/fragment_frag_favoritos" />
 
     <fragment
+        android:id="@+id/fragCentroMensajes"
+        android:name="com.example.artistlan.Fragments.FragCentroMensajes"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_centro_mensajes">
+
+        <argument
+            android:name="tab_inicial"
+            app:argType="integer"
+            android:defaultValue="0" />
+    </fragment>
+
+    <fragment
         android:id="@+id/fragVerPerfil"
         android:name="com.example.artistlan.Fragments.FragVerPerfil"
         app:enterAnim="@anim/nav_enter"

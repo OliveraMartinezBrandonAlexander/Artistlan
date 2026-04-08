@@ -309,10 +309,13 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     }
 
     private void mostrarDatePicker() {
-        Calendar calendar = Calendar.getInstance();
-        int anio = calendar.get(Calendar.YEAR);
-        int mes = calendar.get(Calendar.MONTH);
-        int dia = calendar.get(Calendar.DAY_OF_MONTH);
+        Calendar fechaMaxima = obtenerFechaMaximaMayorEdad();
+        Calendar inicio = Calendar.getInstance();
+        inicio.setTimeInMillis(fechaMaxima.getTimeInMillis());
+
+        int anio = inicio.get(Calendar.YEAR);
+        int mes = inicio.get(Calendar.MONTH);
+        int dia = inicio.get(Calendar.DAY_OF_MONTH);
 
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 this,
@@ -320,7 +323,18 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                         etFecha.setText(String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)),
                 anio, mes, dia
         );
+        datePickerDialog.getDatePicker().setMaxDate(fechaMaxima.getTimeInMillis());
         datePickerDialog.show();
+    }
+
+    private Calendar obtenerFechaMaximaMayorEdad() {
+        Calendar fechaMaxima = Calendar.getInstance();
+        fechaMaxima.set(Calendar.HOUR_OF_DAY, 23);
+        fechaMaxima.set(Calendar.MINUTE, 59);
+        fechaMaxima.set(Calendar.SECOND, 59);
+        fechaMaxima.set(Calendar.MILLISECOND, 999);
+        fechaMaxima.add(Calendar.YEAR, -18);
+        return fechaMaxima;
     }
 
     private void cargarDatosUsuario() {

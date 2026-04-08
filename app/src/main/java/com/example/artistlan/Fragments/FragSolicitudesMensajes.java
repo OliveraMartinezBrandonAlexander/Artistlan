@@ -254,13 +254,15 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
                 .append(esRecibida ? "Comprador: " : "Vendedor: ")
                 .append(item.getNombreActorContextual(esRecibida)).append("\n")
                 .append("Obra: ").append(item.getTituloSeguro()).append("\n")
-                .append("Mensaje comprador: ").append(item.getMensajeSeguro());
+                .append(esRecibida ? "Mensaje comprador: " : "Tu mensaje: ").append(item.getMensajeSeguro());
 
-        appendLineaSiTieneTexto(detalle, "Motivo rechazo", item.getMotivoRechazo());
+        appendBloqueSiTieneTexto(detalle, "Motivo rechazo", item.getMotivoRechazo());
         appendLineaSiTieneTexto(detalle, "Fecha respuesta", MensajeUiUtils.formatearFechaCorta(item.getFechaRespuesta()));
         appendLineaSiTieneTexto(detalle, "Expiracion reserva", MensajeUiUtils.formatearFechaCorta(item.getFechaExpiracionReserva()));
 
-        if (item.getReferenciaTipo() != null && !item.getReferenciaTipo().trim().isEmpty()) {
+        if (item.getReferenciaTipo() != null
+                && !item.getReferenciaTipo().trim().isEmpty()
+                && item.getReferenciaId() != null) {
             detalle.append("\n").append(MensajeUiUtils.etiquetaReferencia(item.getReferenciaTipo(), item.getReferenciaId()));
         }
 
@@ -283,6 +285,13 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
         builder.append("\n").append(etiqueta).append(": ").append(valor.trim());
     }
 
+    private void appendBloqueSiTieneTexto(@NonNull StringBuilder builder, @NonNull String etiqueta, @Nullable String valor) {
+        if (valor == null || valor.trim().isEmpty()) {
+            return;
+        }
+        builder.append("\n").append(etiqueta).append(":\n").append(valor.trim());
+    }
+
     private Integer resolverDestinoReferencia(String referenciaTipo) {
         if (referenciaTipo == null || referenciaTipo.trim().isEmpty()) {
             return null;
@@ -290,9 +299,6 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
         String tipo = referenciaTipo.trim().toLowerCase(Locale.ROOT);
         if (tipo.contains("obra")) {
             return R.id.fragArte;
-        }
-        if (tipo.contains("compra") || tipo.contains("solicitud")) {
-            return R.id.fragTransacciones;
         }
         return null;
     }

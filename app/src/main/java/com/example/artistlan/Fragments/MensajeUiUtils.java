@@ -98,6 +98,44 @@ public final class MensajeUiUtils {
         return "Ref: " + tipo + " #" + referenciaId;
     }
 
+    public static String formatearMensajeConMotivo(String mensajeRaw) {
+        if (mensajeRaw == null) {
+            return "";
+        }
+        String mensaje = mensajeRaw.trim();
+        if (mensaje.isEmpty()) {
+            return mensaje;
+        }
+
+        String[] etiquetas = new String[]{
+                "Motivo de rechazo:",
+                "motivo de rechazo:",
+                "Motivo:",
+                "motivo:"
+        };
+
+        for (String etiqueta : etiquetas) {
+            int idx = mensaje.indexOf(etiqueta);
+            if (idx >= 0) {
+                int inicioValor = idx + etiqueta.length();
+                if (inicioValor < mensaje.length()) {
+                    while (inicioValor < mensaje.length() && Character.isWhitespace(mensaje.charAt(inicioValor))) {
+                        inicioValor++;
+                    }
+                    String valor = inicioValor < mensaje.length() ? mensaje.substring(inicioValor).trim() : "";
+                    String prefijo = mensaje.substring(0, idx).trim();
+                    StringBuilder salida = new StringBuilder();
+                    if (!prefijo.isEmpty()) {
+                        salida.append(prefijo).append("\n\n");
+                    }
+                    salida.append(etiqueta).append("\n").append(valor);
+                    return salida.toString().trim();
+                }
+            }
+        }
+        return mensaje;
+    }
+
     private static Date intentarParseo(String value, String... patrones) {
         for (String patron : patrones) {
             try {

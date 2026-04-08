@@ -31,10 +31,14 @@ import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.pagos.PagoPaypalSessionManager;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import retrofit2.Call;
@@ -42,6 +46,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FragArte extends Fragment implements FilterableExplorarFragment {
+
+    private static final long LIKE_THROTTLE_MS = 500L;
 
     private RecyclerView recyclerViewObras;
     private TarjetaTextoObraAdapter adapter;
@@ -52,6 +58,8 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     private PagoPaypalApi pagoPaypalApi;
     private int idUsuarioLogueado = -1;
     private boolean capturandoPago = false;
+    private final Map<Integer, Long> ultimoToqueLikePorObra = new HashMap<>();
+    private final Set<Integer> likesEnVuelo = new HashSet<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -87,9 +95,9 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     @Override
     public List<String> getFilterOptions() {
         return Arrays.asList(
-                "Pintura", "Dibujo", "Escultura", "Fotografia", "Digital",
-                "Acuarela", "Oleo", "Acrilico", "Grabado", "Ceramica",
-                "Arte textil", "Collage", "Ilustracion", "Mural",
+                "Pintura", "Dibujo", "Escultura", "Fotografía", "Digital",
+                "Acuarela", "Óleo", "Acrílico", "Grabado", "Cerámica",
+                "Arte textil", "Collage", "Ilustración", "Mural",
                 "Arte abstracto", "Retrato", "Paisaje", "Arte conceptual"
         );
     }
@@ -106,7 +114,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
             return;
         }
 
-        if (filter.equalsIgnoreCase(categoriaFiltroActual)) {
+        if (normalizarTextoFiltro(filter).equals(normalizarTextoFiltro(categoriaFiltroActual))) {
             categoriaFiltroActual = "";
             Toast.makeText(getContext(), "Filtro desactivado", Toast.LENGTH_SHORT).show();
         } else {
@@ -208,6 +216,20 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         if (idUsuarioLogueado <= 0) {
             return;
         }
+        if (obraItem == null || obraItem.getIdObra() <= 0) {
+            return;
+        }
+        Integer idObra = obraItem.getIdObra();
+        long ahora = System.currentTimeMillis();
+        Long ultimoToque = ultimoToqueLikePorObra.get(idObra);
+        if (ultimoToque != null && ahora - ultimoToque < LIKE_THROTTLE_MS) {
+            return;
+        }
+        if (likesEnVuelo.contains(idObra)) {
+            return;
+        }
+        ultimoToqueLikePorObra.put(idObra, ahora);
+        likesEnVuelo.add(idObra);
 
         final boolean favoritoAnterior = obraItem.isUserLiked();
         final int likesAnterior = obraItem.getLikes();
@@ -223,6 +245,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                likesEnVuelo.remove(idObra);
                 if (!response.isSuccessful()) {
                     obraItem.setUserLiked(favoritoAnterior);
                     obraItem.setLikes(likesAnterior);
@@ -233,6 +256,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
 
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                likesEnVuelo.remove(idObra);
                 obraItem.setUserLiked(favoritoAnterior);
                 obraItem.setLikes(likesAnterior);
                 adapter.notifyLikeChanged(position);
@@ -263,7 +287,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                 Set<Integer> ownedObraIds = new HashSet<>();
                 for (ObraDTO dto : response.body()) {
                     if (!categoriaFiltroActual.isEmpty()
-                            && (dto.getNombreCategoria() == null || !categoriaFiltroActual.equalsIgnoreCase(dto.getNombreCategoria()))) {
+                            && (dto.getNombreCategoria() == null || !normalizarTextoFiltro(categoriaFiltroActual).equals(normalizarTextoFiltro(dto.getNombreCategoria())))) {
                         continue;
                     }
                     if (dto.getIdUsuario() != null && dto.getIdUsuario() == idUsuarioLogueado && dto.getIdObra() != null) {
@@ -304,5 +328,16 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                 Toast.makeText(getContext(), "Fallo: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private String normalizarTextoFiltro(String valor) {
+        if (valor == null) {
+            return "";
+        }
+        String limpio = Normalizer.normalize(valor, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT)
+                .trim();
+        return limpio;
     }
 }

@@ -34,13 +34,18 @@ import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAd
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FragVerPerfilPublico extends Fragment {
+    private static final long LIKE_THROTTLE_MS = 500L;
 
     private View root;
     private View cardPerfil;
@@ -73,6 +78,8 @@ public class FragVerPerfilPublico extends Fragment {
 
     private List<TarjetaTextoObraItem> obras = new ArrayList<>();
     private List<TarjetaTextoServicioItem> servicios = new ArrayList<>();
+    private final Map<String, Long> ultimoToqueLike = new HashMap<>();
+    private final Set<String> likesEnCurso = new HashSet<>();
 
     public FragVerPerfilPublico() {
         super(R.layout.fragment_frag_ver_perfil_publico);
@@ -139,6 +146,9 @@ public class FragVerPerfilPublico extends Fragment {
     }
 
     private void toggleLikeObra(TarjetaTextoObraItem item, int position) {
+        if (item == null || item.getIdObra() <= 0) {
+            return;
+        }
         FavoritoDTO dto = new FavoritoDTO();
         dto.idUsuario = idUsuarioLogueado;
         dto.idObra = item.getIdObra();
@@ -146,6 +156,11 @@ public class FragVerPerfilPublico extends Fragment {
     }
 
     private void cambiarFavoritoObra(TarjetaTextoObraItem item, int pos, FavoritoDTO dto) {
+        String llave = "obra:" + item.getIdObra();
+        if (!puedeProcesarLike(llave)) {
+            return;
+        }
+
         boolean previo = item.isUserLiked();
         int likesPrevios = item.getLikes();
         item.setUserLiked(!previo);
@@ -156,6 +171,7 @@ public class FragVerPerfilPublico extends Fragment {
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                likesEnCurso.remove(llave);
                 if (!response.isSuccessful()) {
                     revertir();
                 }
@@ -163,6 +179,7 @@ public class FragVerPerfilPublico extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                likesEnCurso.remove(llave);
                 revertir();
             }
 
@@ -176,6 +193,10 @@ public class FragVerPerfilPublico extends Fragment {
 
     private void toggleLikeServicio(TarjetaTextoServicioItem item, int position) {
         if (item.getIdServicio() == null) {
+            return;
+        }
+        String llave = "servicio:" + item.getIdServicio();
+        if (!puedeProcesarLike(llave)) {
             return;
         }
 
@@ -193,6 +214,7 @@ public class FragVerPerfilPublico extends Fragment {
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                likesEnCurso.remove(llave);
                 if (!response.isSuccessful()) {
                     revertir();
                 }
@@ -200,6 +222,7 @@ public class FragVerPerfilPublico extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                likesEnCurso.remove(llave);
                 revertir();
             }
 
@@ -209,6 +232,20 @@ public class FragVerPerfilPublico extends Fragment {
                 servicioAdapter.notifyLikeChanged(position);
             }
         });
+    }
+
+    private boolean puedeProcesarLike(@NonNull String llave) {
+        long ahora = System.currentTimeMillis();
+        Long ultimo = ultimoToqueLike.get(llave);
+        if (ultimo != null && (ahora - ultimo) < LIKE_THROTTLE_MS) {
+            return false;
+        }
+        if (likesEnCurso.contains(llave)) {
+            return false;
+        }
+        ultimoToqueLike.put(llave, ahora);
+        likesEnCurso.add(llave);
+        return true;
     }
 
     private void cargarPerfilPublico() {

@@ -23,13 +23,33 @@
             android:paddingEnd="16dp"
             android:paddingBottom="8dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Centro de mensajes"
-                android:textColor="@color/artistlan_bg_bottom"
-                android:textSize="22sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnCentroMensajesAtras"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_back_bubble"
+                    android:contentDescription="Regresar"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/regresarimg" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="Centro de mensajes"
+                    android:textColor="@color/artistlan_bg_bottom"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvCentroMensajesResumenContador"

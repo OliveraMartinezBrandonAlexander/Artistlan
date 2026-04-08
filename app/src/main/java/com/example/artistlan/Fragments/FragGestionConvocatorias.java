@@ -258,17 +258,19 @@ public class FragGestionConvocatorias extends Fragment {
             public void onResponse(@NonNull Call<ConvocatoriaDTO> call, @NonNull Response<ConvocatoriaDTO> response) {
                 mostrarLoading(false);
                 if (response.isSuccessful()) {
-                    mostrarSnackbar("Convocatoria creada con éxito.");
+                    mostrarDialogoResultado("Convocatoria creada", "La convocatoria se publico correctamente.");
                     cargarConvocatorias();
                 } else {
                     mostrarError("No se pudo crear la convocatoria.");
+                    mostrarDialogoResultado("No se pudo crear", "Hubo un problema al crear la convocatoria.");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ConvocatoriaDTO> call, @NonNull Throwable t) {
                 mostrarLoading(false);
-                mostrarError("Error de conexión al crear convocatoria.");
+                mostrarError("Error de conexion al crear convocatoria.");
+                mostrarDialogoResultado("Error de conexion", "No fue posible crear la convocatoria en este momento.");
             }
         });
     }
@@ -280,17 +282,19 @@ public class FragGestionConvocatorias extends Fragment {
             public void onResponse(@NonNull Call<ConvocatoriaDTO> call, @NonNull Response<ConvocatoriaDTO> response) {
                 mostrarLoading(false);
                 if (response.isSuccessful()) {
-                    mostrarSnackbar("Convocatoria actualizada.");
+                    mostrarDialogoResultado("Convocatoria actualizada", "Los cambios se guardaron correctamente.");
                     cargarConvocatorias();
                 } else {
                     mostrarError("No se pudo actualizar la convocatoria.");
+                    mostrarDialogoResultado("No se pudo actualizar", "Hubo un problema al actualizar la convocatoria.");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ConvocatoriaDTO> call, @NonNull Throwable t) {
                 mostrarLoading(false);
-                mostrarError("Error de conexión al actualizar convocatoria.");
+                mostrarError("Error de conexion al actualizar convocatoria.");
+                mostrarDialogoResultado("Error de conexion", "No fue posible actualizar la convocatoria en este momento.");
             }
         });
     }
@@ -344,5 +348,16 @@ public class FragGestionConvocatorias extends Fragment {
     private void mostrarSnackbar(String mensaje) {
         View view = getView();
         if (view != null) Snackbar.make(view, mensaje, Snackbar.LENGTH_LONG).show();
+    }
+
+    private void mostrarDialogoResultado(String titulo, String mensaje) {
+        if (!isAdded()) {
+            return;
+        }
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(titulo)
+                .setMessage(mensaje)
+                .setPositiveButton("Entendido", null)
+                .show();
     }
 }

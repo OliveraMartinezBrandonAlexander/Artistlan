@@ -28,7 +28,11 @@ import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import retrofit2.Call;
@@ -36,6 +40,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FragArtistas extends Fragment implements FilterableExplorarFragment {
+
+    private static final long LIKE_THROTTLE_MS = 500L;
 
     private RecyclerView recyclerViewArtistas;
     private TarjetaTextoArtistaAdapter adapter;
@@ -45,6 +51,8 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     private FavoritosApi favoritosApi;
     private ObraApi obraApi;
     private int cargaArtistasToken = 0;
+    private final Map<Integer, Long> ultimoToqueLikePorArtista = new HashMap<>();
+    private final Set<Integer> likesEnVuelo = new HashSet<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -125,6 +133,18 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     }
     private void toggleLikeArtista(TarjetaTextoArtistaItem artistaItem, int position) {
         if (idUsuarioLogueado <= 0 || artistaItem.getIdArtista() == null) return;
+        Integer idArtistaTarget = artistaItem.getIdArtista();
+        long ahora = System.currentTimeMillis();
+        Long ultimoToque = ultimoToqueLikePorArtista.get(idArtistaTarget);
+        if (ultimoToque != null && ahora - ultimoToque < LIKE_THROTTLE_MS) {
+            return;
+        }
+        if (likesEnVuelo.contains(idArtistaTarget)) {
+            return;
+        }
+        ultimoToqueLikePorArtista.put(idArtistaTarget, ahora);
+        likesEnVuelo.add(idArtistaTarget);
+
         final boolean favoritoAnterior = artistaItem.isFavorito();
         final int likesAnterior = artistaItem.getLikes();
         artistaItem.setFavorito(!favoritoAnterior);
@@ -138,6 +158,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                likesEnVuelo.remove(idArtistaTarget);
                 if (!response.isSuccessful()) {
                     artistaItem.setFavorito(favoritoAnterior);
                     artistaItem.setLikes(likesAnterior);
@@ -147,6 +168,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
             }
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                likesEnVuelo.remove(idArtistaTarget);
                 artistaItem.setFavorito(favoritoAnterior);
                 artistaItem.setLikes(likesAnterior);
                 adapter.notifyLikeChanged(position);

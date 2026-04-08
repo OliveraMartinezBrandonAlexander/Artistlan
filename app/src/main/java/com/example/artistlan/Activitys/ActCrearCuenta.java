@@ -417,10 +417,13 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
     }
 
     private void mostrarDatePicker() {
-        final Calendar c = Calendar.getInstance();
-        int y = c.get(Calendar.YEAR);
-        int m = c.get(Calendar.MONTH);
-        int d = c.get(Calendar.DAY_OF_MONTH);
+        final Calendar fechaMaxima = obtenerFechaMaximaMayorEdad();
+        final Calendar inicio = Calendar.getInstance();
+        inicio.setTimeInMillis(fechaMaxima.getTimeInMillis());
+
+        int y = inicio.get(Calendar.YEAR);
+        int m = inicio.get(Calendar.MONTH);
+        int d = inicio.get(Calendar.DAY_OF_MONTH);
 
         DatePickerDialog dpd = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
             Calendar sel = Calendar.getInstance();
@@ -433,7 +436,18 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
             edtFecha.setError(null);
         }, y, m, d);
 
+        dpd.getDatePicker().setMaxDate(fechaMaxima.getTimeInMillis());
         dpd.show();
+    }
+
+    private Calendar obtenerFechaMaximaMayorEdad() {
+        Calendar fechaMaxima = Calendar.getInstance();
+        fechaMaxima.set(Calendar.HOUR_OF_DAY, 23);
+        fechaMaxima.set(Calendar.MINUTE, 59);
+        fechaMaxima.set(Calendar.SECOND, 59);
+        fechaMaxima.set(Calendar.MILLISECOND, 999);
+        fechaMaxima.add(Calendar.YEAR, -18);
+        return fechaMaxima;
     }
 
     private boolean validarCampos() {

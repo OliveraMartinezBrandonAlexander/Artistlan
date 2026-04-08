@@ -1,10 +1,17 @@
 package com.example.artistlan.Conector.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class ConvocatoriaDTO {
+    @SerializedName(value = "idConvocatoria", alternate = {"id", "id_convocatoria"})
     private Integer idConvocatoria;
+    @SerializedName(value = "titulo", alternate = {"tituloConvocatoria", "nombre"})
     private String titulo;
+    @SerializedName(value = "descripcion", alternate = {"detalle", "descripcionConvocatoria"})
     private String descripcion;
+    @SerializedName(value = "fecha", alternate = {"fechaCierre", "fechaConvocatoria"})
     private String fecha;
+    @SerializedName(value = "enlace", alternate = {"url", "link"})
     private String enlace;
 
     public Integer getIdConvocatoria() {

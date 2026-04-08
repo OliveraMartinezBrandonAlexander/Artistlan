@@ -49,9 +49,10 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ConvocatoriaDTO item = items.get(position);
 
-        holder.tvTitulo.setText(item.getTitulo() == null ? "Sin título" : item.getTitulo());
-        holder.tvDescripcion.setText(item.getDescripcion() == null ? "Sin descripción" : item.getDescripcion());
-        holder.tvFecha.setText(item.getFecha() == null ? "Sin fecha" : "Fecha: " + item.getFecha());
+        holder.tvTitulo.setText(textoSeguro(item.getTitulo(), "Sin titulo"));
+        holder.tvDescripcion.setText(textoSeguro(item.getDescripcion(), "Sin descripcion"));
+        String fecha = textoSeguro(item.getFecha(), "");
+        holder.tvFecha.setText(fecha.isEmpty() ? "Sin fecha" : "Fecha: " + fecha);
 
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         ThemeApplier.applyTextPrimary(holder.tvTitulo, tm);
@@ -60,7 +61,8 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
         ThemeApplier.applyPrimaryButton(holder.btnVerMas, tm);
 
         String enlace = item.getEnlace();
-        boolean enlaceValido = !TextUtils.isEmpty(enlace) && (enlace.startsWith("http://") || enlace.startsWith("https://"));
+        boolean enlaceValido = !TextUtils.isEmpty(enlace)
+                && (enlace.startsWith("http://") || enlace.startsWith("https://"));
         holder.btnVerMas.setEnabled(enlaceValido);
         holder.btnVerMas.setAlpha(enlaceValido ? 1f : 0.5f);
         holder.btnVerMas.setOnClickListener(v -> {
@@ -71,6 +73,14 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
     @Override
     public int getItemCount() {
         return items.size();
+    }
+
+    private String textoSeguro(String valor, String fallback) {
+        if (valor == null) {
+            return fallback;
+        }
+        String limpio = valor.trim();
+        return limpio.isEmpty() ? fallback : limpio;
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

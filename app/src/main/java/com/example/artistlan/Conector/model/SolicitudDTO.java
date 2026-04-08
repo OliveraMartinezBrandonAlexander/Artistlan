@@ -79,7 +79,7 @@ public class SolicitudDTO {
     @SerializedName(value = "motivoRechazo", alternate = {"motivo", "razonRechazo", "mensajeRechazo"})
     private String motivoRechazo;
 
-    @SerializedName(value = "fechaRespuesta", alternate = {"respondidaEn", "fechaResolucion", "updatedAt"})
+    @SerializedName(value = "fechaRespuesta", alternate = {"respondidaEn", "fechaResolucion"})
     private String fechaRespuesta;
 
     @SerializedName(value = "fechaExpiracionReserva", alternate = {"expiraEn", "fechaExpiracion", "reservaExpiraEn"})

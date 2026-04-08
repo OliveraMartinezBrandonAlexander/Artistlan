@@ -48,7 +48,7 @@ public class NotificacionesAdapter extends RecyclerView.Adapter<NotificacionesAd
     public void onBindViewHolder(@NonNull NotificacionViewHolder holder, int position) {
         NotificacionDTO item = items.get(position);
         holder.tvTitulo.setText(item.getTituloSeguro());
-        holder.tvMensaje.setText(item.getMensajeSeguro());
+        holder.tvMensaje.setText(MensajeUiUtils.formatearMensajeConMotivo(item.getMensajeSeguro()));
         holder.tvFecha.setText(MensajeUiUtils.formatearFechaCorta(item.getFecha()));
 
         String origenNombre = item.getUsuarioOrigenSeguro();

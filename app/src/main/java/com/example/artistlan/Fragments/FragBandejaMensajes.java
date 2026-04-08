@@ -224,7 +224,7 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
                 : (usuarioOrigen != null && !usuarioOrigen.trim().isEmpty() ? usuarioOrigen.trim() : "Usuario");
 
         StringBuilder detalle = new StringBuilder();
-        detalle.append(item.getMensajeSeguro()).append("\n\n")
+        detalle.append(MensajeUiUtils.formatearMensajeConMotivo(item.getMensajeSeguro())).append("\n\n")
                 .append("Fecha: ").append(MensajeUiUtils.formatearFechaCorta(item.getFecha())).append("\n")
                 .append("Origen: ").append(origenVisual);
         if (item.getReferenciaTipo() != null && !item.getReferenciaTipo().trim().isEmpty() && item.getReferenciaId() != null) {

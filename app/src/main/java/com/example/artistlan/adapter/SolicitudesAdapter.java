@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -57,8 +58,18 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
         SolicitudDTO item = items.get(position);
         boolean esRecibida = modoLista == ModoLista.RECIBIDAS;
 
-        holder.tvTitulo.setText(item.getTituloSeguro());
-        holder.tvMensaje.setText(item.getMensajeSeguro());
+        holder.tvTitulo.setText("Titulo de la obra: " + item.getTituloSeguro());
+
+        holder.tvMensaje.setText((esRecibida ? "Mensaje comprador: " : "Tu mensaje: ") + item.getMensajeSeguro());
+
+        String motivoRechazo = item.getMotivoRechazo();
+        if (!TextUtils.isEmpty(motivoRechazo) && item.isRechazada()) {
+            holder.tvMotivoRechazo.setVisibility(View.VISIBLE);
+            holder.tvMotivoRechazo.setText("Motivo de rechazo: " + motivoRechazo.trim());
+        } else {
+            holder.tvMotivoRechazo.setVisibility(View.GONE);
+            holder.tvMotivoRechazo.setText("");
+        }
         holder.tvFecha.setText(MensajeUiUtils.formatearFechaCorta(item.getFecha()));
 
         String actor = item.getNombreActorContextual(esRecibida);
@@ -71,8 +82,11 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
         holder.btnMarcarLeida.setVisibility(View.GONE);
         holder.btnEliminar.setVisibility(View.GONE);
 
+        boolean referenciaValida = item.getReferenciaTipo() != null
+                && !item.getReferenciaTipo().trim().isEmpty()
+                && item.getReferenciaId() != null;
         String referencia = MensajeUiUtils.etiquetaReferencia(item.getReferenciaTipo(), item.getReferenciaId());
-        if (referencia.isEmpty()) {
+        if (!referenciaValida || referencia.isEmpty()) {
             holder.tvReferencia.setVisibility(View.GONE);
         } else {
             holder.tvReferencia.setVisibility(View.VISIBLE);
@@ -168,6 +182,7 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
         private final TextView tvEstado;
         private final TextView tvTitulo;
         private final TextView tvMensaje;
+        private final TextView tvMotivoRechazo;
         private final TextView tvOrigenNombre;
         private final TextView tvFecha;
         private final TextView tvReferencia;
@@ -185,6 +200,7 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
             tvEstado = itemView.findViewById(R.id.tvSolicitudEstado);
             tvTitulo = itemView.findViewById(R.id.tvSolicitudTitulo);
             tvMensaje = itemView.findViewById(R.id.tvSolicitudBody);
+            tvMotivoRechazo = itemView.findViewById(R.id.tvSolicitudMotivoRechazo);
             tvOrigenNombre = itemView.findViewById(R.id.tvSolicitudOrigenNombre);
             tvFecha = itemView.findViewById(R.id.tvSolicitudFecha);
             tvReferencia = itemView.findViewById(R.id.tvSolicitudReferencia);

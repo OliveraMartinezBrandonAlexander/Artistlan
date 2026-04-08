@@ -102,10 +102,22 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:ellipsize="end"
-            android:maxLines="3"
+            android:maxLines="5"
             android:text="Detalle de solicitud para revisar."
             android:textColor="@color/artistlan_menu_text_secondary"
             android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvSolicitudMotivoRechazo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_action_outline_soft"
+            android:padding="8dp"
+            android:text="Motivo de rechazo:\n..."
+            android:textColor="@color/artistlan_menu_text_primary"
+            android:textSize="12sp"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/tvSolicitudReferencia"

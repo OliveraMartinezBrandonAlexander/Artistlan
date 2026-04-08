@@ -5,11 +5,13 @@ import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -25,6 +27,7 @@ public class FragCentroMensajes extends Fragment {
     private TabLayout tabLayout;
     private ViewPager2 viewPager;
     private View menuInferior;
+    private ImageButton btnAtras;
     private TextView tvResumenContador;
     private int notificacionesNoLeidas = 0;
     private int solicitudesPendientes = 0;
@@ -51,7 +54,9 @@ public class FragCentroMensajes extends Fragment {
 
         tabLayout = view.findViewById(R.id.tabLayoutCentroMensajes);
         viewPager = view.findViewById(R.id.viewPagerCentroMensajes);
+        btnAtras = view.findViewById(R.id.btnCentroMensajesAtras);
         tvResumenContador = view.findViewById(R.id.tvCentroMensajesResumenContador);
+        btnAtras.setOnClickListener(v -> navegarAtrasSeguro());
 
         viewPager.setAdapter(new CentroMensajesPagerAdapter(this));
         viewPager.setOffscreenPageLimit(2);
@@ -149,6 +154,19 @@ public class FragCentroMensajes extends Fragment {
         }
         if (solicitudes != null) {
             solicitudes.setText("Solicitudes (" + solicitudesPendientes + ")");
+        }
+    }
+
+    private void navegarAtrasSeguro() {
+        if (!isAdded()) {
+            return;
+        }
+        try {
+            if (!NavHostFragment.findNavController(this).navigateUp()) {
+                requireActivity().getOnBackPressedDispatcher().onBackPressed();
+            }
+        } catch (IllegalStateException ignored) {
+            requireActivity().getOnBackPressedDispatcher().onBackPressed();
         }
     }
 

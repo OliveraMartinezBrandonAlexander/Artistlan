@@ -45,6 +45,7 @@ public class FragMiArte extends Fragment {
     private FavoritosApi favoritosApi;
     private int idUsuarioLogueado = -1;
     private final Map<Integer, Long> lastLikeClickByObra = new HashMap<>();
+    private final Set<Integer> obrasEnEliminacion = new HashSet<>();
     private boolean debeRecargarEnResume = false;
 
     public static final String ARG_MODO_EDICION = "modo_edicion";
@@ -243,18 +244,25 @@ public class FragMiArte extends Fragment {
             Toast.makeText(requireContext(), "Esta obra no se puede eliminar", Toast.LENGTH_SHORT).show();
             return;
         }
+        int idObra = obraItem.getIdObra();
+        if (obrasEnEliminacion.contains(idObra)) {
+            Toast.makeText(requireContext(), "Ya se esta procesando la eliminacion de esta obra", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        obrasEnEliminacion.add(idObra);
 
         ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
-        api.eliminarObraDeUsuario(idUsuarioLogueado, obraItem.getIdObra()).enqueue(new Callback<Void>() {
+        api.eliminarObraDeUsuario(idUsuarioLogueado, idObra).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                obrasEnEliminacion.remove(idObra);
                 if (!isAdded()) {
                     return;
                 }
 
                 int code = response.code();
-                if (code == 204) {
-                    adapter.removeItemAt(position);
+                if (response.isSuccessful()) {
+                    cargarObrasDelUsuario();
                     Toast.makeText(requireContext(), "Obra eliminada correctamente", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -271,18 +279,24 @@ public class FragMiArte extends Fragment {
                     Toast.makeText(requireContext(),
                             backendMessage != null ? backendMessage : "No se puede eliminar esta obra",
                             Toast.LENGTH_LONG).show();
+                    cargarObrasDelUsuario();
                     return;
                 }
                 String backendMessage = ApiErrorParser.extractMessage(response);
-                Toast.makeText(requireContext(),
-                        backendMessage != null ? backendMessage : "No se pudo eliminar la obra (" + code + ")",
-                        Toast.LENGTH_LONG).show();
+                String mensaje = backendMessage;
+                if (mensaje == null || mensaje.trim().isEmpty() || "Error interno del servidor".equalsIgnoreCase(mensaje.trim())) {
+                    mensaje = "No se pudo eliminar la obra por un error temporal del servidor";
+                }
+                Toast.makeText(requireContext(), mensaje + " (" + code + ")", Toast.LENGTH_LONG).show();
+                cargarObrasDelUsuario();
             }
 
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                obrasEnEliminacion.remove(idObra);
                 if (isAdded()) {
                     Toast.makeText(requireContext(), "Error de conexion al eliminar la obra", Toast.LENGTH_LONG).show();
+                    cargarObrasDelUsuario();
                 }
             }
         });

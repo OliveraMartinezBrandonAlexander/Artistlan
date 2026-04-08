@@ -26,7 +26,11 @@ import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -34,12 +38,16 @@ import retrofit2.Response;
 
 public class FragServicios extends Fragment implements FilterableExplorarFragment {
 
+    private static final long LIKE_THROTTLE_MS = 500L;
+
     private RecyclerView recyclerServicios;
     private TarjetaTextoServicioAdapter adapter;
     private List<TarjetaTextoServicioItem> listaServicios = new ArrayList<>();
     private String tipoServicioFiltroActual = "";
     private int idUsuarioLogueado = -1;
     private FavoritosApi favoritosApi;
+    private final Map<Integer, Long> ultimoToqueLikePorServicio = new HashMap<>();
+    private final Set<Integer> likesEnVuelo = new HashSet<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -134,6 +142,18 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
 
     private void toggleLikeServicio(TarjetaTextoServicioItem servicioItem, int position) {
         if (idUsuarioLogueado <= 0 || servicioItem.getIdServicio() == null) return;
+        Integer idServicio = servicioItem.getIdServicio();
+        long ahora = System.currentTimeMillis();
+        Long ultimoToque = ultimoToqueLikePorServicio.get(idServicio);
+        if (ultimoToque != null && ahora - ultimoToque < LIKE_THROTTLE_MS) {
+            return;
+        }
+        if (likesEnVuelo.contains(idServicio)) {
+            return;
+        }
+        ultimoToqueLikePorServicio.put(idServicio, ahora);
+        likesEnVuelo.add(idServicio);
+
         final boolean favoritoAnterior = servicioItem.isFavorito();
         final int likesAnterior = servicioItem.getLikes();
         servicioItem.setFavorito(!favoritoAnterior);
@@ -147,6 +167,7 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                likesEnVuelo.remove(idServicio);
                 if (!response.isSuccessful()) {
                     servicioItem.setFavorito(favoritoAnterior);
                     servicioItem.setLikes(likesAnterior);
@@ -156,6 +177,7 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
             }
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                likesEnVuelo.remove(idServicio);
                 servicioItem.setFavorito(favoritoAnterior);
                 servicioItem.setLikes(likesAnterior);
                 adapter.notifyLikeChanged(position);

@@ -249,6 +249,7 @@ public abstract class BaseTransaccionesFragment extends Fragment {
         ImageView ivVendedor = dialogView.findViewById(R.id.ivDetalleVendedor);
         TextView tvVendedorUsuario = dialogView.findViewById(R.id.tvDetalleVendedorUsuario);
         TextView tvVendedorSecundario = dialogView.findViewById(R.id.tvDetalleVendedorSecundario);
+        TextView tvConfianzaTexto = dialogView.findViewById(R.id.tvDetalleConfianzaTexto);
 
         String titulo = safe(detalle != null ? detalle.getTituloObra() : null, resumen != null ? resumen.getTituloObra() : null, "Obra sin titulo");
         String imagen = safe(detalle != null ? detalle.getImagenObra() : null, resumen != null ? resumen.getImagenObra() : null, "");
@@ -284,6 +285,12 @@ public abstract class BaseTransaccionesFragment extends Fragment {
         tvVendedorUsuario.setText(vendedorUsuario);
         bindSecundarioNombre(tvCompradorSecundario, compradorNombre, compradorUsuario);
         bindSecundarioNombre(tvVendedorSecundario, vendedorNombre, vendedorUsuario);
+        if (tvConfianzaTexto != null) {
+            boolean esCompra = getTipoLista() == TransaccionAdapter.TipoLista.COMPRAS;
+            tvConfianzaTexto.setText(esCompra
+                    ? "¿Problema con tu compra?\n\nPuedes contactar al vendedor o revisar el pago en PayPal para más información y soporte."
+                    : "¿Problema con tu venta?\n\nPuedes contactar al comprador o revisar el pago en PayPal para más información y soporte.");
+        }
 
         Glide.with(dialogView)
                 .load(imagen)
@@ -323,7 +330,13 @@ public abstract class BaseTransaccionesFragment extends Fragment {
             btnAbrirPaypal.setOnClickListener(v -> abrirPaypalWeb());
         }
         if (btnContactar != null) {
-            btnContactar.setOnClickListener(v -> contactarContraparte(detalle));
+            btnContactar.setOnClickListener(v -> contactarContraparte(
+                    detalle,
+                    compradorNombre,
+                    compradorUsuario,
+                    vendedorNombre,
+                    vendedorUsuario
+            ));
         }
 
         dialog.show();
@@ -335,22 +348,27 @@ public abstract class BaseTransaccionesFragment extends Fragment {
         }
     }
 
-    private void contactarContraparte(TransaccionDetalleDTO detalle) {
-        if (detalle == null) {
-            Toast.makeText(requireContext(), "No hay datos de contacto disponibles", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
+    private void contactarContraparte(
+            @Nullable TransaccionDetalleDTO detalle,
+            @Nullable String compradorNombreFallback,
+            @Nullable String compradorUsuarioFallback,
+            @Nullable String vendedorNombreFallback,
+            @Nullable String vendedorUsuarioFallback
+    ) {
         boolean esCompra = getTipoLista() == TransaccionAdapter.TipoLista.COMPRAS;
         ContactoDialogHelper.mostrarDialogoContacto(
                 this,
-                "Contacto de la contraparte",
-                esCompra ? detalle.getNombreVendedor() : detalle.getNombreComprador(),
-                esCompra ? detalle.getUsuarioVendedor() : detalle.getUsuarioComprador(),
-                esCompra ? detalle.getTipoContactoVendedor() : detalle.getTipoContactoComprador(),
-                esCompra ? detalle.getContactoVendedor() : detalle.getContactoComprador(),
-                esCompra ? detalle.getCorreoVendedor() : detalle.getCorreoComprador(),
-                esCompra ? detalle.getTelefonoVendedor() : detalle.getTelefonoComprador()
+                esCompra ? "Contacto del vendedor" : "Contacto del comprador",
+                esCompra
+                        ? safe(detalle != null ? detalle.getNombreVendedor() : null, vendedorNombreFallback, "")
+                        : safe(detalle != null ? detalle.getNombreComprador() : null, compradorNombreFallback, ""),
+                esCompra
+                        ? safe(detalle != null ? detalle.getUsuarioVendedor() : null, vendedorUsuarioFallback, "")
+                        : safe(detalle != null ? detalle.getUsuarioComprador() : null, compradorUsuarioFallback, ""),
+                esCompra ? (detalle != null ? detalle.getTipoContactoVendedor() : null) : (detalle != null ? detalle.getTipoContactoComprador() : null),
+                esCompra ? (detalle != null ? detalle.getContactoVendedor() : null) : (detalle != null ? detalle.getContactoComprador() : null),
+                esCompra ? (detalle != null ? detalle.getCorreoVendedor() : null) : (detalle != null ? detalle.getCorreoComprador() : null),
+                esCompra ? (detalle != null ? detalle.getTelefonoVendedor() : null) : (detalle != null ? detalle.getTelefonoComprador() : null)
         );
     }
 

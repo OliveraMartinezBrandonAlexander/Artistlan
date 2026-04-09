@@ -69,6 +69,18 @@ public class FragTransacciones extends Fragment {
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getActivity() == null) {
+            return;
+        }
+        View menuInferior = getActivity().findViewById(R.id.MenuInferior);
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.GONE);
+        }
+    }
+
     public void recargarDespuesDePago() {
         if (!isAdded()) {
             return;

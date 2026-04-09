@@ -47,7 +47,7 @@
                     android:fontFamily="@font/urbanist_bold"
                     android:maxLines="1"
                     android:text="Centro de mensajes"
-                    android:textColor="@color/artistlan_text_primary"
+                    android:textColor="@color/artistlan_menu_bottombar_2"
                     android:textSize="22sp" />
 
                 <View
@@ -63,7 +63,7 @@
                     android:contentDescription="Más opciones"
                     android:padding="8dp"
                     android:src="@android:drawable/ic_menu_more"
-                    android:tint="@color/artistlan_menu_text_primary" />
+                    app:tint="@color/artistlan_bg_mid" />
 
             </LinearLayout>
 
@@ -73,7 +73,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Pendientes: 0 mensajes no leidos + 0 solicitudes"
-                android:textColor="@color/artistlan_menu_text_secondary"
+                android:textColor="@color/artistlan_menu_icon_active"
                 android:textSize="12sp" />
 
             <com.google.android.material.tabs.TabLayout
@@ -87,9 +87,9 @@
                 app:tabIndicatorHeight="0dp"
                 app:tabInlineLabel="true"
                 app:tabMode="fixed"
-                app:tabRippleColor="@null"
-                app:tabSelectedTextColor="@color/artistlan_menu_icon_active"
-                app:tabTextColor="@color/artistlan_menu_icon_default" />
+
+                app:tabSelectedTextColor="@color/artistlan_bg_top"
+                app:tabTextColor="@color/artistlan_bg_mid" />
 
         </LinearLayout>
 

@@ -16,7 +16,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Detalle de transaccion"
+            android:text="Detalle de transacción"
             android:textColor="#1C1C1C"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -268,10 +268,11 @@
             </LinearLayout>
 
             <TextView
+                android:id="@+id/tvDetalleConfianzaTexto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="¿Problema con tu compra?\n\nPuedes contactar al vendedor o revisar el pago en PayPal para mas informacion y soporte."
+                android:text="¿Problema con tu compra?\n\nPuedes contactar al vendedor o revisar el pago en PayPal para más información y soporte."
                 android:textColor="#5D5D5D"
                 android:textSize="13sp" />
         </LinearLayout>

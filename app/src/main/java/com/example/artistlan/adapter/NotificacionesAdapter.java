@@ -88,9 +88,16 @@ public class NotificacionesAdapter extends RecyclerView.Adapter<NotificacionesAd
 
         String ctaTexto = MensajeUiUtils.obtenerTextoCtaSemantico(item);
         if (ctaTexto == null || ctaTexto.trim().isEmpty()) {
-            holder.btnVerDetalle.setText("Ver detalle");
-            holder.btnVerDetalle.setOnClickListener(v -> listener.onDetalle(item));
+            if (MensajeUiUtils.tieneReferenciaNavegable(item)) {
+                holder.btnVerDetalle.setVisibility(View.VISIBLE);
+                holder.btnVerDetalle.setText("Ver detalle");
+                holder.btnVerDetalle.setOnClickListener(v -> listener.onDetalle(item));
+            } else {
+                holder.btnVerDetalle.setVisibility(View.GONE);
+                holder.btnVerDetalle.setOnClickListener(null);
+            }
         } else {
+            holder.btnVerDetalle.setVisibility(View.VISIBLE);
             holder.btnVerDetalle.setText(ctaTexto);
             holder.btnVerDetalle.setOnClickListener(v -> listener.onNavegar(item));
         }

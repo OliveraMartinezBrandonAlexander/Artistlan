@@ -14,6 +14,8 @@ import java.util.Locale;
 public final class MensajeUiUtils {
 
     private static final Locale LOCALE_ES_MX = new Locale("es", "MX");
+    private static final String ROL_COMPRADOR = "COMPRADOR";
+    private static final String ROL_VENDEDOR = "VENDEDOR";
 
     private MensajeUiUtils() {
     }
@@ -125,6 +127,13 @@ public final class MensajeUiUtils {
     }
 
     public static Integer obtenerTabTransaccionesSemantico(NotificacionDTO item) {
+        String tipo = obtenerTipoNormalizado(item);
+        if (esObraVendida(tipo)) {
+            return 1; // Ventas
+        }
+        if (esCompraConfirmada(tipo)) {
+            return 0; // Compras
+        }
         String contexto = construirContexto(item);
         if (esObraVendida(contexto)) {
             return 1; // Mis ventas
@@ -136,14 +145,73 @@ public final class MensajeUiUtils {
     }
 
     public static Integer obtenerModoSolicitudesSemantico(NotificacionDTO item) {
+        String tipo = obtenerTipoNormalizado(item);
         String contexto = construirContexto(item);
+        if (esEventoReserva(contexto)) {
+            return null;
+        }
+        if (esSolicitudCreada(tipo)) {
+            return FragSolicitudesMensajes.MODO_RECIBIDAS;
+        }
+        if (esSolicitudRechazada(tipo)) {
+            return FragSolicitudesMensajes.MODO_ENVIADAS;
+        }
+        if (esSolicitudCancelada(tipo)) {
+            String rolDestino = obtenerRolDestinoNormalizado(item);
+            if (ROL_VENDEDOR.equals(rolDestino)) {
+                return FragSolicitudesMensajes.MODO_RECIBIDAS;
+            }
+            if (ROL_COMPRADOR.equals(rolDestino)) {
+                return FragSolicitudesMensajes.MODO_ENVIADAS;
+            }
+            if (esCancelacionParaVendedor(contexto)) {
+                return FragSolicitudesMensajes.MODO_RECIBIDAS;
+            }
+            if (esCancelacionParaComprador(contexto)) {
+                return FragSolicitudesMensajes.MODO_ENVIADAS;
+            }
+            return null;
+        }
+        if (esSolicitudEliminada(tipo)) {
+            return esEliminacionParaVendedor(contexto)
+                    ? FragSolicitudesMensajes.MODO_RECIBIDAS
+                    : FragSolicitudesMensajes.MODO_ENVIADAS;
+        }
         if (esSolicitudCreada(contexto)) {
             return FragSolicitudesMensajes.MODO_RECIBIDAS;
         }
+        if (esSolicitudEliminada(contexto)) {
+            return esEliminacionParaVendedor(contexto)
+                    ? FragSolicitudesMensajes.MODO_RECIBIDAS
+                    : FragSolicitudesMensajes.MODO_ENVIADAS;
+        }
         if (esSolicitudRechazadaOCancelada(contexto)) {
-            return FragSolicitudesMensajes.MODO_ENVIADAS;
+            if (esCancelacionParaVendedor(contexto)) {
+                return FragSolicitudesMensajes.MODO_RECIBIDAS;
+            }
+            if (esCancelacionParaComprador(contexto)) {
+                return FragSolicitudesMensajes.MODO_ENVIADAS;
+            }
+            return null;
         }
         return null;
+    }
+
+    public static boolean tieneReferenciaNavegable(NotificacionDTO item) {
+        if (item == null || item.getReferenciaId() == null) {
+            return false;
+        }
+        String referenciaTipo = normalizar(item.getReferenciaTipo());
+        if (referenciaTipo.isEmpty()) {
+            return false;
+        }
+        return contieneAlguno(referenciaTipo,
+                "obra",
+                "solicitud",
+                "carrito",
+                "compra",
+                "transaccion",
+                "historial");
     }
 
     public static String formatearMensajeConMotivo(String mensajeRaw) {
@@ -213,8 +281,45 @@ public final class MensajeUiUtils {
             return 0;
         }
 
+        String tipo = obtenerTipoNormalizado(item);
         String contexto = construirContexto(item);
         if (contexto.isEmpty()) {
+            return 0;
+        }
+
+        if (esObraVendida(tipo) || esCompraConfirmada(tipo)) {
+            return R.id.fragTransacciones;
+        }
+        if (esEventoReserva(tipo) || esEventoReserva(contexto)) {
+            String rolDestino = obtenerRolDestinoNormalizado(item);
+            if (ROL_COMPRADOR.equals(rolDestino)) {
+                return R.id.fragCarrito;
+            }
+            if (ROL_VENDEDOR.equals(rolDestino)) {
+                return 0;
+            }
+            return esEventoReservaParaComprador(contexto) ? R.id.fragCarrito : 0;
+        }
+        if (esSolicitudCreada(tipo)) {
+            return R.id.fragCentroMensajes;
+        }
+        if (esSolicitudRechazada(tipo)) {
+            return R.id.fragCentroMensajes;
+        }
+        if (esSolicitudCancelada(tipo)) {
+            String rolDestino = obtenerRolDestinoNormalizado(item);
+            if (ROL_VENDEDOR.equals(rolDestino) || ROL_COMPRADOR.equals(rolDestino)) {
+                return R.id.fragCentroMensajes;
+            }
+            if (esCancelacionParaVendedor(contexto) || esCancelacionParaComprador(contexto)) {
+                return R.id.fragCentroMensajes;
+            }
+            return 0;
+        }
+        if (esSolicitudAceptada(tipo)) {
+            return esSolicitudAceptadaParaComprador(contexto) ? R.id.fragCarrito : 0;
+        }
+        if (esSolicitudEliminada(tipo)) {
             return 0;
         }
 
@@ -232,9 +337,8 @@ public final class MensajeUiUtils {
         if (contieneAlguno(contexto, "solicitud aceptada", "solicitud_aceptada")) {
             return 0;
         }
-
-        if (esEventoReserva(contexto)) {
-            return esEventoReservaParaComprador(contexto) ? R.id.fragCarrito : 0;
+        if (esSolicitudEliminada(contexto)) {
+            return 0;
         }
 
         if (contieneAlguno(contexto, "carrito")) {
@@ -247,9 +351,31 @@ public final class MensajeUiUtils {
         return 0;
     }
 
+    private static String obtenerTipoNormalizado(NotificacionDTO item) {
+        if (item == null) {
+            return "";
+        }
+        return normalizar(item.getTipo());
+    }
+
+    private static String obtenerRolDestinoNormalizado(NotificacionDTO item) {
+        if (item == null) {
+            return "";
+        }
+        String rol = normalizar(item.getRolDestino());
+        if (rol.contains("comprador")) {
+            return ROL_COMPRADOR;
+        }
+        if (rol.contains("vendedor")) {
+            return ROL_VENDEDOR;
+        }
+        return "";
+    }
+
     private static String construirContexto(NotificacionDTO item) {
         StringBuilder contexto = new StringBuilder();
         appendContexto(contexto, item.getTipo());
+        appendContexto(contexto, item.getOrigen());
         appendContexto(contexto, item.getTitulo());
         appendContexto(contexto, item.getMensaje());
         appendContexto(contexto, item.getReferenciaTipo());
@@ -289,6 +415,10 @@ public final class MensajeUiUtils {
         return contieneAlguno(contexto,
                 "compra confirmada",
                 "compra_confirmada",
+                "compra obra capturada",
+                "compra carrito capturada",
+                "pago capturado",
+                "capturada",
                 "pago confirmado",
                 "pago completado",
                 "compra completada");
@@ -296,6 +426,22 @@ public final class MensajeUiUtils {
 
     private static boolean esSolicitudCreada(String contexto) {
         return contieneAlguno(contexto, "solicitud creada", "solicitud_creada", "nueva solicitud");
+    }
+
+    private static boolean esSolicitudAceptada(String contexto) {
+        return contieneAlguno(contexto, "solicitud aceptada", "solicitud_aceptada");
+    }
+
+    private static boolean esSolicitudRechazada(String contexto) {
+        return contieneAlguno(contexto, "solicitud rechazada", "solicitud_rechazada");
+    }
+
+    private static boolean esSolicitudCancelada(String contexto) {
+        return contieneAlguno(contexto, "solicitud cancelada", "solicitud_cancelada");
+    }
+
+    private static boolean esSolicitudEliminada(String contexto) {
+        return contieneAlguno(contexto, "solicitud eliminada", "solicitud_eliminada");
     }
 
     private static boolean esSolicitudAceptadaParaComprador(String contexto) {
@@ -326,7 +472,9 @@ public final class MensajeUiUtils {
                 "reserva liberada",
                 "reserva_liberada",
                 "reserva expirada",
-                "reserva_expirada");
+                "reserva_expirada",
+                "reserva vencida",
+                "reserva_vencida");
     }
 
     private static boolean esEventoReservaParaComprador(String contexto) {
@@ -344,7 +492,43 @@ public final class MensajeUiUtils {
                 "tu solicitud")) {
             return true;
         }
-        return contieneAlguno(contexto, "comprador", "compra");
+        return contieneAlguno(contexto, "comprador", "tu compra");
+    }
+
+    private static boolean esCancelacionParaVendedor(String contexto) {
+        return contieneAlguno(contexto,
+                "tu obra",
+                "como vendedor",
+                "obra de tu portafolio",
+                "solicitudes de tu obra",
+                "alguien cancelo su reserva",
+                "cancelada por aceptacion de otra",
+                "se acepto otra solicitud",
+                "otra solicitud fue aceptada",
+                "volvio a en venta",
+                "volvio a estar en venta",
+                "el comprador",
+                "cancelo su solicitud");
+    }
+
+    private static boolean esCancelacionParaComprador(String contexto) {
+        return contieneAlguno(contexto,
+                "tu solicitud",
+                "cancelaste tu solicitud",
+                "tu compra",
+                "tu carrito",
+                "solicitud enviada",
+                "enviada por ti");
+    }
+
+    private static boolean esEliminacionParaVendedor(String contexto) {
+        return contieneAlguno(contexto,
+                "tu obra",
+                "como vendedor",
+                "obra de tu portafolio",
+                "eliminacion de usuario vendedor",
+                "eliminacion del vendedor",
+                "solicitudes de tu obra");
     }
 
     private static boolean esEventoReservaParaVendedor(String contexto) {

@@ -994,9 +994,12 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                         return;
                     }
 
+                    if (response.code() == 409) {
+                        onPagoPaypalCancelado();
+                    }
                     Toast.makeText(
                             ActFragmentoPrincipal.this,
-                            backendMessage != null ? backendMessage : "No se pudo capturar el pago (" + response.code() + ")",
+                            resolverMensajeCapturaPaypal(response.code(), backendMessage),
                             Toast.LENGTH_LONG
                     ).show();
                 }
@@ -1034,9 +1037,12 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                     return;
                 }
 
+                if (response.code() == 409) {
+                    onPagoPaypalCancelado();
+                }
                 Toast.makeText(
                         ActFragmentoPrincipal.this,
-                        backendMessage != null ? backendMessage : "No se pudo capturar el pago (" + response.code() + ")",
+                        resolverMensajeCapturaPaypal(response.code(), backendMessage),
                         Toast.LENGTH_LONG
                 ).show();
             }
@@ -1084,5 +1090,15 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         if (currentFragment instanceof FragCarrito) {
             ((FragCarrito) currentFragment).recargarDespuesDePago();
         }
+    }
+
+    private String resolverMensajeCapturaPaypal(int statusCode, String backendMessage) {
+        if (statusCode == 409) {
+            return "El pago no fue aprobado en PayPal. Puedes intentarlo nuevamente.";
+        }
+        if (backendMessage != null && !backendMessage.trim().isEmpty()) {
+            return backendMessage;
+        }
+        return "No se pudo capturar el pago (" + statusCode + ")";
     }
 }

@@ -124,6 +124,9 @@ public class FragCarrito extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.GONE);
+        }
         if (PagoPaypalSessionManager.shouldCaptureOnReturn(requireContext())
                 && !PagoPaypalSessionManager.hasApprovalFromDeepLink(requireContext())) {
             PagoPaypalSessionManager.clear(requireContext());
@@ -637,16 +640,23 @@ public class FragCarrito extends Fragment {
     }
 
     private String resolveCompraErrorMessage(Response<?> response, String fallback) {
+        int code = response != null ? response.code() : -1;
         String backendMessage = ApiErrorParser.extractMessage(response);
+        if (code == 409) {
+            String normalized = backendMessage == null ? "" : backendMessage.toLowerCase(Locale.ROOT);
+            if (normalized.contains("order_not_approved")
+                    || normalized.contains("not approved")
+                    || normalized.contains("cancelad")
+                    || normalized.contains("no aprob")) {
+                return "El pago no fue aprobado en PayPal. Puedes intentarlo nuevamente.";
+            }
+            return "Hubo un conflicto al procesar el pago en PayPal. Intenta nuevamente.";
+        }
         if (backendMessage != null && !backendMessage.trim().isEmpty()) {
             return backendMessage;
         }
-        int code = response != null ? response.code() : -1;
         if (code == 404) {
             return "La reserva ya no esta disponible para esta obra";
-        }
-        if (code == 409) {
-            return "No se pudo completar la compra por un conflicto de estado de reserva";
         }
         if (code >= 500) {
             return "El servidor no pudo procesar la compra en este momento";

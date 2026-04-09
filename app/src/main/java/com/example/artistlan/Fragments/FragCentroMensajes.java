@@ -102,6 +102,9 @@ public class FragCentroMensajes extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.GONE);
+        }
         if (getActivity() instanceof com.example.artistlan.Activitys.ActFragmentoPrincipal) {
             ((com.example.artistlan.Activitys.ActFragmentoPrincipal) getActivity()).refrescarBadgeMensajes();
         }

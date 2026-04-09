@@ -39,8 +39,11 @@ public class NotificacionDTO {
     @SerializedName(value = "referenciaId", alternate = {"idReferencia", "referenceId"})
     private Integer referenciaId;
 
-    @SerializedName(value = "tipo", alternate = {"categoria", "kind"})
+    @SerializedName(value = "tipo", alternate = {"categoria", "kind", "tipoNotificacion", "notificationType", "eventType"})
     private String tipo;
+
+    @SerializedName(value = "rolDestino", alternate = {"actorDestino", "contextoActor", "destinatarioRol"})
+    private String rolDestino;
 
     public Integer getIdNotificacion() {
         return idNotificacion;
@@ -92,6 +95,10 @@ public class NotificacionDTO {
 
     public String getTipo() {
         return tipo;
+    }
+
+    public String getRolDestino() {
+        return rolDestino;
     }
 
     public String getUsuarioOrigenSeguro() {

@@ -40,14 +40,30 @@
                     android:src="@drawable/regresarimg" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
+                    android:layout_marginStart="14dp"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/urbanist_bold"
+                    android:maxLines="1"
                     android:text="Centro de mensajes"
-                    android:textColor="@color/artistlan_bg_bottom"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="22sp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <ImageButton
+                    android:id="@+id/btnCentroMensajesMenu"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_action_outline_soft"
+                    android:contentDescription="Más opciones"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_menu_more"
+                    android:tint="@color/artistlan_menu_text_primary" />
 
             </LinearLayout>
 

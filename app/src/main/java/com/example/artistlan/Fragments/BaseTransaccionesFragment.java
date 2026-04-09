@@ -5,11 +5,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -242,8 +242,7 @@ public abstract class BaseTransaccionesFragment extends Fragment {
         TextView tvEstado = dialogView.findViewById(R.id.tvDetalleEstado);
         TextView tvOrderId = dialogView.findViewById(R.id.tvDetallePaypalOrderId);
         TextView tvCaptureId = dialogView.findViewById(R.id.tvDetallePaypalCaptureId);
-        TextView tvFechaCreacion = dialogView.findViewById(R.id.tvDetalleFechaCreacion);
-        TextView tvFechaCaptura = dialogView.findViewById(R.id.tvDetalleFechaCaptura);
+        TextView tvFechaPago = dialogView.findViewById(R.id.tvDetalleFechaPago);
         ImageView ivComprador = dialogView.findViewById(R.id.ivDetalleComprador);
         TextView tvCompradorUsuario = dialogView.findViewById(R.id.tvDetalleCompradorUsuario);
         TextView tvCompradorSecundario = dialogView.findViewById(R.id.tvDetalleCompradorSecundario);
@@ -261,8 +260,14 @@ public abstract class BaseTransaccionesFragment extends Fragment {
         String estadoRaw = safe(detalle != null ? detalle.getEstado() : null, resumen != null ? resumen.getEstado() : null, "No disponible");
         String paypalOrderId = safe(detalle != null ? detalle.getPaypalOrderId() : null, "-", "-");
         String paypalCaptureId = safe(detalle != null ? detalle.getPaypalCaptureId() : null, "-", "-");
-        String fechaCreacion = formatearFechaHora(safe(detalle != null ? detalle.getFechaCreacion() : null, resumen != null ? resumen.getFechaTransaccion() : null, "-"));
-        String fechaCaptura = formatearFechaHora(safe(detalle != null ? detalle.getFechaCaptura() : null, "-", "-"));
+        String fechaPagoRaw = detalle != null ? detalle.getFechaCaptura() : null;
+        if (fechaPagoRaw == null || fechaPagoRaw.trim().isEmpty()) {
+            fechaPagoRaw = detalle != null ? detalle.getFechaCreacion() : null;
+        }
+        if (fechaPagoRaw == null || fechaPagoRaw.trim().isEmpty()) {
+            fechaPagoRaw = resumen != null ? resumen.getFechaTransaccion() : null;
+        }
+        String fechaPago = formatearFechaHora(safe(fechaPagoRaw, "-", "-"));
 
         String compradorUsuario = safe(detalle != null ? detalle.getUsuarioComprador() : null, "No disponible");
         String compradorNombre = safe(detalle != null ? detalle.getNombreComprador() : null, "");
@@ -274,8 +279,7 @@ public abstract class BaseTransaccionesFragment extends Fragment {
         tvEstado.setText(formatearEstadoVisual(estadoRaw));
         tvOrderId.setText(paypalOrderId);
         tvCaptureId.setText(paypalCaptureId);
-        tvFechaCreacion.setText(fechaCreacion);
-        tvFechaCaptura.setText(fechaCaptura);
+        tvFechaPago.setText(fechaPago);
         tvCompradorUsuario.setText(compradorUsuario);
         tvVendedorUsuario.setText(vendedorUsuario);
         bindSecundarioNombre(tvCompradorSecundario, compradorNombre, compradorUsuario);
@@ -302,19 +306,33 @@ public abstract class BaseTransaccionesFragment extends Fragment {
                 .circleCrop()
                 .into(ivVendedor);
 
-        Button btnCerrar = dialogView.findViewById(R.id.btnDetalleCerrar);
-        Button btnAbrirPaypal = dialogView.findViewById(R.id.btnDetalleAbrirPaypal);
-        Button btnContactar = dialogView.findViewById(R.id.btnDetalleContactar);
-        Button btnReportar = dialogView.findViewById(R.id.btnDetalleReportar);
 
-        btnCerrar.setOnClickListener(v -> dialog.dismiss());
-        btnAbrirPaypal.setOnClickListener(v -> abrirPaypalWeb());
-        btnReportar.setOnClickListener(v -> Toast.makeText(requireContext(),
-                "Esta funcion estara disponible proximamente",
-                Toast.LENGTH_SHORT).show());
-        btnContactar.setOnClickListener(v -> contactarContraparte(detalle));
+        ImageButton btnCerrarTop = dialogView.findViewById(R.id.btnDetalleCerrarTop);
+        TextView btnReportarTop = dialogView.findViewById(R.id.btnDetalleReportarTop);
+        TextView btnAbrirPaypal = dialogView.findViewById(R.id.btnDetalleAbrirPaypal);
+        TextView btnContactar = dialogView.findViewById(R.id.btnDetalleContactar);
+        if (btnCerrarTop != null) {
+            btnCerrarTop.setOnClickListener(v -> dialog.dismiss());
+        }
+        if (btnReportarTop != null) {
+            btnReportarTop.setOnClickListener(v -> Toast.makeText(requireContext(),
+                    "Esta funcion estara disponible proximamente",
+                    Toast.LENGTH_SHORT).show());
+        }
+        if (btnAbrirPaypal != null) {
+            btnAbrirPaypal.setOnClickListener(v -> abrirPaypalWeb());
+        }
+        if (btnContactar != null) {
+            btnContactar.setOnClickListener(v -> contactarContraparte(detalle));
+        }
 
         dialog.show();
+        if (dialog.getWindow() != null) {
+            DisplayMetrics dm = getResources().getDisplayMetrics();
+            int width = (int) (dm.widthPixels * 0.94f);
+            int height = (int) (dm.heightPixels * 0.9f);
+            dialog.getWindow().setLayout(width, height);
+        }
     }
 
     private void contactarContraparte(TransaccionDetalleDTO detalle) {
@@ -323,30 +341,17 @@ public abstract class BaseTransaccionesFragment extends Fragment {
             return;
         }
 
-        ContactoInfo contacto = getTipoLista() == TransaccionAdapter.TipoLista.COMPRAS
-                ? new ContactoInfo(detalle.getNombreVendedor(), detalle.getUsuarioVendedor(), detalle.getCorreoVendedor(), detalle.getTelefonoVendedor())
-                : new ContactoInfo(detalle.getNombreComprador(), detalle.getUsuarioComprador(), detalle.getCorreoComprador(), detalle.getTelefonoComprador());
-
-        if (!TextUtils.isEmpty(contacto.correo)) {
-            Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + contacto.correo));
-            intent.putExtra(Intent.EXTRA_SUBJECT, "Artistlan - Seguimiento de transaccion");
-            iniciarIntentSeguro(intent, "No se pudo abrir correo para contactar");
-            return;
-        }
-
-        if (!TextUtils.isEmpty(contacto.telefono)) {
-            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + contacto.telefono));
-            iniciarIntentSeguro(intent, "No se pudo abrir telefono para contactar");
-            return;
-        }
-
-        String alias = safe(contacto.usuario, contacto.nombre, "");
-        if (!alias.isEmpty()) {
-            Toast.makeText(requireContext(), "Contacto disponible: " + alias, Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        Toast.makeText(requireContext(), "No hay datos de contacto disponibles", Toast.LENGTH_SHORT).show();
+        boolean esCompra = getTipoLista() == TransaccionAdapter.TipoLista.COMPRAS;
+        ContactoDialogHelper.mostrarDialogoContacto(
+                this,
+                "Contacto de la contraparte",
+                esCompra ? detalle.getNombreVendedor() : detalle.getNombreComprador(),
+                esCompra ? detalle.getUsuarioVendedor() : detalle.getUsuarioComprador(),
+                esCompra ? detalle.getTipoContactoVendedor() : detalle.getTipoContactoComprador(),
+                esCompra ? detalle.getContactoVendedor() : detalle.getContactoComprador(),
+                esCompra ? detalle.getCorreoVendedor() : detalle.getCorreoComprador(),
+                esCompra ? detalle.getTelefonoVendedor() : detalle.getTelefonoComprador()
+        );
     }
 
     private void abrirPaypalWeb() {
@@ -453,17 +458,4 @@ public abstract class BaseTransaccionesFragment extends Fragment {
         tvTransaccionesVacias.setVisibility(View.VISIBLE);
     }
 
-    private static class ContactoInfo {
-        final String nombre;
-        final String usuario;
-        final String correo;
-        final String telefono;
-
-        ContactoInfo(String nombre, String usuario, String correo, String telefono) {
-            this.nombre = nombre;
-            this.usuario = usuario;
-            this.correo = correo;
-            this.telefono = telefono;
-        }
-    }
 }

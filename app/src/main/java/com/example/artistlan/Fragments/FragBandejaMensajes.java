@@ -41,6 +41,7 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
     private TextView emptySubtitle;
     private TextView btnMarcarTodasLeidas;
     private TextView btnRecargar;
+    private View layoutAccionesLocal;
 
     private NotificacionesAdapter adapter;
     private NotificacionesApi notificacionesApi;
@@ -67,11 +68,15 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
         emptySubtitle = view.findViewById(R.id.tvBandejaVaciaSubtitulo);
         btnMarcarTodasLeidas = view.findViewById(R.id.btnBandejaMarcarTodasLeidas);
         btnRecargar = view.findViewById(R.id.btnBandejaRecargar);
+        layoutAccionesLocal = view.findViewById(R.id.layoutBandejaAccionesLocal);
 
         recyclerMensajes.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new NotificacionesAdapter(this);
         recyclerMensajes.setAdapter(adapter);
 
+        if (layoutAccionesLocal != null) {
+            layoutAccionesLocal.setVisibility(View.GONE);
+        }
         btnMarcarTodasLeidas.setOnClickListener(v -> confirmarMarcarTodas());
         btnRecargar.setOnClickListener(v -> cargarNotificaciones());
 
@@ -79,6 +84,9 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
     }
 
     private void cargarNotificaciones() {
+        if (!vistaListaInicializada()) {
+            return;
+        }
         if (idUsuario <= 0) {
             mostrarVacio("Sin sesion activa", "Inicia sesion para ver tu bandeja de mensajes.");
             return;
@@ -127,7 +135,7 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
     private List<NotificacionDTO> filtrarMensajes(List<NotificacionDTO> source) {
         List<NotificacionDTO> salida = new ArrayList<>();
         for (NotificacionDTO item : source) {
-            if (item != null && !item.esSolicitudCreada()) {
+            if (item != null) {
                 salida.add(item);
             }
         }
@@ -152,6 +160,9 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
     }
 
     private void confirmarMarcarTodas() {
+        if (!vistaListaInicializada()) {
+            return;
+        }
         if (adapter.getItems().isEmpty()) {
             Toast.makeText(requireContext(), "No hay mensajes para marcar.", Toast.LENGTH_SHORT).show();
             return;
@@ -250,15 +261,31 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
     }
 
     private void navegarSemantico(@NonNull NotificacionDTO item, int destinationId) {
-        if (MensajeUiUtils.destinoSemanticoRequiereSolicitudesTab(item)) {
+        Integer modoSolicitudes = MensajeUiUtils.obtenerModoSolicitudesSemantico(item);
+        if (MensajeUiUtils.destinoSemanticoRequiereSolicitudesTab(item) || modoSolicitudes != null) {
             if (getParentFragment() instanceof FragCentroMensajes) {
-                ((FragCentroMensajes) getParentFragment()).seleccionarTab(1);
+                FragCentroMensajes parent = (FragCentroMensajes) getParentFragment();
+                parent.seleccionarTab(1);
+                if (modoSolicitudes != null) {
+                    parent.seleccionarModoSolicitudes(modoSolicitudes);
+                }
                 return;
             }
             if (getActivity() instanceof ActFragmentoPrincipal) {
-                ((ActFragmentoPrincipal) getActivity()).abrirCentroMensajes(1);
+                ((ActFragmentoPrincipal) getActivity()).abrirCentroMensajes(
+                        1,
+                        modoSolicitudes != null ? modoSolicitudes : FragSolicitudesMensajes.MODO_RECIBIDAS
+                );
                 return;
             }
+        }
+
+        Integer tabTransacciones = MensajeUiUtils.obtenerTabTransaccionesSemantico(item);
+        if (destinationId == R.id.fragTransacciones
+                && tabTransacciones != null
+                && getActivity() instanceof ActFragmentoPrincipal) {
+            ((ActFragmentoPrincipal) getActivity()).abrirTransacciones(tabTransacciones);
+            return;
         }
         navegarADestinoSeguro(destinationId, null);
     }
@@ -360,5 +387,28 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
         if (getParentFragment() instanceof FragCentroMensajes) {
             ((FragCentroMensajes) getParentFragment()).refrescarResumenContadores();
         }
+    }
+
+    public void recargarDesdeHeader() {
+        if (!vistaListaInicializada()) {
+            return;
+        }
+        cargarNotificaciones();
+    }
+
+    public void marcarTodasDesdeHeader() {
+        if (!vistaListaInicializada()) {
+            return;
+        }
+        confirmarMarcarTodas();
+    }
+
+    private boolean vistaListaInicializada() {
+        return isAdded()
+                && getView() != null
+                && adapter != null
+                && recyclerMensajes != null
+                && progressMensajes != null
+                && emptyState != null;
     }
 }

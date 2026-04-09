@@ -1,17 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Detalle de transaccion"
-        android:textColor="#1C1C1C"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Detalle de transaccion"
+            android:textColor="#1C1C1C"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnDetalleReportarTop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_action_outline_soft"
+            android:paddingStart="10dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="6dp"
+            android:text="Reportar"
+            android:textColor="@color/artistlan_menu_text_primary"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btnDetalleCerrarTop"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_back_bubble"
+            android:contentDescription="Cerrar detalle"
+            android:padding="8dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            app:tint="#2E2E2E" />
+    </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
@@ -23,8 +57,9 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginTop="12dp"
+        android:layout_weight="1"
         android:fillViewport="true">
 
         <LinearLayout
@@ -125,30 +160,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Fecha creacion"
+                android:text="Fecha de pago"
                 android:textColor="#6A6A6A"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/tvDetalleFechaCreacion"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="-"
-                android:textColor="#1F1F1F"
-                android:textSize="13sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Fecha captura"
-                android:textColor="#6A6A6A"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvDetalleFechaCaptura"
+                android:id="@+id/tvDetalleFechaPago"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="-"
@@ -253,7 +271,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="El pago fue procesado mediante PayPal."
+                android:text="¿Problema con tu compra?\n\nPuedes contactar al vendedor o revisar el pago en PayPal para mas informacion y soporte."
                 android:textColor="#5D5D5D"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -263,37 +281,23 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
-        android:orientation="vertical">
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/btnDetalleContactar"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="44dp"
-            android:text="Contactar contraparte"
+            android:layout_weight="1"
+            android:text="Contactar"
             android:textAllCaps="false" />
 
         <Button
             android:id="@+id/btnDetalleAbrirPaypal"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="44dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
             android:text="Abrir PayPal"
-            android:textAllCaps="false" />
-
-        <Button
-            android:id="@+id/btnDetalleReportar"
-            android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginTop="8dp"
-            android:text="Reportar problema"
-            android:textAllCaps="false" />
-
-        <Button
-            android:id="@+id/btnDetalleCerrar"
-            android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginTop="8dp"
-            android:text="Cerrar"
             android:textAllCaps="false" />
     </LinearLayout>
 

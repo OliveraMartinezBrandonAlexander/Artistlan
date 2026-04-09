@@ -27,23 +27,23 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/btnSolicitudesRecibidas"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@android:color/transparent"
-                android:text="RECIBIDAS"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
-
-            <Button
                 android:id="@+id/btnSolicitudesEnviadas"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:text="ENVIADAS"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnSolicitudesRecibidas"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:text="RECIBIDAS"
                 android:textAllCaps="false"
                 android:textColor="#1E3A8A"
                 android:textStyle="bold" />
@@ -52,6 +52,7 @@
     </FrameLayout>
 
     <LinearLayout
+        android:id="@+id/layoutSolicitudesAccionesLocal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"

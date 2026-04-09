@@ -41,6 +41,9 @@ import retrofit2.Response;
 
 public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdapter.Listener {
 
+    public static final int MODO_RECIBIDAS = 0;
+    public static final int MODO_ENVIADAS = 1;
+
     private enum ModoSolicitudes {
         RECIBIDAS,
         ENVIADAS
@@ -57,11 +60,13 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
     private View segmentIndicator;
     private Button btnRecibidas;
     private Button btnEnviadas;
+    private View layoutAccionesLocal;
 
     private SolicitudesAdapter adapter;
     private SolicitudesApi solicitudesApi;
     private int idUsuario = -1;
     private ModoSolicitudes modoActual = ModoSolicitudes.RECIBIDAS;
+    private Integer modoExternoPendiente = null;
 
     @Nullable
     @Override
@@ -89,32 +94,45 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
         segmentIndicator = view.findViewById(R.id.segmentIndicatorSolicitudes);
         btnRecibidas = view.findViewById(R.id.btnSolicitudesRecibidas);
         btnEnviadas = view.findViewById(R.id.btnSolicitudesEnviadas);
+        layoutAccionesLocal = view.findViewById(R.id.layoutSolicitudesAccionesLocal);
 
         recyclerSolicitudes.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new SolicitudesAdapter(this);
         recyclerSolicitudes.setAdapter(adapter);
 
+        if (layoutAccionesLocal != null) {
+            layoutAccionesLocal.setVisibility(View.GONE);
+        }
         btnMarcarTodasLeidas.setVisibility(View.GONE);
         btnRecargar.setOnClickListener(v -> cargarSolicitudes());
 
         configurarSegmento();
-        view.post(() -> seleccionarModo(ModoSolicitudes.RECIBIDAS, false));
+        ModoSolicitudes inicial = modoExternoPendiente != null && modoExternoPendiente == MODO_ENVIADAS
+                ? ModoSolicitudes.ENVIADAS
+                : ModoSolicitudes.RECIBIDAS;
+        modoExternoPendiente = null;
+        view.post(() -> seleccionarModo(inicial, false));
     }
 
     private void configurarSegmento() {
-        btnRecibidas.setOnClickListener(v -> seleccionarModo(ModoSolicitudes.RECIBIDAS, true));
         btnEnviadas.setOnClickListener(v -> seleccionarModo(ModoSolicitudes.ENVIADAS, true));
+        btnRecibidas.setOnClickListener(v -> seleccionarModo(ModoSolicitudes.RECIBIDAS, true));
     }
 
     private void seleccionarModo(ModoSolicitudes modo, boolean animar) {
+        if (!vistaListaInicializada()) {
+            modoExternoPendiente = (modo == ModoSolicitudes.ENVIADAS) ? MODO_ENVIADAS : MODO_RECIBIDAS;
+            modoActual = modo;
+            return;
+        }
         this.modoActual = modo;
         adapter.setModoLista(modo == ModoSolicitudes.RECIBIDAS
                 ? SolicitudesAdapter.ModoLista.RECIBIDAS
                 : SolicitudesAdapter.ModoLista.ENVIADAS);
 
         moverIndicador(modo == ModoSolicitudes.RECIBIDAS, animar);
-        btnRecibidas.setTextColor(modo == ModoSolicitudes.RECIBIDAS ? 0xFFFFFFFF : 0xFF1E3A8A);
-        btnEnviadas.setTextColor(modo == ModoSolicitudes.RECIBIDAS ? 0xFF1E3A8A : 0xFFFFFFFF);
+        btnEnviadas.setTextColor(modo == ModoSolicitudes.ENVIADAS ? 0xFFFFFFFF : 0xFF1E3A8A);
+        btnRecibidas.setTextColor(modo == ModoSolicitudes.ENVIADAS ? 0xFF1E3A8A : 0xFFFFFFFF);
         cargarSolicitudes();
     }
 
@@ -124,7 +142,7 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
         }
         int contWidth = segmentContainer.getWidth();
         int mitad = contWidth / 2;
-        int nuevoInicio = izquierda ? 0 : mitad;
+        int nuevoInicio = izquierda ? mitad : 0;
 
         if (!animar) {
             segmentIndicator.setX(nuevoInicio);
@@ -145,6 +163,9 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
     }
 
     private void cargarSolicitudes() {
+        if (!vistaListaInicializada()) {
+            return;
+        }
         if (idUsuario <= 0) {
             mostrarVacio("Sin sesion activa", "Inicia sesion para ver tus solicitudes.");
             return;
@@ -471,5 +492,40 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
         if (getParentFragment() instanceof FragCentroMensajes) {
             ((FragCentroMensajes) getParentFragment()).refrescarResumenContadores();
         }
+    }
+
+    public void recargarDesdeHeader() {
+        if (!vistaListaInicializada()) {
+            return;
+        }
+        cargarSolicitudes();
+    }
+
+    public void seleccionarModoExterno(int modo) {
+        if (!isAdded()) {
+            modoExternoPendiente = modo;
+            return;
+        }
+        ModoSolicitudes destino = modo == MODO_ENVIADAS ? ModoSolicitudes.ENVIADAS : ModoSolicitudes.RECIBIDAS;
+        if (!vistaListaInicializada()) {
+            modoExternoPendiente = modo;
+            return;
+        }
+        if (segmentContainer != null) {
+            segmentContainer.post(() -> seleccionarModo(destino, false));
+        } else {
+            seleccionarModo(destino, false);
+        }
+    }
+
+    private boolean vistaListaInicializada() {
+        return isAdded()
+                && getView() != null
+                && adapter != null
+                && recyclerSolicitudes != null
+                && progressSolicitudes != null
+                && emptyState != null
+                && btnRecibidas != null
+                && btnEnviadas != null;
     }
 }

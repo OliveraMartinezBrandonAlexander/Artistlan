@@ -20,6 +20,8 @@ import java.util.List;
 
 public class FragTransacciones extends Fragment {
 
+    public static final String ARG_TAB_INICIAL = "tab_transacciones_inicial";
+
     private TabLayout tabLayout;
     private ViewPager2 viewPager;
 
@@ -48,6 +50,13 @@ public class FragTransacciones extends Fragment {
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
             tab.setText(position == 0 ? R.string.tab_mis_compras : R.string.tab_mis_ventas);
         }).attach();
+
+        int tabInicial = 0;
+        Bundle args = getArguments();
+        if (args != null) {
+            tabInicial = args.getInt(ARG_TAB_INICIAL, 0);
+        }
+        seleccionarTab(tabInicial);
     }
 
     @Override
@@ -70,6 +79,14 @@ public class FragTransacciones extends Fragment {
                 ((BaseTransaccionesFragment) fragment).recargarDespuesDePago();
             }
         }
+    }
+
+    public void seleccionarTab(int tabIndex) {
+        if (viewPager == null) {
+            return;
+        }
+        int safeIndex = Math.max(0, Math.min(1, tabIndex));
+        viewPager.setCurrentItem(safeIndex, false);
     }
 
     private static class TransaccionesPagerAdapter extends FragmentStateAdapter {

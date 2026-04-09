@@ -48,7 +48,13 @@
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
         app:popExitAnim="@anim/nav_pop_exit"
-        tools:layout="@layout/fragment_frag_transacciones" />
+        tools:layout="@layout/fragment_frag_transacciones">
+
+        <argument
+            android:name="tab_transacciones_inicial"
+            app:argType="integer"
+            android:defaultValue="0" />
+    </fragment>
 
     <fragment
         android:id="@+id/fragArtistas"
@@ -97,6 +103,11 @@
 
         <argument
             android:name="tab_inicial"
+            app:argType="integer"
+            android:defaultValue="0" />
+
+        <argument
+            android:name="solicitudes_modo"
             app:argType="integer"
             android:defaultValue="0" />
     </fragment>

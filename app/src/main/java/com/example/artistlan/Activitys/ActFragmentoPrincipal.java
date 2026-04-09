@@ -39,6 +39,7 @@ import com.example.artistlan.Conector.model.CapturarOrdenPaypalCarritoResponseDT
 import com.example.artistlan.Conector.model.CapturarOrdenPaypalResponseDTO;
 import com.example.artistlan.Fragments.FragCarrito;
 import com.example.artistlan.Fragments.FragCentroMensajes;
+import com.example.artistlan.Fragments.FragSolicitudesMensajes;
 import com.example.artistlan.Fragments.FragTransacciones;
 import com.example.artistlan.Fragments.MensajesBadgeManager;
 import com.example.artistlan.R;
@@ -483,7 +484,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 }
 
                 if (itemId == R.id.navNotificaciones) {
-                    abrirCentroMensajes(1);
+                    abrirCentroMensajes(1, FragSolicitudesMensajes.MODO_RECIBIDAS);
                     drawerLayout.closeDrawer(GravityCompat.START);
                     return true;
                 }
@@ -519,10 +520,15 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     }
 
     public void abrirCentroMensajes(int tabInicial) {
+        abrirCentroMensajes(tabInicial, FragSolicitudesMensajes.MODO_RECIBIDAS);
+    }
+
+    public void abrirCentroMensajes(int tabInicial, int solicitudesModo) {
         if (navController == null) return;
 
         Bundle args = new Bundle();
         args.putInt(FragCentroMensajes.ARG_TAB_INICIAL, Math.max(0, Math.min(1, tabInicial)));
+        args.putInt(FragCentroMensajes.ARG_SOLICITUDES_MODO, solicitudesModo);
 
         NavDestination current = navController.getCurrentDestination();
         if (current != null && current.getId() == R.id.fragCentroMensajes) {
@@ -531,13 +537,37 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             if (navHostFragment != null) {
                 Fragment currentFragment = navHostFragment.getChildFragmentManager().getPrimaryNavigationFragment();
                 if (currentFragment instanceof FragCentroMensajes) {
-                    ((FragCentroMensajes) currentFragment).seleccionarTab(tabInicial);
+                    FragCentroMensajes centro = (FragCentroMensajes) currentFragment;
+                    centro.seleccionarTab(tabInicial);
+                    centro.seleccionarModoSolicitudes(solicitudesModo);
                     return;
                 }
             }
         }
 
         navegarSinDuplicar(R.id.fragCentroMensajes, args);
+    }
+
+    public void abrirTransacciones(int tabInicial) {
+        if (navController == null) return;
+        int safeTab = Math.max(0, Math.min(1, tabInicial));
+
+        NavDestination current = navController.getCurrentDestination();
+        if (current != null && current.getId() == R.id.fragTransacciones) {
+            NavHostFragment navHostFragment =
+                    (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);
+            if (navHostFragment != null) {
+                Fragment currentFragment = navHostFragment.getChildFragmentManager().getPrimaryNavigationFragment();
+                if (currentFragment instanceof FragTransacciones) {
+                    ((FragTransacciones) currentFragment).seleccionarTab(safeTab);
+                    return;
+                }
+            }
+        }
+
+        Bundle args = new Bundle();
+        args.putInt(FragTransacciones.ARG_TAB_INICIAL, safeTab);
+        navegarSinDuplicar(R.id.fragTransacciones, args);
     }
 
     public void refrescarBadgeMensajes() {

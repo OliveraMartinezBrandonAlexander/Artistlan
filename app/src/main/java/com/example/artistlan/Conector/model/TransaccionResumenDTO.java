@@ -71,7 +71,7 @@ public class TransaccionResumenDTO {
             return null;
         }
         String valor = tipoOrigen.trim().toUpperCase(Locale.ROOT);
-        if (valor.contains("OBRA")) {
+        if (valor.contains("OBRA") || valor.contains("DIRECTA")) {
             return "OBRA_DIRECTA";
         }
         if (valor.contains("CARRITO")) {

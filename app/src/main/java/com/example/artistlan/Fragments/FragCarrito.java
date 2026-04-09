@@ -1,7 +1,5 @@
 package com.example.artistlan.Fragments;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -445,87 +443,16 @@ public class FragCarrito extends Fragment {
     }
 
     private void mostrarDialogoContacto(ContactoVendedorInfo info) {
-        StringBuilder mensaje = new StringBuilder();
-        appendLinea(mensaje, "Artista", info.nombre);
-        appendLinea(mensaje, "Usuario", info.usuario);
-        appendLinea(mensaje, "Contacto", info.contacto);
-        appendLinea(mensaje, "Tipo", info.tipoContacto);
-        appendLinea(mensaje, "Correo", info.correo);
-        appendLinea(mensaje, "Telefono", info.telefono);
-
-        String texto = mensaje.toString().trim();
-        if (texto.isEmpty()) {
-            texto = "No hay informacion de contacto disponible.";
-        }
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext())
-                .setTitle("Contacto del artista")
-                .setMessage(texto)
-                .setNegativeButton("Cerrar", null);
-
-        if (!isBlank(info.contacto)) {
-            builder.setPositiveButton("Copiar contacto", (dialog, which) -> copiarTexto("Contacto del artista", info.contacto));
-        }
-
-        if (puedeAbrirContacto(info)) {
-            builder.setNeutralButton("Contactar", (dialog, which) -> abrirContacto(info));
-        }
-
-        builder.show();
-    }
-
-    private boolean puedeAbrirContacto(ContactoVendedorInfo info) {
-        if (isBlank(info.contacto)) {
-            return false;
-        }
-        String tipo = safe(info.tipoContacto, "").toUpperCase(Locale.ROOT);
-        return tipo.contains("MAIL")
-                || tipo.contains("EMAIL")
-                || tipo.contains("WHATS")
-                || tipo.contains("TELEF")
-                || tipo.contains("PHONE")
-                || tipo.contains("INSTA");
-    }
-
-    private void abrirContacto(ContactoVendedorInfo info) {
-        if (isBlank(info.contacto)) {
-            return;
-        }
-        String tipo = safe(info.tipoContacto, "").toUpperCase(Locale.ROOT);
-        String valor = info.contacto.trim();
-        Intent intent;
-
-        if (tipo.contains("MAIL") || tipo.contains("EMAIL") || valor.contains("@")) {
-            intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + valor));
-        } else if (tipo.contains("WHATS")) {
-            String numero = valor.replaceAll("[^0-9]", "");
-            intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/" + numero));
-        } else if (tipo.contains("TELEF") || tipo.contains("PHONE")) {
-            intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + valor));
-        } else if (tipo.contains("INSTA")) {
-            String user = valor.startsWith("@") ? valor.substring(1) : valor;
-            intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://instagram.com/" + user));
-        } else {
-            copiarTexto("Contacto del artista", valor);
-            Toast.makeText(requireContext(), "Contacto copiado al portapapeles", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        try {
-            startActivity(intent);
-        } catch (Exception e) {
-            Toast.makeText(requireContext(), "No se pudo abrir la app de contacto", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void copiarTexto(String label, String texto) {
-        ClipboardManager clipboard = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
-        if (clipboard == null) {
-            Toast.makeText(requireContext(), "No se pudo acceder al portapapeles", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        clipboard.setPrimaryClip(ClipData.newPlainText(label, texto));
-        Toast.makeText(requireContext(), "Contacto copiado", Toast.LENGTH_SHORT).show();
+        ContactoDialogHelper.mostrarDialogoContacto(
+                this,
+                "Contacto del artista",
+                info.nombre,
+                info.usuario,
+                info.tipoContacto,
+                info.contacto,
+                info.correo,
+                info.telefono
+        );
     }
 
     private void prepararCompraObra(CarritoDTO item, int position) {
@@ -558,7 +485,7 @@ public class FragCarrito extends Fragment {
         }
         new AlertDialog.Builder(requireContext())
                 .setTitle("Confirmar compra")
-                .setMessage("Estas a punto de comprar esta obra.\n\nEl pago se realizara mediante PayPal.\nTe recomendamos haber acordado previamente los detalles de entrega con el vendedor.\n\nDeseas continuar?")
+                .setMessage("Estas a punto de comprar esta obra.\n\nTu pago se procesara de forma segura mediante PayPal.\nSi lo deseas, puedes contactar al vendedor antes de continuar.\nDespues podras dar seguimiento en tu historial.\n\nDeseas continuar?")
                 .setNegativeButton("Cancelar", null)
                 .setPositiveButton("Continuar", (dialog, which) -> {
                     if (onConfirmar != null) {
@@ -865,13 +792,6 @@ public class FragCarrito extends Fragment {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? fallback : trimmed;
-    }
-
-    private static void appendLinea(StringBuilder builder, String label, String value) {
-        if (builder == null || isBlank(value)) {
-            return;
-        }
-        builder.append(label).append(": ").append(value.trim()).append('\n');
     }
 
     private static class ContactoVendedorInfo {

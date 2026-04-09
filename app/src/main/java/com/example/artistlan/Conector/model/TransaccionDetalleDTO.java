@@ -18,10 +18,23 @@ public class TransaccionDetalleDTO {
     @SerializedName(value = "monto", alternate = {"precio", "total", "importe"})
     private Double monto;
 
-    @SerializedName(value = "fechaCreacion", alternate = {"createdAt", "fechaTransaccion", "fechaCompra", "fechaVenta"})
+    @SerializedName(value = "fechaCreacion", alternate = {
+            "createdAt",
+            "created_at",
+            "fechaTransaccion",
+            "fechaCompra",
+            "fechaVenta"
+    })
     private String fechaCreacion;
 
-    @SerializedName(value = "fechaCaptura", alternate = {"capturedAt", "fechaPago", "fechaCapturaPago"})
+    @SerializedName(value = "fechaCaptura", alternate = {
+            "capturedAt",
+            "captured_at",
+            "fecha_captura",
+            "fechaPago",
+            "fechaCapturaPago",
+            "capturaFecha"
+    })
     private String fechaCaptura;
 
     @SerializedName(value = "paypalOrderId", alternate = {"idOrdenPaypal", "ordenPaypalId", "orderIdPaypal"})
@@ -48,6 +61,12 @@ public class TransaccionDetalleDTO {
     @SerializedName(value = "telefonoComprador", alternate = {"celularComprador", "whatsappComprador"})
     private String telefonoComprador;
 
+    @SerializedName(value = "tipoContactoComprador", alternate = {"contactoTipoComprador", "tipoCanalComprador"})
+    private String tipoContactoComprador;
+
+    @SerializedName(value = "contactoComprador", alternate = {"datoContactoComprador", "valorContactoComprador"})
+    private String contactoComprador;
+
     @SerializedName(value = "fotoComprador", alternate = {"avatarComprador", "compradorFoto", "fotoPerfilComprador"})
     private String fotoComprador;
 
@@ -62,6 +81,12 @@ public class TransaccionDetalleDTO {
 
     @SerializedName(value = "telefonoVendedor", alternate = {"celularVendedor", "whatsappVendedor"})
     private String telefonoVendedor;
+
+    @SerializedName(value = "tipoContactoVendedor", alternate = {"contactoTipoVendedor", "tipoCanalVendedor"})
+    private String tipoContactoVendedor;
+
+    @SerializedName(value = "contactoVendedor", alternate = {"datoContactoVendedor", "valorContactoVendedor"})
+    private String contactoVendedor;
 
     @SerializedName(value = "fotoVendedor", alternate = {"avatarVendedor", "vendedorFoto", "fotoPerfilVendedor"})
     private String fotoVendedor;
@@ -157,6 +182,20 @@ public class TransaccionDetalleDTO {
         return comprador != null ? comprador.getTelefono() : null;
     }
 
+    public String getTipoContactoComprador() {
+        if (tipoContactoComprador != null && !tipoContactoComprador.trim().isEmpty()) {
+            return tipoContactoComprador.trim();
+        }
+        return null;
+    }
+
+    public String getContactoComprador() {
+        if (contactoComprador != null && !contactoComprador.trim().isEmpty()) {
+            return contactoComprador.trim();
+        }
+        return null;
+    }
+
     public String getFotoComprador() {
         if (fotoComprador != null && !fotoComprador.trim().isEmpty()) {
             return fotoComprador.trim();
@@ -193,6 +232,20 @@ public class TransaccionDetalleDTO {
             return telefonoVendedor.trim();
         }
         return vendedor != null ? vendedor.getTelefono() : null;
+    }
+
+    public String getTipoContactoVendedor() {
+        if (tipoContactoVendedor != null && !tipoContactoVendedor.trim().isEmpty()) {
+            return tipoContactoVendedor.trim();
+        }
+        return null;
+    }
+
+    public String getContactoVendedor() {
+        if (contactoVendedor != null && !contactoVendedor.trim().isEmpty()) {
+            return contactoVendedor.trim();
+        }
+        return null;
     }
 
     public String getFotoVendedor() {

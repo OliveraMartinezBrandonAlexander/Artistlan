@@ -54,11 +54,10 @@ public class NotificacionesAdapter extends RecyclerView.Adapter<NotificacionesAd
         holder.tvFecha.setText(MensajeUiUtils.formatearFechaCorta(item.getFecha()));
 
         String origenNombre = item.getUsuarioOrigenSeguro();
-        holder.tvOrigenNombre.setText(
-                origenNombre == null || origenNombre.trim().isEmpty()
-                        ? (item.esDeSistema() ? "Sistema" : "Usuario")
-                        : origenNombre.trim()
-        );
+        String origenVisual = origenNombre == null || origenNombre.trim().isEmpty()
+                ? (item.esDeSistema() ? "Sistema" : "Usuario")
+                : origenNombre.trim();
+        holder.tvOrigenNombre.setText("De: " + origenVisual);
 
         holder.tvChipOrigen.setText(item.esDeSistema() ? "SISTEMA" : "USUARIO");
         holder.tvChipOrigen.setBackgroundResource(item.esDeSistema()

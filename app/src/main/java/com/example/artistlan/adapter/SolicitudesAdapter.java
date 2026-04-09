@@ -58,7 +58,7 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
         SolicitudDTO item = items.get(position);
         boolean esRecibida = modoLista == ModoLista.RECIBIDAS;
 
-        holder.tvTitulo.setText("Titulo de la obra: " + item.getTituloSeguro());
+        holder.tvTitulo.setText("Obra: " + item.getTituloSeguro());
 
         holder.tvMensaje.setText((esRecibida ? "Mensaje comprador: " : "Tu mensaje: ") + item.getMensajeSeguro());
 
@@ -73,7 +73,7 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
         holder.tvFecha.setText(MensajeUiUtils.formatearFechaCorta(item.getFecha()));
 
         String actor = item.getNombreActorContextual(esRecibida);
-        holder.tvOrigenNombre.setText((esRecibida ? "Comprador: " : "Vendedor: ") + actor);
+        holder.tvOrigenNombre.setText((esRecibida ? "De: " : "Para: ") + actor);
 
         holder.tvEstado.setText(item.getEstadoVisual());
         holder.tvEstado.setBackgroundResource(obtenerFondoEstado(item));

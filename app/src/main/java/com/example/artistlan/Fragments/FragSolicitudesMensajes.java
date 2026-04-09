@@ -16,6 +16,7 @@ import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -131,8 +132,10 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
                 : SolicitudesAdapter.ModoLista.ENVIADAS);
 
         moverIndicador(modo == ModoSolicitudes.RECIBIDAS, animar);
-        btnEnviadas.setTextColor(modo == ModoSolicitudes.ENVIADAS ? 0xFFFFFFFF : 0xFF1E3A8A);
-        btnRecibidas.setTextColor(modo == ModoSolicitudes.ENVIADAS ? 0xFF1E3A8A : 0xFFFFFFFF);
+        int selectedColor = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_primary);
+        int defaultColor = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_secondary);
+        btnEnviadas.setTextColor(modo == ModoSolicitudes.ENVIADAS ? selectedColor : defaultColor);
+        btnRecibidas.setTextColor(modo == ModoSolicitudes.ENVIADAS ? defaultColor : selectedColor);
         cargarSolicitudes();
     }
 
@@ -272,7 +275,7 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
         StringBuilder detalle = new StringBuilder();
         detalle.append("Estado: ").append(item.getEstadoVisual()).append("\n")
                 .append("Fecha solicitud: ").append(MensajeUiUtils.formatearFechaCorta(item.getFecha())).append("\n")
-                .append(esRecibida ? "Comprador: " : "Vendedor: ")
+                .append(esRecibida ? "De: " : "Para: ")
                 .append(item.getNombreActorContextual(esRecibida)).append("\n")
                 .append("Obra: ").append(item.getTituloSeguro()).append("\n")
                 .append(esRecibida ? "Mensaje comprador: " : "Tu mensaje: ").append(item.getMensajeSeguro());

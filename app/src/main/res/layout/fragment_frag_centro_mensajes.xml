@@ -11,12 +11,14 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
+        android:background="@color/artistlan_menu_bg"
+        android:stateListAnimator="@null"
         app:elevation="0dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/artistlan_menu_bg"
             android:orientation="vertical"
             android:paddingStart="16dp"
             android:paddingTop="14dp"
@@ -76,20 +78,26 @@
                 android:textColor="@color/artistlan_menu_icon_active"
                 android:textSize="12sp" />
 
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tabLayoutCentroMensajes"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                app:tabBackground="@drawable/bg_bottom_nav_artistlan"
-                app:tabIndicator="@drawable/bg_bottom_nav_active"
-                app:tabIndicatorFullWidth="true"
-                app:tabIndicatorHeight="0dp"
-                app:tabInlineLabel="true"
-                app:tabMode="fixed"
+                android:background="@drawable/bg_centro_tabs_container"
+                android:padding="4dp">
 
-                app:tabSelectedTextColor="@color/artistlan_bg_top"
-                app:tabTextColor="@color/artistlan_bg_mid" />
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/tabLayoutCentroMensajes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    app:tabBackground="@drawable/bg_centro_tab_item"
+                    app:tabIndicatorColor="@android:color/transparent"
+                    app:tabIndicatorHeight="0dp"
+                    app:tabMode="fixed"
+                    app:tabRippleColor="@color/artistlan_menu_accent_soft"
+                    app:tabSelectedTextColor="@color/artistlan_menu_text_primary"
+                    app:tabTextColor="@color/artistlan_menu_text_secondary" />
+            </FrameLayout>
 
         </LinearLayout>
 
@@ -99,6 +107,7 @@
         android:id="@+id/viewPagerCentroMensajes"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/artistlan_menu_bg"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

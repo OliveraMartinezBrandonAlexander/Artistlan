@@ -4,13 +4,17 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.example.artistlan.Activitys.ActFragmentoPrincipal;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
 import com.google.android.material.tabs.TabLayout;
@@ -24,6 +28,8 @@ public class FragTransacciones extends Fragment {
 
     private TabLayout tabLayout;
     private ViewPager2 viewPager;
+    private View menuInferior;
+    private ImageButton btnAtras;
 
     @Nullable
     @Override
@@ -36,13 +42,17 @@ public class FragTransacciones extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         new BotonesMenuSuperior(this);
-        View menuInferior = requireActivity().findViewById(R.id.MenuInferior);
+        menuInferior = requireActivity().findViewById(R.id.MenuInferior);
         if (menuInferior != null) {
             menuInferior.setVisibility(View.GONE);
         }
 
         tabLayout = view.findViewById(R.id.tabLayoutTransacciones);
         viewPager = view.findViewById(R.id.viewPagerTransacciones);
+        btnAtras = view.findViewById(R.id.btnTransaccionesAtras);
+        if (btnAtras != null) {
+            btnAtras.setOnClickListener(v -> navegarAtrasSeguro());
+        }
 
         viewPager.setAdapter(new TransaccionesPagerAdapter(this));
         viewPager.setOffscreenPageLimit(2);
@@ -62,20 +72,21 @@ public class FragTransacciones extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (getActivity() == null) return;
-        View menuInferior = getActivity().findViewById(R.id.MenuInferior);
         if (menuInferior != null) {
             menuInferior.setVisibility(View.VISIBLE);
         }
+        menuInferior = null;
+        btnAtras = null;
+        if (viewPager != null) {
+            viewPager.setAdapter(null);
+        }
+        viewPager = null;
+        tabLayout = null;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (getActivity() == null) {
-            return;
-        }
-        View menuInferior = getActivity().findViewById(R.id.MenuInferior);
         if (menuInferior != null) {
             menuInferior.setVisibility(View.GONE);
         }
@@ -99,6 +110,37 @@ public class FragTransacciones extends Fragment {
         }
         int safeIndex = Math.max(0, Math.min(1, tabIndex));
         viewPager.setCurrentItem(safeIndex, false);
+    }
+
+    private void navegarAtrasSeguro() {
+        if (!isAdded()) {
+            return;
+        }
+
+        NavController navController = null;
+        try {
+            navController = NavHostFragment.findNavController(this);
+            if (navController.popBackStack()) {
+                return;
+            }
+        } catch (Exception ignored) {
+            // fallback abajo
+        }
+
+        if (getActivity() instanceof ActFragmentoPrincipal) {
+            ((ActFragmentoPrincipal) getActivity()).navegarDesdeCentroMensajes(R.id.fragExplorar, null);
+            return;
+        }
+
+        try {
+            if (navController != null && navController.navigateUp()) {
+                return;
+            }
+        } catch (Exception ignored) {
+            // fallback final
+        }
+
+        requireActivity().finish();
     }
 
     private static class TransaccionesPagerAdapter extends FragmentStateAdapter {

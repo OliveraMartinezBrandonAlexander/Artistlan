@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/artistlan_menu_bg"
     tools:context=".Fragments.FragTransacciones">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -20,10 +21,46 @@
             android:orientation="vertical"
             app:layout_scrollFlags="scroll|enterAlways">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="12dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="10dp">
+
+                <ImageButton
+                    android:id="@+id/btnTransaccionesAtras"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_back_bubble"
+                    android:contentDescription="Regresar"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/regresarimg" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/urbanist_bold"
+                    android:maxLines="1"
+                    android:text="Mis transacciones"
+                    android:textColor="@color/artistlan_menu_bottombar_2"
+                    android:textSize="22sp" />
+
+            </LinearLayout>
+
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tabLayoutTransacciones"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="8dp"
                 app:tabGravity="fill"
                 app:tabIndicatorFullWidth="false"
                 app:tabIndicatorHeight="3dp"

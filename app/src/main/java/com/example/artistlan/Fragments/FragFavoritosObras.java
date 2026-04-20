@@ -9,10 +9,16 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 
 
 public class FragFavoritosObras extends Fragment {
 
+    @Override
+    public void onViewCreated(@androidx.annotation.NonNull View view, @androidx.annotation.Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,

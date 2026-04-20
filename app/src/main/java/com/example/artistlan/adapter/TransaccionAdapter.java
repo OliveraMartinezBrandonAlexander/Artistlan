@@ -13,6 +13,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.artistlan.Conector.model.TransaccionResumenDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -62,7 +65,15 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         TransaccionResumenDTO item = transacciones.get(position);
+
+        ThemeApplier.applyTextPrimary(holder.tvTituloObra, tm);
+        ThemeApplier.applyTextSecondary(holder.tvRolPersona, tm);
+        ThemeApplier.applyTextSecondary(holder.tvNombrePersona, tm);
+        ThemeApplier.applyTextSecondary(holder.tvFecha, tm);
+        ThemeApplier.applyTextPrimary(holder.tvPrecio, tm);
+        ThemeApplier.applyCardContainer(holder.itemView, tm);
 
         holder.tvTituloObra.setText(textoSeguro(item.getTituloObra(), context.getString(R.string.transaccion_titulo_fallback)));
         holder.tvNombrePersona.setText(obtenerUsuarioRelacionado(item));

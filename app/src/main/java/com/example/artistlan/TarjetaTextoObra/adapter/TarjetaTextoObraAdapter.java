@@ -17,6 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 
@@ -128,7 +131,18 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
+        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         TarjetaTextoObraItem obra = listaObras.get(position);
+
+        ThemeApplier.applyTextPrimary(holder.titulo, tm);
+        ThemeApplier.applyTextSecondary(holder.autor, tm);
+        ThemeApplier.applyTextSecondary(holder.descripcion, tm);
+        ThemeApplier.applyTextSecondary(holder.tecnica, tm);
+        ThemeApplier.applyTextSecondary(holder.medidas, tm);
+        ThemeApplier.applyTextPrimary(holder.precio, tm);
+        ThemeApplier.applyPrimaryButton(holder.btnAccionPrincipal, tm);
+        ThemeApplier.applySecondaryButton(holder.btnAccionSecundaria, tm);
+        ThemeApplier.applyCardContainer(holder.itemView, tm);
 
         holder.titulo.setText(obra.getTitulo());
         holder.autor.setText(obra.getNombreAutor());

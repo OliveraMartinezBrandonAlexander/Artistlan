@@ -14,6 +14,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.artistlan.Conector.model.CarritoDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -76,6 +79,7 @@ public class CarritoObraAdapter extends RecyclerView.Adapter<CarritoObraAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         CarritoDTO item = items.get(position);
 
         String imagen = safe(item.getImagen1(), "");
@@ -88,6 +92,16 @@ public class CarritoObraAdapter extends RecyclerView.Adapter<CarritoObraAdapter.
         } else {
             holder.imgObra.setImageResource(R.drawable.imagencargaobras);
         }
+
+        ThemeApplier.applyTextPrimary(holder.tvTitulo, tm);
+        ThemeApplier.applyTextSecondary(holder.tvArtista, tm);
+        ThemeApplier.applyTextSecondary(holder.tvPrecio, tm);
+        ThemeApplier.applyTextSecondary(holder.tvEstado, tm);
+        ThemeApplier.applyTextSecondary(holder.tvReservaDetalle, tm);
+        ThemeApplier.applyPrimaryButton(holder.btnComprar, tm);
+        ThemeApplier.applySecondaryButton(holder.btnContactar, tm);
+        ThemeApplier.applySecondaryButton(holder.btnQuitar, tm);
+        ThemeApplier.applyCardContainer(holder.itemView, tm);
 
         holder.tvTitulo.setText(safe(item.getTitulo(), "Obra sin titulo"));
         holder.tvArtista.setText("Artista: " + safe(item.getNombreAutor(), "No disponible"));

@@ -23,6 +23,7 @@ import com.example.artistlan.Conector.api.ServicioApi;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 
@@ -59,6 +60,7 @@ public class FragMisServicios extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
 
         recyclerMisServicios = view.findViewById(R.id.recyclerMisServicios);
         recyclerMisServicios.setLayoutManager(new LinearLayoutManager(requireContext()));

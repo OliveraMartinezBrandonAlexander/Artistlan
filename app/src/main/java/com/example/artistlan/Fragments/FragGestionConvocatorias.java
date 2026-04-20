@@ -23,6 +23,9 @@ import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.ConvocatoriaApi;
 import com.example.artistlan.Conector.model.ConvocatoriaDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -59,6 +62,7 @@ public class FragGestionConvocatorias extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
 
         convocatoriaApi = RetrofitClient.getClient().create(ConvocatoriaApi.class);
 
@@ -150,6 +154,8 @@ public class FragGestionConvocatorias extends Fragment {
 
         etFecha.setOnClickListener(v -> mostrarDatePicker(etFecha));
 
+        ThemeManager tm = new ThemeManager(requireContext());
+
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(editando ? "Editar convocatoria" : "Nueva convocatoria")
                 .setView(form)
@@ -184,6 +190,12 @@ public class FragGestionConvocatorias extends Fragment {
         }));
 
         dialog.show();
+        ThemeApplier.applyPrimaryButton(dialog.getButton(AlertDialog.BUTTON_POSITIVE), tm);
+        ThemeApplier.applySecondaryButton(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), tm);
+        ThemeApplier.applyInput(etTitulo, tm);
+        ThemeApplier.applyInput(etDescripcion, tm);
+        ThemeApplier.applyInput(etFecha, tm);
+        ThemeApplier.applyInput(etEnlace, tm);
     }
 
     private void mostrarDatePicker(TextInputEditText etFecha) {

@@ -27,6 +27,7 @@ import com.example.artistlan.Conector.api.SolicitudesApi;
 import com.example.artistlan.Conector.model.ResolverSolicitudRequestDTO;
 import com.example.artistlan.Conector.model.SolicitudDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.adapter.SolicitudesAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -78,6 +79,7 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
 
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));

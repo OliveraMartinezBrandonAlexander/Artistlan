@@ -26,6 +26,7 @@ import com.example.artistlan.Conector.model.SolicitudCompraCrearRequestDTO;
 import com.example.artistlan.Conector.model.SolicitudDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.pagos.PagoPaypalSessionManager;
@@ -81,6 +82,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
 

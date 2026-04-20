@@ -16,6 +16,9 @@ import com.bumptech.glide.Glide;
 import com.example.artistlan.Conector.model.SolicitudDTO;
 import com.example.artistlan.Fragments.MensajeUiUtils;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
@@ -55,8 +58,18 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull SolicitudViewHolder holder, int position) {
+        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         SolicitudDTO item = items.get(position);
         boolean esRecibida = modoLista == ModoLista.RECIBIDAS;
+
+        ThemeApplier.applyTextPrimary(holder.tvTitulo, tm);
+        ThemeApplier.applyTextSecondary(holder.tvMensaje, tm);
+        ThemeApplier.applyTextSecondary(holder.tvOrigenNombre, tm);
+        ThemeApplier.applyTextSecondary(holder.tvFecha, tm);
+        ThemeApplier.applyPrimaryButton(holder.btnDetalle, tm);
+        ThemeApplier.applyPrimaryButton(holder.btnAceptar, tm);
+        ThemeApplier.applySecondaryButton(holder.btnRechazar, tm);
+        ThemeApplier.applyCardContainer(holder.cardRoot, tm);
 
         holder.tvTitulo.setText("Obra: " + item.getTituloSeguro());
 

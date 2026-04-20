@@ -13,6 +13,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 // Importaciones de la nueva biblioteca
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
@@ -35,6 +36,7 @@ public class FragPortafolio extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
 
         new com.example.artistlan.BotonesMenuSuperior(this);
 

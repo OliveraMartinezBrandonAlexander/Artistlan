@@ -6,6 +6,7 @@
     android:id="@+id/rootPerfil"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_create_account_screen"
     android:orientation="vertical"
     android:clickable="true"
     android:focusable="true"
@@ -16,7 +17,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@android:color/black" />
+        android:background="@color/artistlan_menu_stroke_soft" />
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollPerfil"

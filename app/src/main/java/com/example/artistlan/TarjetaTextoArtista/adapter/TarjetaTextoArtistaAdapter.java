@@ -17,6 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
 
 import java.util.ArrayList;
@@ -90,7 +93,15 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
+        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         TarjetaTextoArtistaItem artista = listaArtistas.get(position);
+
+        ThemeApplier.applyTextPrimary(holder.nombre, tm);
+        ThemeApplier.applyTextSecondary(holder.categoria, tm);
+        ThemeApplier.applyTextSecondary(holder.descripcion, tm);
+        ThemeApplier.applyTextSecondary(holder.likes, tm);
+        ThemeApplier.applyPrimaryButton(holder.btnVisitar, tm);
+        ThemeApplier.applyCardContainer(holder.itemView, tm);
 
         holder.nombre.setText(artista.getNombre());
         holder.categoria.setText("Categoría: " + safeText(artista.getCategoria(), "Sin categoria"));

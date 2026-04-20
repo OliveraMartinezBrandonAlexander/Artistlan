@@ -15,6 +15,9 @@ import com.bumptech.glide.Glide;
 import com.example.artistlan.Conector.model.NotificacionDTO;
 import com.example.artistlan.Fragments.MensajeUiUtils;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
@@ -48,7 +51,16 @@ public class NotificacionesAdapter extends RecyclerView.Adapter<NotificacionesAd
 
     @Override
     public void onBindViewHolder(@NonNull NotificacionViewHolder holder, int position) {
+        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         NotificacionDTO item = items.get(position);
+        ThemeApplier.applyTextPrimary(holder.tvTitulo, tm);
+        ThemeApplier.applyTextSecondary(holder.tvMensaje, tm);
+        ThemeApplier.applyTextSecondary(holder.tvOrigenNombre, tm);
+        ThemeApplier.applyTextSecondary(holder.tvFecha, tm);
+        ThemeApplier.applyPrimaryButton(holder.btnVerDetalle, tm);
+        ThemeApplier.applySecondaryButton(holder.btnMarcarLeida, tm);
+        ThemeApplier.applyCardContainer(holder.cardRoot, tm);
+
         holder.tvTitulo.setText(item.getTituloSeguro());
         holder.tvMensaje.setText(MensajeUiUtils.formatearMensajeConMotivo(item.getMensajeSeguro()));
         holder.tvFecha.setText(MensajeUiUtils.formatearFechaCorta(item.getFecha()));

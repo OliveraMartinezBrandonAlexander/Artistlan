@@ -21,6 +21,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 
 import java.util.ArrayList;
@@ -67,7 +70,19 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
+        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         TarjetaTextoServicioItem servicio = listaServicios.get(position);
+        ThemeApplier.applyTextPrimary(holder.titulo, tm);
+        ThemeApplier.applyTextSecondary(holder.autor, tm);
+        ThemeApplier.applyTextSecondary(holder.descripcion, tm);
+        ThemeApplier.applyTextSecondary(holder.contacto, tm);
+        ThemeApplier.applyTextSecondary(holder.tipoContacto, tm);
+        ThemeApplier.applyTextSecondary(holder.tecnicas, tm);
+        ThemeApplier.applyTextPrimary(holder.precioRango, tm);
+        ThemeApplier.applyTextSecondary(holder.categoria, tm);
+        ThemeApplier.applyPrimaryButton(holder.btnContactar, tm);
+        ThemeApplier.applyCardContainer(holder.itemView, tm);
+        
         holder.autor.setText(safe(servicio.getAutor(), "Autor"));
         holder.titulo.setText(safe(servicio.getTitulo(), "Servicio"));
         holder.descripcion.setText("Descripción: " + safe(servicio.getDescripcion(), "Sin descripción"));

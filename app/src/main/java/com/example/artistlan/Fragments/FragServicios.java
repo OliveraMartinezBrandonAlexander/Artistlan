@@ -21,6 +21,7 @@ import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 
@@ -63,6 +64,7 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
         new BotonesMenuSuperior(this);
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));

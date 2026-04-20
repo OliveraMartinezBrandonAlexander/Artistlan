@@ -1,10 +1,11 @@
 package com.example.artistlan.Theme;
 
-import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -30,13 +31,20 @@ public class ActAjustesTema extends AppCompatActivity {
     private View previewDrawer;
     private View previewGlow1;
     private View previewGlow2;
+    private View previewCard;
+    private View previewInput;
+    private View previewButton;
     private TextView previewTitle;
     private TextView previewSubtitle;
+    private TextView previewBody;
+
+    private LinearLayout presetsContainer;
 
     private ThemePrefsManager prefsManager;
     private ThemeManager themeManager;
     private ThemeSectionAdapter sectionAdapter;
     private final List<ThemeSection> sections = new ArrayList<>();
+    private final List<ThemePreset> presets = ThemePresets.build();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,6 +57,7 @@ public class ActAjustesTema extends AppCompatActivity {
         initViews();
         initRecycler();
         loadSections();
+        buildPresetsUi();
         renderPreview();
 
         btnBack.setOnClickListener(v -> finish());
@@ -56,6 +65,7 @@ public class ActAjustesTema extends AppCompatActivity {
         btnReset.setOnClickListener(v -> {
             prefsManager.resetAll();
             loadSections();
+            buildPresetsUi();
             renderPreview();
         });
     }
@@ -70,8 +80,13 @@ public class ActAjustesTema extends AppCompatActivity {
         previewDrawer = findViewById(R.id.previewDrawer);
         previewGlow1 = findViewById(R.id.previewGlow1);
         previewGlow2 = findViewById(R.id.previewGlow2);
+        previewCard = findViewById(R.id.previewCard);
+        previewInput = findViewById(R.id.previewInput);
+        previewButton = findViewById(R.id.previewButton);
         previewTitle = findViewById(R.id.previewTitle);
         previewSubtitle = findViewById(R.id.previewSubtitle);
+        previewBody = findViewById(R.id.previewBody);
+        presetsContainer = findViewById(R.id.themePresetsContainer);
     }
 
     private void initRecycler() {
@@ -81,6 +96,53 @@ public class ActAjustesTema extends AppCompatActivity {
         recyclerSections.setHasFixedSize(false);
         recyclerSections.setItemAnimator(null);
         recyclerSections.setAdapter(sectionAdapter);
+    }
+
+    private void buildPresetsUi() {
+        presetsContainer.removeAllViews();
+        for (ThemePreset preset : presets) {
+            Button button = new Button(this);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            lp.bottomMargin = dp(8);
+            button.setLayoutParams(lp);
+            button.setAllCaps(false);
+            button.setText(preset.getName() + " · " + preset.getDescription());
+            button.setBackgroundResource(R.drawable.bg_btn_bubble_glass_secondary);
+            button.setTextColor(themeManager.color(ThemeKeys.TEXT_PRIMARY));
+            button.getBackground().setColorFilter(themeManager.color(ThemeKeys.ACCOUNT_GLASS_PANEL), PorterDuff.Mode.SRC_ATOP);
+
+            button.setOnClickListener(v -> {
+                prefsManager.setColors(preset.getColors());
+                loadSections();
+                renderPreview();
+                stylePresetButtons(preset.getName());
+            });
+            presetsContainer.addView(button);
+        }
+        stylePresetButtons(null);
+    }
+
+    private void stylePresetButtons(@Nullable String activePreset) {
+        for (int i = 0; i < presetsContainer.getChildCount(); i++) {
+            View child = presetsContainer.getChildAt(i);
+            if (!(child instanceof Button)) continue;
+            Button b = (Button) child;
+            boolean active = activePreset != null && b.getText().toString().startsWith(activePreset + " ·");
+            b.setTextColor(active ? themeManager.color(ThemeKeys.BUTTON_TEXT_DARK) : themeManager.color(ThemeKeys.TEXT_PRIMARY));
+            if (b.getBackground() != null) {
+                b.getBackground().setColorFilter(
+                        active ? themeManager.color(ThemeKeys.BUTTON_PRIMARY_BG) : themeManager.color(ThemeKeys.ACCOUNT_GLASS_PANEL),
+                        PorterDuff.Mode.SRC_ATOP
+                );
+            }
+        }
+    }
+
+    private int dp(int value) {
+        return Math.round(getResources().getDisplayMetrics().density * value);
     }
 
     private void loadSections() {
@@ -270,6 +332,7 @@ public class ActAjustesTema extends AppCompatActivity {
     }
 
     private void renderPreview() {
+        themeManager = new ThemeManager(this);
         previewTopbar.setBackgroundColor(themeManager.color(ThemeKeys.MENU_TOPBAR));
         previewBottomBar.setBackgroundColor(themeManager.color(ThemeKeys.MENU_BOTTOMBAR));
         previewDrawer.setBackgroundColor(themeManager.color(ThemeKeys.MENU_DRAWER));
@@ -277,5 +340,16 @@ public class ActAjustesTema extends AppCompatActivity {
         previewGlow2.setBackgroundColor(themeManager.color(ThemeKeys.GLOW_SECONDARY));
         previewTitle.setTextColor(themeManager.color(ThemeKeys.TEXT_PRIMARY));
         previewSubtitle.setTextColor(themeManager.color(ThemeKeys.TEXT_SECONDARY));
+        previewBody.setTextColor(themeManager.color(ThemeKeys.TEXT_SECONDARY));
+
+        if (previewCard.getBackground() != null) {
+            previewCard.getBackground().setColorFilter(themeManager.color(ThemeKeys.ACCOUNT_GLASS_PANEL), PorterDuff.Mode.SRC_ATOP);
+        }
+        if (previewInput.getBackground() != null) {
+            previewInput.getBackground().setColorFilter(themeManager.color(ThemeKeys.INPUT_BG), PorterDuff.Mode.SRC_ATOP);
+        }
+        if (previewButton.getBackground() != null) {
+            previewButton.getBackground().setColorFilter(themeManager.color(ThemeKeys.BUTTON_PRIMARY_BG), PorterDuff.Mode.SRC_ATOP);
+        }
     }
 }

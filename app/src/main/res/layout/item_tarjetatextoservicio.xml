@@ -9,7 +9,7 @@
     android:layout_marginBottom="12dp"
     app:cardCornerRadius="22dp"
     app:cardElevation="10dp"
-    app:cardBackgroundColor="#F3E8FF">
+    app:cardBackgroundColor="@color/artistlan_menu_surface_soft">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -56,7 +56,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0"
-                android:textColor="#111111"
+                android:textColor="@color/artistlan_text_primary"
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
@@ -81,7 +81,7 @@
             android:hyphenationFrequency="full"
             android:maxLines="2"
             android:text="Autor"
-            android:textColor="#111111"
+            android:textColor="@color/artistlan_text_primary"
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintStart_toEndOf="@id/imgAutor"
@@ -122,7 +122,7 @@
             android:layout_marginTop="12dp"
             android:text="Título del servicio"
             android:textStyle="bold"
-            android:textColor="#111111"
+            android:textColor="@color/artistlan_text_primary"
             android:textSize="19sp"
             android:gravity="center"
             android:lineSpacingExtra="3dp"
@@ -217,7 +217,7 @@
                 android:layout_marginTop="16dp"
                 android:text="Contactar"
                 android:textAllCaps="false"
-                android:backgroundTint="#A1BBCE" />
+                android:backgroundTint="@color/artistlan_secondary" />
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

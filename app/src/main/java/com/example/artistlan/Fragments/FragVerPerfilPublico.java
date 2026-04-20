@@ -28,6 +28,7 @@ import com.example.artistlan.Conector.model.PerfilPublicoArtistaDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
@@ -88,6 +89,7 @@ public class FragVerPerfilPublico extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
         new BotonesMenuSuperior(this);
         root = view;
 

@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 import com.example.artistlan.Activitys.ActFragmentoPrincipal;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 
 public class FragFavoritos extends Fragment implements View.OnClickListener {
 
@@ -29,6 +30,7 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
 
         requireActivity().findViewById(R.id.MenuInferior).setVisibility(View.GONE);
         new BotonesMenuSuperior(this);

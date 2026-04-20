@@ -44,6 +44,11 @@ import com.example.artistlan.Conector.model.CategoriaDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.Conector.repository.FirebaseImageRepository;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeEffectsApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -146,6 +151,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_frag_subir_obra, container, false);
+        ThemeModuleStyler.styleFragment(this, view);
 
         etTituloObra = view.findViewById(R.id.tituloObra);
         rgOpciones   = view.findViewById(R.id.radioGroupOpciones);
@@ -581,9 +587,14 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         View view = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_confirmar_obra, null);
 
+        ThemeManager tm = new ThemeManager(requireContext());
         TextView txtResumen = view.findViewById(R.id.txtResumenObra);
         Button btnEditar = view.findViewById(R.id.btnEditar);
         Button btnPublicar = view.findViewById(R.id.btnConfirmarPublicar);
+
+        ThemeApplier.applyTextPrimary(txtResumen, tm);
+        ThemeApplier.applySecondaryButton(btnEditar, tm);
+        ThemeApplier.applyPrimaryButton(btnPublicar, tm);
 
         String resumen =
                 "Título:\n" + titulo + "\n\n" +
@@ -621,6 +632,9 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         });
 
         dialog.show();
+        if (dialog.getWindow() != null && dialog.getWindow().getDecorView() != null) {
+            ThemeEffectsApplier.applyPanelGlass(dialog.getWindow().getDecorView(), tm);
+        }
     }
 
     private void limpiarErroresValidacionObra() {

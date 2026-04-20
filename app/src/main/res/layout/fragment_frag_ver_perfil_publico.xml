@@ -5,13 +5,14 @@
     android:id="@+id/rootPublicPerfil"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_create_account_screen"
     android:orientation="vertical"
     tools:context=".Fragments.FragVerPerfilPublico">
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@android:color/black" />
+        android:background="@color/artistlan_menu_stroke_soft" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -33,7 +34,7 @@
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"
-                android:backgroundTint="#F3E8FF"
+                android:backgroundTint="@color/artistlan_menu_surface_soft"
                 android:elevation="10dp">
 
                 <LinearLayout
@@ -66,7 +67,7 @@
                             android:text="usuario"
                             android:textStyle="bold"
                             android:textSize="18sp"
-                            android:textColor="@android:color/black"/>
+                            android:textColor="@color/artistlan_menu_stroke_soft"/>
                     </LinearLayout>
 
                     <TextView
@@ -75,7 +76,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:text="Descripción"
-                        android:textColor="@android:color/black"
+                        android:textColor="@color/artistlan_menu_stroke_soft"
                         android:textSize="14sp"
                         android:background="@drawable/editredondo"
                         android:backgroundTint="#A1BBCE"
@@ -97,7 +98,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Nombre: ---"
-                            android:textColor="@android:color/black"
+                            android:textColor="@color/artistlan_menu_stroke_soft"
                             android:textSize="14sp" />
 
                         <TextView
@@ -106,7 +107,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             android:text="Ubicación: ---"
-                            android:textColor="@android:color/black"
+                            android:textColor="@color/artistlan_menu_stroke_soft"
                             android:textSize="14sp" />
 
                         <TextView
@@ -115,7 +116,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             android:text="Redes: ---"
-                            android:textColor="@android:color/black"
+                            android:textColor="@color/artistlan_menu_stroke_soft"
                             android:textSize="14sp" />
 
                         <TextView
@@ -124,7 +125,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             android:text="Fecha: ---"
-                            android:textColor="@android:color/black"
+                            android:textColor="@color/artistlan_menu_stroke_soft"
                             android:textSize="14sp" />
 
                         <TextView
@@ -133,7 +134,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             android:text="Ocupación: ---"
-                            android:textColor="@android:color/black"
+                            android:textColor="@color/artistlan_menu_stroke_soft"
                             android:textSize="14sp" />
                     </LinearLayout>
 

@@ -29,6 +29,7 @@ import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.Carrusel.adapter.CarruselAdapter;
 import com.example.artistlan.Carrusel.model.ObraCarruselItem;
 
@@ -55,6 +56,7 @@ public class FragMain extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_frag_main, container, false);
+        ThemeModuleStyler.styleFragment(this, root);
         new BotonesMenuSuperior(this);
         viewPager = root.findViewById(R.id.viewPagerCarrusel);
         btnIzq = root.findViewById(R.id.btnCarruselIzquierdo);

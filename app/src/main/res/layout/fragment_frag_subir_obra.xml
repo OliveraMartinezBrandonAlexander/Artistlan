@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_create_account_screen"
     android:orientation="vertical"
     tools:context=".Fragments.FragSubirObra">
 
@@ -10,7 +11,8 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@android:color/black" />
+        android:background="@color/artistlan_menu_stroke_soft" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -32,7 +34,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bordes_redondeados"
-                android:backgroundTint="#A6A1BBCE"
+                android:backgroundTint="@color/artistlan_menu_surface_soft"
                 android:orientation="vertical"
                 android:padding="15dp">
 

@@ -95,6 +95,38 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:background="@drawable/bg_form_glass_panel"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Temas predeterminados"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Aplica un preset y luego ajusta detalles manualmente si lo deseas."
+                    android:textColor="@color/artistlan_text_secondary"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:id="@+id/themePresetsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:background="@drawable/bg_form_glass_panel"
                 android:orientation="vertical"
@@ -112,13 +144,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Edita cada color y observa cómo cambia la identidad visual."
+                    android:text="Simulación de top bar, drawer, panel, input, botón y navegación inferior."
                     android:textColor="@color/artistlan_text_secondary"
                     android:textSize="13sp" />
 
                 <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="180dp"
+                    android:layout_height="220dp"
                     android:layout_marginTop="18dp"
                     android:background="@drawable/bg_dialog_solid_panel">
 
@@ -157,7 +189,7 @@
 
                             <View
                                 android:id="@+id/previewDrawer"
-                                android:layout_width="72dp"
+                                android:layout_width="64dp"
                                 android:layout_height="match_parent"
                                 android:background="#1A1F2A" />
 
@@ -165,8 +197,8 @@
                                 android:layout_width="0dp"
                                 android:layout_height="match_parent"
                                 android:layout_weight="1"
-                                android:gravity="center"
-                                android:orientation="vertical">
+                                android:orientation="vertical"
+                                android:padding="10dp">
 
                                 <TextView
                                     android:id="@+id/previewTitle"
@@ -174,24 +206,57 @@
                                     android:layout_height="wrap_content"
                                     android:text="ARTISTLAN"
                                     android:textColor="@android:color/white"
-                                    android:textSize="20sp"
+                                    android:textSize="16sp"
                                     android:textStyle="bold" />
 
                                 <TextView
                                     android:id="@+id/previewSubtitle"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginTop="6dp"
-                                    android:text="Vista previa del tema"
+                                    android:layout_marginTop="2dp"
+                                    android:text="Tema aplicado"
                                     android:textColor="#D0D4E6"
-                                    android:textSize="13sp" />
+                                    android:textSize="12sp" />
+
+                                <LinearLayout
+                                    android:id="@+id/previewCard"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="0dp"
+                                    android:layout_marginTop="8dp"
+                                    android:layout_weight="1"
+                                    android:background="@drawable/bg_form_glass_panel"
+                                    android:orientation="vertical"
+                                    android:padding="8dp">
+
+                                    <TextView
+                                        android:id="@+id/previewBody"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Tarjeta premium"
+                                        android:textColor="#D0D4E6"
+                                        android:textSize="12sp" />
+
+                                    <View
+                                        android:id="@+id/previewInput"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="24dp"
+                                        android:layout_marginTop="6dp"
+                                        android:background="@drawable/bg_edittext_bubble" />
+
+                                    <View
+                                        android:id="@+id/previewButton"
+                                        android:layout_width="72dp"
+                                        android:layout_height="20dp"
+                                        android:layout_marginTop="6dp"
+                                        android:background="@drawable/bg_btn_bubble_primary" />
+                                </LinearLayout>
                             </LinearLayout>
                         </LinearLayout>
 
                         <View
                             android:id="@+id/previewBottomBar"
                             android:layout_width="match_parent"
-                            android:layout_height="42dp"
+                            android:layout_height="38dp"
                             android:background="#1B102B" />
                     </LinearLayout>
                 </FrameLayout>

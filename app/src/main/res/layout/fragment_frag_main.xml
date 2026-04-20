@@ -4,21 +4,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#E1C699"
+    android:background="@drawable/bg_create_account_screen"
     android:orientation="vertical"
     tools:context=".Fragments.FragMain">
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@android:color/black" />
+        android:background="@color/artistlan_menu_stroke_soft" />
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollContenido"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@android:color/white"
+        android:background="@android:color/transparent"
         android:clipToPadding="false"
         android:paddingTop="16dp"
         android:paddingBottom="16dp">
@@ -35,7 +35,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="BIENVENIDO A ARTISTLAN"
-                android:textColor="@android:color/black"
+                android:textColor="@color/artistlan_menu_stroke_soft"
                 android:textSize="28sp"
                 android:textStyle="bold"
                 android:layout_marginTop="16dp"
@@ -94,7 +94,7 @@
                 android:gravity="center"
                 android:layout_marginTop="32dp"
                 android:text="Eventos próximos:"
-                android:textColor="@android:color/black"
+                android:textColor="@color/artistlan_menu_stroke_soft"
                 android:textSize="20sp"
                 android:textStyle="bold"/>
 

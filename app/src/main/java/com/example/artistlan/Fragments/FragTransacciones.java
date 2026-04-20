@@ -17,6 +17,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.example.artistlan.Activitys.ActFragmentoPrincipal;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -40,6 +41,7 @@ public class FragTransacciones extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
 
         new BotonesMenuSuperior(this);
         menuInferior = requireActivity().findViewById(R.id.MenuInferior);

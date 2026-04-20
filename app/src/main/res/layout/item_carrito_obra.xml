@@ -7,7 +7,7 @@
     android:layout_marginTop="10dp"
     android:layout_marginEnd="8dp"
     android:layout_marginBottom="8dp"
-    app:cardBackgroundColor="#F3E8FF"
+    app:cardBackgroundColor="@color/artistlan_menu_surface_soft"
     app:cardCornerRadius="18dp"
     app:cardElevation="8dp">
 
@@ -42,7 +42,7 @@
                     android:layout_height="wrap_content"
                     android:maxLines="2"
                     android:text="Titulo de obra"
-                    android:textColor="#111111"
+                    android:textColor="@color/artistlan_text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -53,7 +53,7 @@
                     android:layout_marginTop="4dp"
                     android:maxLines="1"
                     android:text="Artista: usuario"
-                    android:textColor="#2F2F2F"
+                    android:textColor="@color/artistlan_text_secondary"
                     android:textSize="13sp" />
 
                 <TextView
@@ -62,7 +62,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:text="Precio: $ 0.00"
-                    android:textColor="#2F2F2F"
+                    android:textColor="@color/artistlan_text_secondary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
@@ -71,13 +71,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:background="#E5D5F2"
+                    android:background="@drawable/bg_action_outline_soft"
                     android:paddingStart="10dp"
                     android:paddingTop="4dp"
                     android:paddingEnd="10dp"
                     android:paddingBottom="4dp"
                     android:text="Reserva: Pendiente"
-                    android:textColor="#3E2D6D"
+                    android:textColor="@color/artistlan_text_secondary"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
@@ -103,7 +103,7 @@
                 android:id="@+id/btnCarritoComprar"
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
-                android:backgroundTint="#A1BBCE"
+                android:backgroundTint="@color/artistlan_secondary"
                 android:text="Comprar"
                 android:textAllCaps="false" />
 

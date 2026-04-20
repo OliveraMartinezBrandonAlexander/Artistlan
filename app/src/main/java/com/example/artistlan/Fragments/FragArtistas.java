@@ -23,6 +23,7 @@ import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.ArtistaDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoArtista.adapter.TarjetaTextoArtistaAdapter;
 import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
 
@@ -68,6 +69,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
         new BotonesMenuSuperior(this);
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));

@@ -14,6 +14,7 @@ import android.widget.SearchView;
 import androidx.fragment.app.Fragment;
 
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.google.android.material.chip.ChipGroup;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class FragExplorar extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_frag_explorar, container, false);
+        ThemeModuleStyler.styleFragment(this, view);
 
         new com.example.artistlan.BotonesMenuSuperior(this);
 

@@ -6,7 +6,7 @@ import android.graphics.Color;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
+import java.util.Set;
 public class ThemePrefsManager {
 
     private static final String PREFS_NAME = "artistlan_theme_prefs";
@@ -27,6 +27,25 @@ public class ThemePrefsManager {
 
     public void resetAll() {
         prefs.edit().clear().apply();
+    }
+
+    public void setColors(Map<String, Integer> colors) {
+        if (colors == null || colors.isEmpty()) return;
+        SharedPreferences.Editor editor = prefs.edit();
+        for (Map.Entry<String, Integer> entry : colors.entrySet()) {
+            if (entry.getKey() != null && entry.getValue() != null) {
+                editor.putInt(entry.getKey(), entry.getValue());
+            }
+        }
+        editor.apply();
+    }
+
+    public boolean hasAnyCustomValue(Set<String> keys) {
+        if (keys == null || keys.isEmpty()) return false;
+        for (String key : keys) {
+            if (prefs.contains(key)) return true;
+        }
+        return false;
     }
 
     public int getResolvedColor(String key) {

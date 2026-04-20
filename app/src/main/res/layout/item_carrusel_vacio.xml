@@ -3,4 +3,4 @@
     android:layout_width="100dp"
     android:layout_height="40dp"
     android:layout_margin="6dp"
-    android:background="@android:color/transparent" />
+    android:background="@drawable/bg_action_outline_soft" />

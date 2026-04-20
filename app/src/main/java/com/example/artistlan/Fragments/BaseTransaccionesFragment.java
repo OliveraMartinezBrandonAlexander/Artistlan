@@ -32,6 +32,9 @@ import com.example.artistlan.Conector.model.TransaccionResumenDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.adapter.TransaccionAdapter;
 import com.example.artistlan.pagos.PagoSyncManager;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.pagos.PagoSyncManager;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -236,6 +239,7 @@ public abstract class BaseTransaccionesFragment extends Fragment {
                 .setView(dialogView)
                 .create();
 
+        ThemeManager tm = new ThemeManager(requireContext());
         ImageView imgObra = dialogView.findViewById(R.id.imgDetalleObra);
         TextView tvTitulo = dialogView.findViewById(R.id.tvDetalleTituloObra);
         TextView tvMonto = dialogView.findViewById(R.id.tvDetalleMonto);
@@ -274,6 +278,17 @@ public abstract class BaseTransaccionesFragment extends Fragment {
         String compradorNombre = safe(detalle != null ? detalle.getNombreComprador() : null, "");
         String vendedorUsuario = safe(detalle != null ? detalle.getUsuarioVendedor() : null, "No disponible");
         String vendedorNombre = safe(detalle != null ? detalle.getNombreVendedor() : null, "");
+
+        ThemeApplier.applyTextPrimary(tvTitulo, tm);
+        ThemeApplier.applyTextPrimary(tvMonto, tm);
+        ThemeApplier.applyTextSecondary(tvEstado, tm);
+        ThemeApplier.applyTextSecondary(tvOrderId, tm);
+        ThemeApplier.applyTextSecondary(tvCaptureId, tm);
+        ThemeApplier.applyTextSecondary(tvFechaPago, tm);
+        ThemeApplier.applyTextSecondary(tvCompradorUsuario, tm);
+        ThemeApplier.applyTextSecondary(tvCompradorSecundario, tm);
+        ThemeApplier.applyTextSecondary(tvVendedorUsuario, tm);
+        ThemeApplier.applyTextSecondary(tvVendedorSecundario, tm);
 
         tvTitulo.setText(titulo);
         tvMonto.setText(monto != null ? currencyFormatter.format(monto) : "No disponible");
@@ -340,6 +355,9 @@ public abstract class BaseTransaccionesFragment extends Fragment {
         }
 
         dialog.show();
+        ThemeApplier.applySecondaryButton(btnCerrarTop, tm);
+        ThemeApplier.applyPrimaryButton(btnAbrirPaypal, tm);
+        ThemeApplier.applySecondaryButton(btnContactar, tm);
         if (dialog.getWindow() != null) {
             DisplayMetrics dm = getResources().getDisplayMetrics();
             int width = (int) (dm.widthPixels * 0.94f);

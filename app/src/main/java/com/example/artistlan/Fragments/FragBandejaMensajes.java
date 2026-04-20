@@ -21,6 +21,7 @@ import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.NotificacionesApi;
 import com.example.artistlan.Conector.model.NotificacionDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.adapter.NotificacionesAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -56,6 +57,7 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
 
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));

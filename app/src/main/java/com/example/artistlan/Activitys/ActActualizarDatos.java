@@ -428,6 +428,8 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                             .setNegativeButton("Cancelar", (d, w) -> d.dismiss())
                             .create();
 
+                    ThemeApplier.applyInput(etPassword, themeManager);
+
                     dialogPassword.setOnShowListener(d -> {
                         Button btnEliminar = dialogPassword.getButton(AlertDialog.BUTTON_POSITIVE);
                         btnEliminar.setOnClickListener(v2 -> {
@@ -452,6 +454,8 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                     });
 
                     dialogPassword.show();
+                    ThemeApplier.applyPrimaryButton(dialogPassword.getButton(AlertDialog.BUTTON_POSITIVE), themeManager);
+                    ThemeApplier.applySecondaryButton(dialogPassword.getButton(AlertDialog.BUTTON_NEGATIVE), themeManager);
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();

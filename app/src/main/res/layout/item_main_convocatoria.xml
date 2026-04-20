@@ -17,7 +17,7 @@
             android:id="@+id/tvMainTituloConvocatoria"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/black"
+            android:textColor="@color/artistlan_text_primary"
             android:textSize="17sp"
             android:textStyle="bold" />
 
@@ -26,7 +26,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:textColor="#555555"
+            android:textColor="@color/artistlan_text_secondary"
             android:textSize="14sp" />
 
         <TextView
@@ -34,7 +34,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:textColor="#666666"
+            android:textColor="@color/artistlan_text_secondary"
             android:textSize="13sp" />
 
         <Button
@@ -43,7 +43,7 @@
             android:layout_height="38dp"
             android:layout_gravity="end"
             android:layout_marginTop="10dp"
-            android:backgroundTint="#A1BBCE"
+            android:backgroundTint="@color/artistlan_secondary"
             android:text="Saber más"
             android:textAllCaps="false"
             android:textSize="12sp" />

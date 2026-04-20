@@ -31,6 +31,9 @@ import com.example.artistlan.Conector.api.ServicioApi;
 import com.example.artistlan.Conector.model.CategoriaDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,7 +81,7 @@ public class FragSubirServicio extends Fragment {
 
 
         View view = inflater.inflate(R.layout.fragment_frag_subir_servicio, container, false);
-
+        ThemeModuleStyler.styleFragment(this, view);
         spinnerCategoriaServicio = view.findViewById(R.id.spinnerCategoriaServicio);
         spinnerTipoContacto = view.findViewById(R.id.spinnerTipoContacto);
         etTituloServicio = view.findViewById(R.id.etTituloServicio);
@@ -350,9 +353,14 @@ public class FragSubirServicio extends Fragment {
     private void mostrarDialogConfirmacion(int idUsuario, CategoriaDTO categoria, String titulo, String descripcion, String tecnica, String contacto, String tipoContacto, Double min, Double max) {
         View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_confirmar_servicio, null);
 
+        ThemeManager tm = new ThemeManager(requireContext());
         TextView txtResumen = view.findViewById(R.id.txtResumenServicio);
         Button btnEditar = view.findViewById(R.id.btnEditar);
         Button btnPublicar = view.findViewById(R.id.btnConfirmarPublicar);
+
+        ThemeApplier.applyTextPrimary(txtResumen, tm);
+        ThemeApplier.applySecondaryButton(btnEditar, tm);
+        ThemeApplier.applyPrimaryButton(btnPublicar, tm);
 
         String categoriaTxt = categoria != null ? categoria.getNombreCategoria() : "Sin cambio";
         String precioTxt = (min == null && max == null) ? "A convenir" : ((min != null ? min : "-") + " / " + (max != null ? max : "-"));
@@ -391,6 +399,9 @@ public class FragSubirServicio extends Fragment {
             guardarServicio(idUsuario, servicio);
         });
         dialog.show();
+        if (dialog.getWindow() != null && dialog.getWindow().getDecorView() != null) {
+            ThemeApplier.applyCardContainer(dialog.getWindow().getDecorView(), tm);
+        }
     }
     private void guardarServicio(int idUsuario, ServicioDTO servicio) {
         if (modoEdicion) actualizarServicioEnBD(idUsuario, servicio);

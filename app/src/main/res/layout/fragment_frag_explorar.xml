@@ -8,10 +8,12 @@
     android:background="@android:color/transparent"
     tools:context=".Fragments.FragExplorar">
 
-    <!-- HEADER QUE SE ESCONDE -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:elevation="4dp"
+        app:liftOnScroll="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -19,15 +21,14 @@
             android:orientation="vertical"
             app:layout_scrollFlags="scroll|enterAlways">
 
-
-
             <!-- BUSCADOR -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:layout_marginEnd="12dp"
                 android:layout_marginTop="12dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="10dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -38,73 +39,84 @@
                     android:layout_weight="1"
                     android:background="@drawable/bg_search_bubble"
                     android:hint="Buscar en Artistlan"
-                    app:navigationIcon="@android:drawable/ic_menu_search"/>
+                    android:iconifiedByDefault="false"
+                    android:queryHint="Buscar en Artistlan" />
 
                 <ImageButton
                     android:id="@+id/btnFiltrosExplorar"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:layout_marginStart="8dp"
                     android:alpha="0"
-                    android:background="@drawable/bg_action_bubble"
+                    android:background="@drawable/bg_back_bubble"
                     android:contentDescription="Mostrar filtros"
-                    android:padding="8dp"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_menu_hamburguer"
                     android:visibility="gone" />
 
             </LinearLayout>
 
-            <!-- SELECTORES -->
+            <!-- CATEGORÍAS -->
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chipGroupExplorar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="10dp"
                 android:gravity="center"
+                app:singleLine="true"
                 app:singleSelection="true">
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipObras"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:checked="true"
+                    android:text="Obras"
+                    android:textAllCaps="false"
                     android:textColor="@color/chip_explorar_text_colors"
                     app:chipBackgroundColor="@color/chip_explorar_bg_colors"
                     app:chipCornerRadius="20dp"
-                    app:chipMinHeight="40dp"
-                    android:text="Obras"
-                    app:chipIcon="@drawable/arte"
+                    app:chipIcon="@drawable/ic_nav_arte_artistlan"
                     app:chipIconTint="@color/chip_explorar_text_colors"
-                    app:chipIconVisible="true"/>
+                    app:chipIconVisible="true"
+                    app:chipMinHeight="40dp"
+                    app:rippleColor="@color/artistlan_menu_accent_soft" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipServicios"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:text="Servicios"
+                    android:textAllCaps="false"
                     android:textColor="@color/chip_explorar_text_colors"
                     app:chipBackgroundColor="@color/chip_explorar_bg_colors"
                     app:chipCornerRadius="20dp"
-                    app:chipMinHeight="40dp"
-                    android:text="Servicios"
-                    app:chipIcon="@drawable/servicios"
+                    app:chipIcon="@drawable/ic_servicios"
                     app:chipIconTint="@color/chip_explorar_text_colors"
-                    app:chipIconVisible="true"/>
+                    app:chipIconVisible="true"
+                    app:chipMinHeight="40dp"
+                    app:rippleColor="@color/artistlan_menu_accent_soft" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipArtistas"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:text="Artistas"
+                    android:textAllCaps="false"
                     android:textColor="@color/chip_explorar_text_colors"
                     app:chipBackgroundColor="@color/chip_explorar_bg_colors"
                     app:chipCornerRadius="20dp"
-                    app:chipMinHeight="40dp"
-                    android:text="Artistas"
-                    app:chipIcon="@drawable/artista"
+                    app:chipIcon="@drawable/ic_artista"
                     app:chipIconTint="@color/chip_explorar_text_colors"
-                    app:chipIconVisible="true"/>
+                    app:chipIconVisible="true"
+                    app:chipMinHeight="40dp"
+                    app:rippleColor="@color/artistlan_menu_accent_soft" />
 
             </com.google.android.material.chip.ChipGroup>
 
@@ -112,12 +124,10 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-
-    <!-- CONTENEDOR SCROLL -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerExplorar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

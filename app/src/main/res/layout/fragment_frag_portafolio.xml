@@ -75,7 +75,7 @@
             android:layout_height="wrap_content"
             app:fab_colorNormal="@android:color/white"
             app:fab_colorPressed="#00BCD4"
-            app:fab_icon="@drawable/obraport"
+            app:fab_icon="@drawable/serport"
             app:fab_size="mini"
             app:fab_title="Subir Obra" />
 

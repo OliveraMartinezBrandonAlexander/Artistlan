@@ -2,17 +2,21 @@ package com.example.artistlan.Fragments;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.SearchView;
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeModuleStyler;
@@ -31,8 +35,8 @@ public class FragExplorar extends Fragment {
     private boolean filtrosVisibles = false;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_frag_explorar, container, false);
         ThemeModuleStyler.styleFragment(this, view);
@@ -42,94 +46,135 @@ public class FragExplorar extends Fragment {
         chipGroup = view.findViewById(R.id.chipGroupExplorar);
         searchView = view.findViewById(R.id.searchExplorar);
         btnFiltros = view.findViewById(R.id.btnFiltrosExplorar);
-        btnFiltros.setVisibility(View.GONE);
 
-        // Fragment inicial
-        cargarFragment(new FragArte());
+        configurarBuscador();
+        configurarBotonFiltros();
+        configurarChips();
 
-        chipGroup.setOnCheckedChangeListener((group, checkedId) -> {
+        if (savedInstanceState == null) {
+            cargarFragment(new FragArte());
+        }
 
-            cerrarTeclado();
-            searchView.setQuery("", false);
-            searchView.clearFocus();
+        return view;
+    }
 
-            Fragment fragment = null;
+    private void configurarBuscador() {
+        if (searchView == null) return;
 
-            searchView.animate()
-                    .alpha(0.5f)
-                    .setDuration(100)
-                    .withEndAction(() -> {
-                        searchView.animate().alpha(1f).setDuration(100).start();
-                    })
-                    .start();
+        searchView.setIconifiedByDefault(false);
+        searchView.clearFocus();
+        searchView.setQueryHint("Buscar en Artistlan");
 
-            if (checkedId == R.id.chipObras) {
+        int searchIconId = getResources().getIdentifier("android:id/search_mag_icon", null, null);
+        ImageView searchIcon = searchView.findViewById(searchIconId);
+        if (searchIcon != null) {
+            searchIcon.setImageResource(R.drawable.ic_nav_explorar_artistlan);
+        }
 
-                fragment = new FragArte();
-
-            } else if (checkedId == R.id.chipServicios) {
-
-                fragment = new FragServicios();
-
-            } else if (checkedId == R.id.chipArtistas) {
-
-                fragment = new FragArtistas();
-
-            }
-
-            if (fragment != null) {
-                cargarFragment(fragment);
-            }
-
-        });
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-
             @Override
             public boolean onQueryTextSubmit(String query) {
-                mostrarBotonFiltros(true);
-                return false;
+                boolean hayTexto = !TextUtils.isEmpty(query != null ? query.trim() : "");
+                mostrarBotonFiltros(hayTexto);
+                aplicarBusquedaAlFragmentActual(query);
+                cerrarTeclado();
+                searchView.clearFocus();
+                return true;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                mostrarBotonFiltros(newText != null && !newText.trim().isEmpty());
-
-                Fragment fragmentActual = getChildFragmentManager()
-                        .findFragmentById(R.id.fragmentContainerExplorar);
-
-                if(fragmentActual instanceof FragArte){
-                    ((FragArte) fragmentActual).filtrarBusqueda(newText);
-                }
-
-                if(fragmentActual instanceof FragServicios){
-                    ((FragServicios) fragmentActual).filtrarBusqueda(newText);
-                }
-
-                if(fragmentActual instanceof FragArtistas){
-                    ((FragArtistas) fragmentActual).filtrarBusqueda(newText);
-                }
-
+                boolean hayTexto = !TextUtils.isEmpty(newText != null ? newText.trim() : "");
+                mostrarBotonFiltros(hayTexto);
+                aplicarBusquedaAlFragmentActual(newText);
                 return true;
             }
         });
 
         searchView.setOnQueryTextFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                mostrarBotonFiltros(true);
-            } else {
-                CharSequence query = searchView.getQuery();
-                mostrarBotonFiltros(query != null && query.length() > 0);
-            }
+            CharSequence query = searchView.getQuery();
+            boolean hayTexto = query != null && query.toString().trim().length() > 0;
+            mostrarBotonFiltros(hasFocus || hayTexto);
         });
 
-        btnFiltros.setOnClickListener(v -> mostrarMenuFiltros());
-
-        return view;
+        searchView.setOnCloseListener(() -> {
+            mostrarBotonFiltros(false);
+            aplicarBusquedaAlFragmentActual("");
+            return false;
+        });
     }
+
+    private void configurarBotonFiltros() {
+        if (btnFiltros == null) return;
+
+        btnFiltros.setVisibility(View.GONE);
+        btnFiltros.setAlpha(0f);
+        btnFiltros.setOnClickListener(v -> mostrarMenuFiltros());
+    }
+
+    private void configurarChips() {
+        if (chipGroup == null) return;
+
+        chipGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            cerrarTeclado();
+
+            if (searchView != null) {
+                searchView.setQuery("", false);
+                searchView.clearFocus();
+            }
+
+            mostrarBotonFiltros(false);
+            animarBuscador();
+
+            Fragment fragment = null;
+
+            if (checkedId == R.id.chipObras) {
+                fragment = new FragArte();
+            } else if (checkedId == R.id.chipServicios) {
+                fragment = new FragServicios();
+            } else if (checkedId == R.id.chipArtistas) {
+                fragment = new FragArtistas();
+            }
+
+            if (fragment != null) {
+                cargarFragment(fragment);
+            }
+        });
+    }
+
+    private void animarBuscador() {
+        if (searchView == null) return;
+
+        searchView.animate()
+                .alpha(0.5f)
+                .setDuration(100)
+                .withEndAction(() ->
+                        searchView.animate()
+                                .alpha(1f)
+                                .setDuration(100)
+                                .start()
+                )
+                .start();
+    }
+
+    private void aplicarBusquedaAlFragmentActual(String texto) {
+        Fragment fragmentActual = getChildFragmentManager()
+                .findFragmentById(R.id.fragmentContainerExplorar);
+
+        if (fragmentActual instanceof FragArte) {
+            ((FragArte) fragmentActual).filtrarBusqueda(texto);
+        } else if (fragmentActual instanceof FragServicios) {
+            ((FragServicios) fragmentActual).filtrarBusqueda(texto);
+        } else if (fragmentActual instanceof FragArtistas) {
+            ((FragArtistas) fragmentActual).filtrarBusqueda(texto);
+        }
+    }
+
     private void mostrarBotonFiltros(boolean mostrar) {
         if (btnFiltros == null || filtrosVisibles == mostrar) {
             return;
         }
+
         filtrosVisibles = mostrar;
 
         if (mostrar) {
@@ -138,6 +183,7 @@ public class FragExplorar extends Fragment {
             btnFiltros.setScaleX(0.88f);
             btnFiltros.setScaleY(0.88f);
             btnFiltros.setAlpha(0f);
+
             btnFiltros.animate()
                     .alpha(1f)
                     .translationX(0f)
@@ -175,6 +221,10 @@ public class FragExplorar extends Fragment {
         FilterableExplorarFragment filterableFragment = (FilterableExplorarFragment) fragmentActual;
         List<String> filtros = filterableFragment.getFilterOptions();
 
+        if (filtros == null || filtros.isEmpty()) {
+            return;
+        }
+
         PopupMenu popupMenu = new PopupMenu(requireContext(), btnFiltros);
         Menu menu = popupMenu.getMenu();
         String filtroActivo = filterableFragment.getActiveFilter();
@@ -183,13 +233,13 @@ public class FragExplorar extends Fragment {
             String filtro = filtros.get(i);
             menu.add(MENU_GROUP_FILTERS, i, i, filtro)
                     .setCheckable(true)
-                    .setChecked(filtro.equalsIgnoreCase(filtroActivo));
+                    .setChecked(filtroActivo != null && filtro.equalsIgnoreCase(filtroActivo));
         }
 
         menu.setGroupCheckable(MENU_GROUP_FILTERS, true, true);
 
         menu.add(Menu.NONE, MENU_ID_CLEAR_FILTERS, filtros.size(), "Borrar filtros")
-                .setEnabled(filtroActivo != null && !filtroActivo.isEmpty());
+                .setEnabled(!TextUtils.isEmpty(filtroActivo));
 
         popupMenu.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == MENU_ID_CLEAR_FILTERS) {
@@ -209,17 +259,18 @@ public class FragExplorar extends Fragment {
     }
 
     private void cerrarTeclado() {
+        if (!isAdded()) return;
+
         InputMethodManager imm = (InputMethodManager) requireActivity()
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
 
-        View view = requireActivity().getCurrentFocus();
-        if (view != null) {
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        View focusedView = requireActivity().getCurrentFocus();
+        if (imm != null && focusedView != null) {
+            imm.hideSoftInputFromWindow(focusedView.getWindowToken(), 0);
         }
     }
 
-    private void cargarFragment(Fragment fragment){
-
+    private void cargarFragment(Fragment fragment) {
         getChildFragmentManager()
                 .beginTransaction()
                 .setCustomAnimations(
@@ -230,6 +281,5 @@ public class FragExplorar extends Fragment {
                 )
                 .replace(R.id.fragmentContainerExplorar, fragment)
                 .commit();
-
     }
 }

@@ -37,14 +37,14 @@
                 android:id="@+id/bottomBar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_bottom_nav_artistlan"
+                android:background="@android:color/transparent"
                 android:minHeight="86dp"
                 android:paddingStart="8dp"
                 android:paddingTop="10dp"
                 android:paddingEnd="8dp"
                 android:paddingBottom="10dp"
                 app:itemActiveIndicatorStyle="@style/ArtistlanBottomNavActiveIndicator"
-                app:itemIconSize="25dp"
+                app:itemIconSize="30dp"
                 app:labelVisibilityMode="labeled"
                 app:menu="@menu/menu_inferior" />
 

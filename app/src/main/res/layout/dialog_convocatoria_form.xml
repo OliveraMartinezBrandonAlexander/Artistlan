@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_solid_panel"
+    android:padding="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -11,7 +13,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilTituloConvocatoria"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Título">
@@ -19,12 +21,15 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etTituloConvocatoria"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_input_artistlan"
+                android:textColor="@color/artistlan_text_primary"
+                android:textColorHint="@color/artistlan_text_hint" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilDescripcionConvocatoria"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -34,13 +39,16 @@
                 android:id="@+id/etDescripcionConvocatoria"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/bg_input_artistlan"
+                android:textColor="@color/artistlan_text_primary"
+                android:textColorHint="@color/artistlan_text_hint"
                 android:gravity="top"
                 android:minLines="3" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilFechaConvocatoria"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -50,6 +58,9 @@
                 android:id="@+id/etFechaConvocatoria"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/bg_input_artistlan"
+                android:textColor="@color/artistlan_text_primary"
+                android:textColorHint="@color/artistlan_text_hint"
                 android:focusable="false"
                 android:clickable="true"
                 android:inputType="none"
@@ -58,7 +69,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilEnlaceConvocatoria"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -68,6 +79,9 @@
                 android:id="@+id/etEnlaceConvocatoria"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/bg_input_artistlan"
+                android:textColor="@color/artistlan_text_primary"
+                android:textColorHint="@color/artistlan_text_hint"
                 android:inputType="textUri" />
         </com.google.android.material.textfield.TextInputLayout>
 

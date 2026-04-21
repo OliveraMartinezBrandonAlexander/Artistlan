@@ -6,7 +6,7 @@
     android:id="@+id/rootPerfil"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_create_account_screen"
+    android:background="@android:color/transparent"
     android:orientation="vertical"
     android:clickable="true"
     android:focusable="true"
@@ -52,7 +52,7 @@
                     android:layout_marginBottom="10dp"
                     app:cardCornerRadius="22dp"
                     app:cardElevation="10dp"
-                    app:cardBackgroundColor="#F3E8FF">
+                    app:cardBackgroundColor="@color/artistlan_menu_surface_soft">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
@@ -107,8 +107,8 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
                             android:padding="12dp"
-                            android:background="@drawable/editredondo"
-                            android:backgroundTint="#A1BBCE"
+                            android:background="@drawable/bg_input_artistlan"
+
                             android:textColor="#111111"
                             android:textSize="14sp"
                             android:lineSpacingExtra="3dp"
@@ -137,8 +137,8 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="vertical"
-                                android:background="@drawable/editredondo"
-                                android:backgroundTint="#A1BBCE"
+                                android:background="@drawable/bg_input_artistlan"
+
                                 android:padding="14dp">
 
                                 <!-- Usuario -->
@@ -299,15 +299,28 @@
                     android:textStyle="bold"
                     android:textSize="18sp"/>
 
-                <com.google.android.material.tabs.TabLayout
-                    android:id="@+id/tabFavoritosPerfil"
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
                     android:layout_marginEnd="6dp"
-                    app:tabIndicatorColor="#7B1FA2"
-                    app:tabSelectedTextColor="#111111"
-                    app:tabTextColor="#66000000" />
+                    android:background="@drawable/bg_centro_tabs_container"
+                    android:padding="4dp">
+
+                    <com.google.android.material.tabs.TabLayout
+                        android:id="@+id/tabFavoritosPerfil"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@android:color/transparent"
+                        app:tabBackground="@drawable/bg_centro_tab_item"
+                        app:tabGravity="fill"
+                        app:tabIndicatorColor="@android:color/transparent"
+                        app:tabIndicatorHeight="0dp"
+                        app:tabMode="fixed"
+                        app:tabRippleColor="@color/artistlan_menu_accent_soft"
+                        app:tabSelectedTextColor="@color/artistlan_menu_text_primary"
+                        app:tabTextColor="@color/artistlan_menu_text_secondary" />
+                </FrameLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recyclerFavoritosPerfil"

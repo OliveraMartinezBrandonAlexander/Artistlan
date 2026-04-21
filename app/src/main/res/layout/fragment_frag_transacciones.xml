@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_create_account_screen"
+    android:background="@android:color/transparent"
     tools:context=".Fragments.FragTransacciones">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -54,20 +54,29 @@
 
             </LinearLayout>
 
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tabLayoutTransacciones"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="8dp"
-                app:tabGravity="fill"
-                app:tabIndicatorFullWidth="false"
-                app:tabIndicatorHeight="3dp"
-                app:tabMode="fixed"
-                app:tabRippleColor="@null"
-                app:tabSelectedTextColor="#424242"
-                app:tabTextAppearance="@style/TextAppearance.MaterialComponents.Button" />
+                android:background="@drawable/bg_centro_tabs_container"
+                android:padding="4dp">
+
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/tabLayoutTransacciones"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    app:tabBackground="@drawable/bg_centro_tab_item"
+                    app:tabIndicatorColor="@android:color/transparent"
+                    app:tabIndicatorHeight="0dp"
+                    app:tabGravity="fill"
+                    app:tabMode="fixed"
+                    app:tabRippleColor="@color/artistlan_menu_accent_soft"
+                    app:tabSelectedTextColor="@color/artistlan_menu_text_primary"
+                    app:tabTextColor="@color/artistlan_menu_text_secondary" />
+            </FrameLayout>
 
         </LinearLayout>
 

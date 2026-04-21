@@ -35,17 +35,17 @@
                 android:id="@+id/IsLayCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bordes_redondeados"
-                android:backgroundTint="#A6A1BBCE"
+                android:background="@drawable/bg_form_glass_panel"
                 android:orientation="vertical"
                 android:padding="15dp">
+
 
                 <ImageButton
                     android:id="@+id/IsbtnRegresar"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:src="@drawable/regresarimg"
-                    android:background="@android:color/transparent"
+                    android:background="@drawable/bg_back_bubble"
                     android:scaleType="centerInside"
                     android:adjustViewBounds="true"
                     android:padding="4dp" />
@@ -102,7 +102,7 @@
                     android:id="@+id/correo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/editredondonoeditable"
+                    android:background="@drawable/bg_input_artistlan"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
                     android:paddingStart="25dp"
@@ -129,7 +129,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondonoeditable"
+                    android:background="@drawable/bg_input_artistlan"
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
                     android:paddingTop="8dp"
@@ -154,7 +154,7 @@
                     android:layout_height="120dp"
                     android:scaleType="centerCrop"
                     android:src="@drawable/fotoperfilprueba"
-                    android:background="@drawable/bordes_redondeados"
+                    android:background="@drawable/bg_form_glass_panel"
                     android:layout_gravity="center"/>
 
                 <ImageView
@@ -177,7 +177,7 @@
                     android:id="@+id/nombre"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
                     android:hint="Juanito Perez"
@@ -202,7 +202,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:gravity="top|start"
                     android:hint="Descripción Personal"
                     android:inputType="textMultiLine"
@@ -225,7 +225,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:padding="10dp" />
 
                 <TextView
@@ -242,7 +242,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:gravity="top|start"
                     android:hint="https://www.youtube.com/usuario"
                     android:inputType="textMultiLine"
@@ -262,7 +262,7 @@
                     android:id="@+id/telefono"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
                     android:hint="55XXXXXXXXX"
@@ -288,7 +288,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:hint="Opcional"
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
@@ -312,7 +312,7 @@
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
                     android:layout_gravity="center_horizontal"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:hint="DÍA / MES / AÑO"
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
@@ -331,8 +331,8 @@
                     android:text="Actualizar"
                     android:padding="10dp"
                     android:layout_marginBottom="24dp"
-                    android:backgroundTint="#6C6C6C"
-                    android:textColor="#000000"
+                    android:background="@drawable/bg_btn_bubble_glass_primary"
+                    android:textColor="@color/artistlan_text_primary"
                     android:layout_gravity="center_horizontal" />
 
                 <Button
@@ -342,8 +342,8 @@
                     android:text="Eliminar cuenta"
                     android:layout_marginBottom="16dp"
                     android:layout_gravity="center_horizontal"
-                    android:backgroundTint="#B00020"
-                    android:textColor="#FFFFFF" />
+                    android:background="@drawable/bg_btn_bubble_glass_secondary"
+                    android:textColor="@color/artistlan_text_primary" />
 
             </LinearLayout>
         </ScrollView>

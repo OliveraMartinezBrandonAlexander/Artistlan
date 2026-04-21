@@ -1,7 +1,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/fondo"
+    android:background="@drawable/bg_dialog_solid_panel"
     android:orientation="vertical"
     android:padding="24dp">
 
@@ -18,7 +18,7 @@
         android:layout_width="match_parent"
         android:layout_height="250dp"
         android:layout_marginTop="16dp"
-        android:background="#F9F6F0"
+        android:background="@drawable/bg_form_glass_panel_solid"
         android:padding="12dp">
 
         <TextView
@@ -38,7 +38,7 @@
 
         <Button
             android:id="@+id/btnEditar"
-            style="?android:attr/borderlessButtonStyle"
+            android:background="@drawable/bg_btn_bubble_glass_secondary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Editar"
@@ -48,7 +48,7 @@
             android:id="@+id/btnConfirmarPublicar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:backgroundTint="#4A90E2"
+            android:background="@drawable/bg_btn_bubble_glass_primary"
             android:text="Publicar"
             android:textColor="#FFFFFF"
             android:layout_marginStart="12dp" />

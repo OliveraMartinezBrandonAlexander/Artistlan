@@ -30,7 +30,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
             android:text="Carrito"
-            android:textColor="#1C1C1C"
+            android:textColor="@color/artistlan_text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -70,7 +70,7 @@
                 android:layout_marginTop="12dp"
                 android:gravity="center"
                 android:text="Tu carrito esta vacio"
-                android:textColor="#1B1B1B"
+                android:textColor="@color/artistlan_text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -81,7 +81,7 @@
                 android:layout_marginTop="6dp"
                 android:gravity="center"
                 android:text="Agrega obras reservadas para verlas aqui."
-                android:textColor="#666666"
+                android:textColor="@color/artistlan_text_secondary"
                 android:textSize="14sp" />
         </LinearLayout>
 
@@ -97,9 +97,9 @@
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="#F3E8FF"
+        app:cardBackgroundColor="@color/artistlan_menu_surface_soft"
         app:cardCornerRadius="16dp"
-        app:cardElevation="6dp">
+        app:cardElevation="10dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -112,7 +112,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Items: 0"
-                android:textColor="#2F2F2F"
+                android:textColor="@color/artistlan_text_secondary"
                 android:textSize="14sp" />
 
             <TextView
@@ -121,7 +121,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Total: $ 0.00"
-                android:textColor="#181818"
+                android:textColor="@color/artistlan_text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -130,7 +130,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="10dp"
-                android:backgroundTint="#A1BBCE"
+                android:background="@drawable/bg_btn_bubble_glass_primary"
                 android:text="Comprar todo"
                 android:textAllCaps="false" />
         </LinearLayout>

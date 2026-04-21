@@ -10,6 +10,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.SearchView;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import androidx.fragment.app.Fragment;
 
@@ -27,6 +28,7 @@ public class FragExplorar extends Fragment {
     private ChipGroup chipGroup;
     private SearchView searchView;
     private ImageButton btnFiltros;
+    private boolean filtrosVisibles = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -40,6 +42,7 @@ public class FragExplorar extends Fragment {
         chipGroup = view.findViewById(R.id.chipGroupExplorar);
         searchView = view.findViewById(R.id.searchExplorar);
         btnFiltros = view.findViewById(R.id.btnFiltrosExplorar);
+        btnFiltros.setVisibility(View.GONE);
 
         // Fragment inicial
         cargarFragment(new FragArte());
@@ -83,11 +86,13 @@ public class FragExplorar extends Fragment {
 
             @Override
             public boolean onQueryTextSubmit(String query) {
+                mostrarBotonFiltros(true);
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                mostrarBotonFiltros(newText != null && !newText.trim().isEmpty());
 
                 Fragment fragmentActual = getChildFragmentManager()
                         .findFragmentById(R.id.fragmentContainerExplorar);
@@ -108,9 +113,55 @@ public class FragExplorar extends Fragment {
             }
         });
 
+        searchView.setOnQueryTextFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                mostrarBotonFiltros(true);
+            } else {
+                CharSequence query = searchView.getQuery();
+                mostrarBotonFiltros(query != null && query.length() > 0);
+            }
+        });
+
         btnFiltros.setOnClickListener(v -> mostrarMenuFiltros());
 
         return view;
+    }
+    private void mostrarBotonFiltros(boolean mostrar) {
+        if (btnFiltros == null || filtrosVisibles == mostrar) {
+            return;
+        }
+        filtrosVisibles = mostrar;
+
+        if (mostrar) {
+            btnFiltros.setVisibility(View.VISIBLE);
+            btnFiltros.setTranslationX(18f);
+            btnFiltros.setScaleX(0.88f);
+            btnFiltros.setScaleY(0.88f);
+            btnFiltros.setAlpha(0f);
+            btnFiltros.animate()
+                    .alpha(1f)
+                    .translationX(0f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(220)
+                    .setInterpolator(new FastOutSlowInInterpolator())
+                    .start();
+            return;
+        }
+
+        btnFiltros.animate()
+                .alpha(0f)
+                .translationX(14f)
+                .scaleX(0.9f)
+                .scaleY(0.9f)
+                .setDuration(170)
+                .setInterpolator(new FastOutSlowInInterpolator())
+                .withEndAction(() -> {
+                    if (btnFiltros != null && !filtrosVisibles) {
+                        btnFiltros.setVisibility(View.GONE);
+                    }
+                })
+                .start();
     }
 
     private void mostrarMenuFiltros() {

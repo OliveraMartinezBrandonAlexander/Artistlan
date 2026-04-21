@@ -7,9 +7,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import com.example.artistlan.Activitys.ActFragmentoPrincipal;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
@@ -90,7 +93,8 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
 
         int nuevoInicio = izquierda ? 0 : mitad;
         ValueAnimator anim = ValueAnimator.ofInt(segmentIndicatorFavoritos.getLeft(), nuevoInicio);
-        anim.setDuration(250);
+        anim.setDuration(220);
+        anim.setInterpolator(new FastOutSlowInInterpolator());
         anim.addUpdateListener(a -> {
             int val = (int) a.getAnimatedValue();
             segmentIndicatorFavoritos.setX(val);
@@ -102,5 +106,14 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
         // Cambiar colores del texto
         btnArte.setTextColor(izquierda ? 0xFFFFFFFF : 0xFF1E3A8A);
         btnArtista.setTextColor(izquierda ? 0xFF1E3A8A : 0xFFFFFFFF);
+        int selected = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_primary);
+        int unselected = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_secondary);
+        btnArte.setTextColor(izquierda ? selected : unselected);
+        btnArtista.setTextColor(izquierda ? unselected : selected);
+
+        Button activo = izquierda ? btnArte : btnArtista;
+        activo.animate().scaleX(1.02f).scaleY(1.02f).setDuration(120)
+                .withEndAction(() -> activo.animate().scaleX(1f).scaleY(1f).setDuration(120).start())
+                .start();
     }
 }

@@ -18,6 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -158,6 +159,7 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
 
         ValueAnimator animator = ValueAnimator.ofInt((int) segmentIndicator.getX(), nuevoInicio);
         animator.setDuration(220);
+        animator.setInterpolator(new FastOutSlowInInterpolator());
         animator.addUpdateListener(a -> {
             int val = (int) a.getAnimatedValue();
             segmentIndicator.setX(val);

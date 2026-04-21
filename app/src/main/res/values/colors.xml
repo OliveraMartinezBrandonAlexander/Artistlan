@@ -19,6 +19,7 @@
     <!-- Texto base actual -->
     <color name="artistlan_text_primary">#FFFFFFFF</color>
     <color name="artistlan_text_secondary">#D0D4E6</color>
+    <color name="artistlan_text_hint">#99A8C6</color>
 
     <!-- Colores base personalizables -->
     <color name="artistlan_primary">#B28DFF</color>

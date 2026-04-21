@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_create_account_screen"
+    android:background="@android:color/transparent"
     android:orientation="vertical"
     tools:context=".Fragments.FragSubirServicio">
 
@@ -35,8 +35,8 @@
                 android:id="@+id/lsLayCardServicio"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bordes_redondeados"
-                android:backgroundTint="@color/artistlan_menu_surface_soft"
+                android:background="@drawable/bg_form_glass_panel"
+
                 android:orientation="vertical"
                 android:padding="15dp">
 
@@ -45,7 +45,7 @@
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:src="@drawable/regresarimg"
-                    android:background="@android:color/transparent"
+                    android:background="@drawable/bg_back_bubble"
                     android:scaleType="centerInside"
                     android:adjustViewBounds="true"
                     android:padding="4dp" />
@@ -93,7 +93,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:padding="10dp" />
 
                 <TextView
@@ -110,7 +110,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:hint="Ej. Retrato digital, sesión de fotos, etc."
                     android:inputType="textCapSentences"
                     android:paddingStart="20dp"
@@ -133,7 +133,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:gravity="top|start"
                     android:hint="Describe qué incluye tu servicio, tiempos de entrega, etc."
                     android:inputType="textMultiLine"
@@ -155,7 +155,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:hint="Ej. Ilustración digital, óleo, acrílico, fotografía, etc."
                     android:inputType="textCapSentences"
                     android:paddingStart="20dp"
@@ -177,7 +177,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:padding="10dp" />
 
                 <TextView
@@ -194,7 +194,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="20dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:hint="Medio de contacto"
                     android:inputType="textEmailAddress|textPersonName|textVisiblePassword"
                     android:paddingStart="20dp"
@@ -216,7 +216,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="12dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:hint="Obligatorio"
                     android:inputType="numberDecimal"
                     android:paddingStart="20dp"
@@ -237,7 +237,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="20dp"
-                    android:background="@drawable/editredondo"
+                    android:background="@drawable/bg_input_artistlan"
                     android:hint="Obligatorio"
                     android:inputType="numberDecimal"
                     android:paddingStart="20dp"
@@ -254,8 +254,9 @@
                     android:layout_marginBottom="10dp"
                     android:padding="10dp"
                     android:text="PUBLICAR"
-                    android:textAllCaps="true"
-                    android:textColor="@android:color/white"
+                    android:background="@drawable/bg_btn_bubble_glass_primary"
+                    android:textAllCaps="false"
+                    android:textColor="@color/artistlan_text_primary"
                     android:textStyle="bold" />
 
 

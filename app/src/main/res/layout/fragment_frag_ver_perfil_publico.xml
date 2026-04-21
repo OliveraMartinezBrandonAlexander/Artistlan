@@ -2,10 +2,11 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/rootPublicPerfil"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_create_account_screen"
+    android:background="@android:color/transparent"
     android:orientation="vertical"
     tools:context=".Fragments.FragVerPerfilPublico">
 
@@ -34,8 +35,11 @@
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"
-                android:backgroundTint="@color/artistlan_menu_surface_soft"
-                android:elevation="10dp">
+                app:cardBackgroundColor="@color/artistlan_menu_surface_soft"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="10dp"
+                app:strokeColor="@color/artistlan_menu_stroke_soft"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -78,8 +82,8 @@
                         android:text="Descripción"
                         android:textColor="@color/artistlan_menu_stroke_soft"
                         android:textSize="14sp"
-                        android:background="@drawable/editredondo"
-                        android:backgroundTint="#A1BBCE"
+                        android:background="@drawable/bg_input_artistlan"
+
                         android:padding="12dp"/>
 
                     <LinearLayout
@@ -89,8 +93,8 @@
                         android:layout_marginTop="12dp"
                         android:visibility="gone"
                         android:orientation="vertical"
-                        android:background="@drawable/editredondo"
-                        android:backgroundTint="#A1BBCE"
+                        android:background="@drawable/bg_input_artistlan"
+
                         android:padding="12dp">
 
                         <TextView
@@ -145,14 +149,15 @@
                 android:id="@+id/cardTabs"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:backgroundTint="#E9F2FF"
-                android:elevation="6dp"
+                android:backgroundTint="@android:color/transparent"
+                android:elevation="0dp"
                 android:radius="16dp">
 
                 <FrameLayout
                     android:id="@+id/tabsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:background="@drawable/bg_segment_container"
                     android:padding="6dp">
 
                     <View
@@ -160,8 +165,8 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_gravity="start"
-                        android:background="@drawable/editredondo"
-                        android:backgroundTint="#25002F" />
+                        android:background="@drawable/bg_segment_indicator"
+                        />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -176,7 +181,7 @@
                             android:gravity="center"
                             android:text="OBRAS"
                             android:textStyle="bold"
-                            android:textColor="@android:color/white"/>
+                            android:textColor="@color/artistlan_menu_text_primary"/>
 
                         <TextView
                             android:id="@+id/btnTabServicios"
@@ -186,7 +191,7 @@
                             android:gravity="center"
                             android:text="SERVICIOS"
                             android:textStyle="bold"
-                            android:textColor="#2F6FED"/>
+                            android:textColor="@color/artistlan_menu_text_secondary"/>
                     </LinearLayout>
 
                 </FrameLayout>

@@ -12,7 +12,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -444,8 +446,10 @@ public class FragVerPerfilPublico extends Fragment {
     private void mostrarObras() {
         mostrandoObras = true;
         moverIndicador(true, true);
-        btnTabObras.setTextColor(0xFFFFFFFF);
-        btnTabServicios.setTextColor(0xFF2F6FED);
+        int selected = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_primary);
+        int unselected = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_secondary);
+        btnTabObras.setTextColor(selected);
+        btnTabServicios.setTextColor(unselected);
         obraAdapter.actualizarLista(obras);
         recyclerPublico.setAdapter(obraAdapter);
         tvVacio.setVisibility(obras.isEmpty() ? View.VISIBLE : View.GONE);
@@ -455,8 +459,10 @@ public class FragVerPerfilPublico extends Fragment {
     private void mostrarServicios() {
         mostrandoObras = false;
         moverIndicador(false, true);
-        btnTabServicios.setTextColor(0xFFFFFFFF);
-        btnTabObras.setTextColor(0xFF2F6FED);
+        int selected = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_primary);
+        int unselected = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_secondary);
+        btnTabServicios.setTextColor(selected);
+        btnTabObras.setTextColor(unselected);
         servicioAdapter.actualizarLista(servicios);
         recyclerPublico.setAdapter(servicioAdapter);
         tvVacio.setVisibility(servicios.isEmpty() ? View.VISIBLE : View.GONE);
@@ -470,7 +476,11 @@ public class FragVerPerfilPublico extends Fragment {
             indicator.setTranslationX(targetX);
             return;
         }
-        indicator.animate().translationX(targetX).setDuration(220).start();
+        indicator.animate()
+                .translationX(targetX)
+                .setDuration(220)
+                .setInterpolator(new FastOutSlowInInterpolator())
+                .start();
     }
 
     private String safe(String value, String fallback) {

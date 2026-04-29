@@ -1,5 +1,7 @@
 package com.example.artistlan.Conector.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class UsuariosDTO
 {
     private Integer idUsuario;
@@ -19,6 +21,8 @@ public class UsuariosDTO
     private Boolean esFavorito;
     private String rol;
     private String ubicacion;
+    @SerializedName(value = "twoFactorEnabled", alternate = {"two_factor_enabled"})
+    private Boolean twoFactorEnabled;
 
     public Integer getIdCategoria() {
         return idCategoria;
@@ -148,5 +152,13 @@ public class UsuariosDTO
 
     public void setUbicacion(String ubicacion) {
         this.ubicacion = ubicacion;
+    }
+
+    public Boolean getTwoFactorEnabled() {
+        return Boolean.TRUE.equals(twoFactorEnabled);
+    }
+
+    public void setTwoFactorEnabled(Boolean twoFactorEnabled) {
+        this.twoFactorEnabled = twoFactorEnabled;
     }
 }

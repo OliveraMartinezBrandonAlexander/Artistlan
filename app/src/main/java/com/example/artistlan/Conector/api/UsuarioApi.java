@@ -2,6 +2,7 @@ package com.example.artistlan.Conector.api;
 
 import com.example.artistlan.Conector.model.ActualizarFotoPerfilRequestDTO;
 import com.example.artistlan.Conector.model.ArtistaDTO;
+import com.example.artistlan.Conector.model.LoginResponseDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.Conector.model.CambiarRolRequestDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
@@ -27,7 +28,7 @@ public interface UsuarioApi {
     Call<List<UsuariosDTO>> crearUsuarios(@Body List<UsuariosDTO> usuarios);
 
     @GET("usuarios/login")
-    Call<UsuariosDTO> login(
+    Call<LoginResponseDTO> login(
             @Query("usuario") String usuario,
             @Query("correo") String correo,
             @Query("contrasena") String contrasena

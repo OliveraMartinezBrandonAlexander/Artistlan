@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="28dp"
+    android:layout_marginEnd="28dp"
+    android:background="@drawable/bg_dialog_solid_panel"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <ProgressBar
+        android:id="@+id/twoFactorLoadingProgress"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:indeterminate="true" />
+
+    <TextView
+        android:id="@+id/twoFactorLoadingText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:gravity="center"
+        android:text="Enviando código de verificación…"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

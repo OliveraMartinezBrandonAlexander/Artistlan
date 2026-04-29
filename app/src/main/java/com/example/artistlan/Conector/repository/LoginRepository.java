@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.artistlan.Conector.api.UsuarioApi;
-import com.example.artistlan.Conector.model.UsuariosDTO;
+import com.example.artistlan.Conector.model.LoginResponseDTO;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -18,12 +18,12 @@ public class LoginRepository {
         this.api = api;
     }
 
-    public LiveData<UsuariosDTO> login(String usuario, String correo, String contrasena) {
-        MutableLiveData<UsuariosDTO> data = new MutableLiveData<>();
+    public LiveData<LoginResponseDTO> login(String usuario, String correo, String contrasena) {
+        MutableLiveData<LoginResponseDTO> data = new MutableLiveData<>();
 
-        api.login(usuario, correo, contrasena).enqueue(new Callback<UsuariosDTO>() {
+        api.login(usuario, correo, contrasena).enqueue(new Callback<LoginResponseDTO>() {
             @Override
-            public void onResponse(Call<UsuariosDTO> call, Response<UsuariosDTO> response) {
+            public void onResponse(Call<LoginResponseDTO> call, Response<LoginResponseDTO> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     data.setValue(response.body());
                 } else {
@@ -32,7 +32,7 @@ public class LoginRepository {
             }
 
             @Override
-            public void onFailure(Call<UsuariosDTO> call, Throwable t) {
+            public void onFailure(Call<LoginResponseDTO> call, Throwable t) {
                 data.setValue(null);
             }
         });

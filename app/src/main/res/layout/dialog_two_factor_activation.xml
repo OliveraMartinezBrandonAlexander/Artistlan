@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="20dp"
+    android:layout_marginEnd="20dp"
+    android:background="@drawable/bg_dialog_solid_panel"
+    android:orientation="vertical"
+    android:padding="22dp">
+
+    <TextView
+        android:id="@+id/twoFactorActivationIcon"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="🔐"
+        android:textSize="30sp" />
+
+    <TextView
+        android:id="@+id/twoFactorActivationTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="Protege tu cuenta"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/twoFactorActivationMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:lineSpacingExtra="2dp"
+        android:text="Activa la verificación en dos pasos para agregar una capa extra de seguridad a tu cuenta."
+        android:textSize="15sp" />
+
+    <Button
+        android:id="@+id/twoFactorActivationPrimaryButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/bg_btn_bubble_primary"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:text="Activar ahora"
+        android:textAllCaps="false"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/twoFactorActivationSecondaryButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_btn_bubble_secondary"
+        android:paddingTop="11dp"
+        android:paddingBottom="11dp"
+        android:text="Más tarde"
+        android:textAllCaps="false" />
+
+</LinearLayout>

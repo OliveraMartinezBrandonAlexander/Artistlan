@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_create_account_screen"
+    android:padding="24dp"
+    tools:context=".Activitys.ActVerificarOtpLogin">
+
+    <LinearLayout
+        android:id="@+id/otpCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_form_glass_panel"
+        android:orientation="vertical"
+        android:padding="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/otpTitleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:gravity="center"
+            android:text="Verificacion en dos pasos"
+            android:textColor="@color/artistlan_text_primary"
+            android:textSize="24sp" />
+
+        <TextView
+            android:id="@+id/otpInfoText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="Ingresa el codigo que enviamos a tu correo"
+            android:textColor="@color/artistlan_text_secondary"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/otpCodeInput"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_input_artistlan"
+            android:digits="0123456789"
+            android:gravity="center"
+            android:hint="123456"
+            android:inputType="number"
+            android:maxLength="6"
+            android:textColor="@color/artistlan_text_primary"
+            android:textColorHint="#9FB1C7"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/otpVerifyButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_btn_bubble_glass_primary"
+            android:text="Verificar"
+            android:textAllCaps="false"
+            android:textColor="@color/artistlan_text_primary"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/otpResendButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_btn_bubble_glass_secondary"
+            android:text="Reenviar codigo"
+            android:textAllCaps="false"
+            android:textColor="@color/artistlan_text_primary"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/otpResendCooldownText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="Puedes reenviar el codigo en 60s"
+            android:textColor="@color/artistlan_text_secondary"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/otpTimerText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center"
+            android:text="Tiempo restante: 05:00"
+            android:textColor="@color/artistlan_text_secondary"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

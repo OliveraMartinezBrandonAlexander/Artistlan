@@ -11,16 +11,20 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.os.SystemClock;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -32,11 +36,15 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.SessionManager;
+import com.example.artistlan.Conector.api.Auth2FAApi;
 import com.example.artistlan.Conector.api.CarritoPaypalApi;
 import com.example.artistlan.Conector.api.PagoPaypalApi;
 import com.example.artistlan.Conector.model.CapturarOrdenPaypalCarritoResponseDTO;
 import com.example.artistlan.Conector.model.CapturarOrdenPaypalResponseDTO;
+import com.example.artistlan.Conector.model.TwoFactorResponse;
 import com.example.artistlan.Fragments.FragCarrito;
 import com.example.artistlan.Fragments.FragCentroMensajes;
 import com.example.artistlan.Fragments.FragSolicitudesMensajes;
@@ -54,6 +62,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 
 public class ActFragmentoPrincipal extends AppCompatActivity {
+    private static final String TAG = "ActFragmentoPrincipal";
 
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
@@ -95,6 +104,12 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private static final long NAV_DEBOUNCE_MS = 400L;
     private long ultimaAccionNavegacion = 0L;
     private boolean capturandoPagoDeepLink = false;
+    private boolean activationPromptShown = false;
+    private boolean activationRequestInProgress = false;
+    private SessionManager sessionManager;
+    private Auth2FAApi auth2FAApi;
+    private AlertDialog twoFactorPromptDialog;
+    private AlertDialog twoFactorLoadingDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +117,8 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         setContentView(R.layout.activity_act_fragmento_principal);
 
         themeManager = new ThemeManager(this);
+        sessionManager = new SessionManager(this);
+        auth2FAApi = RetrofitClient.getClient().create(Auth2FAApi.class);
 
         initViews();
         applyThemeOnlyColors();
@@ -118,6 +135,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         animarCampana();
         animarGlows();
         refrescarBadgeMensajes();
+        mostrarModalActivacion2FAIfNeeded();
     }
 
     private void initViews() {
@@ -846,6 +864,136 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         finish();
     }
 
+    private void mostrarModalActivacion2FAIfNeeded() {
+        if (activationPromptShown || sessionManager == null || isFinishing() || isDestroyed()) {
+            return;
+        }
+
+        boolean loggedIn = sessionManager.isLoggedIn();
+        boolean twoFactorEnabled = sessionManager.isTwoFactorEnabled();
+        Log.d(TAG, "twoFactorEnabled guardado = " + twoFactorEnabled + ", loggedIn = " + loggedIn);
+
+        if (!loggedIn || twoFactorEnabled) {
+            return;
+        }
+
+        activationPromptShown = true;
+        mostrarDialogoActivacionPersonalizado();
+    }
+
+    private void solicitarActivacion2FA() {
+        if (activationRequestInProgress) {
+            return;
+        }
+        String token = sessionManager.getToken();
+        if (token == null || token.trim().isEmpty()) {
+            Toast.makeText(this, "Sesion no valida. Vuelve a iniciar sesion.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        activationRequestInProgress = true;
+        mostrarLoadingActivacion();
+
+        auth2FAApi.requestActivation("Bearer " + token.trim()).enqueue(new retrofit2.Callback<TwoFactorResponse>() {
+            @Override
+            public void onResponse(retrofit2.Call<TwoFactorResponse> call, retrofit2.Response<TwoFactorResponse> response) {
+                activationRequestInProgress = false;
+                ocultarLoadingActivacion();
+                if (!response.isSuccessful() || response.body() == null) {
+                    String backendMessage = ApiErrorParser.extractMessage(response);
+                    Toast.makeText(
+                            ActFragmentoPrincipal.this,
+                            backendMessage != null ? backendMessage : "No se pudo solicitar el codigo de activacion",
+                            Toast.LENGTH_LONG
+                    ).show();
+                    return;
+                }
+
+                TwoFactorResponse body = response.body();
+                if (!Boolean.TRUE.equals(body.getSuccess())) {
+                    Toast.makeText(
+                            ActFragmentoPrincipal.this,
+                            body.getMessage() != null ? body.getMessage() : "No se pudo solicitar el codigo de activacion",
+                            Toast.LENGTH_LONG
+                    ).show();
+                    return;
+                }
+
+                Intent intent = new Intent(ActFragmentoPrincipal.this, ActVerificarOtpLogin.class);
+                intent.putExtra(ActVerificarOtpLogin.EXTRA_MODE, ActVerificarOtpLogin.MODE_ACTIVATION);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<TwoFactorResponse> call, Throwable t) {
+                activationRequestInProgress = false;
+                ocultarLoadingActivacion();
+                Toast.makeText(ActFragmentoPrincipal.this, "Error de conexion al solicitar activacion 2FA", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void mostrarDialogoActivacionPersonalizado() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_two_factor_activation, null, false);
+        TextView title = dialogView.findViewById(R.id.twoFactorActivationTitle);
+        TextView message = dialogView.findViewById(R.id.twoFactorActivationMessage);
+        TextView lockIcon = dialogView.findViewById(R.id.twoFactorActivationIcon);
+        Button activarAhora = dialogView.findViewById(R.id.twoFactorActivationPrimaryButton);
+        Button masTarde = dialogView.findViewById(R.id.twoFactorActivationSecondaryButton);
+
+        ThemeApplier.applyTextPrimary(title, themeManager);
+        ThemeApplier.applyTextSecondary(message, themeManager);
+        ThemeApplier.applyTextPrimary(lockIcon, themeManager);
+        ThemeApplier.applyPrimaryButton(activarAhora, themeManager);
+        ThemeApplier.applySecondaryButton(masTarde, themeManager);
+
+        twoFactorPromptDialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        if (twoFactorPromptDialog.getWindow() != null) {
+            twoFactorPromptDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        activarAhora.setOnClickListener(v -> {
+            twoFactorPromptDialog.dismiss();
+            solicitarActivacion2FA();
+        });
+
+        masTarde.setOnClickListener(v -> twoFactorPromptDialog.dismiss());
+
+        twoFactorPromptDialog.show();
+    }
+
+    private void mostrarLoadingActivacion() {
+        if (twoFactorLoadingDialog == null) {
+            View loadingView = LayoutInflater.from(this).inflate(R.layout.dialog_two_factor_loading, null, false);
+            TextView loadingText = loadingView.findViewById(R.id.twoFactorLoadingText);
+            ThemeApplier.applyTextPrimary(loadingText, themeManager);
+
+            twoFactorLoadingDialog = new AlertDialog.Builder(this)
+                    .setView(loadingView)
+                    .setCancelable(false)
+                    .create();
+
+            if (twoFactorLoadingDialog.getWindow() != null) {
+                twoFactorLoadingDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            }
+            twoFactorLoadingDialog.setCanceledOnTouchOutside(false);
+        }
+
+        if (!twoFactorLoadingDialog.isShowing()) {
+            twoFactorLoadingDialog.show();
+        }
+    }
+
+    private void ocultarLoadingActivacion() {
+        if (twoFactorLoadingDialog != null && twoFactorLoadingDialog.isShowing()) {
+            twoFactorLoadingDialog.dismiss();
+        }
+    }
+
 
     @Override
     protected void onNewIntent(Intent intent) {
@@ -870,6 +1018,10 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        ocultarLoadingActivacion();
+        if (twoFactorPromptDialog != null && twoFactorPromptDialog.isShowing()) {
+            twoFactorPromptDialog.dismiss();
+        }
 
         cancelAnimator(bellAnimator);
 
@@ -1102,3 +1254,4 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         return "No se pudo capturar el pago (" + statusCode + ")";
     }
 }
+

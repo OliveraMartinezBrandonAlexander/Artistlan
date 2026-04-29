@@ -61,6 +61,11 @@
             android:theme="@style/Theme.Artistlan" />
 
         <activity
+            android:name=".Activitys.ActVerificarOtpLogin"
+            android:exported="false"
+            android:theme="@style/Theme.Artistlan" />
+
+        <activity
             android:name=".Activitys.ActCrearCuenta"
             android:exported="false"
             android:theme="@style/Theme.Artistlan"

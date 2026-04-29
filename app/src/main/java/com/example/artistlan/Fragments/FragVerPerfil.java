@@ -7,12 +7,15 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
@@ -22,7 +25,10 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.artistlan.Activitys.ActActualizarDatos;
 import com.example.artistlan.BotonesMenuSuperior;
+import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.SessionManager;
+import com.example.artistlan.Conector.api.Auth2FAApi;
 import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.api.ServicioApi;
@@ -31,8 +37,11 @@ import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
+import com.example.artistlan.Conector.model.TwoFactorResponse;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoArtista.adapter.TarjetaTextoArtistaAdapter;
 import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
@@ -58,6 +67,11 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private View expandedSectionPerfil;
     private RecyclerView recyclerFavoritos;
     private TabLayout tabFavoritos;
+    private Button btnDesactivar2FA;
+    private SessionManager sessionManager;
+    private Auth2FAApi auth2FAApi;
+    private boolean twoFactorEnabled = false;
+    private ThemeManager themeManager;
 
     private int idUsuarioLogueado = -1;
     private String rolUsuario = "USER";
@@ -88,6 +102,9 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         servicioApi = RetrofitClient.getClient().create(ServicioApi.class);
         solicitudesApi = RetrofitClient.getClient().create(SolicitudesApi.class);
         usuarioApi = RetrofitClient.getClient().create(UsuarioApi.class);
+        auth2FAApi = RetrofitClient.getClient().create(Auth2FAApi.class);
+        sessionManager = new SessionManager(requireContext());
+        themeManager = new ThemeManager(requireContext());
 
         View root = view.findViewById(R.id.rootPerfil);
         root.setOnClickListener(v -> colapsarFicha());
@@ -112,6 +129,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         recyclerFavoritos = view.findViewById(R.id.recyclerFavoritosPerfil);
         tvFavoritosVacio = view.findViewById(R.id.tvFavoritosVacio);
         tabFavoritos = view.findViewById(R.id.tabFavoritosPerfil);
+        crearBotonDesactivar2FASiHaceFalta(view);
 
         recyclerFavoritos.setLayoutManager(new LinearLayoutManager(requireContext()));
         obraAdapter = new TarjetaTextoObraAdapter(new ArrayList<>(), requireContext());
@@ -181,6 +199,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         String fechaNac = prefs.getString("fechaNac", "");
         String categoria = prefs.getString("ocupacion", prefs.getString("categoria", "Sin ocupación"));
         String ubicacion = prefs.getString("ubicacion", "");
+        twoFactorEnabled = prefs.getBoolean("twoFactorEnabled", false);
 
         tvNombre.setText(usuario.isEmpty() ? "usuario" : usuario);
         tvUsuario.setText(nombre.isEmpty() ? "Nombre no disponible" : nombre);
@@ -204,6 +223,8 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         } else {
             imgFotoPerfil.setImageResource(R.drawable.fotoperfilprueba);
         }
+
+        actualizarEstadoBoton2FA();
     }
 
     private void refrescarDatosPerfilDesdeApi() {
@@ -228,6 +249,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 String fechaNac = textoSeguro(user.getFechaNacimiento(), "Sin fecha");
                 String ocupacion = textoSeguro(user.getCategoria(), "Sin ocupación");
                 String ubicacion = textoSeguro(user.getUbicacion(), "No disponible");
+                twoFactorEnabled = Boolean.TRUE.equals(user.getTwoFactorEnabled());
 
                 tvNombre.setText(usuario);
                 tvUsuario.setText(nombreCompleto);
@@ -251,6 +273,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                         .putString("categoria", ocupacion)
                         .putString("ocupacion", ocupacion)
                         .putString("ubicacion", user.getUbicacion() != null ? user.getUbicacion() : "")
+                        .putBoolean("twoFactorEnabled", twoFactorEnabled)
                         .apply();
 
                 String fotoPerfil = user.getFotoPerfil();
@@ -265,6 +288,8 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 } else {
                     imgFotoPerfil.setImageResource(R.drawable.fotoperfilprueba);
                 }
+
+                actualizarEstadoBoton2FA();
             }
 
             @Override
@@ -276,6 +301,131 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     private String textoSeguro(String value, String fallback) {
         return value != null && !value.trim().isEmpty() ? value.trim() : fallback;
+    }
+
+    private void crearBotonDesactivar2FASiHaceFalta(@NonNull View rootView) {
+        LinearLayout panelInfo = rootView.findViewById(R.id.panelInfo);
+        if (panelInfo == null || btnDesactivar2FA != null) {
+            return;
+        }
+
+        btnDesactivar2FA = new Button(requireContext());
+        btnDesactivar2FA.setText("Desactivar verificacion en dos pasos");
+        btnDesactivar2FA.setAllCaps(false);
+
+        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        buttonParams.topMargin = dpToPx(14);
+        btnDesactivar2FA.setLayoutParams(buttonParams);
+
+        panelInfo.addView(btnDesactivar2FA);
+        if (themeManager != null) {
+            ThemeApplier.applySecondaryButton(btnDesactivar2FA, themeManager);
+        }
+
+        btnDesactivar2FA.setOnClickListener(v -> mostrarConfirmacionDesactivar2FA());
+        actualizarEstadoBoton2FA();
+    }
+
+    private void mostrarConfirmacionDesactivar2FA() {
+        if (!isAdded()) {
+            return;
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle("Desactivar 2FA")
+                .setMessage("Se desactivara la verificacion en dos pasos de tu cuenta. Deseas continuar?")
+                .setPositiveButton("Desactivar", (d, which) -> desactivar2FA())
+                .setNegativeButton("Cancelar", (d, which) -> d.dismiss())
+                .create();
+
+        dialog.show();
+        if (themeManager != null) {
+            ThemeApplier.applyPrimaryButton(dialog.getButton(AlertDialog.BUTTON_POSITIVE), themeManager);
+            ThemeApplier.applySecondaryButton(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), themeManager);
+        }
+    }
+
+    private void desactivar2FA() {
+        if (auth2FAApi == null || sessionManager == null) {
+            Toast.makeText(requireContext(), "No se pudo desactivar 2FA", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String token = sessionManager.getToken();
+        if (token == null || token.trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Sesion no valida. Vuelve a iniciar sesion.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (btnDesactivar2FA != null) {
+            btnDesactivar2FA.setEnabled(false);
+        }
+
+        auth2FAApi.disable("Bearer " + token.trim()).enqueue(new Callback<TwoFactorResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<TwoFactorResponse> call, @NonNull Response<TwoFactorResponse> response) {
+                if (!isAdded()) {
+                    return;
+                }
+
+                if (btnDesactivar2FA != null) {
+                    btnDesactivar2FA.setEnabled(true);
+                }
+
+                if (!response.isSuccessful() || response.body() == null) {
+                    String backendMessage = ApiErrorParser.extractMessage(response);
+                    Toast.makeText(
+                            requireContext(),
+                            backendMessage != null ? backendMessage : "No se pudo desactivar 2FA",
+                            Toast.LENGTH_LONG
+                    ).show();
+                    return;
+                }
+
+                TwoFactorResponse body = response.body();
+                if (!Boolean.TRUE.equals(body.getSuccess())) {
+                    Toast.makeText(
+                            requireContext(),
+                            body.getMessage() != null ? body.getMessage() : "No se pudo desactivar 2FA",
+                            Toast.LENGTH_LONG
+                    ).show();
+                    return;
+                }
+
+                twoFactorEnabled = false;
+                sessionManager.updateTwoFactorEnabled(false);
+                SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+                prefs.edit().putBoolean("twoFactorEnabled", false).apply();
+                actualizarEstadoBoton2FA();
+                Toast.makeText(requireContext(), "2FA desactivado", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<TwoFactorResponse> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (btnDesactivar2FA != null) {
+                    btnDesactivar2FA.setEnabled(true);
+                }
+                Toast.makeText(requireContext(), "Error de conexion al desactivar 2FA", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void actualizarEstadoBoton2FA() {
+        if (btnDesactivar2FA == null) {
+            return;
+        }
+        btnDesactivar2FA.setVisibility(twoFactorEnabled ? View.VISIBLE : View.GONE);
+    }
+
+    private int dpToPx(int dp) {
+        float density = requireContext().getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 
     private void eliminarFavoritoObra(TarjetaTextoObraItem item, int position) {

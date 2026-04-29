@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,8 +27,10 @@ import com.airbnb.lottie.LottieAnimationView;
 import com.airbnb.lottie.LottieProperty;
 import com.airbnb.lottie.model.KeyPath;
 import com.airbnb.lottie.value.LottieValueCallback;
+import com.example.artistlan.Conector.SessionManager;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.UsuarioApi;
+import com.example.artistlan.Conector.model.LoginResponseDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
@@ -45,6 +48,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
     private ImageButton btnRegresar;
     private EditText etCorreo, etUsuario, etContrasena;
     private UsuarioApi api;
+    private SessionManager sessionManager;
 
     private View glowTop, glowCenter, glowBottom, formContainer, dividerShimmer, dividerBase, rootMain;
     private ObjectAnimator glowTopY, glowTopX, glowTopAlpha;
@@ -118,6 +122,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         setupPressAnimation(resultOk);
 
         api = RetrofitClient.getClient().create(UsuarioApi.class);
+        sessionManager = new SessionManager(this);
 
         ScrollView scrollView = findViewById(R.id.IsScroll);
         ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
@@ -471,88 +476,109 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         String correo = etCorreo.getText().toString().trim();
         String usuario = etUsuario.getText().toString().trim();
         String contrasena = etContrasena.getText().toString().trim();
-
         if (correo.isEmpty() && usuario.isEmpty()) {
             etUsuario.requestFocus();
             showErrorDialog("Faltan datos", "Debes ingresar tu usuario o tu correo.");
             return;
         }
-
         if (contrasena.isEmpty()) {
             etContrasena.requestFocus();
-            showErrorDialog("Contraseña requerida", "La contraseña es obligatoria.");
+            showErrorDialog("Contrasena requerida", "La contrasena es obligatoria.");
             return;
         }
-
         showWaitingDialog();
-
-        Call<UsuariosDTO> call = api.login(usuario, correo, contrasena);
-
-        call.enqueue(new Callback<UsuariosDTO>() {
+        Call<LoginResponseDTO> call = api.login(usuario, correo, contrasena);
+        call.enqueue(new Callback<LoginResponseDTO>() {
             @Override
-            public void onResponse(Call<UsuariosDTO> call, Response<UsuariosDTO> response) {
+            public void onResponse(Call<LoginResponseDTO> call, Response<LoginResponseDTO> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    UsuariosDTO user = response.body();
-                    guardarUsuarioLogeado(user, contrasena);
-
-                    api.obtenerCategoriaUsuario(user.getIdUsuario()).enqueue(new Callback<UsuariosDTO>() {
-                        @Override
-                        public void onResponse(Call<UsuariosDTO> call, Response<UsuariosDTO> respCategoria) {
-                            if (respCategoria.isSuccessful() && respCategoria.body() != null) {
-                                UsuariosDTO userConCategoria = respCategoria.body();
-                                SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
-                                SharedPreferences.Editor editor = prefs.edit();
-                                String categoria = userConCategoria.getCategoria();
-                                editor.putString("categoria", categoria != null ? categoria : "Sin categoría");
-                                editor.putString("ocupacion", categoria != null ? categoria : "Sin categoría");
-                                editor.apply();
-                            }
+                    LoginResponseDTO loginResponse = response.body();
+                    boolean requires2FA = Boolean.TRUE.equals(loginResponse.getRequires2FA());
+                    if (requires2FA) {
+                        String temporaryToken = loginResponse.getTemporaryToken();
+                        if (temporaryToken == null || temporaryToken.trim().isEmpty()) {
+                            showErrorDialog("Error de autenticacion", "No se recibio temporaryToken para continuar con 2FA.");
+                            return;
                         }
-
-                        @Override
-                        public void onFailure(Call<UsuariosDTO> call, Throwable t) {
-                            SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
-                            SharedPreferences.Editor editor = prefs.edit();
-                            editor.putString("categoria", "Sin categoría");
-                            editor.putString("ocupacion", "Sin categoría");
-                            editor.apply();
-                        }
-                    });
-
+                        openOtpVerificationScreen(temporaryToken, usuario, correo);
+                        return;
+                    }
+                    UsuariosDTO user = loginResponse.getEffectiveUser();
+                    if (user == null) {
+                        showErrorDialog("Error de autenticacion", "No se recibio informacion valida del usuario.");
+                        return;
+                    }
+                    Integer idUsuario = user.getIdUsuario();
+                    if (idUsuario == null || idUsuario <= 0) {
+                        showErrorDialog("Error de autenticacion", "No se recibio id de usuario valido.");
+                        return;
+                    }
+                    user.setContrasena(contrasena);
+                    guardarUsuarioLogeado(user, loginResponse.getToken());
+                    cargarCategoriaUsuario(idUsuario);
                     showSuccessAndNavigate();
                 } else {
-                    showErrorDialog("Credenciales incorrectas", "Revisa tu usuario, correo o contraseña.");
+                    showErrorDialog("Credenciales incorrectas", "Revisa tu usuario, correo o contrasena.");
                 }
             }
-
             @Override
-            public void onFailure(Call<UsuariosDTO> call, Throwable t) {
-                showErrorDialog("Error de conexión", "No se pudo conectar con el servidor.");
+            public void onFailure(Call<LoginResponseDTO> call, Throwable t) {
+                showErrorDialog("Error de conexion", "No se pudo conectar con el servidor.");
             }
         });
     }
+    private void cargarCategoriaUsuario(Integer idUsuario) {
+        api.obtenerCategoriaUsuario(idUsuario).enqueue(new Callback<UsuariosDTO>() {
+            @Override
+            public void onResponse(Call<UsuariosDTO> call, Response<UsuariosDTO> respCategoria) {
+                if (respCategoria.isSuccessful() && respCategoria.body() != null) {
+                    UsuariosDTO userConCategoria = respCategoria.body();
+                    SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    String categoria = userConCategoria.getCategoria();
+                    editor.putString("categoria", categoria != null ? categoria : "Sin categoria");
+                    editor.putString("ocupacion", categoria != null ? categoria : "Sin categoria");
+                    editor.apply();
+                }
+            }
+            @Override
+            public void onFailure(Call<UsuariosDTO> call, Throwable t) {
+                SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putString("categoria", "Sin categoria");
+                editor.putString("ocupacion", "Sin categoria");
+                editor.apply();
+            }
+        });
+    }
+    private void openOtpVerificationScreen(String temporaryToken, String usuario, String correo) {
+        waitingMode = false;
+        if (resultLottie != null) {
+            resultLottie.cancelAnimation();
+        }
+        if (resultOverlay != null) {
+            resultOverlay.setAlpha(0f);
+            resultOverlay.setVisibility(View.GONE);
+        }
 
-    private void guardarUsuarioLogeado(UsuariosDTO usuario, String contrasenaIngresada) {
+        Intent intent = new Intent(ActIniciarSesion.this, ActVerificarOtpLogin.class);
+        intent.putExtra(ActVerificarOtpLogin.EXTRA_MODE, ActVerificarOtpLogin.MODE_LOGIN);
+        intent.putExtra(ActVerificarOtpLogin.EXTRA_TEMPORARY_TOKEN, temporaryToken);
+        intent.putExtra(ActVerificarOtpLogin.EXTRA_USUARIO, usuario != null ? usuario : "");
+        intent.putExtra(ActVerificarOtpLogin.EXTRA_CORREO, correo != null ? correo : "");
+        startActivity(intent);
+        Toast.makeText(this, "Te enviamos un codigo a tu correo.", Toast.LENGTH_SHORT).show();
+    }
+    private void guardarUsuarioLogeado(UsuariosDTO usuario, String jwtToken) {
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-
-        editor.putInt("id", usuario.getIdUsuario());
-        editor.putInt("idUsuario", usuario.getIdUsuario());
-        editor.putString("usuario", usuario.getUsuario());
-        editor.putString("correo", usuario.getCorreo());
-        editor.putString("nombreCompleto", usuario.getNombreCompleto());
-        editor.putString("contrasena", contrasenaIngresada);
-        editor.putString("telefono", usuario.getTelefono());
-        editor.putString("descripcion", usuario.getDescripcion());
-        editor.putString("redes", usuario.getRedesSociales());
-        editor.putString("fechaNac", usuario.getFechaNacimiento());
-        editor.putString("ubicacion", usuario.getUbicacion() != null ? usuario.getUbicacion() : "");
-        editor.putString("ocupacion", usuario.getCategoria() != null ? usuario.getCategoria() : "");
-        String rol = (usuario.getRol() != null && !usuario.getRol().trim().isEmpty()) ? usuario.getRol() : "USER";
-        editor.putString("rol", rol);
-        String foto = usuario.getFotoPerfil();
-        editor.putString("fotoPerfil", foto != null ? foto : "");
-        editor.apply();
+        String categoria = usuario.getCategoria();
+        sessionManager.saveUserSession(usuario, jwtToken);
+        if (categoria != null && !categoria.trim().isEmpty()) {
+            prefs.edit()
+                    .putString("categoria", categoria)
+                    .putString("ocupacion", categoria)
+                    .apply();
+        }
     }
 
     @Override

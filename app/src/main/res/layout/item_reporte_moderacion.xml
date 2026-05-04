@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    app:cardBackgroundColor="@color/artistlan_menu_surface_soft"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="8dp"
+    app:strokeColor="@color/artistlan_menu_stroke_soft"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <TextView
+            android:id="@+id/tvIdReporteModeracion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Reporte #0"
+            android:textColor="@color/artistlan_menu_text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvTipoObjetivoModeracion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Tipo: N/A"
+            android:textColor="@color/artistlan_menu_text_secondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvTituloObjetivoModeracion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Objetivo: Sin título"
+            android:textColor="@color/artistlan_menu_text_primary"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvMotivoModeracion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Motivo: Sin motivo"
+            android:textColor="@color/artistlan_menu_text_secondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvEstadoModeracionItem"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Estado: N/A"
+            android:textColor="@color/artistlan_menu_text_secondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvPrioridadModeracionItem"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Prioridad: N/A"
+            android:textColor="@color/artistlan_menu_text_secondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvReportanteModeracion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Reportante: No disponible"
+            android:textColor="@color/artistlan_menu_text_secondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvModeradorAsignadoModeracion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Moderador: Sin asignar"
+            android:textColor="@color/artistlan_menu_text_secondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvFechaReporteModeracion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Fecha: No disponible"
+            android:textColor="@color/artistlan_menu_text_secondary"
+            android:textSize="13sp" />
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

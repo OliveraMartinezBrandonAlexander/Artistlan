@@ -6,6 +6,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,6 +25,7 @@ import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.api.SolicitudesApi;
 import com.example.artistlan.Conector.api.UsuarioApi;
+import com.example.artistlan.Fragments.DialogReportarContenido;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.Conector.model.PerfilPublicoArtistaDTO;
@@ -66,6 +68,7 @@ public class FragVerPerfilPublico extends Fragment {
     private TextView tvVacio;
     private TextView btnTabObras;
     private TextView btnTabServicios;
+    private Button btnReportarUsuario;
     private RecyclerView recyclerPublico;
 
     private boolean expandido = false;
@@ -125,6 +128,7 @@ public class FragVerPerfilPublico extends Fragment {
         indicator = root.findViewById(R.id.tabIndicator);
         btnTabObras = root.findViewById(R.id.btnTabObras);
         btnTabServicios = root.findViewById(R.id.btnTabServicios);
+        btnReportarUsuario = root.findViewById(R.id.btnReportarUsuarioPublico);
         recyclerPublico = root.findViewById(R.id.recyclerPublico);
         tvVacio = root.findViewById(R.id.tvPublicoVacio);
     }
@@ -253,8 +257,9 @@ public class FragVerPerfilPublico extends Fragment {
     }
 
     private void cargarPerfilPublico() {
+        configurarBotonReportarUsuario(null);
         if (idArtista <= 0) {
-            Toast.makeText(getContext(), "Artista invalido", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Artista inválido", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -266,7 +271,7 @@ public class FragVerPerfilPublico extends Fragment {
                             return;
                         }
                         if (!response.isSuccessful() || response.body() == null) {
-                            Toast.makeText(getContext(), "No se pudo cargar el perfil publico", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "No se pudo cargar el perfil público", Toast.LENGTH_SHORT).show();
                             return;
                         }
                         renderizarPerfil(response.body());
@@ -287,13 +292,14 @@ public class FragVerPerfilPublico extends Fragment {
         }
 
         tvUsuario.setText(safe(perfil.getUsuario(), "usuario"));
-        tvDescripcion.setText(safe(perfil.getDescripcion(), "Sin descripcion"));
+        tvDescripcion.setText(safe(perfil.getDescripcion(), "Sin descripción"));
         tvNombreCompleto.setText("Nombre: " + safe(perfil.getNombreCompleto(), "No disponible"));
         tvRedes.setText("Redes: " + safe(perfil.getRedesSociales(), "Sin redes"));
         tvFecha.setText("Fecha nac.: " + safe(perfil.getFechaNacimiento(), "No disponible"));
-        tvUbicacion.setText("Ubicacion: " + safe(perfil.getUbicacion(), "No especificada"));
-        tvCategorias.setText("Ocupacion: " + safe(perfil.getOcupacion(), "Sin ocupacion"));
+        tvUbicacion.setText("Ubicación: " + safe(perfil.getUbicacion(), "No especificada"));
+        tvCategorias.setText("Ocupación: " + safe(perfil.getOcupacion(), "Sin ocupación"));
         cargarOcupacionUsuarioConsultado();
+        configurarBotonReportarUsuario(safe(perfil.getUsuario(), "usuario"));
 
         Glide.with(this)
                 .load(perfil.getFotoPerfil())
@@ -302,8 +308,53 @@ public class FragVerPerfilPublico extends Fragment {
                 .into(imgPerfil);
 
         obras = convertirObras(perfil.getObras());
+        actualizarOwnedObraIdsPerfilPublico();
         servicios = convertirServicios(perfil.getServicios());
         mostrarObras();
+    }
+
+    private void actualizarOwnedObraIdsPerfilPublico() {
+        Set<Integer> ownedObraIds = new HashSet<>();
+        if (idUsuarioLogueado > 0 && idArtista > 0 && idUsuarioLogueado == idArtista) {
+            for (TarjetaTextoObraItem obra : obras) {
+                if (obra != null && obra.getIdObra() > 0) {
+                    ownedObraIds.add(obra.getIdObra());
+                }
+            }
+        }
+        if (obraAdapter != null) {
+            obraAdapter.setOwnedObraIds(ownedObraIds);
+        }
+    }
+
+    private void configurarBotonReportarUsuario(@Nullable String nombreUsuarioArtista) {
+        if (btnReportarUsuario == null) {
+            return;
+        }
+
+        boolean mostrar = idUsuarioLogueado > 0
+                && idArtista > 0
+                && idArtista != idUsuarioLogueado
+                && nombreUsuarioArtista != null
+                && !nombreUsuarioArtista.trim().isEmpty();
+
+        btnReportarUsuario.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+
+        if (!mostrar) {
+            btnReportarUsuario.setOnClickListener(null);
+            return;
+        }
+
+        String nombreSeguro = safe(nombreUsuarioArtista, "usuario");
+        btnReportarUsuario.setOnClickListener(v -> {
+            DialogReportarContenido dialog = DialogReportarContenido.newInstance(
+                    "USUARIO",
+                    idArtista,
+                    idUsuarioLogueado,
+                    nombreSeguro
+            );
+            dialog.show(getParentFragmentManager(), "DialogReportarContenido");
+        });
     }
 
     private void cargarOcupacionUsuarioConsultado() {
@@ -317,8 +368,8 @@ public class FragVerPerfilPublico extends Fragment {
                         if (!isAdded() || !response.isSuccessful() || response.body() == null) {
                             return;
                         }
-                        String ocupacion = safe(response.body().getCategoria(), "Sin ocupacion");
-                        tvCategorias.setText("Ocupacion: " + ocupacion);
+                        String ocupacion = safe(response.body().getCategoria(), "Sin ocupación");
+                        tvCategorias.setText("Ocupación: " + ocupacion);
                     }
 
                     @Override
@@ -453,7 +504,7 @@ public class FragVerPerfilPublico extends Fragment {
         obraAdapter.actualizarLista(obras);
         recyclerPublico.setAdapter(obraAdapter);
         tvVacio.setVisibility(obras.isEmpty() ? View.VISIBLE : View.GONE);
-        tvVacio.setText("Este artista aun no tiene obras publicas.");
+        tvVacio.setText("Este artista aún no tiene obras públicas.");
     }
 
     private void mostrarServicios() {
@@ -466,7 +517,7 @@ public class FragVerPerfilPublico extends Fragment {
         servicioAdapter.actualizarLista(servicios);
         recyclerPublico.setAdapter(servicioAdapter);
         tvVacio.setVisibility(servicios.isEmpty() ? View.VISIBLE : View.GONE);
-        tvVacio.setText("Este artista aun no tiene servicios publicos.");
+        tvVacio.setText("Este artista aún no tiene servicios públicos.");
     }
 
     private void moverIndicador(boolean aObras, boolean animar) {

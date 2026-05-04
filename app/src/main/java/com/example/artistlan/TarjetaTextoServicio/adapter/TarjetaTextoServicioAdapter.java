@@ -3,6 +3,7 @@ package com.example.artistlan.TarjetaTextoServicio.adapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -17,9 +18,12 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.artistlan.Conector.SessionManager;
+import com.example.artistlan.Fragments.DialogReportarContenido;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
@@ -81,8 +85,9 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         ThemeApplier.applyTextPrimary(holder.precioRango, tm);
         ThemeApplier.applyTextSecondary(holder.categoria, tm);
         ThemeApplier.applyPrimaryButton(holder.btnContactar, tm);
+        ThemeApplier.applySecondaryButton(holder.btnReportarServicio, tm);
         ThemeApplier.applyCardContainer(holder.itemView, tm);
-        
+
         holder.autor.setText(safe(servicio.getAutor(), "Autor"));
         holder.titulo.setText(safe(servicio.getTitulo(), "Servicio"));
         holder.descripcion.setText("Descripción: " + safe(servicio.getDescripcion(), "Sin descripción"));
@@ -114,11 +119,12 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         configurarMenuOpciones(holder);
 
         boolean esServicioPropio = servicio.getIdUsuario() != null
-                && currentUserId != null
-                && servicio.getIdUsuario().equals(currentUserId);
+                && getCurrentUserId() != null
+                && servicio.getIdUsuario().equals(getCurrentUserId());
         holder.btnContactar.setVisibility(esServicioPropio ? View.GONE : View.VISIBLE);
         holder.btnContactar.setEnabled(!esServicioPropio && !TextUtils.isEmpty(servicio.getContacto()));
         holder.btnContactar.setOnClickListener(v -> contactar(servicio));
+        configurarBotonReportar(holder, servicio);
 
         holder.itemView.setOnClickListener(v -> {
             int previous = tarjetaExpandida;
@@ -177,6 +183,53 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     @Override public int getItemCount() { return listaServicios != null ? listaServicios.size() : 0; }
 
     private String safe(String v, String def) { return (v == null || v.trim().isEmpty()) ? def : v; }
+
+    private void configurarBotonReportar(ViewHolder holder, TarjetaTextoServicioItem servicio) {
+        boolean mostrarReportar = puedeReportarseServicio(servicio);
+        holder.btnReportarServicio.setVisibility(mostrarReportar ? View.VISIBLE : View.GONE);
+        if (!mostrarReportar) {
+            holder.btnReportarServicio.setOnClickListener(null);
+            return;
+        }
+
+        holder.btnReportarServicio.setOnClickListener(v -> mostrarDialogoReporteServicio(servicio));
+    }
+
+    private boolean puedeReportarseServicio(TarjetaTextoServicioItem servicio) {
+        Integer usuarioActual = getCurrentUserId();
+        if (usuarioActual == null || usuarioActual <= 0) {
+            return false;
+        }
+        if (servicio == null || servicio.getIdServicio() == null || servicio.getIdServicio() <= 0) {
+            return false;
+        }
+        return servicio.getIdUsuario() == null || !servicio.getIdUsuario().equals(usuarioActual);
+    }
+
+    private Integer getCurrentUserId() {
+        if (currentUserId != null && currentUserId > 0) {
+            return currentUserId;
+        }
+        SharedPreferences prefs = context.getSharedPreferences(SessionManager.PREF_NAME, Context.MODE_PRIVATE);
+        int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+        return idUsuario > 0 ? idUsuario : null;
+    }
+
+    private void mostrarDialogoReporteServicio(TarjetaTextoServicioItem servicio) {
+        Integer usuarioActual = getCurrentUserId();
+        if (!(context instanceof FragmentActivity) || usuarioActual == null || usuarioActual <= 0) {
+            Toast.makeText(context, "No se pudo abrir el formulario de reporte.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        DialogReportarContenido dialog = DialogReportarContenido.newInstance(
+                "SERVICIO",
+                servicio.getIdServicio(),
+                usuarioActual,
+                servicio.getTitulo()
+        );
+        dialog.show(((FragmentActivity) context).getSupportFragmentManager(), "DialogReportarContenido");
+    }
 
 
     private void configurarMenuOpciones(ViewHolder holder) {
@@ -304,7 +357,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         ImageView imgAutor;
         ImageButton btnLike, btnMoreOptions;
         View expandedSection;
-        Button btnContactar;
+        Button btnContactar, btnReportarServicio;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -322,6 +375,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             btnMoreOptions = itemView.findViewById(R.id.btnMoreOptions);
             expandedSection = itemView.findViewById(R.id.expanded_section);
             btnContactar = itemView.findViewById(R.id.btnContactar);
+            btnReportarServicio = itemView.findViewById(R.id.btnReportarServicio);
         }
     }
 }

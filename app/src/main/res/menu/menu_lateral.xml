@@ -23,7 +23,6 @@
             android:title="Subir obra" />
     </group>
 
-
     <item android:title="Opciones">
         <menu>
             <item
@@ -40,6 +39,12 @@
                 android:id="@+id/navNotificaciones"
                 android:icon="@drawable/ic_notificaciones_artistlan"
                 android:title="Solicitudes" />
+
+            <item
+                android:id="@+id/navModeracionReportes"
+                android:icon="@drawable/ic_nav_mensajes_artistlan"
+                android:title="Moderación"
+                android:visible="false" />
 
             <item
                 android:id="@+id/navConfiguracion"

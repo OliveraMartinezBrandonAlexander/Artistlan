@@ -327,10 +327,12 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
         String rol = prefs.getString("rol", "USER");
-        boolean esAdmin = "ADMIN".equals(rol);
+        boolean esAdmin = "ADMIN".equalsIgnoreCase(rol);
+        boolean esModerador = "MODERADOR".equalsIgnoreCase(rol);
 
         navigationView.getMenu().setGroupVisible(R.id.admin_group, esAdmin);
         navigationView.getMenu().findItem(R.id.navAdminSection).setVisible(esAdmin);
+        navigationView.getMenu().findItem(R.id.navModeracionReportes).setVisible(esAdmin || esModerador);
     }
 
     private void configurarNavegacion() {
@@ -503,6 +505,14 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
                 if (itemId == R.id.navNotificaciones) {
                     abrirCentroMensajes(1, FragSolicitudesMensajes.MODO_RECIBIDAS);
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    return true;
+                }
+
+                if (itemId == R.id.navModeracionReportes) {
+                    if (navController != null) {
+                        navegarSinDuplicar(R.id.fragModeracionReportes);
+                    }
                     drawerLayout.closeDrawer(GravityCompat.START);
                     return true;
                 }
@@ -1079,10 +1089,19 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
             if (navController != null && navController.getCurrentDestination() != null) {
                 int currentId = navController.getCurrentDestination().getId();
+                SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+                String rol = prefs.getString("rol", "USER");
+                boolean esAdmin = "ADMIN".equalsIgnoreCase(rol);
+                boolean esModerador = "MODERADOR".equalsIgnoreCase(rol);
+
                 if (currentId == R.id.fragAdminGestionUsuarios || currentId == R.id.fragAdminConvocatorias) {
-                    SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
-                    String rol = prefs.getString("rol", "USER");
-                    if (!"ADMIN".equals(rol)) {
+                    if (!esAdmin) {
+                        navController.navigate(R.id.fragMain);
+                    }
+                }
+
+                if (currentId == R.id.fragModeracionReportes) {
+                    if (!esAdmin && !esModerador) {
                         navController.navigate(R.id.fragMain);
                     }
                 }

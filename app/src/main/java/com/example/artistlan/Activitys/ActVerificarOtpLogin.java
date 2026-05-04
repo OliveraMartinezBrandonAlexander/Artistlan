@@ -82,19 +82,19 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
         if (MODE_LOGIN.equals(mode)) {
             if (temporaryToken == null || temporaryToken.trim().isEmpty()) {
-                Toast.makeText(this, "Token temporal invalido. Inicia sesion nuevamente.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Token temporal inválido. Inicia sesión nuevamente.", Toast.LENGTH_LONG).show();
                 finish();
                 return;
             }
         } else if (MODE_ACTIVATION.equals(mode)) {
             if (jwtToken == null || jwtToken.trim().isEmpty()) {
-                Toast.makeText(this, "Sesion no valida. Vuelve a iniciar sesion.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Sesión no válida. Vuelve a iniciar sesión.", Toast.LENGTH_LONG).show();
                 finish();
                 return;
             }
         }
 
-        tvInfo.setText("Te enviamos un codigo al correo asociado a tu cuenta.");
+        tvInfo.setText("Te enviamos un código al correo asociado a tu cuenta.");
 
         btnVerify.setOnClickListener(v -> verifyCode());
         btnResend.setOnClickListener(v -> resendCode());
@@ -105,7 +105,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
     private void verifyCode() {
         String code = etCode.getText().toString().trim();
         if (!code.matches("\\d{6}")) {
-            etCode.setError("El codigo debe tener 6 digitos");
+            etCode.setError("El código debe tener 6 dígitos");
             etCode.requestFocus();
             return;
         }
@@ -126,11 +126,15 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
             public void onResponse(Call<TwoFactorVerifyLoginResponse> call, Response<TwoFactorVerifyLoginResponse> response) {
                 setLoadingState(false);
 
-                if (!response.isSuccessful() || response.body() == null) {
-                    String backendMessage = ApiErrorParser.extractMessage(response);
+                if (!response.isSuccessful()) {
+                    handleVerifyLoginErrorResponse(response);
+                    return;
+                }
+
+                if (response.body() == null) {
                     Toast.makeText(
                             ActVerificarOtpLogin.this,
-                            backendMessage != null ? backendMessage : "No se pudo verificar el codigo",
+                            "No se pudo verificar el código",
                             Toast.LENGTH_LONG
                     ).show();
                     return;
@@ -140,7 +144,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                 if (!Boolean.TRUE.equals(body.getSuccess())) {
                     Toast.makeText(
                             ActVerificarOtpLogin.this,
-                            body.getMessage() != null ? body.getMessage() : "Codigo incorrecto o expirado",
+                            body.getMessage() != null ? body.getMessage() : "Código incorrecto o expirado",
                             Toast.LENGTH_LONG
                     ).show();
                     return;
@@ -148,7 +152,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
                 UsuariosDTO user = body.getUser();
                 if (user == null || user.getIdUsuario() == null || user.getIdUsuario() <= 0) {
-                    Toast.makeText(ActVerificarOtpLogin.this, "Respuesta invalida del servidor", Toast.LENGTH_LONG).show();
+                    Toast.makeText(ActVerificarOtpLogin.this, "Respuesta inválida del servidor", Toast.LENGTH_LONG).show();
                     return;
                 }
 
@@ -162,9 +166,51 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
             @Override
             public void onFailure(Call<TwoFactorVerifyLoginResponse> call, Throwable t) {
                 setLoadingState(false);
-                Toast.makeText(ActVerificarOtpLogin.this, "Error de conexion al verificar codigo", Toast.LENGTH_LONG).show();
+                Toast.makeText(ActVerificarOtpLogin.this, "Error de conexión al verificar código", Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void handleVerifyLoginErrorResponse(Response<TwoFactorVerifyLoginResponse> response) {
+        String backendMessage = ApiErrorParser.extractMessage(response);
+        int code = response != null ? response.code() : -1;
+
+        if (code == 423) {
+            handleBlockedVerifyLogin("Tu cuenta está suspendida temporalmente. Intenta nuevamente cuando termine la suspensión.");
+            return;
+        }
+
+        if (code == 403) {
+            handleBlockedVerifyLogin(
+                    backendMessage != null ? backendMessage : "Tu cuenta no puede iniciar sesión. Puede estar desactivada o bloqueada."
+            );
+            return;
+        }
+
+        if (code == 400 || code == 401) {
+            Toast.makeText(
+                    this,
+                    backendMessage != null ? backendMessage : "Código incorrecto o expirado",
+                    Toast.LENGTH_LONG
+            ).show();
+            return;
+        }
+
+        Toast.makeText(
+                this,
+                backendMessage != null ? backendMessage : "No se pudo verificar el código",
+                Toast.LENGTH_LONG
+        ).show();
+    }
+
+    private void handleBlockedVerifyLogin(String message) {
+        temporaryToken = null;
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+
+        Intent intent = new Intent(ActVerificarOtpLogin.this, ActIniciarSesion.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
     }
 
     private void verifyActivationCode(String code) {
@@ -182,7 +228,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                     String backendMessage = ApiErrorParser.extractMessage(response);
                     Toast.makeText(
                             ActVerificarOtpLogin.this,
-                            backendMessage != null ? backendMessage : "No se pudo verificar el codigo",
+                            backendMessage != null ? backendMessage : "No se pudo verificar el código",
                             Toast.LENGTH_LONG
                     ).show();
                     return;
@@ -192,7 +238,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                 if (!Boolean.TRUE.equals(body.getSuccess())) {
                     Toast.makeText(
                             ActVerificarOtpLogin.this,
-                            body.getMessage() != null ? body.getMessage() : "Codigo incorrecto o expirado",
+                            body.getMessage() != null ? body.getMessage() : "Código incorrecto o expirado",
                             Toast.LENGTH_LONG
                     ).show();
                     return;
@@ -206,7 +252,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
             @Override
             public void onFailure(Call<TwoFactorResponse> call, Throwable t) {
                 setLoadingState(false);
-                Toast.makeText(ActVerificarOtpLogin.this, "Error de conexion al verificar codigo", Toast.LENGTH_LONG).show();
+                Toast.makeText(ActVerificarOtpLogin.this, "Error de conexión al verificar código", Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -221,7 +267,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
     private void resendLoginCode() {
         if (temporaryToken == null || temporaryToken.trim().isEmpty()) {
-            Toast.makeText(this, "Token temporal invalido", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Token temporal inválido", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -237,7 +283,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                     String backendMessage = ApiErrorParser.extractMessage(response);
                     Toast.makeText(
                             ActVerificarOtpLogin.this,
-                            backendMessage != null ? backendMessage : "No se pudo reenviar el codigo",
+                            backendMessage != null ? backendMessage : "No se pudo reenviar el código",
                             Toast.LENGTH_LONG
                     ).show();
                     return;
@@ -247,7 +293,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                 if (!Boolean.TRUE.equals(body.getSuccess())) {
                     Toast.makeText(
                             ActVerificarOtpLogin.this,
-                            body.getMessage() != null ? body.getMessage() : "No se pudo reenviar el codigo",
+                            body.getMessage() != null ? body.getMessage() : "No se pudo reenviar el código",
                             Toast.LENGTH_LONG
                     ).show();
                     return;
@@ -259,20 +305,20 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
                 startOtpTimer();
                 startResendCooldown();
-                Toast.makeText(ActVerificarOtpLogin.this, "Codigo reenviado", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ActVerificarOtpLogin.this, "Código reenviado", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onFailure(Call<TwoFactorResponse> call, Throwable t) {
                 setLoadingState(false);
-                Toast.makeText(ActVerificarOtpLogin.this, "Error de conexion al reenviar codigo", Toast.LENGTH_LONG).show();
+                Toast.makeText(ActVerificarOtpLogin.this, "Error de conexión al reenviar código", Toast.LENGTH_LONG).show();
             }
         });
     }
 
     private void resendActivationCode() {
         if (jwtToken == null || jwtToken.trim().isEmpty()) {
-            Toast.makeText(this, "Sesion no valida. Vuelve a iniciar sesion.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Sesión no válida. Vuelve a iniciar sesión.", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -286,7 +332,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                     String backendMessage = ApiErrorParser.extractMessage(response);
                     Toast.makeText(
                             ActVerificarOtpLogin.this,
-                            backendMessage != null ? backendMessage : "No se pudo reenviar el codigo",
+                            backendMessage != null ? backendMessage : "No se pudo reenviar el código",
                             Toast.LENGTH_LONG
                     ).show();
                     return;
@@ -296,7 +342,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                 if (!Boolean.TRUE.equals(body.getSuccess())) {
                     Toast.makeText(
                             ActVerificarOtpLogin.this,
-                            body.getMessage() != null ? body.getMessage() : "No se pudo reenviar el codigo",
+                            body.getMessage() != null ? body.getMessage() : "No se pudo reenviar el código",
                             Toast.LENGTH_LONG
                     ).show();
                     return;
@@ -304,13 +350,13 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
                 startOtpTimer();
                 startResendCooldown();
-                Toast.makeText(ActVerificarOtpLogin.this, "Codigo reenviado", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ActVerificarOtpLogin.this, "Código reenviado", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onFailure(Call<TwoFactorResponse> call, Throwable t) {
                 setLoadingState(false);
-                Toast.makeText(ActVerificarOtpLogin.this, "Error de conexion al reenviar codigo", Toast.LENGTH_LONG).show();
+                Toast.makeText(ActVerificarOtpLogin.this, "Error de conexión al reenviar código", Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -342,7 +388,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
             @Override
             public void onFinish() {
-                tvTimer.setText("El codigo ha expirado. Solicita uno nuevo.");
+                tvTimer.setText("El código ha expirado. Solicita uno nuevo.");
             }
         };
         otpCountDownTimer.start();
@@ -352,7 +398,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
         resendCooldownActive = true;
         btnResend.setEnabled(false);
         tvResendCooldown.setVisibility(View.VISIBLE);
-        tvResendCooldown.setText("Puedes reenviar el codigo en 120s");
+        tvResendCooldown.setText("Puedes reenviar el código en 120s");
 
         if (resendCountDownTimer != null) {
             resendCountDownTimer.cancel();
@@ -362,7 +408,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
             @Override
             public void onTick(long millisUntilFinished) {
                 long seconds = (millisUntilFinished + 999L) / 1000L;
-                tvResendCooldown.setText("Puedes reenviar el codigo en " + seconds + "s");
+                tvResendCooldown.setText("Puedes reenviar el código en " + seconds + "s");
             }
 
             @Override

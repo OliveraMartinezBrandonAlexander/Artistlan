@@ -100,7 +100,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             idObraEditar = args.getInt(ARG_OBRA_ID, -1);
         }
 
-        firebaseRepo = new FirebaseImageRepository();
+        firebaseRepo = new FirebaseImageRepository(requireContext());
 
         seleccionarImagenObraLauncher =
                 registerForActivityResult(
@@ -207,6 +207,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                 .setTitle("Selecciona una opcion")
                 .setItems(opciones, (dialog, which) -> {
                     if (which == 0) {
+                        Toast.makeText(getContext(), "Se recomienda una imagen en formato 4:3 para mejor visualización. No se deformará tu imagen.", Toast.LENGTH_SHORT).show();
                         seleccionarImagenObraLauncher.launch("image/*");
                     } else if (which == 1) {
                         abrirCamaraConPermiso();

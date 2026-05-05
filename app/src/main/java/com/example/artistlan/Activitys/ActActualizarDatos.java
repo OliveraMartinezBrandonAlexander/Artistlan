@@ -276,6 +276,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                 .setTitle("Selecciona una opción")
                 .setItems(opciones, (dialog, which) -> {
                     if (which == 0) {
+                        Toast.makeText(this, "Selecciona una imagen cuadrada para que tu foto se vea correctamente.", Toast.LENGTH_SHORT).show();
                         seleccionarImagenperfilLauncher.launch("image/*");
                     } else if (which == 1) {
                         abrirCamaraPerfilConPermiso();
@@ -690,7 +691,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     }
 
     private void subirFotoPerfil(int idUsuario, SharedPreferences prefs, Runnable onSuccess) {
-        FirebaseImageRepository repo = new FirebaseImageRepository();
+        FirebaseImageRepository repo = new FirebaseImageRepository(this);
         repo.subirFotoPerfilYGuardarEnBD(idUsuario, imageUri, new FirebaseImageRepository.ImagenListener() {
             @Override
             public void onSuccess(String urlNueva) {

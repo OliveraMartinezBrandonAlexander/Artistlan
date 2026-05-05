@@ -217,8 +217,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                     .load(fotoPerfil)
                     .placeholder(R.drawable.fotoperfilprueba)
                     .error(R.drawable.fotoperfilprueba)
-                    .skipMemoryCache(true)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .into(imgFotoPerfil);
         } else {
             imgFotoPerfil.setImageResource(R.drawable.fotoperfilprueba);
@@ -282,8 +281,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                             .load(fotoPerfil)
                             .placeholder(R.drawable.fotoperfilprueba)
                             .error(R.drawable.fotoperfilprueba)
-                            .skipMemoryCache(true)
-                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                             .into(imgFotoPerfil);
                 } else {
                     imgFotoPerfil.setImageResource(R.drawable.fotoperfilprueba);

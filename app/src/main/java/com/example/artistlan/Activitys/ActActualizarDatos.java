@@ -1,7 +1,6 @@
 package com.example.artistlan.Activitys;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,13 +10,15 @@ import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.view.LayoutInflater;
+import android.text.InputType;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -33,9 +34,12 @@ import androidx.core.view.WindowInsetsCompat;
 import com.bumptech.glide.Glide;
 import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.SessionManager;
 import com.example.artistlan.Conector.api.CategoriaApi;
 import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.CategoriaDTO;
+import com.example.artistlan.Conector.model.DesactivarCuentaRequestDTO;
+import com.example.artistlan.Conector.model.RespuestaModeracionDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.Conector.repository.FirebaseImageRepository;
 import com.example.artistlan.R;
@@ -70,6 +74,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
     private UsuarioApi api;
     private List<CategoriaDTO> listaCategorias;
+    private SessionManager sessionManager;
 
     private ActivityResultLauncher<String> seleccionarImagenperfilLauncher;
     private ActivityResultLauncher<Void> tomarFotoPerfilLauncher;
@@ -144,6 +149,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         });
 
         api = RetrofitClient.getClient().create(UsuarioApi.class);
+        sessionManager = new SessionManager(this);
 
         etCorreo.setEnabled(false);
         etUsuario.setEnabled(false);
@@ -266,7 +272,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     private void mostrarOpcionesFotoPerfil() {
         String[] opciones = {"Elegir de galería", "Tomar foto con cámara"};
 
-        new AlertDialog.Builder(this)
+        new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Selecciona una opción")
                 .setItems(opciones, (dialog, which) -> {
                     if (which == 0) {
@@ -406,63 +412,76 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         } else if (v.getId() == R.id.btnActualizarDatos) {
             actualizarUsuario();
         } else if (v.getId() == R.id.btnEliminarCuenta) {
-            mostrarDialogoEliminarCuenta();
+            mostrarDialogoDesactivarCuentaConContrasena();
         }
     }
 
-    private void mostrarDialogoEliminarCuenta() {
+    private void mostrarDialogoDesactivarCuentaConContrasena() {
+        LinearLayout contenedor = new LinearLayout(this);
+        contenedor.setOrientation(LinearLayout.VERTICAL);
+        contenedor.setPadding(dpToPx(24), dpToPx(8), dpToPx(24), 0);
+
+        TextView tvMensaje = new TextView(this);
+        tvMensaje.setText("Tu cuenta se desactivará. No se borrará físicamente.\n\nSe conservarán tu historial de compras, ventas y transacciones.\n\nPara confirmar, ingresa tu contraseña actual.");
+        tvMensaje.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        contenedor.addView(tvMensaje);
+
+        EditText etContrasenaActual = new EditText(this);
+        etContrasenaActual.setHint("Ingresa tu contraseña actual");
+        etContrasenaActual.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        etContrasenaActual.setSingleLine(true);
+
+        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        inputParams.topMargin = dpToPx(16);
+        contenedor.addView(etContrasenaActual, inputParams);
+
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Desactivar cuenta")
+                .setView(contenedor)
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Desactivar cuenta", null)
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            Button btnConfirmar = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE);
+            Button btnCancelar = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE);
+
+            btnConfirmar.setOnClickListener(v -> {
+                String contrasenaActual = etContrasenaActual.getText() != null
+                        ? etContrasenaActual.getText().toString().trim()
+                        : "";
+
+                if (contrasenaActual.isEmpty()) {
+                    etContrasenaActual.setError("Ingresa tu contraseña actual.");
+                    etContrasenaActual.requestFocus();
+                    return;
+                }
+
+                etContrasenaActual.setError(null);
+                desactivarCuentaConApiV11(contrasenaActual, dialog, etContrasenaActual, btnConfirmar, btnCancelar);
+            });
+        });
+
+        dialog.show();
+    }
+
+    private void mostrarDialogoDesactivarCuenta() {
         new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Eliminar cuenta")
-                .setMessage("Esta acción es permanente y eliminará tu cuenta y toda tu información. ¿Deseas continuar?")
-                .setPositiveButton("Sí, eliminar", (dialog, which) -> {
+                .setTitle("Desactivar cuenta")
+                .setMessage("Tu cuenta se desactivará y ya no podrá iniciar sesión ni operar normalmente. Tu historial de compras, ventas, reportes y transacciones se conservará. Esta acción no borra físicamente tu información. ¿Deseas confirmar la desactivación de tu cuenta?")
+                .setPositiveButton("Sí, desactivar", (dialog, which) -> {
                     dialog.dismiss();
-
-                    View view = LayoutInflater.from(this).inflate(R.layout.dialog_ingresar_password, null);
-                    EditText etPassword = view.findViewById(R.id.etPasswordDialog);
-
-                    AlertDialog dialogPassword = new AlertDialog.Builder(this)
-                            .setTitle("Confirma tu contraseña")
-                            .setView(view)
-                            .setCancelable(false)
-                            .setPositiveButton("Eliminar", null)
-                            .setNegativeButton("Cancelar", (d, w) -> d.dismiss())
-                            .create();
-
-                    ThemeApplier.applyInput(etPassword, themeManager);
-
-                    dialogPassword.setOnShowListener(d -> {
-                        Button btnEliminar = dialogPassword.getButton(AlertDialog.BUTTON_POSITIVE);
-                        btnEliminar.setOnClickListener(v2 -> {
-                            String passwordIngresada = etPassword.getText().toString().trim();
-                            if (passwordIngresada.isEmpty()) {
-                                etPassword.setError("Ingresa tu contraseña");
-                                etPassword.requestFocus();
-                                return;
-                            }
-
-                            SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
-                            String passwordActual = prefs.getString("contrasena", "");
-
-                            if (passwordIngresada.equals(passwordActual)) {
-                                dialogPassword.dismiss();
-                                eliminarCuentaConApi();
-                            } else {
-                                etPassword.setError("Contraseña incorrecta");
-                                etPassword.requestFocus();
-                            }
-                        });
-                    });
-
-                    dialogPassword.show();
-                    ThemeApplier.applyPrimaryButton(dialogPassword.getButton(AlertDialog.BUTTON_POSITIVE), themeManager);
-                    ThemeApplier.applySecondaryButton(dialogPassword.getButton(AlertDialog.BUTTON_NEGATIVE), themeManager);
+                    desactivarCuentaConApi();
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
     }
 
-    private void eliminarCuentaConApi() {
-        SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
+    private void desactivarCuentaConApi() {
+        SharedPreferences prefs = getSharedPreferences(SessionManager.PREF_NAME, MODE_PRIVATE);
         int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
 
         if (idUsuario == -1) {
@@ -470,34 +489,165 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             return;
         }
 
-        api.eliminarUsuario(idUsuario).enqueue(new Callback<Void>() {
+        DesactivarCuentaRequestDTO request = new DesactivarCuentaRequestDTO();
+        request.setIdUsuarioSolicitante(idUsuario);
+        request.setMotivo("Cuenta desactivada desde Android por solicitud del usuario");
+        request.setConfirmacion(true);
+
+        api.desactivarCuenta(idUsuario, request).enqueue(new Callback<RespuestaModeracionDTO>() {
             @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
+            public void onResponse(Call<RespuestaModeracionDTO> call, Response<RespuestaModeracionDTO> response) {
                 if (response.isSuccessful()) {
-                    prefs.edit().clear().apply();
-
                     Toast.makeText(ActActualizarDatos.this,
-                            "Cuenta eliminada correctamente",
+                            "Tu cuenta fue desactivada correctamente",
                             Toast.LENGTH_SHORT).show();
-
-                    Intent intent = new Intent(ActActualizarDatos.this, MainActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
+                    cerrarSesionYRedirigirALogin();
 
                 } else {
                     Toast.makeText(ActActualizarDatos.this,
-                            "Error al eliminar la cuenta (Código: " + response.code() + ")",
+                            construirMensajeErrorDesactivacion(response),
                             Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<Void> call, Throwable t) {
+            public void onFailure(Call<RespuestaModeracionDTO> call, Throwable t) {
                 Toast.makeText(ActActualizarDatos.this,
                         "Error de conexión: " + t.getMessage(),
                         Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private String construirMensajeErrorDesactivacion(Response<RespuestaModeracionDTO> response) {
+        String backendMessage = ApiErrorParser.extractMessage(response);
+        int code = response != null ? response.code() : -1;
+
+        if (code == 409) {
+            return backendMessage != null ? backendMessage : "Tu cuenta ya se encuentra desactivada o bloqueada.";
+        }
+        if (code == 403) {
+            return backendMessage != null ? backendMessage : "No tienes permisos para desactivar esta cuenta.";
+        }
+        if (code == 400) {
+            return backendMessage != null ? backendMessage : "La solicitud de desactivación no es válida.";
+        }
+        return backendMessage != null ? backendMessage : "No se pudo desactivar la cuenta. Inténtalo de nuevo más tarde.";
+    }
+
+    private void desactivarCuentaConApiV11(
+            String contrasenaActual,
+            androidx.appcompat.app.AlertDialog dialog,
+            EditText etContrasenaActual,
+            Button btnConfirmar,
+            Button btnCancelar
+    ) {
+        SharedPreferences prefs = getSharedPreferences(SessionManager.PREF_NAME, MODE_PRIVATE);
+        int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+
+        if (idUsuario == -1) {
+            Toast.makeText(this, "Error: sesión no válida", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        DesactivarCuentaRequestDTO request = new DesactivarCuentaRequestDTO();
+        request.setIdUsuarioSolicitante(idUsuario);
+        request.setContrasenaActual(contrasenaActual);
+        request.setMotivo("Cuenta desactivada desde Android por solicitud del usuario");
+        request.setConfirmacion(true);
+
+        setEstadoDialogoDesactivacion(dialog, etContrasenaActual, btnConfirmar, btnCancelar, false);
+
+        api.desactivarCuenta(idUsuario, request).enqueue(new Callback<RespuestaModeracionDTO>() {
+            @Override
+            public void onResponse(Call<RespuestaModeracionDTO> call, Response<RespuestaModeracionDTO> response) {
+                if (response.isSuccessful()) {
+                    dialog.dismiss();
+                    Toast.makeText(
+                            ActActualizarDatos.this,
+                            "Tu cuenta fue desactivada correctamente.",
+                            Toast.LENGTH_LONG
+                    ).show();
+                    cerrarSesionYRedirigirALogin();
+                } else {
+                    setEstadoDialogoDesactivacion(dialog, etContrasenaActual, btnConfirmar, btnCancelar, true);
+                    Toast.makeText(
+                            ActActualizarDatos.this,
+                            construirMensajeErrorDesactivacionV11(response),
+                            Toast.LENGTH_LONG
+                    ).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<RespuestaModeracionDTO> call, Throwable t) {
+                setEstadoDialogoDesactivacion(dialog, etContrasenaActual, btnConfirmar, btnCancelar, true);
+                Toast.makeText(
+                        ActActualizarDatos.this,
+                        "Error de conexión al desactivar la cuenta.",
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+        });
+    }
+
+    private String construirMensajeErrorDesactivacionV11(Response<RespuestaModeracionDTO> response) {
+        String backendMessage = ApiErrorParser.extractMessage(response);
+        int code = response != null ? response.code() : -1;
+
+        if (code == 400) {
+            return backendMessage != null ? backendMessage : "Revisa los datos para desactivar la cuenta.";
+        }
+        if (code == 403) {
+            return backendMessage != null ? backendMessage : "La contraseña actual es incorrecta.";
+        }
+        if (code == 409) {
+            return backendMessage != null ? backendMessage : "La cuenta no puede desactivarse.";
+        }
+        return backendMessage != null ? backendMessage : "No se pudo desactivar la cuenta.";
+    }
+
+    private void setEstadoDialogoDesactivacion(
+            androidx.appcompat.app.AlertDialog dialog,
+            EditText etContrasenaActual,
+            Button btnConfirmar,
+            Button btnCancelar,
+            boolean habilitado
+    ) {
+        if (dialog != null) {
+            dialog.setCancelable(habilitado);
+            dialog.setCanceledOnTouchOutside(habilitado);
+        }
+        if (etContrasenaActual != null) {
+            etContrasenaActual.setEnabled(habilitado);
+        }
+        if (btnConfirmar != null) {
+            btnConfirmar.setEnabled(habilitado);
+        }
+        if (btnCancelar != null) {
+            btnCancelar.setEnabled(habilitado);
+        }
+        if (btnEliminarCuenta != null) {
+            btnEliminarCuenta.setEnabled(habilitado);
+        }
+    }
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
+    private void cerrarSesionYRedirigirALogin() {
+        if (sessionManager != null) {
+            sessionManager.clearSession();
+        } else {
+            getSharedPreferences(SessionManager.PREF_NAME, MODE_PRIVATE).edit().clear().apply();
+        }
+
+        Intent intent = new Intent(ActActualizarDatos.this, ActIniciarSesion.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void actualizarUsuario() {
@@ -527,7 +677,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
         String telefono = etTelefono.getText().toString().trim();
         if (!telefono.isEmpty() && !esTelefonoValido(telefono)) {
-            etTelefono.setError("Telefono invalido");
+            etTelefono.setError("Teléfono inválido");
             etTelefono.requestFocus();
             return;
         }
@@ -616,7 +766,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                 } else {
                     String backendMessage = ApiErrorParser.extractMessage(response);
                     Toast.makeText(ActActualizarDatos.this,
-                            backendMessage != null ? backendMessage : "Error al actualizar (Codigo: " + response.code() + ")",
+                            backendMessage != null ? backendMessage : "Error al actualizar (Código: " + response.code() + ")",
                             Toast.LENGTH_LONG).show();
                 }
             }

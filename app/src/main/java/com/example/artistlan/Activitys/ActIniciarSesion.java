@@ -27,6 +27,7 @@ import com.airbnb.lottie.LottieAnimationView;
 import com.airbnb.lottie.LottieProperty;
 import com.airbnb.lottie.model.KeyPath;
 import com.airbnb.lottie.value.LottieValueCallback;
+import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.SessionManager;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.UsuarioApi;
@@ -483,7 +484,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         }
         if (contrasena.isEmpty()) {
             etContrasena.requestFocus();
-            showErrorDialog("Contrasena requerida", "La contrasena es obligatoria.");
+            showErrorDialog("Contraseña requerida", "La contraseña es obligatoria.");
             return;
         }
         showWaitingDialog();
@@ -497,7 +498,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                     if (requires2FA) {
                         String temporaryToken = loginResponse.getTemporaryToken();
                         if (temporaryToken == null || temporaryToken.trim().isEmpty()) {
-                            showErrorDialog("Error de autenticacion", "No se recibio temporaryToken para continuar con 2FA.");
+                            showErrorDialog("Error de autenticación", "No se recibió temporaryToken para continuar con 2FA.");
                             return;
                         }
                         openOtpVerificationScreen(temporaryToken, usuario, correo);
@@ -505,12 +506,12 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                     }
                     UsuariosDTO user = loginResponse.getEffectiveUser();
                     if (user == null) {
-                        showErrorDialog("Error de autenticacion", "No se recibio informacion valida del usuario.");
+                        showErrorDialog("Error de autenticación", "No se recibió información válida del usuario.");
                         return;
                     }
                     Integer idUsuario = user.getIdUsuario();
                     if (idUsuario == null || idUsuario <= 0) {
-                        showErrorDialog("Error de autenticacion", "No se recibio id de usuario valido.");
+                        showErrorDialog("Error de autenticación", "No se recibió id de usuario válido.");
                         return;
                     }
                     user.setContrasena(contrasena);
@@ -518,15 +519,47 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                     cargarCategoriaUsuario(idUsuario);
                     showSuccessAndNavigate();
                 } else {
-                    showErrorDialog("Credenciales incorrectas", "Revisa tu usuario, correo o contrasena.");
+                    handleLoginErrorResponse(response);
                 }
             }
             @Override
             public void onFailure(Call<LoginResponseDTO> call, Throwable t) {
-                showErrorDialog("Error de conexion", "No se pudo conectar con el servidor.");
+                showErrorDialog("Error de conexión", "No se pudo conectar con el servidor.");
             }
         });
     }
+
+    private void handleLoginErrorResponse(Response<LoginResponseDTO> response) {
+        String backendMessage = ApiErrorParser.extractMessage(response);
+        int code = response != null ? response.code() : -1;
+
+        if (code == 423) {
+            showErrorDialog(
+                    "Cuenta suspendida",
+                    "Tu cuenta está suspendida temporalmente. Intenta nuevamente cuando termine la suspensión."
+            );
+            return;
+        }
+
+        if (code == 403) {
+            showErrorDialog(
+                    "Acceso bloqueado",
+                    backendMessage != null ? backendMessage : "Tu cuenta no puede iniciar sesión. Puede estar desactivada o bloqueada."
+            );
+            return;
+        }
+
+        if (code == 401) {
+            showErrorDialog("Credenciales incorrectas", "Revisa tu usuario, correo o contraseña.");
+            return;
+        }
+
+        showErrorDialog(
+                "No se pudo iniciar sesión",
+                backendMessage != null ? backendMessage : "Ocurrió un error al iniciar sesión. Intenta de nuevo."
+        );
+    }
+
     private void cargarCategoriaUsuario(Integer idUsuario) {
         api.obtenerCategoriaUsuario(idUsuario).enqueue(new Callback<UsuariosDTO>() {
             @Override
@@ -567,7 +600,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         intent.putExtra(ActVerificarOtpLogin.EXTRA_USUARIO, usuario != null ? usuario : "");
         intent.putExtra(ActVerificarOtpLogin.EXTRA_CORREO, correo != null ? correo : "");
         startActivity(intent);
-        Toast.makeText(this, "Te enviamos un codigo a tu correo.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Te enviamos un código a tu correo.", Toast.LENGTH_SHORT).show();
     }
     private void guardarUsuarioLogeado(UsuariosDTO usuario, String jwtToken) {
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);

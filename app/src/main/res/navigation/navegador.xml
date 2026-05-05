@@ -167,6 +167,30 @@
         tools:layout="@layout/fragment_frag_admin_convocatorias" />
 
     <fragment
+        android:id="@+id/fragModeracionReportes"
+        android:name="com.example.artistlan.Fragments.FragModeracionReportes"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_moderacion_reportes" />
+
+    <fragment
+        android:id="@+id/fragDetalleReporteModeracion"
+        android:name="com.example.artistlan.Fragments.FragDetalleReporteModeracion"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_detalle_reporte_moderacion">
+
+        <argument
+            android:name="idReporte"
+            android:defaultValue="-1"
+            app:argType="integer" />
+    </fragment>
+
+    <fragment
         android:id="@+id/fragVerPerfilPublico"
         android:name="com.example.artistlan.Fragments.FragVerPerfilPublico"
         app:enterAnim="@anim/nav_enter"

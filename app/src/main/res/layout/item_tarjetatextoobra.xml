@@ -155,7 +155,7 @@
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="2"
-            android:text="TITULO"
+            android:text="TÍTULO"
             android:textColor="@color/artistlan_text_primary"
             android:textSize="19sp"
             android:textStyle="bold"
@@ -256,6 +256,16 @@
                     android:textAllCaps="false"
                     android:visibility="gone" />
             </LinearLayout>
+
+            <Button
+                android:id="@+id/btnReportarObra"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:backgroundTint="#D9C7EB"
+                android:text="Reportar"
+                android:textAllCaps="false"
+                android:visibility="gone" />
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

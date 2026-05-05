@@ -2,7 +2,9 @@ package com.example.artistlan.Conector.api;
 
 import com.example.artistlan.Conector.model.ActualizarFotoPerfilRequestDTO;
 import com.example.artistlan.Conector.model.ArtistaDTO;
+import com.example.artistlan.Conector.model.DesactivarCuentaRequestDTO;
 import com.example.artistlan.Conector.model.LoginResponseDTO;
+import com.example.artistlan.Conector.model.RespuestaModeracionDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.Conector.model.CambiarRolRequestDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
@@ -59,6 +61,12 @@ public interface UsuarioApi {
 
     @DELETE("usuariosusuario/{id}")
     Call<Void> eliminarUsuario(@Path("id") int idUsuario);
+
+    @POST("usuarios/{idUsuario}/desactivar-cuenta")
+    Call<RespuestaModeracionDTO> desactivarCuenta(
+            @Path("idUsuario") Integer idUsuario,
+            @Body DesactivarCuentaRequestDTO request
+    );
 
     @GET("usuarios/favoritos/{usuarioId}")
     Call<List<FavoritoDTO>> favoritosAlterno(@Path("usuarioId") int usuarioId);

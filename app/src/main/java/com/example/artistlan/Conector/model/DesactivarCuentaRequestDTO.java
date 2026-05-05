@@ -3,6 +3,7 @@ package com.example.artistlan.Conector.model;
 public class DesactivarCuentaRequestDTO {
 
     private Integer idUsuarioSolicitante;
+    private String contrasenaActual;
     private String motivo;
     private Boolean confirmacion;
 
@@ -12,6 +13,14 @@ public class DesactivarCuentaRequestDTO {
 
     public void setIdUsuarioSolicitante(Integer idUsuarioSolicitante) {
         this.idUsuarioSolicitante = idUsuarioSolicitante;
+    }
+
+    public String getContrasenaActual() {
+        return contrasenaActual;
+    }
+
+    public void setContrasenaActual(String contrasenaActual) {
+        this.contrasenaActual = contrasenaActual;
     }
 
     public String getMotivo() {

@@ -14,6 +14,7 @@
         android:background="@color/artistlan_menu_stroke_soft" />
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollDetalleReporteModeracion"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true">
@@ -361,8 +362,11 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="6dp"
-                                android:hint="Fecha fin de suspensi&#243;n (yyyy-MM-dd'T'HH:mm:ss)"
-                                android:inputType="text" />
+                                android:clickable="true"
+                                android:focusable="false"
+                                android:hint="Selecciona fecha y hora de fin de suspensión"
+                                android:inputType="none"
+                                android:textCursorDrawable="@null" />
                         </LinearLayout>
 
                         <Button

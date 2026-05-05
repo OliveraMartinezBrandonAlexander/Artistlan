@@ -37,6 +37,7 @@ import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
+import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,6 +76,7 @@ public class FragVerPerfilPublico extends Fragment {
     private boolean mostrandoObras = true;
     private int idUsuarioLogueado = -1;
     private int idArtista = -1;
+    private String rolUsuarioLogueado = "";
 
     private TarjetaTextoObraAdapter obraAdapter;
     private TarjetaTextoServicioAdapter servicioAdapter;
@@ -100,6 +102,7 @@ public class FragVerPerfilPublico extends Fragment {
 
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+        rolUsuarioLogueado = prefs.getString("rol", "");
         idArtista = getArguments() != null ? getArguments().getInt("idArtista", -1) : -1;
 
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
@@ -271,7 +274,10 @@ public class FragVerPerfilPublico extends Fragment {
                             return;
                         }
                         if (!response.isSuccessful() || response.body() == null) {
-                            Toast.makeText(getContext(), "No se pudo cargar el perfil público", Toast.LENGTH_SHORT).show();
+                            String mensaje = response.code() == 404
+                                    ? "Este perfil ya no está disponible."
+                                    : "No se pudo cargar el perfil público";
+                            Toast.makeText(getContext(), mensaje, Toast.LENGTH_SHORT).show();
                             return;
                         }
                         renderizarPerfil(response.body());
@@ -333,6 +339,7 @@ public class FragVerPerfilPublico extends Fragment {
         }
 
         boolean mostrar = idUsuarioLogueado > 0
+                && ReporteUiPermissions.esRolUsuarioReportanteValido(rolUsuarioLogueado)
                 && idArtista > 0
                 && idArtista != idUsuarioLogueado
                 && nombreUsuarioArtista != null

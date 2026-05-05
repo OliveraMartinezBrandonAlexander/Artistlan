@@ -22,6 +22,7 @@ import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.ReporteApi;
 import com.example.artistlan.Conector.model.CrearReporteRequestDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -149,6 +150,16 @@ public class DialogReportarContenido extends DialogFragment {
 
         if (idUsuarioReportante <= 0) {
             Toast.makeText(requireContext(), "No se pudo identificar al usuario que reporta.", Toast.LENGTH_LONG).show();
+            return null;
+        }
+
+        String rolActual = ReporteUiPermissions.resolveCurrentUserRole(requireContext());
+        if (ReporteUiPermissions.esRolAdminOModerador(rolActual)) {
+            Toast.makeText(
+                    requireContext(),
+                    "Los administradores y moderadores no pueden crear reportes desde este flujo.",
+                    Toast.LENGTH_LONG
+            ).show();
             return null;
         }
 

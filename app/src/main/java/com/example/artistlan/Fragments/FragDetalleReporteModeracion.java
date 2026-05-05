@@ -1,10 +1,14 @@
 package com.example.artistlan.Fragments;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -17,6 +21,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
@@ -30,11 +37,13 @@ import com.example.artistlan.Conector.model.RespuestaModeracionDTO;
 import com.example.artistlan.Conector.model.TomarReporteRequestDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.ModeracionUiMapper;
 
 import java.text.Normalizer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -45,7 +54,10 @@ import retrofit2.Response;
 public class FragDetalleReporteModeracion extends Fragment {
 
     private static final String ARG_ID_REPORTE = "idReporte";
+    private static final Locale LOCALE_ES_MX = new Locale("es", "MX");
+    private static final String ACTION_SUSPENDER_USUARIO = "SUSPENDER_USUARIO";
 
+    private NestedScrollView detailScrollView;
     private View contenedorDetalle;
     private ProgressBar progressBar;
     private TextView tvError;
@@ -82,6 +94,8 @@ public class FragDetalleReporteModeracion extends Fragment {
     private String rolActual = "USER";
     private ReporteDetalleDTO reporteActual;
     private final List<AccionResolucionOption> opcionesResolucionActuales = new ArrayList<>();
+    private String fechaFinSuspensionBackend;
+    private int previousSoftInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
 
     public FragDetalleReporteModeracion() {
         super(R.layout.fragment_frag_detalle_reporte_moderacion);
@@ -101,6 +115,7 @@ public class FragDetalleReporteModeracion extends Fragment {
 
         btnTomarReporte.setOnClickListener(v -> tomarReporte());
         btnResolverReporte.setOnClickListener(v -> resolverReporte());
+        etFechaFinSuspension.setOnClickListener(v -> abrirSelectorFechaFinSuspension());
         spinnerAccionResolver.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -113,11 +128,13 @@ public class FragDetalleReporteModeracion extends Fragment {
             }
         });
 
+        configurarScrollYTeclado();
         ocultarSeccionResolucion();
         validarPermisosYCargar();
     }
 
     private void bindViews(@NonNull View view) {
+        detailScrollView = view.findViewById(R.id.scrollDetalleReporteModeracion);
         contenedorDetalle = view.findViewById(R.id.contenedorDetalleReporteModeracion);
         progressBar = view.findViewById(R.id.progressDetalleReporteModeracion);
         tvError = view.findViewById(R.id.tvErrorDetalleReporteModeracion);
@@ -147,6 +164,23 @@ public class FragDetalleReporteModeracion extends Fragment {
         contenedorFechaFinSuspension = view.findViewById(R.id.contenedorFechaFinSuspensionModeracion);
         etFechaFinSuspension = view.findViewById(R.id.etFechaFinSuspensionModeracion);
         btnResolverReporte = view.findViewById(R.id.btnResolverReporteModeracion);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (requireActivity().getWindow() != null) {
+            previousSoftInputMode = requireActivity().getWindow().getAttributes().softInputMode;
+            requireActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        if (getActivity() != null && getActivity().getWindow() != null) {
+            getActivity().getWindow().setSoftInputMode(previousSoftInputMode);
+        }
+        super.onPause();
     }
 
     private void cargarSesionActual() {
@@ -217,20 +251,24 @@ public class FragDetalleReporteModeracion extends Fragment {
         tvError.setVisibility(View.GONE);
 
         tvIdReporte.setText("Reporte #" + safeNumero(reporte.getIdReporte()));
-        tvTipoObjetivo.setText("Tipo de objetivo: " + safeText(reporte.getTipoObjetivo(), "No disponible"));
+        tvTipoObjetivo.setText("Tipo de objetivo: " + ModeracionUiMapper.formatTipoObjetivo(reporte.getTipoObjetivo()));
         tvTituloObjetivo.setText("Objetivo: " + safeText(reporte.getTituloObjetivo(), "Sin t\u00edtulo"));
         tvDescripcionObjetivo.setText("Descripci\u00f3n del contenido: " + safeText(reporte.getDescripcionObjetivo(), "Sin descripci\u00f3n del contenido"));
         tvReportante.setText("Reportante: " + safeText(reporte.getNombreUsuarioReportante(), "No disponible"));
         tvUsuarioReportado.setText("Due\u00f1o o usuario reportado: " + resolverUsuarioReportado(reporte));
         tvMotivo.setText("Motivo: " + safeText(reporte.getMotivo(), "Sin motivo"));
         tvDescripcionReporte.setText("Descripci\u00f3n del reporte: " + safeText(reporte.getDescripcion(), "Sin descripci\u00f3n adicional"));
-        tvEstado.setText("Estado: " + safeText(reporte.getEstado(), "No disponible"));
-        tvPrioridad.setText("Prioridad: " + safeText(reporte.getPrioridad(), "No disponible"));
+        tvEstado.setText("Estado: " + ModeracionUiMapper.formatEstadoReporte(reporte.getEstado()));
+        tvPrioridad.setText("Prioridad: " + ModeracionUiMapper.formatPrioridad(reporte.getPrioridad()));
         tvModeradorAsignado.setText("Moderador asignado: " + safeText(reporte.getNombreModeradorAsignado(), "Sin asignar"));
         tvFechaReporte.setText("Fecha del reporte: " + safeText(reporte.getFechaReporte(), "No disponible"));
         tvFechaInicioRevision.setText("Inicio de revisi\u00f3n: " + safeText(reporte.getFechaInicioRevision(), "A\u00fan no iniciado"));
 
-        configurarCampoOpcional(tvAccionResolucion, "Acci\u00f3n de resoluci\u00f3n: ", reporte.getAccionResolucion());
+        configurarCampoOpcional(
+                tvAccionResolucion,
+                "Acci\u00f3n de resoluci\u00f3n: ",
+                mapearAccionResolucionVisible(reporte.getAccionResolucion())
+        );
         configurarCampoOpcional(tvMensajeRespuesta, "Mensaje de respuesta: ", reporte.getMensajeRespuesta());
         configurarCampoOpcional(tvFechaResolucion, "Fecha de resoluci\u00f3n: ", reporte.getFechaResolucion());
 
@@ -355,13 +393,11 @@ public class FragDetalleReporteModeracion extends Fragment {
         boolean esUsuario = "USUARIO".equals(normalizarValor(reporte.getTipoObjetivo()));
         if (!esUsuario) {
             opcionesResolucionActuales.add(new AccionResolucionOption("Ocultar contenido", "OCULTAR_CONTENIDO"));
-            opcionesResolucionActuales.add(new AccionResolucionOption("Reactivar contenido", "REACTIVAR_CONTENIDO"));
-            opcionesResolucionActuales.add(new AccionResolucionOption("Eliminar contenido l\u00f3gico", "ELIMINAR_CONTENIDO_LOGICO"));
+            opcionesResolucionActuales.add(new AccionResolucionOption("Retirar contenido", "ELIMINAR_CONTENIDO_LOGICO"));
         }
 
         opcionesResolucionActuales.add(new AccionResolucionOption("Advertir usuario", "ADVERTENCIA"));
-        opcionesResolucionActuales.add(new AccionResolucionOption("Suspender usuario", "SUSPENDER_USUARIO"));
-        opcionesResolucionActuales.add(new AccionResolucionOption("Reactivar usuario", "REACTIVAR_USUARIO"));
+        opcionesResolucionActuales.add(new AccionResolucionOption("Suspender usuario", ACTION_SUSPENDER_USUARIO));
         opcionesResolucionActuales.add(new AccionResolucionOption("Bloquear usuario permanentemente", "BLOQUEAR_USUARIO_PERMANENTE"));
 
         List<String> labels = new ArrayList<>();
@@ -389,9 +425,10 @@ public class FragDetalleReporteModeracion extends Fragment {
 
     private void actualizarCampoFechaFinSuspension() {
         AccionResolucionOption action = getAccionSeleccionada();
-        boolean requiereFecha = action != null && "SUSPENDER_USUARIO".equals(action.backendAction);
+        boolean requiereFecha = action != null && ACTION_SUSPENDER_USUARIO.equals(action.backendAction);
         contenedorFechaFinSuspension.setVisibility(requiereFecha ? View.VISIBLE : View.GONE);
         if (!requiereFecha) {
+            fechaFinSuspensionBackend = null;
             etFechaFinSuspension.setText("");
             etFechaFinSuspension.setError(null);
         }
@@ -401,6 +438,7 @@ public class FragDetalleReporteModeracion extends Fragment {
         spinnerAccionResolver.setSelection(0, false);
         etMensajeRespuesta.setText("");
         etMotivoAccion.setText("");
+        fechaFinSuspensionBackend = null;
         etFechaFinSuspension.setText("");
         etMensajeRespuesta.setError(null);
         etMotivoAccion.setError(null);
@@ -434,16 +472,10 @@ public class FragDetalleReporteModeracion extends Fragment {
             return;
         }
 
-        String fechaFinSuspension = valueOrEmpty(etFechaFinSuspension);
-        if ("SUSPENDER_USUARIO".equals(accion.backendAction)) {
-            if (TextUtils.isEmpty(fechaFinSuspension)) {
+        if (ACTION_SUSPENDER_USUARIO.equals(accion.backendAction)) {
+            if (TextUtils.isEmpty(fechaFinSuspensionBackend)) {
                 etFechaFinSuspension.setError("Debes indicar la fecha de fin de suspensi\u00f3n.");
-                etFechaFinSuspension.requestFocus();
-                return;
-            }
-            if (!esFechaFinSuspensionValida(fechaFinSuspension)) {
-                etFechaFinSuspension.setError("Usa el formato yyyy-MM-dd'T'HH:mm:ss.");
-                etFechaFinSuspension.requestFocus();
+                scrollToField(etFechaFinSuspension);
                 return;
             }
         }
@@ -454,7 +486,7 @@ public class FragDetalleReporteModeracion extends Fragment {
         request.setTipoRespuesta("PERSONALIZADA");
         request.setMensajeRespuesta(mensajeRespuesta);
         request.setMotivoAccion(TextUtils.isEmpty(motivoAccion) ? null : motivoAccion);
-        request.setFechaFinSuspension(TextUtils.isEmpty(fechaFinSuspension) ? null : fechaFinSuspension);
+        request.setFechaFinSuspension(TextUtils.isEmpty(fechaFinSuspensionBackend) ? null : fechaFinSuspensionBackend);
 
         setEstadoResolverReporte(true);
         moderacionApi.resolverReporte(idReporte, request).enqueue(new Callback<RespuestaModeracionDTO>() {
@@ -514,18 +546,126 @@ public class FragDetalleReporteModeracion extends Fragment {
         etFechaFinSuspension.setEnabled(!resolviendo);
     }
 
-    private boolean esFechaFinSuspensionValida(@NonNull String value) {
-        if (value.length() != 19) {
-            return false;
+    private void abrirSelectorFechaFinSuspension() {
+        if (!ACTION_SUSPENDER_USUARIO.equals(getBackendActionSeleccionada())) {
+            return;
         }
 
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-        formatter.setLenient(false);
-        try {
-            return formatter.parse(value) != null;
-        } catch (ParseException e) {
-            return false;
+        Calendar baseCalendar = obtenerFechaFinSuspensionSeleccionadaOActual();
+        DatePickerDialog datePickerDialog = new DatePickerDialog(
+                requireContext(),
+                (view, year, month, dayOfMonth) -> {
+                    baseCalendar.set(Calendar.YEAR, year);
+                    baseCalendar.set(Calendar.MONTH, month);
+                    baseCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                    abrirSelectorHoraFinSuspension(baseCalendar);
+                },
+                baseCalendar.get(Calendar.YEAR),
+                baseCalendar.get(Calendar.MONTH),
+                baseCalendar.get(Calendar.DAY_OF_MONTH)
+        );
+        datePickerDialog.show();
+    }
+
+    private void abrirSelectorHoraFinSuspension(@NonNull Calendar calendar) {
+        TimePickerDialog timePickerDialog = new TimePickerDialog(
+                requireContext(),
+                (view, hourOfDay, minute) -> {
+                    calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                    calendar.set(Calendar.MINUTE, minute);
+                    calendar.set(Calendar.SECOND, 0);
+                    calendar.set(Calendar.MILLISECOND, 0);
+                    actualizarFechaFinSuspensionSeleccionada(calendar);
+                },
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE),
+                true
+        );
+        timePickerDialog.show();
+    }
+
+    @NonNull
+    private Calendar obtenerFechaFinSuspensionSeleccionadaOActual() {
+        Calendar calendar = Calendar.getInstance();
+        if (TextUtils.isEmpty(fechaFinSuspensionBackend)) {
+            return calendar;
         }
+
+        try {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+            formatter.setLenient(false);
+            java.util.Date parsedDate = formatter.parse(fechaFinSuspensionBackend);
+            if (parsedDate != null) {
+                calendar.setTime(parsedDate);
+            }
+        } catch (ParseException ignored) {
+            // fallback: usar fecha actual
+        }
+        return calendar;
+    }
+
+    private void actualizarFechaFinSuspensionSeleccionada(@NonNull Calendar calendar) {
+        fechaFinSuspensionBackend = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+                .format(calendar.getTime());
+        String visibleValue = new SimpleDateFormat("dd/MM/yyyy HH:mm", LOCALE_ES_MX)
+                .format(calendar.getTime());
+        etFechaFinSuspension.setError(null);
+        etFechaFinSuspension.setText(visibleValue);
+    }
+
+    @Nullable
+    private String getBackendActionSeleccionada() {
+        AccionResolucionOption action = getAccionSeleccionada();
+        return action != null ? action.backendAction : null;
+    }
+
+    private void configurarScrollYTeclado() {
+        if (detailScrollView == null) {
+            return;
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(detailScrollView, (v, insets) -> {
+            int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            v.setPadding(
+                    v.getPaddingLeft(),
+                    v.getPaddingTop(),
+                    v.getPaddingRight(),
+                    imeBottom
+            );
+            return insets;
+        });
+
+        configurarScrollEnFoco(etMensajeRespuesta);
+        configurarScrollEnFoco(etMotivoAccion);
+    }
+
+    private void configurarScrollEnFoco(@Nullable View target) {
+        if (target == null) {
+            return;
+        }
+        target.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                scrollToField(v);
+            }
+        });
+    }
+
+    private void scrollToField(@NonNull View target) {
+        if (detailScrollView == null) {
+            return;
+        }
+
+        detailScrollView.post(() -> {
+            Rect rect = new Rect();
+            target.getDrawingRect(rect);
+            detailScrollView.offsetDescendantRectToMyCoords(target, rect);
+            detailScrollView.smoothScrollTo(0, Math.max(0, rect.top - dpToPx(24)));
+        });
+    }
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 
     private void mostrarCarga(boolean cargando) {
@@ -555,6 +695,14 @@ public class FragDetalleReporteModeracion extends Fragment {
         }
         textView.setVisibility(View.VISIBLE);
         textView.setText(label + value.trim());
+    }
+
+    @Nullable
+    private String mapearAccionResolucionVisible(@Nullable String value) {
+        if (TextUtils.isEmpty(value)) {
+            return null;
+        }
+        return ModeracionUiMapper.formatAccionResolucion(value);
     }
 
     @NonNull

@@ -2,7 +2,6 @@ package com.example.artistlan.TarjetaTextoObra.adapter;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,7 +18,6 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.artistlan.Conector.SessionManager;
 import com.example.artistlan.Fragments.DialogReportarContenido;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
@@ -27,6 +25,7 @@ import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
+import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -385,7 +384,8 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         }
 
         Integer usuarioActual = currentUserId != null ? currentUserId : resolveCurrentUserId();
-        if (usuarioActual == null || usuarioActual <= 0) {
+        String rolActual = resolveCurrentUserRole();
+        if (!ReporteUiPermissions.puedeMostrarReportar(usuarioActual, rolActual)) {
             return false;
         }
 
@@ -446,9 +446,11 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     }
 
     private Integer resolveCurrentUserId() {
-        SharedPreferences prefs = context.getSharedPreferences(SessionManager.PREF_NAME, Context.MODE_PRIVATE);
-        int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
-        return idUsuario > 0 ? idUsuario : null;
+        return ReporteUiPermissions.resolveCurrentUserId(context);
+    }
+
+    private String resolveCurrentUserRole() {
+        return ReporteUiPermissions.resolveCurrentUserRole(context);
     }
 
     private void mostrarDialogoReporteObra(TarjetaTextoObraItem obra) {

@@ -44,6 +44,7 @@ public class FragModeracionReportes extends Fragment {
     private CheckBox checkSoloMios;
     private ProgressBar progressBar;
     private TextView tvVacio;
+    private TextView btnToggleFiltros;
     private View contenedorFiltros;
 
     private ModeracionApi moderacionApi;
@@ -52,6 +53,11 @@ public class FragModeracionReportes extends Fragment {
     private int idUsuarioActual = -1;
     private String rolActual = "USER";
     private boolean filtrosListos = false;
+    private boolean filtrosVisibles = true;
+
+    private final List<FilterOption> opcionesEstado = new ArrayList<>();
+    private final List<FilterOption> opcionesTipo = new ArrayList<>();
+    private final List<FilterOption> opcionesPrioridad = new ArrayList<>();
 
     public FragModeracionReportes() {
         super(R.layout.fragment_frag_moderacion_reportes);
@@ -91,6 +97,7 @@ public class FragModeracionReportes extends Fragment {
         checkSoloMios = view.findViewById(R.id.checkSoloMiosModeracion);
         progressBar = view.findViewById(R.id.progressModeracionReportes);
         tvVacio = view.findViewById(R.id.tvModeracionVacio);
+        btnToggleFiltros = view.findViewById(R.id.btnToggleFiltrosModeracion);
         contenedorFiltros = view.findViewById(R.id.contenedorFiltrosModeracion);
     }
 
@@ -110,9 +117,30 @@ public class FragModeracionReportes extends Fragment {
     }
 
     private void configurarFiltros() {
-        configurarSpinner(spinnerEstado, new String[]{"TODOS", "PENDIENTE", "EN_REVISION", "RESUELTO", "DESCARTADO"});
-        configurarSpinner(spinnerTipo, new String[]{"TODOS", "OBRA", "SERVICIO", "USUARIO"});
-        configurarSpinner(spinnerPrioridad, new String[]{"TODAS", "BAJA", "MEDIA", "ALTA"});
+        filtrosListos = false;
+
+        opcionesEstado.clear();
+        opcionesEstado.add(new FilterOption("Todos", null));
+        opcionesEstado.add(new FilterOption("Pendiente", "PENDIENTE"));
+        opcionesEstado.add(new FilterOption("En revisión", "EN_REVISION"));
+        opcionesEstado.add(new FilterOption("Resuelto", "RESUELTO"));
+        opcionesEstado.add(new FilterOption("Descartado", "DESCARTADO"));
+
+        opcionesTipo.clear();
+        opcionesTipo.add(new FilterOption("Todos", null));
+        opcionesTipo.add(new FilterOption("Obra", "OBRA"));
+        opcionesTipo.add(new FilterOption("Servicio", "SERVICIO"));
+        opcionesTipo.add(new FilterOption("Usuario", "USUARIO"));
+
+        opcionesPrioridad.clear();
+        opcionesPrioridad.add(new FilterOption("Todas", null));
+        opcionesPrioridad.add(new FilterOption("Baja", "BAJA"));
+        opcionesPrioridad.add(new FilterOption("Media", "MEDIA"));
+        opcionesPrioridad.add(new FilterOption("Alta", "ALTA"));
+
+        configurarSpinner(spinnerEstado, opcionesEstado);
+        configurarSpinner(spinnerTipo, opcionesTipo);
+        configurarSpinner(spinnerPrioridad, opcionesPrioridad);
 
         AdapterView.OnItemSelectedListener recargaListener = new AdapterView.OnItemSelectedListener() {
             @Override
@@ -136,17 +164,41 @@ public class FragModeracionReportes extends Fragment {
             }
         });
 
+        spinnerEstado.setSelection(findIndexByBackendValue(opcionesEstado, "PENDIENTE"), false);
+        spinnerTipo.setSelection(0, false);
+        spinnerPrioridad.setSelection(0, false);
+        checkSoloMios.setChecked(false);
+
+        if (btnToggleFiltros != null) {
+            btnToggleFiltros.setOnClickListener(v -> toggleFiltros());
+        }
+        aplicarVisibilidadFiltros();
+
         filtrosListos = true;
     }
 
-    private void configurarSpinner(@NonNull Spinner spinner, @NonNull String[] valores) {
-        ArrayAdapter<String> adapterSpinner = new ArrayAdapter<>(
+    private void configurarSpinner(@NonNull Spinner spinner, @NonNull List<FilterOption> valores) {
+        ArrayAdapter<FilterOption> adapterSpinner = new ArrayAdapter<>(
                 requireContext(),
                 android.R.layout.simple_spinner_item,
                 valores
         );
         adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapterSpinner);
+    }
+
+    private int findIndexByBackendValue(@NonNull List<FilterOption> options, @Nullable String backendValue) {
+        for (int i = 0; i < options.size(); i++) {
+            FilterOption option = options.get(i);
+            if (backendValue == null) {
+                if (option.backendValue == null) {
+                    return i;
+                }
+            } else if (backendValue.equals(option.backendValue)) {
+                return i;
+            }
+        }
+        return 0;
     }
 
     private void validarPermisosYCargar() {
@@ -235,20 +287,43 @@ public class FragModeracionReportes extends Fragment {
 
     @Nullable
     private String obtenerFiltroEstado() {
-        String valor = spinnerEstado.getSelectedItem() != null ? spinnerEstado.getSelectedItem().toString() : "TODOS";
-        return "TODOS".equalsIgnoreCase(valor) ? null : valor;
+        FilterOption option = getSelectedFilterOption(spinnerEstado);
+        return option != null ? option.backendValue : null;
     }
 
     @Nullable
     private String obtenerFiltroTipo() {
-        String valor = spinnerTipo.getSelectedItem() != null ? spinnerTipo.getSelectedItem().toString() : "TODOS";
-        return "TODOS".equalsIgnoreCase(valor) ? null : valor;
+        FilterOption option = getSelectedFilterOption(spinnerTipo);
+        return option != null ? option.backendValue : null;
     }
 
     @Nullable
     private String obtenerFiltroPrioridad() {
-        String valor = spinnerPrioridad.getSelectedItem() != null ? spinnerPrioridad.getSelectedItem().toString() : "TODAS";
-        return "TODAS".equalsIgnoreCase(valor) ? null : valor;
+        FilterOption option = getSelectedFilterOption(spinnerPrioridad);
+        return option != null ? option.backendValue : null;
+    }
+
+    @Nullable
+    private FilterOption getSelectedFilterOption(@NonNull Spinner spinner) {
+        Object selected = spinner.getSelectedItem();
+        if (selected instanceof FilterOption) {
+            return (FilterOption) selected;
+        }
+        return null;
+    }
+
+    private void toggleFiltros() {
+        filtrosVisibles = !filtrosVisibles;
+        aplicarVisibilidadFiltros();
+    }
+
+    private void aplicarVisibilidadFiltros() {
+        if (contenedorFiltros != null) {
+            contenedorFiltros.setVisibility(filtrosVisibles ? View.VISIBLE : View.GONE);
+        }
+        if (btnToggleFiltros != null) {
+            btnToggleFiltros.setText(filtrosVisibles ? "Ocultar filtros" : "Mostrar filtros");
+        }
     }
 
     private void mostrarCarga(boolean cargando) {
@@ -272,5 +347,22 @@ public class FragModeracionReportes extends Fragment {
         tvVacio.setVisibility(View.VISIBLE);
         tvVacio.setText(mensaje);
         Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show();
+    }
+
+    private static class FilterOption {
+        private final String label;
+        @Nullable
+        private final String backendValue;
+
+        private FilterOption(@NonNull String label, @Nullable String backendValue) {
+            this.label = label;
+            this.backendValue = backendValue;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 }

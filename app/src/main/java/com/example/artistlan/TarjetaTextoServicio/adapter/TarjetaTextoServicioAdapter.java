@@ -3,7 +3,6 @@ package com.example.artistlan.TarjetaTextoServicio.adapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -22,13 +21,13 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.artistlan.Conector.SessionManager;
 import com.example.artistlan.Fragments.DialogReportarContenido;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
+import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -197,7 +196,8 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
     private boolean puedeReportarseServicio(TarjetaTextoServicioItem servicio) {
         Integer usuarioActual = getCurrentUserId();
-        if (usuarioActual == null || usuarioActual <= 0) {
+        String rolActual = getCurrentUserRole();
+        if (!ReporteUiPermissions.puedeMostrarReportar(usuarioActual, rolActual)) {
             return false;
         }
         if (servicio == null || servicio.getIdServicio() == null || servicio.getIdServicio() <= 0) {
@@ -210,9 +210,11 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         if (currentUserId != null && currentUserId > 0) {
             return currentUserId;
         }
-        SharedPreferences prefs = context.getSharedPreferences(SessionManager.PREF_NAME, Context.MODE_PRIVATE);
-        int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
-        return idUsuario > 0 ? idUsuario : null;
+        return ReporteUiPermissions.resolveCurrentUserId(context);
+    }
+
+    private String getCurrentUserRole() {
+        return ReporteUiPermissions.resolveCurrentUserRole(context);
     }
 
     private void mostrarDialogoReporteServicio(TarjetaTextoServicioItem servicio) {

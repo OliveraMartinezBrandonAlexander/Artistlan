@@ -40,11 +40,27 @@
             android:textColor="@color/artistlan_menu_text_secondary"
             android:textSize="14sp" />
 
+        <TextView
+            android:id="@+id/btnToggleFiltrosModeracion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingStart="4dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="4dp"
+            android:paddingBottom="4dp"
+            android:text="Ocultar filtros"
+            android:textColor="@color/artistlan_menu_text_primary"
+            android:textStyle="bold" />
+
         <LinearLayout
             android:id="@+id/contenedorFiltrosModeracion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="10dp"
             android:background="@drawable/bg_input_artistlan"
             android:orientation="vertical"
             android:padding="12dp">

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.artistlan.Conector.model.ReporteResumenDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.utils.ModeracionUiMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,11 +41,11 @@ public class ReportesModeracionAdapter extends RecyclerView.Adapter<ReportesMode
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ReporteResumenDTO reporte = reportes.get(position);
         holder.tvIdReporte.setText("Reporte #" + safeNumero(reporte.getIdReporte()));
-        holder.tvTipoObjetivo.setText("Tipo: " + safeText(reporte.getTipoObjetivo(), "N/A"));
+        holder.tvTipoObjetivo.setText("Tipo: " + ModeracionUiMapper.formatTipoObjetivo(reporte.getTipoObjetivo()));
         holder.tvTituloObjetivo.setText("Objetivo: " + resolverTitulo(reporte));
         holder.tvMotivo.setText("Motivo: " + safeText(reporte.getMotivo(), "Sin motivo"));
-        holder.tvEstado.setText("Estado: " + safeText(reporte.getEstado(), "N/A"));
-        holder.tvPrioridad.setText("Prioridad: " + safeText(reporte.getPrioridad(), "N/A"));
+        holder.tvEstado.setText("Estado: " + ModeracionUiMapper.formatEstadoReporte(reporte.getEstado()));
+        holder.tvPrioridad.setText("Prioridad: " + ModeracionUiMapper.formatPrioridad(reporte.getPrioridad()));
         holder.tvReportante.setText("Reportante: " + safeText(reporte.getNombreUsuarioReportante(), "No disponible"));
         holder.tvModeradorAsignado.setText("Moderador: " + safeText(reporte.getNombreModeradorAsignado(), "Sin asignar"));
         holder.tvFechaReporte.setText("Fecha: " + safeText(reporte.getFechaReporte(), "No disponible"));

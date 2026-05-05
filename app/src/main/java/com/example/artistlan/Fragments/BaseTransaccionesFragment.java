@@ -337,9 +337,15 @@ public abstract class BaseTransaccionesFragment extends Fragment {
             btnCerrarTop.setOnClickListener(v -> dialog.dismiss());
         }
         if (btnReportarTop != null) {
-            btnReportarTop.setOnClickListener(v -> Toast.makeText(requireContext(),
-                    "Esta funcion estara disponible proximamente",
-                    Toast.LENGTH_SHORT).show());
+            if (getTipoLista() == TransaccionAdapter.TipoLista.COMPRAS) {
+                btnReportarTop.setVisibility(View.GONE);
+                btnReportarTop.setOnClickListener(null);
+            } else {
+                btnReportarTop.setVisibility(View.VISIBLE);
+                btnReportarTop.setOnClickListener(v -> Toast.makeText(requireContext(),
+                        "Esta funcion estara disponible proximamente",
+                        Toast.LENGTH_SHORT).show());
+            }
         }
         if (btnAbrirPaypal != null) {
             btnAbrirPaypal.setOnClickListener(v -> abrirPaypalWeb());

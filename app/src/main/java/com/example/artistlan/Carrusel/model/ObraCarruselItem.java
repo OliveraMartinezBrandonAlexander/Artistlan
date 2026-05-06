@@ -9,6 +9,10 @@ public class ObraCarruselItem {
     private String autor;
     private String likes;
     private String autorFotoUrl;
+    private Integer idObra;
+    private Integer idAutor;
+    private int likesCount;
+    private boolean userLiked;
 
     // 1) Dummy (sin URLs)
     public ObraCarruselItem(int imagen, String titulo, String descripcion, String autor, String likes) {
@@ -53,4 +57,12 @@ public class ObraCarruselItem {
     public String getAutor() { return autor; }
     public String getLikes() { return likes; }
     public String getAutorFotoUrl() { return autorFotoUrl; }
+    public Integer getIdObra() { return idObra; }
+    public void setIdObra(Integer idObra) { this.idObra = idObra; }
+    public Integer getIdAutor() { return idAutor; }
+    public void setIdAutor(Integer idAutor) { this.idAutor = idAutor; }
+    public int getLikesCount() { return likesCount; }
+    public void setLikesCount(int likesCount) { this.likesCount = likesCount; }
+    public boolean isUserLiked() { return userLiked; }
+    public void setUserLiked(boolean userLiked) { this.userLiked = userLiked; }
 }

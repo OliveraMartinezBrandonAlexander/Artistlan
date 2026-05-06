@@ -16,6 +16,7 @@ public class TarjetaTextoObraItem {
     private String nombreAutor;
     private String nombreCategoria;
     private String fotoPerfilAutor;
+    private Integer idAutor;
     private boolean userLiked;
     private boolean expandido = false;
     private boolean editable = true;
@@ -44,6 +45,14 @@ public class TarjetaTextoObraItem {
     }
     public String getFotoPerfilAutor() {
         return fotoPerfilAutor;
+    }
+
+    public Integer getIdAutor() {
+        return idAutor;
+    }
+
+    public void setIdAutor(Integer idAutor) {
+        this.idAutor = idAutor;
     }
 
     public void setFotoPerfilAutor(String fotoPerfilAutor) {

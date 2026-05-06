@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,8 +23,10 @@ import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Carrusel.adapter.CarruselAdapter;
 import com.example.artistlan.Carrusel.model.ObraCarruselItem;
 import com.example.artistlan.Conector.RetrofitClient;
+import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.api.ServicioApi;
+import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.R;
@@ -33,6 +36,7 @@ import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,6 +60,7 @@ public class FragMain extends Fragment {
     private Call<List<ObraDTO>> obrasFeedCall;
     private Call<List<ServicioDTO>> serviciosFeedCall;
     private Call<List<ObraDTO>> obrasCarruselCall;
+    private FavoritosApi favoritosApi;
 
     @Nullable
     @Override
@@ -68,6 +73,7 @@ public class FragMain extends Fragment {
 
         ThemeModuleStyler.styleFragment(this, root);
         new BotonesMenuSuperior(this);
+        favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
 
         initViews(root);
         ocultarElementosNoVisibles(root);
@@ -122,12 +128,17 @@ public class FragMain extends Fragment {
         adapter.setOnCarruselActionListener(new CarruselAdapter.OnCarruselActionListener() {
             @Override
             public void onOpen(ObraCarruselItem item, int position) {
-                Toast.makeText(requireContext(), "Abrir: " + item.getTitulo(), Toast.LENGTH_SHORT).show();
+                abrirDetalleObra(item.getIdObra());
             }
 
             @Override
             public void onLike(ObraCarruselItem item, int position) {
-                Toast.makeText(requireContext(), "Te gusta: " + item.getTitulo(), Toast.LENGTH_SHORT).show();
+                toggleLikeCarrusel(item, position, adapter);
+            }
+
+            @Override
+            public void onAuthor(ObraCarruselItem item, int position) {
+                abrirPerfilPublico(item.getIdAutor());
             }
         });
         viewPager.setAdapter(adapter);
@@ -286,6 +297,16 @@ public class FragMain extends Fragment {
             }
         }
 
+        for (RecyclerView.Adapter<? extends RecyclerView.ViewHolder> adapter : bloques) {
+            if (adapter instanceof TarjetaTextoObraAdapter) {
+                ((TarjetaTextoObraAdapter) adapter).setOnAuthorClickListener((obraItem, position) -> abrirPerfilPublico(obraItem.getIdAutor()));
+                ((TarjetaTextoObraAdapter) adapter).setOnLikeClickListener(this::toggleLikeObraEnFeed);
+                ((TarjetaTextoObraAdapter) adapter).setOnPrimaryActionClickListener((obraItem, position) -> abrirDetalleObra(obraItem.getIdObra()));
+            }
+            if (adapter instanceof TarjetaTextoServicioAdapter) {
+                ((TarjetaTextoServicioAdapter) adapter).setOnAuthorClickListener((servicioItem, position) -> abrirPerfilPublico(servicioItem.getIdUsuario()));
+            }
+        }
         rvFeedPublicacionesMain.setAdapter(new ConcatAdapter(bloques));
 
         if (rvFeedPublicacionesMain.getAlpha() < 1f) {
@@ -334,6 +355,7 @@ public class FragMain extends Fragment {
                     false
             );
 
+            item.setIdAutor(dto.getIdUsuario());
             items.add(item);
         }
 
@@ -370,6 +392,7 @@ public class FragMain extends Fragment {
                     false
             );
 
+            item.setIdAutor(dto.getIdUsuario());
             items.add(item);
         }
 
@@ -449,7 +472,7 @@ public class FragMain extends Fragment {
                     ObraDTO dto = copia.get(i);
                     ObraCarruselItem itemActual = obras.get(i);
 
-                    obras.set(i, new ObraCarruselItem(
+                    ObraCarruselItem mapped = new ObraCarruselItem(
                             itemActual.getImagen(),
                             dto.getImagen1(),
                             dto.getTitulo(),
@@ -457,7 +480,12 @@ public class FragMain extends Fragment {
                             dto.getNombreAutor(),
                             "",
                             dto.getFotoPerfilAutor()
-                    ));
+                    );
+                    mapped.setIdObra(dto.getIdObra());
+                    mapped.setIdAutor(dto.getIdUsuario());
+                    mapped.setLikesCount(dto.getLikes() == null ? 0 : dto.getLikes());
+                    mapped.setUserLiked(Boolean.TRUE.equals(dto.getEsFavorito()));
+                    obras.set(i, mapped);
                 }
 
                 adapter.notifyDataSetChanged();
@@ -485,6 +513,105 @@ public class FragMain extends Fragment {
         if (tvConvocatoriasMainEstado != null && mostrar) {
             tvConvocatoriasMainEstado.setVisibility(View.GONE);
         }
+    }
+    private void abrirPerfilPublico(Integer idArtista) {
+        if (!isAdded() || idArtista == null || idArtista <= 0) {
+            Toast.makeText(requireContext(), "Perfil no disponible", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Bundle args = new Bundle();
+        args.putInt("idArtista", idArtista);
+        NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfilPublico, args);
+    }
+
+    private void abrirDetalleObra(Integer idObra) {
+        if (!isAdded() || idObra == null || idObra <= 0) {
+            Toast.makeText(requireContext(), "Publicación no disponible", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // No existe un fragment de detalle exclusivo de obra en el grafo; se reutiliza perfil público del autor.
+        Toast.makeText(requireContext(), "Detalle completo no disponible en Home aún", Toast.LENGTH_SHORT).show();
+    }
+
+    private void toggleLikeObraEnFeed(TarjetaTextoObraItem obraItem, int position) {
+        if (obraItem == null || obraItem.getIdObra() <= 0 || favoritosApi == null || !isAdded()) {
+            return;
+        }
+        Integer idUsuario = ReporteUiPermissions.resolveCurrentUserId(requireContext());
+        if (idUsuario == null || idUsuario <= 0) {
+            Toast.makeText(requireContext(), "Inicia sesión para dar like", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final boolean previo = obraItem.isUserLiked();
+        final int likesPrevios = obraItem.getLikes();
+        obraItem.setUserLiked(!previo);
+        obraItem.setLikes(Math.max(0, likesPrevios + (previo ? -1 : 1)));
+        if (rvFeedPublicacionesMain != null && rvFeedPublicacionesMain.getAdapter() != null) {
+            rvFeedPublicacionesMain.getAdapter().notifyDataSetChanged();
+        }
+
+        FavoritoDTO dto = new FavoritoDTO();
+        dto.idUsuario = idUsuario;
+        dto.idObra = obraItem.getIdObra();
+        Call<Void> call = previo ? favoritosApi.eliminarFavorito(dto) : favoritosApi.agregarFavorito(dto);
+        call.enqueue(new Callback<Void>() {
+            @Override public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (!isAdded()) return;
+                if (!response.isSuccessful()) {
+                    obraItem.setUserLiked(previo);
+                    obraItem.setLikes(likesPrevios);
+                    if (rvFeedPublicacionesMain != null && rvFeedPublicacionesMain.getAdapter() != null) {
+                        rvFeedPublicacionesMain.getAdapter().notifyDataSetChanged();
+                    }
+                }
+            }
+            @Override public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                obraItem.setUserLiked(previo);
+                obraItem.setLikes(likesPrevios);
+                if (rvFeedPublicacionesMain != null && rvFeedPublicacionesMain.getAdapter() != null) {
+                    rvFeedPublicacionesMain.getAdapter().notifyDataSetChanged();
+                }
+            }
+        });
+    }
+
+    private void toggleLikeCarrusel(ObraCarruselItem item, int position, CarruselAdapter adapter) {
+        if (item == null || item.getIdObra() == null || item.getIdObra() <= 0 || favoritosApi == null || !isAdded()) {
+            return;
+        }
+        Integer idUsuario = ReporteUiPermissions.resolveCurrentUserId(requireContext());
+        if (idUsuario == null || idUsuario <= 0) {
+            Toast.makeText(requireContext(), "Inicia sesión para dar like", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final boolean previo = item.isUserLiked();
+        final int likesPrevios = item.getLikesCount();
+        item.setUserLiked(!previo);
+        item.setLikesCount(Math.max(0, likesPrevios + (previo ? -1 : 1)));
+        adapter.notifyItemChanged(position);
+
+        FavoritoDTO dto = new FavoritoDTO();
+        dto.idUsuario = idUsuario;
+        dto.idObra = item.getIdObra();
+        Call<Void> call = previo ? favoritosApi.eliminarFavorito(dto) : favoritosApi.agregarFavorito(dto);
+        call.enqueue(new Callback<Void>() {
+            @Override public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (!isAdded()) return;
+                if (!response.isSuccessful()) {
+                    item.setUserLiked(previo);
+                    item.setLikesCount(likesPrevios);
+                    adapter.notifyItemChanged(position);
+                }
+            }
+            @Override public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                item.setUserLiked(previo);
+                item.setLikesCount(likesPrevios);
+                adapter.notifyItemChanged(position);
+            }
+        });
     }
 
     @Override

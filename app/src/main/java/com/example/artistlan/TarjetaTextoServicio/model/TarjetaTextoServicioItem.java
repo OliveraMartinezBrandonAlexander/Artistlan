@@ -66,4 +66,8 @@ public class TarjetaTextoServicioItem {
     public void setFavorito(boolean favorito) { this.favorito = favorito; }
     public boolean isExpandido() { return expandido; }
     public void setExpandido(boolean expandido) { this.expandido = expandido; }
+
+    public void setIdAutor(Integer idAutor) {
+        this.idAutor = idAutor;
+    }
 }

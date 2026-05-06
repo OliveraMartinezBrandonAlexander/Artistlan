@@ -23,6 +23,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
     public interface OnCarruselActionListener {
         void onOpen(ObraCarruselItem item, int position);
         void onLike(ObraCarruselItem item, int position);
+        void onAuthor(ObraCarruselItem item, int position);
     }
 
     private final List<ObraCarruselItem> lista;
@@ -76,6 +77,9 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         holder.tvTitulo.setText(item.getTitulo());
         holder.tvDescripcion.setText(item.getDescripcion());
         holder.tvAutor.setText(item.getAutor());
+        holder.btnLikeCarrusel.setProgress(item.isUserLiked() ? 1f : 0f);
+        holder.itemView.setOnClickListener(v -> { if (onCarruselActionListener != null) onCarruselActionListener.onOpen(item, holder.getBindingAdapterPosition()); });
+        holder.imgAutor.setOnClickListener(v -> { if (onCarruselActionListener != null) onCarruselActionListener.onAuthor(item, holder.getBindingAdapterPosition()); });
         holder.btnLikeCarrusel.setOnClickListener(v -> {
             holder.btnLikeCarrusel.playAnimation();
             if (onCarruselActionListener != null) {

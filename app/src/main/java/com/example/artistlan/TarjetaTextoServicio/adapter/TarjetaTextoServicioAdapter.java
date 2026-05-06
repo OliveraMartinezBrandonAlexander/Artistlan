@@ -39,11 +39,13 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     public interface OnLikeClickListener { void onLikeClick(TarjetaTextoServicioItem servicioItem, int position); }
     public interface OnEditClickListener { void onEditClick(TarjetaTextoServicioItem servicioItem, int position); }
     public interface OnDeleteClickListener { void onDeleteClick(TarjetaTextoServicioItem servicioItem, int position); }
+    public interface OnAuthorClickListener { void onAuthorClick(TarjetaTextoServicioItem servicioItem, int position); }
 
     private static final long LIKE_BUTTON_COOLDOWN_MS = 500L;
     private OnLikeClickListener onLikeClickListener;
     private OnEditClickListener onEditClickListener;
     private OnDeleteClickListener onDeleteClickListener;
+    private OnAuthorClickListener onAuthorClickListener;
     private final List<TarjetaTextoServicioItem> listaServicios;
     private final List<TarjetaTextoServicioItem> listaOriginal;
     private final Context context;
@@ -60,6 +62,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     public void setOnLikeClickListener(OnLikeClickListener onLikeClickListener) { this.onLikeClickListener = onLikeClickListener; }
     public void setOnEditClickListener(OnEditClickListener onEditClickListener) { this.onEditClickListener = onEditClickListener; notifyDataSetChanged(); }
     public void setOnDeleteClickListener(OnDeleteClickListener onDeleteClickListener) { this.onDeleteClickListener = onDeleteClickListener; notifyDataSetChanged(); }
+    public void setOnAuthorClickListener(OnAuthorClickListener onAuthorClickListener) { this.onAuthorClickListener = onAuthorClickListener; }
     public void setCurrentUserId(Integer currentUserId) {
         this.currentUserId = currentUserId;
         notifyDataSetChanged();
@@ -117,6 +120,13 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
                 .circleCrop()
                 .into(holder.imgAutor);
 
+        holder.imgAutor.setOnClickListener(v -> {
+            animatePress(v);
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (onAuthorClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                onAuthorClickListener.onAuthorClick(listaServicios.get(adapterPosition), adapterPosition);
+            }
+        });
         boolean expandido = (tarjetaExpandida == position);
         holder.descripcion.setMaxLines(expandido ? Integer.MAX_VALUE : 2);
         animarVista(holder.expandedSection, expandido);

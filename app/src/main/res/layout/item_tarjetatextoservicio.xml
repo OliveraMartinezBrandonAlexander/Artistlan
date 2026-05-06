@@ -4,54 +4,98 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginStart="0dp"
+    android:layout_marginTop="2dp"
     android:layout_marginEnd="0dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginBottom="4dp"
-    app:cardCornerRadius="22dp"
-    app:cardElevation="2dp"
-    app:cardBackgroundColor="@android:color/transparent">
+    android:layout_marginBottom="2dp"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="0dp"
+    app:cardUseCompatPadding="false">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layoutServicioCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingStart="15dp"
-        android:paddingEnd="14dp"
-        android:paddingTop="18dp"
-        android:paddingBottom="14dp"
-        android:background="@drawable/bg_card_feed_bubble">
+        android:background="@drawable/bg_card_feed_glass"
+        android:clickable="true"
+        android:focusable="true"
+        android:paddingStart="10dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="12dp">
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imgAutor"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:background="@android:color/transparent"
-            android:adjustViewBounds="true"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:clickable="true"
+            android:focusable="true"
             android:scaleType="centerCrop"
-            android:src="@null"
+            android:src="@drawable/fotoperfilprueba"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+            app:strokeColor="@color/artistlan_text_secondary"
+            app:strokeWidth="1dp" />
+
+        <TextView
+            android:id="@+id/autor"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Autor"
+            android:textColor="@color/artistlan_text_primary"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/btnMoreOptions"
+            app:layout_constraintStart_toEndOf="@id/imgAutor"
+            app:layout_constraintTop_toTopOf="@id/imgAutor" />
+
+        <TextView
+            android:id="@+id/categoria"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="3dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_chip_glass"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingStart="9dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="9dp"
+            android:paddingBottom="4dp"
+            android:text="Categoría"
+            android:textColor="@color/artistlan_text_primary"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/likeContainer"
+            app:layout_constraintStart_toEndOf="@id/imgAutor"
+            app:layout_constraintTop_toBottomOf="@id/autor" />
 
         <ImageButton
             android:id="@+id/btnMoreOptions"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
             android:background="@android:color/transparent"
             android:contentDescription="Opciones"
-            android:padding="4dp"
+            android:padding="6dp"
             android:src="@drawable/ic_edit"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="@id/imgAutor" />
 
         <LinearLayout
             android:id="@+id/likeContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnMoreOptions">
+            app:layout_constraintBottom_toBottomOf="@id/imgAutor"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <TextView
                 android:id="@+id/likes"
@@ -64,52 +108,15 @@
 
             <com.airbnb.lottie.LottieAnimationView
                 android:id="@+id/btnLike"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_marginStart="0dp"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_marginStart="2dp"
+                android:background="@drawable/bg_like_bubble"
+                android:padding="5dp"
                 app:lottie_autoPlay="false"
                 app:lottie_loop="false"
                 app:lottie_rawRes="@raw/lottie_like_heart" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/autor"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
-            android:layout_marginEnd="12dp"
-            android:breakStrategy="high_quality"
-            android:ellipsize="end"
-            android:gravity="center_vertical"
-            android:hyphenationFrequency="full"
-            android:maxLines="2"
-            android:text="Autor"
-            android:textColor="@color/artistlan_text_primary"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toEndOf="@id/imgAutor"
-            app:layout_constraintTop_toTopOf="@id/imgAutor"
-            app:layout_constraintEnd_toStartOf="@id/likeContainer" />
-
-        <TextView
-            android:id="@+id/categoria"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="12dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
-            android:text="Ilustración"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toEndOf="@id/imgAutor"
-            app:layout_constraintTop_toBottomOf="@id/autor"
-            app:layout_constraintEnd_toStartOf="@id/likeContainer" />
 
         <androidx.constraintlayout.widget.Barrier
             android:id="@+id/headerBottomBarrier"
@@ -118,137 +125,127 @@
             app:barrierDirection="bottom"
             app:constraint_referenced_ids="imgAutor,autor,categoria,likeContainer,btnMoreOptions" />
 
-
         <TextView
             android:id="@+id/tvBadgeServicio"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_chip_glass"
             android:paddingStart="10dp"
+            android:paddingTop="5dp"
             android:paddingEnd="10dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
+            android:paddingBottom="5dp"
             android:text="SERVICIO"
-            android:textStyle="bold"
-            android:textSize="11sp"
             android:textColor="@color/artistlan_text_primary"
-            android:background="@drawable/bg_drawer_item_selected"
-            app:layout_constraintTop_toBottomOf="@id/headerBottomBarrier"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/headerBottomBarrier" />
 
         <TextView
             android:id="@+id/titulo"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Título del servicio"
-            android:textStyle="bold"
-            android:textColor="@color/artistlan_text_primary"
-            android:textSize="19sp"
-            android:gravity="center"
-            android:lineSpacingExtra="3dp"
-            android:maxLines="3"
+            android:layout_marginTop="9dp"
             android:ellipsize="end"
-            android:breakStrategy="high_quality"
-            android:hyphenationFrequency="full"
-            app:layout_constraintTop_toBottomOf="@id/headerBottomBarrier"
+            android:maxLines="2"
+            android:text="Título del servicio"
+            android:textColor="@color/artistlan_text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/tvBadgeServicio" />
 
         <TextView
             android:id="@+id/descripcion"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Descripción breve"
-            android:textColor="#2A2A2A"
-            android:textSize="14sp"
-            android:lineSpacingExtra="3dp"
-            android:maxLines="4"
+            android:layout_marginTop="7dp"
             android:ellipsize="end"
-            app:layout_constraintTop_toBottomOf="@id/titulo"
+            android:lineSpacingExtra="3dp"
+            android:maxLines="3"
+            android:text="Descripción breve"
+            android:textColor="@color/artistlan_text_primary"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/titulo" />
 
-        <View
-            android:id="@+id/divider"
+        <TextView
+            android:id="@+id/precioRango"
             android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_marginTop="14dp"
-            android:background="#22000000"
-            app:layout_constraintTop_toBottomOf="@id/descripcion"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_chip_glass"
+            android:paddingStart="10dp"
+            android:paddingTop="5dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="5dp"
+            android:text="Precio: A convenir"
+            android:textColor="@color/artistlan_text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/descripcion" />
 
         <LinearLayout
             android:id="@+id/expanded_section"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="8dp"
             android:orientation="vertical"
             android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/divider"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            app:layout_constraintTop_toBottomOf="@id/precioRango">
 
             <TextView
                 android:id="@+id/tipoContacto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
                 android:text="Tipo de contacto"
-                android:textColor="#2A2A2A"
-                android:textSize="14sp"
-                android:lineSpacingExtra="3dp" />
+                android:textColor="@color/artistlan_text_secondary"
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/contacto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:text="Contacto"
-                android:textColor="#2A2A2A"
-                android:textSize="14sp"
-                android:lineSpacingExtra="3dp" />
+                android:textColor="@color/artistlan_text_secondary"
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/tecnicas"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:text="Técnicas"
-                android:textColor="#2A2A2A"
-                android:textSize="14sp"
-                android:lineSpacingExtra="3dp" />
-
-            <TextView
-                android:id="@+id/precioRango"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Precio"
-                android:textColor="#2A2A2A"
-                android:textSize="14sp"
-                android:lineSpacingExtra="3dp" />
+                android:textColor="@color/artistlan_text_secondary"
+                android:textSize="14sp" />
 
             <Button
                 android:id="@+id/btnContactar"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="12dp"
+                android:backgroundTint="@color/artistlan_secondary"
                 android:text="Contactar"
-                android:textAllCaps="false"
-                android:backgroundTint="@color/artistlan_secondary" />
+                android:textAllCaps="false" />
 
             <Button
                 android:id="@+id/btnReportarServicio"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="8dp"
                 android:backgroundTint="#D9C7EB"
                 android:text="Reportar"
                 android:textAllCaps="false"
                 android:visibility="gone" />
+
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -3,108 +3,64 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginStart="14dp"
+    android:layout_marginStart="8dp"
     android:layout_marginTop="4dp"
-    android:layout_marginEnd="14dp"
-    android:layout_marginBottom="10dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="4dp"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="26dp"
     app:cardElevation="0dp"
-    app:cardCornerRadius="28dp"
-    app:cardUseCompatPadding="false"
-    app:cardBackgroundColor="@android:color/transparent">
+    app:cardUseCompatPadding="false">
 
     <LinearLayout
-        android:background="@drawable/bg_carrusel_bubble"
+        android:id="@+id/layoutCarruselCard"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_carrusel_bubble"
+        android:clickable="true"
+        android:focusable="true"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="10dp">
 
         <LinearLayout
+            android:id="@+id/headerCarrusel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/imgAutor"
-                android:layout_width="45dp"
-                android:layout_height="45dp"
-                android:layout_marginEnd="10dp"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:clickable="true"
+                android:focusable="true"
                 android:scaleType="centerCrop"
-
-                app:strokeWidth="2dp"
-                app:strokeColor="@color/purple_500"
-                app:srcCompat="@drawable/fotoperfilprueba" />
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                app:srcCompat="@drawable/fotoperfilprueba"
+                app:strokeColor="@color/artistlan_text_secondary"
+                app:strokeWidth="1dp" />
 
             <TextView
                 android:id="@+id/tvAutor"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
                 android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="Autor"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:textColor="@color/artistlan_text_primary"/>
-
-            <TextView
-                android:id="@+id/tvLikes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="❤️ 123"
-                android:visibility="gone"
-                android:textSize="14sp"/>
-        </LinearLayout>
-
-        <ImageView
-            android:id="@+id/imgObra"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:adjustViewBounds="true"
-            android:scaleType="centerCrop"/>
-
-
-        <TextView
-            android:id="@+id/tvTitulo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Título"
-            android:textStyle="bold"
-            android:textSize="18sp"
-            android:textColor="@color/artistlan_text_primary"
-            android:gravity="center"/>
-
-        <TextView
-            android:id="@+id/tvDescripcion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginVertical="6dp"
-            android:text="Descripción de la obra"
-            android:gravity="center"
-            android:textSize="14sp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <com.airbnb.lottie.LottieAnimationView
-                android:id="@+id/btnLikeCarrusel"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                app:lottie_autoPlay="false"
-                app:lottie_loop="false"
-                app:lottie_rawRes="@raw/lottie_like_heart" />
+                android:textColor="@color/artistlan_text_primary"
+                android:textSize="15sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvAbrirCarrusel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:background="@drawable/bg_btn_bubble_glass_secondary"
+                android:background="@drawable/bg_chip_glass"
                 android:paddingStart="12dp"
                 android:paddingTop="6dp"
                 android:paddingEnd="12dp"
@@ -114,6 +70,64 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/imgObra"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="10dp"
+            android:layout_weight="1"
+            android:adjustViewBounds="false"
+            android:background="@android:color/transparent"
+            android:scaleType="centerCrop" />
+
+        <LinearLayout
+            android:id="@+id/actionsCarrusel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="8dp"
+            android:paddingBottom="2dp">
+
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/btnLikeCarrusel"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/bg_like_bubble"
+                android:padding="5dp"
+                app:lottie_autoPlay="false"
+                app:lottie_loop="false"
+                app:lottie_rawRes="@raw/lottie_like_heart" />
+
+            <TextView
+                android:id="@+id/tvTitulo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Título"
+                android:textColor="@color/artistlan_text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvDescripcion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:lineSpacingExtra="2dp"
+            android:maxLines="2"
+            android:paddingStart="2dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="2dp"
+            android:text="Descripción de la obra"
+            android:textColor="@color/artistlan_text_secondary"
+            android:textSize="13sp" />
+
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>

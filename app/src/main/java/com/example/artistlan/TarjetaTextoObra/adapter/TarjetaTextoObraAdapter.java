@@ -49,6 +49,10 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         void onSecondaryActionClick(TarjetaTextoObraItem obraItem, int position);
     }
 
+    public interface OnAuthorClickListener {
+        void onAuthorClick(TarjetaTextoObraItem obraItem, int position);
+    }
+
     public interface OnComprarClickListener {
         void onComprarClick(TarjetaTextoObraItem obraItem, int position);
     }
@@ -68,6 +72,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     private OnSecondaryActionClickListener onSecondaryActionClickListener;
     private OnEditClickListener onEditClickListener;
     private OnDeleteClickListener onDeleteClickListener;
+    private OnAuthorClickListener onAuthorClickListener;
 
     private final List<TarjetaTextoObraItem> listaObras;
     private final List<TarjetaTextoObraItem> listaOriginal;
@@ -120,6 +125,10 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     public void setOnDeleteClickListener(OnDeleteClickListener listener) {
         this.onDeleteClickListener = listener;
         notifyDataSetChanged();
+    }
+
+    public void setOnAuthorClickListener(OnAuthorClickListener listener) {
+        this.onAuthorClickListener = listener;
     }
 
     public void setOwnedObraIds(Set<Integer> ownedObraIds) {
@@ -193,6 +202,14 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
                 .placeholder(R.drawable.fotoperfilprueba)
                 .circleCrop()
                 .into(holder.imgAutor);
+
+        holder.imgAutor.setOnClickListener(v -> {
+            animatePress(v);
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (onAuthorClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                onAuthorClickListener.onAuthorClick(listaObras.get(adapterPosition), adapterPosition);
+            }
+        });
 
         String imagenObra = obra.getImagen1();
         if (imagenObra != null && !imagenObra.isEmpty()) {

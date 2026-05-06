@@ -76,6 +76,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
     private ModoTarjetaObra modoTarjeta;
     private int tarjetaExpandida = -1;
+    private int lastAnimatedPosition = -1;
 
     public TarjetaTextoObraAdapter(List<TarjetaTextoObraItem> listaObras, Context context) {
         this(listaObras, context, ModoTarjetaObra.EXPLORAR);
@@ -140,6 +141,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         TarjetaTextoObraItem obra = listaObras.get(position);
+        animateFeedEntry(holder, position);
 
         ThemeApplier.applyTextPrimary(holder.titulo, tm);
         ThemeApplier.applyTextSecondary(holder.autor, tm);
@@ -173,6 +175,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
         holder.btnLike.setImageResource(obra.isUserLiked() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
         holder.btnLike.setOnClickListener(v -> {
+            animatePress(v);
             v.setEnabled(false);
             v.postDelayed(() -> v.setEnabled(true), LIKE_BUTTON_COOLDOWN_MS);
             animateLikeButton(holder.btnLike, obra.isUserLiked());
@@ -228,6 +231,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         });
 
         holder.btnAccionPrincipal.setOnClickListener(v -> {
+            animatePress(v);
             int adapterPosition = holder.getAdapterPosition();
             if (adapterPosition == RecyclerView.NO_POSITION || onPrimaryActionClickListener == null) {
                 return;
@@ -240,6 +244,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         });
 
         holder.btnAccionSecundaria.setOnClickListener(v -> {
+            animatePress(v);
             int adapterPosition = holder.getAdapterPosition();
             if (adapterPosition == RecyclerView.NO_POSITION || onSecondaryActionClickListener == null) {
                 return;
@@ -278,7 +283,10 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             return;
         }
 
-        holder.btnReportarObra.setOnClickListener(v -> mostrarDialogoReporteObra(obra));
+        holder.btnReportarObra.setOnClickListener(v -> {
+            animatePress(v);
+            mostrarDialogoReporteObra(obra);
+        });
     }
 
     private void configurarMenuOpciones(ViewHolder holder, TarjetaTextoObraItem obra) {
@@ -526,6 +534,28 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
                             .start();
                 })
                 .start();
+    }
+
+
+    private void animateFeedEntry(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if (position <= lastAnimatedPosition) {
+            return;
+        }
+        holder.itemView.setAlpha(0f);
+        holder.itemView.setTranslationY(24f);
+        holder.itemView.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(220)
+                .start();
+        lastAnimatedPosition = position;
+    }
+
+    private void animatePress(@NonNull View view) {
+        view.animate().cancel();
+        view.animate().scaleX(0.96f).scaleY(0.96f).setDuration(80).withEndAction(
+                () -> view.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
+        ).start();
     }
 
     private void animarVista(View view, boolean expandir) {

@@ -5,9 +5,9 @@
     android:layout_height="wrap_content"
     android:layout_marginStart="0dp"
     android:layout_marginEnd="0dp"
-    android:layout_marginTop="12dp"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="22dp"
+    android:layout_marginTop="10dp"
+    android:layout_marginBottom="10dp"
+    app:cardCornerRadius="18dp"
     app:cardElevation="10dp"
     app:cardBackgroundColor="@color/artistlan_menu_surface_soft">
 
@@ -131,7 +131,7 @@
             android:textSize="11sp"
             android:textColor="@color/artistlan_text_primary"
             android:background="@drawable/bg_drawer_item_selected"
-            app:layout_constraintTop_toBottomOf="@id/tvBadgeServicio"
+            app:layout_constraintTop_toBottomOf="@id/headerBottomBarrier"
             app:layout_constraintStart_toStartOf="parent" />
 
         <TextView

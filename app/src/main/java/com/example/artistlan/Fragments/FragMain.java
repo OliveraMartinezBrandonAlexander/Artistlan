@@ -71,6 +71,7 @@ public class FragMain extends Fragment {
         initViews(root);
         ocultarElementosNoVisibles(root);
         configurarCarrusel();
+        animarEntradaCarrusel();
         configurarFeed();
         cargarFeedMixto();
 
@@ -118,6 +119,14 @@ public class FragMain extends Fragment {
 
         CarruselAdapter adapter = new CarruselAdapter(obras, requireContext());
         viewPager.setAdapter(adapter);
+        viewPager.setOffscreenPageLimit(1);
+        viewPager.setClipToPadding(false);
+        viewPager.setClipChildren(false);
+        viewPager.setPageTransformer((page, position) -> {
+            float abs = Math.abs(position);
+            page.setAlpha(0.86f + (1f - abs) * 0.14f);
+            page.setScaleY(0.95f + (1f - abs) * 0.05f);
+        });
 
         cargarObrasCarrusel(obras, adapter);
         iniciarAutoCarrusel(obras.size());
@@ -132,6 +141,7 @@ public class FragMain extends Fragment {
         rvFeedPublicacionesMain.setNestedScrollingEnabled(false);
         rvFeedPublicacionesMain.setHasFixedSize(false);
         rvFeedPublicacionesMain.setItemAnimator(null);
+        rvFeedPublicacionesMain.setClipToPadding(false);
     }
 
     private void cargarFeedMixto() {
@@ -266,6 +276,10 @@ public class FragMain extends Fragment {
 
         rvFeedPublicacionesMain.setAdapter(new ConcatAdapter(bloques));
 
+        if (rvFeedPublicacionesMain.getAlpha() < 1f) {
+            rvFeedPublicacionesMain.animate().alpha(1f).setDuration(220).start();
+        }
+
         boolean sinPublicaciones = obras.isEmpty() && servicios.isEmpty();
 
         if (tvConvocatoriasMainEstado != null) {
@@ -348,6 +362,20 @@ public class FragMain extends Fragment {
         }
 
         return items;
+    }
+
+
+    private void animarEntradaCarrusel() {
+        if (viewPager == null) {
+            return;
+        }
+        viewPager.setAlpha(0f);
+        viewPager.setTranslationY(24f);
+        viewPager.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(260)
+                .start();
     }
 
     private void iniciarAutoCarrusel(int total) {
@@ -436,6 +464,10 @@ public class FragMain extends Fragment {
     private void mostrarLoadingFeed(boolean mostrar) {
         if (pbConvocatoriasMain != null) {
             pbConvocatoriasMain.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        }
+
+        if (rvFeedPublicacionesMain != null) {
+            rvFeedPublicacionesMain.setAlpha(mostrar ? 0.6f : 1f);
         }
 
         if (tvConvocatoriasMainEstado != null && mostrar) {

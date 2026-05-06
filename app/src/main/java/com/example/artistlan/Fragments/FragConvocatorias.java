@@ -30,7 +30,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class FragCalendarioEventos extends Fragment {
+public class FragConvocatorias extends Fragment {
 
     private RecyclerView rvCalendarioEventos;
     private ProgressBar pbCalendarioEventos;
@@ -40,7 +40,7 @@ public class FragCalendarioEventos extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_calendario_eventos, container, false);
+        View root = inflater.inflate(R.layout.fragment_frag_convocatorias, container, false);
         ThemeModuleStyler.styleFragment(this, root);
         new BotonesMenuSuperior(this);
 

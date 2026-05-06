@@ -47,6 +47,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     private final List<TarjetaTextoServicioItem> listaOriginal;
     private final Context context;
     private int tarjetaExpandida = -1;
+    private int lastAnimatedPosition = -1;
     private Integer currentUserId;
 
     public TarjetaTextoServicioAdapter(List<TarjetaTextoServicioItem> listaServicios, Context context) {
@@ -75,6 +76,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         TarjetaTextoServicioItem servicio = listaServicios.get(position);
+        animateFeedEntry(holder, position);
         ThemeApplier.applyTextPrimary(holder.titulo, tm);
         ThemeApplier.applyTextSecondary(holder.autor, tm);
         ThemeApplier.applyTextSecondary(holder.descripcion, tm);
@@ -98,6 +100,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         holder.likes.setText(String.valueOf(servicio.getLikes()));
         holder.btnLike.setImageResource(servicio.isFavorito() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
         holder.btnLike.setOnClickListener(v -> {
+            animatePress(v);
             v.setEnabled(false);
             v.postDelayed(() -> v.setEnabled(true), LIKE_BUTTON_COOLDOWN_MS);
             animateLikeButton(holder.btnLike, servicio.isFavorito());
@@ -123,7 +126,10 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
                 && servicio.getIdUsuario().equals(getCurrentUserId());
         holder.btnContactar.setVisibility(esServicioPropio ? View.GONE : View.VISIBLE);
         holder.btnContactar.setEnabled(!esServicioPropio && !TextUtils.isEmpty(servicio.getContacto()));
-        holder.btnContactar.setOnClickListener(v -> contactar(servicio));
+        holder.btnContactar.setOnClickListener(v -> {
+            animatePress(v);
+            contactar(servicio);
+        });
         configurarBotonReportar(holder, servicio);
 
         holder.itemView.setOnClickListener(v -> {
@@ -192,7 +198,10 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             return;
         }
 
-        holder.btnReportarServicio.setOnClickListener(v -> mostrarDialogoReporteServicio(servicio));
+        holder.btnReportarServicio.setOnClickListener(v -> {
+            animatePress(v);
+            mostrarDialogoReporteServicio(servicio);
+        });
     }
 
     private boolean puedeReportarseServicio(TarjetaTextoServicioItem servicio) {
@@ -330,6 +339,28 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
     public void notifyLikeChanged(int position) {
         if (position >= 0 && position < listaServicios.size()) notifyItemChanged(position);
+    }
+
+
+    private void animateFeedEntry(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if (position <= lastAnimatedPosition) {
+            return;
+        }
+        holder.itemView.setAlpha(0f);
+        holder.itemView.setTranslationY(24f);
+        holder.itemView.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(220)
+                .start();
+        lastAnimatedPosition = position;
+    }
+
+    private void animatePress(@NonNull View view) {
+        view.animate().cancel();
+        view.animate().scaleX(0.96f).scaleY(0.96f).setDuration(80).withEndAction(
+                () -> view.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
+        ).start();
     }
 
     private void animarVista(View view, boolean expandir) {

@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
     android:orientation="vertical"
-    tools:context=".Fragments.FragCalendarioEventos">
+    tools:context=".Fragments.FragConvocatorias">
 
     <View
         android:layout_width="match_parent"

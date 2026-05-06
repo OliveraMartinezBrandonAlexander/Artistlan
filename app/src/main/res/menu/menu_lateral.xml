@@ -1,66 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <group android:checkableBehavior="single">
-        <item
-            android:id="@+id/fragVerPerfil"
-            android:icon="@drawable/ic_nav_perfil_artistlan"
-            android:title="Perfil del artista" />
+    <item android:title="Principal">
+    <menu>
+        <group android:checkableBehavior="single">
+            <item
+                android:id="@+id/fragMain"
+                android:icon="@drawable/ic_nav_inicio_artistlan"
+                android:title="Inicio" />
 
-        <item
-            android:id="@+id/fragPortafolio"
-            android:icon="@drawable/ic_nav_portafolio_artistlan"
-            android:title="Portafolio personal" />
+            <item
+                android:id="@+id/fragExplorar"
+                android:icon="@drawable/ic_nav_explorar_artistlan"
+                android:title="Explorar" />
 
-        <item
-            android:id="@+id/fragTransacciones"
-            android:icon="@drawable/ic_nav_transacciones_artistlan"
-            android:title="@string/menu_mis_transacciones" />
-
-        <item
-            android:id="@+id/fragSubirObra"
-            android:icon="@drawable/ic_nav_arte_artistlan"
-            android:title="Subir obra" />
-    </group>
-
-    <item android:title="Opciones">
-        <menu>
             <item
                 android:id="@+id/navCalendario"
                 android:icon="@drawable/ic_nav_calendario_artistlan"
                 android:title="Calendario de eventos" />
+        </group>
+    </menu>
+    </item>
 
-            <item
-                android:id="@+id/navMensajes"
-                android:icon="@drawable/ic_nav_mensajes_artistlan"
-                android:title="Bandeja de mensajes" />
+    <item android:title="Comunidad y arte">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/fragHistoriaArte"
+                    android:icon="@drawable/ic_history_art"
+                    android:title="Historia del arte" />
 
-            <item
-                android:id="@+id/navNotificaciones"
-                android:icon="@drawable/ic_notificaciones_artistlan"
-                android:title="Solicitudes" />
+                <item
+                    android:id="@+id/fragHistoriaArtistlan"
+                    android:icon="@drawable/ic_artistlan_story"
+                    android:title="Historia de Artistlan" />
+            </group>
+        </menu>
+    </item>
 
-            <item
-                android:id="@+id/navModeracionReportes"
-                android:icon="@drawable/ic_nav_mensajes_artistlan"
-                android:title="Moderación"
-                android:visible="false" />
+    <item android:title="Mi cuenta">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/fragVerPerfil"
+                    android:icon="@drawable/ic_nav_perfil_artistlan"
+                    android:title="Perfil del artista" />
 
-            <item
-                android:id="@+id/navConfiguracion"
-                android:icon="@drawable/ic_nav_config_artistlan"
-                android:title="Configuración" />
+                <item
+                    android:id="@+id/fragPortafolio"
+                    android:icon="@drawable/ic_nav_portafolio_artistlan"
+                    android:title="Portafolio personal" />
 
-            <item
-                android:id="@+id/navCerrarSesion"
-                android:icon="@drawable/ic_nav_cerrar_artistlan"
-                android:title="Cerrar sesión" />
+                <item
+                    android:id="@+id/fragMiArte"
+                    android:icon="@drawable/ic_nav_arte_artistlan"
+                    android:title="Mis obras" />
+
+                <item
+                    android:id="@+id/fragTransacciones"
+                    android:icon="@drawable/ic_nav_transacciones_artistlan"
+                    android:title="@string/menu_mis_transacciones" />
+
+                <item
+                    android:id="@+id/fragSubirObra"
+                    android:icon="@drawable/ic_nav_subir_artistlan"
+                    android:title="Subir obra" />
+
+                <item
+                    android:id="@+id/navConfiguracion"
+                    android:icon="@drawable/ic_nav_config_artistlan"
+                    android:title="Configuración" />
+            </group>
+        </menu>
+    </item>
+
+    <item android:title="Soporte">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/fragAyuda"
+                    android:icon="@drawable/ic_help_artistlan"
+                    android:title="Ayuda" />
+
+                <item
+                    android:id="@+id/navMensajes"
+                    android:icon="@drawable/ic_nav_mensajes_artistlan"
+                    android:title="Bandeja de mensajes" />
+
+                <item
+                    android:id="@+id/navNotificaciones"
+                    android:icon="@drawable/ic_notificaciones_artistlan"
+                    android:title="Solicitudes" />
+
+                <item
+                    android:id="@+id/navModeracionReportes"
+                    android:icon="@drawable/ic_nav_mensajes_artistlan"
+                    android:title="Moderación"
+                    android:visible="false" />
+
+                <item
+                    android:id="@+id/navCerrarSesion"
+                    android:icon="@drawable/ic_nav_cerrar_artistlan"
+                    android:title="Cerrar sesión" />
+            </group>
         </menu>
     </item>
 
     <item
         android:id="@+id/navAdminSection"
-        android:title="Funciones administrador">
+        android:title="Administración">
         <menu>
             <group android:id="@+id/admin_group">
                 <item

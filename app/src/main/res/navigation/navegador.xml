@@ -16,12 +16,40 @@
 
     <fragment
         android:id="@+id/navCalendario"
-        android:name="com.example.artistlan.Fragments.FragCalendarioEventos"
+        android:name="com.example.artistlan.Fragments.FragConvocatorias"
         app:enterAnim="@anim/nav_enter"
         app:exitAnim="@anim/nav_exit"
         app:popEnterAnim="@anim/nav_pop_enter"
         app:popExitAnim="@anim/nav_pop_exit"
-        tools:layout="@layout/fragment_frag_calendario_eventos" />
+        tools:layout="@layout/fragment_frag_convocatorias" />
+
+
+    <fragment
+        android:id="@+id/fragHistoriaArte"
+        android:name="com.example.artistlan.Fragments.FragHistoriaArte"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_historia_arte" />
+
+    <fragment
+        android:id="@+id/fragAyuda"
+        android:name="com.example.artistlan.Fragments.FragAyuda"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_ayuda" />
+
+    <fragment
+        android:id="@+id/fragHistoriaArtistlan"
+        android:name="com.example.artistlan.Fragments.FragHistoriaArtistlan"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_historia_artistlan" />
     <fragment
         android:id="@+id/fragServicios"
         android:name="com.example.artistlan.Fragments.FragServicios"

@@ -4,19 +4,19 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginStart="0dp"
-    android:layout_marginTop="12dp"
+    android:layout_marginTop="10dp"
     android:layout_marginEnd="0dp"
-    android:layout_marginBottom="12dp"
+    android:layout_marginBottom="10dp"
     app:cardBackgroundColor="@color/artistlan_menu_surface_soft"
-    app:cardCornerRadius="22dp"
+    app:cardCornerRadius="18dp"
     app:cardElevation="10dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingStart="18dp"
+        android:paddingStart="14dp"
         android:paddingTop="18dp"
-        android:paddingEnd="18dp"
+        android:paddingEnd="14dp"
         android:paddingBottom="18dp">
 
         <ImageView

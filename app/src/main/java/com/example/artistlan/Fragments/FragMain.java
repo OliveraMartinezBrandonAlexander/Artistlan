@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -118,6 +119,17 @@ public class FragMain extends Fragment {
         obras.add(new ObraCarruselItem(R.drawable.pin3, "Obra 3", "Descripción 3", "Wonder Woman", ""));
 
         CarruselAdapter adapter = new CarruselAdapter(obras, requireContext());
+        adapter.setOnCarruselActionListener(new CarruselAdapter.OnCarruselActionListener() {
+            @Override
+            public void onOpen(ObraCarruselItem item, int position) {
+                Toast.makeText(requireContext(), "Abrir: " + item.getTitulo(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onLike(ObraCarruselItem item, int position) {
+                Toast.makeText(requireContext(), "Te gusta: " + item.getTitulo(), Toast.LENGTH_SHORT).show();
+            }
+        });
         viewPager.setAdapter(adapter);
         viewPager.setOffscreenPageLimit(1);
         viewPager.setClipToPadding(false);

@@ -28,6 +28,7 @@ import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 import com.example.artistlan.utils.ReporteUiPermissions;
+import com.airbnb.lottie.LottieAnimationView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,7 +99,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         holder.precioRango.setText(formatearPrecioRango(servicio.getPrecioMin(), servicio.getPrecioMax()));
         holder.categoria.setText("Categoría: " + safe(servicio.getCategoria(), "Sin categoría"));
         holder.likes.setText(String.valueOf(servicio.getLikes()));
-        holder.btnLike.setImageResource(servicio.isFavorito() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
+        holder.btnLike.setProgress(servicio.isFavorito() ? 1f : 0f);
         holder.btnLike.setOnClickListener(v -> {
             animatePress(v);
             v.setEnabled(false);
@@ -275,11 +276,14 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         });
     }
 
-    private void animateLikeButton(ImageButton btnLike, boolean wasLiked) {
+    private void animateLikeButton(LottieAnimationView btnLike, boolean wasLiked) {
         btnLike.animate().cancel();
         btnLike.setScaleX(0.82f);
         btnLike.setScaleY(0.82f);
         btnLike.setAlpha(0.75f);
+
+        btnLike.setMinAndMaxProgress(0f,1f);
+        if (!wasLiked) { btnLike.playAnimation(); } else { btnLike.reverseAnimationSpeed(); btnLike.playAnimation(); }
 
         btnLike.animate()
                 .scaleX(1.24f)
@@ -287,12 +291,11 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
                 .alpha(1f)
                 .setDuration(140)
                 .withEndAction(() -> {
-                    btnLike.setImageResource(wasLiked ? R.drawable.ic_heart_purple : R.drawable.ic_heart_red);
+                    btnLike.setProgress(wasLiked ? 0f : 1f);
                     btnLike.animate()
                             .scaleX(1f)
                             .scaleY(1f)
                             .setDuration(220)
-                            .setInterpolator(new OvershootInterpolator(2.8f))
                             .start();
                 })
                 .start();
@@ -389,7 +392,8 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
         TextView titulo, descripcion, contacto, tipoContacto, tecnicas, autor, categoria, precioRango, likes;
         ImageView imgAutor;
-        ImageButton btnLike, btnMoreOptions;
+        LottieAnimationView btnLike;
+        ImageButton btnMoreOptions;
         View expandedSection;
         Button btnContactar, btnReportarServicio;
 

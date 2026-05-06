@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,12 +20,21 @@ import java.util.List;
 
 public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.CarruselViewHolder> {
 
+    public interface OnCarruselActionListener {
+        void onOpen(ObraCarruselItem item, int position);
+        void onLike(ObraCarruselItem item, int position);
+    }
+
     private final List<ObraCarruselItem> lista;
     private final Context context;
+    private OnCarruselActionListener onCarruselActionListener;
 
     public CarruselAdapter(List<ObraCarruselItem> lista, Context context) {
         this.lista = lista;
         this.context = context;
+    }
+    public void setOnCarruselActionListener(OnCarruselActionListener listener) {
+        this.onCarruselActionListener = listener;
     }
 
     @NonNull
@@ -66,6 +76,19 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         holder.tvTitulo.setText(item.getTitulo());
         holder.tvDescripcion.setText(item.getDescripcion());
         holder.tvAutor.setText(item.getAutor());
+        holder.btnLikeCarrusel.setOnClickListener(v -> {
+            holder.btnLikeCarrusel.playAnimation();
+            if (onCarruselActionListener != null) {
+                onCarruselActionListener.onLike(item, holder.getBindingAdapterPosition());
+            }
+        });
+        holder.tvAbrirCarrusel.setOnClickListener(v -> {
+            if (onCarruselActionListener != null) {
+                onCarruselActionListener.onOpen(item, holder.getBindingAdapterPosition());
+            } else {
+                Toast.makeText(context, item.getTitulo(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -76,7 +99,8 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
     public static class CarruselViewHolder extends RecyclerView.ViewHolder {
 
         ImageView imgObra, imgAutor;
-        TextView tvTitulo, tvDescripcion, tvAutor;
+        TextView tvTitulo, tvDescripcion, tvAutor, tvAbrirCarrusel;
+        com.airbnb.lottie.LottieAnimationView btnLikeCarrusel;
 
         public CarruselViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -85,6 +109,8 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
             tvTitulo      = itemView.findViewById(R.id.tvTitulo);
             tvDescripcion = itemView.findViewById(R.id.tvDescripcion);
             tvAutor       = itemView.findViewById(R.id.tvAutor);
+            tvAbrirCarrusel = itemView.findViewById(R.id.tvAbrirCarrusel);
+            btnLikeCarrusel = itemView.findViewById(R.id.btnLikeCarrusel);
         }
     }
 }

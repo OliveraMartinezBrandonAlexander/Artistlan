@@ -26,6 +26,7 @@ import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.utils.ReporteUiPermissions;
+import com.airbnb.lottie.LottieAnimationView;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -173,7 +174,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.categoria.setText(safeText(obra.getNombreCategoria(), "Sin categoría"));
         holder.likes.setText(String.valueOf(obra.getLikes()));
 
-        holder.btnLike.setImageResource(obra.isUserLiked() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
+        holder.btnLike.setProgress(obra.isUserLiked() ? 1f : 0f);
         holder.btnLike.setOnClickListener(v -> {
             animatePress(v);
             v.setEnabled(false);
@@ -513,11 +514,14 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         return builder.toString();
     }
 
-    private void animateLikeButton(ImageButton btnLike, boolean wasLiked) {
+    private void animateLikeButton(LottieAnimationView btnLike, boolean wasLiked) {
         btnLike.animate().cancel();
         btnLike.setScaleX(0.82f);
         btnLike.setScaleY(0.82f);
         btnLike.setAlpha(0.75f);
+
+        btnLike.setMinAndMaxProgress(0f,1f);
+        if (!wasLiked) { btnLike.playAnimation(); } else { btnLike.reverseAnimationSpeed(); btnLike.playAnimation(); }
 
         btnLike.animate()
                 .scaleX(1.24f)
@@ -525,12 +529,11 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
                 .alpha(1f)
                 .setDuration(140)
                 .withEndAction(() -> {
-                    btnLike.setImageResource(wasLiked ? R.drawable.ic_heart_purple : R.drawable.ic_heart_red);
+                    btnLike.setProgress(wasLiked ? 0f : 1f);
                     btnLike.animate()
                             .scaleX(1f)
                             .scaleY(1f)
                             .setDuration(220)
-                            .setInterpolator(new OvershootInterpolator(2.8f))
                             .start();
                 })
                 .start();
@@ -582,7 +585,8 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView titulo, descripcion, estadoResumen, estado, tecnica, medidas, precio, categoria, likes, autor;
         ImageView imgAutor, imgObra;
-        ImageButton btnLike, btnMoreOptions;
+        LottieAnimationView btnLike;
+        ImageButton btnMoreOptions;
         View expandedSection, actionsContainer;
         Button btnAccionPrincipal, btnAccionSecundaria, btnReportarObra;
 

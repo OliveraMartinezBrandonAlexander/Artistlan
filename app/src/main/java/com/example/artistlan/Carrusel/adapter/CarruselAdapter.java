@@ -78,17 +78,29 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         holder.tvDescripcion.setText(item.getDescripcion());
         holder.tvAutor.setText(item.getAutor());
         holder.btnLikeCarrusel.setProgress(item.isUserLiked() ? 1f : 0f);
-        holder.itemView.setOnClickListener(v -> { if (onCarruselActionListener != null) onCarruselActionListener.onOpen(item, holder.getBindingAdapterPosition()); });
-        holder.imgAutor.setOnClickListener(v -> { if (onCarruselActionListener != null) onCarruselActionListener.onAuthor(item, holder.getBindingAdapterPosition()); });
+        holder.itemView.setOnClickListener(v -> {
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (onCarruselActionListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                onCarruselActionListener.onOpen(item, adapterPosition);
+            }
+        });
+        holder.imgAutor.setOnClickListener(v -> {
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (onCarruselActionListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                onCarruselActionListener.onAuthor(item, adapterPosition);
+            }
+        });
         holder.btnLikeCarrusel.setOnClickListener(v -> {
             holder.btnLikeCarrusel.playAnimation();
-            if (onCarruselActionListener != null) {
-                onCarruselActionListener.onLike(item, holder.getBindingAdapterPosition());
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (onCarruselActionListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                onCarruselActionListener.onLike(item, adapterPosition);
             }
         });
         holder.tvAbrirCarrusel.setOnClickListener(v -> {
-            if (onCarruselActionListener != null) {
-                onCarruselActionListener.onOpen(item, holder.getBindingAdapterPosition());
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (onCarruselActionListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                onCarruselActionListener.onOpen(item, adapterPosition);
             } else {
                 Toast.makeText(context, item.getTitulo(), Toast.LENGTH_SHORT).show();
             }

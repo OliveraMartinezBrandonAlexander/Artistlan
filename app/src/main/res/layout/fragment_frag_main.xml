@@ -13,7 +13,7 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:fillViewport="true"
-        android:paddingBottom="10dp">
+        android:paddingBottom="4dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -24,9 +24,9 @@
                 android:id="@+id/layoutMainHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="10dp"
+                android:layout_marginStart="0dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="0dp"
                 android:background="@drawable/bg_card_feed_glass"
                 android:gravity="center"
                 android:orientation="vertical"
@@ -62,9 +62,9 @@
                 android:id="@+id/tvCarruselFamaTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="14dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="14dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="8dp"
                 android:text="Carrusel de la fama"
                 android:textColor="@color/artistlan_text_primary"
                 android:textSize="20sp"

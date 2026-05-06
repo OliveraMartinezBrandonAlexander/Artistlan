@@ -143,9 +143,9 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         });
         configurarBotonReportar(holder, servicio);
 
-        holder.itemView.setOnClickListener(v -> {
+        View.OnClickListener toggleExpandListener = v -> {
             int previous = tarjetaExpandida;
-            int currentPosition = holder.getAdapterPosition();
+            int currentPosition = holder.getBindingAdapterPosition();
 
             if (currentPosition == RecyclerView.NO_POSITION) return;
             if (previous == currentPosition) tarjetaExpandida = -1;
@@ -154,7 +154,9 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
                 if (previous != -1) notifyItemChanged(previous);
             }
             notifyItemChanged(currentPosition);
-        });
+        };
+        holder.itemView.setOnClickListener(toggleExpandListener);
+        holder.layoutServicioCard.setOnClickListener(toggleExpandListener);
     }
 
     private String formatearPrecioRango(Double min, Double max) {
@@ -404,11 +406,12 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         ImageView imgAutor;
         LottieAnimationView btnLike;
         ImageButton btnMoreOptions;
-        View expandedSection;
+        View expandedSection, layoutServicioCard;
         Button btnContactar, btnReportarServicio;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+
             autor = itemView.findViewById(R.id.autor);
             titulo = itemView.findViewById(R.id.titulo);
             descripcion = itemView.findViewById(R.id.descripcion);
@@ -422,6 +425,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             btnLike = itemView.findViewById(R.id.btnLike);
             btnMoreOptions = itemView.findViewById(R.id.btnMoreOptions);
             expandedSection = itemView.findViewById(R.id.expanded_section);
+            layoutServicioCard = itemView.findViewById(R.id.layoutServicioCard);
             btnContactar = itemView.findViewById(R.id.btnContactar);
             btnReportarServicio = itemView.findViewById(R.id.btnReportarServicio);
         }

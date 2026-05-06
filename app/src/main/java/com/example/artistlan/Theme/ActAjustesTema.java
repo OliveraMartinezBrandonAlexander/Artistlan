@@ -157,14 +157,14 @@ public class ActAjustesTema extends AppCompatActivity {
 
         sections.add(new ThemeSection(
                 ThemeKeys.SECTION_TEMAS,
-                "Fondos y textos base de toda la identidad.",
+                "Fondo, títulos y textos principales.",
                 buildTemaItems(),
                 false
         ));
 
         sections.add(new ThemeSection(
                 ThemeKeys.SECTION_MENU,
-                "Top bar, bottom nav, drawer y estados activos.",
+                "Menú superior, botón menú, drawer y estados activos.",
                 buildMenuItems(),
                 false
         ));

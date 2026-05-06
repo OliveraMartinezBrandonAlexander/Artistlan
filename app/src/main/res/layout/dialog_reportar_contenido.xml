@@ -15,7 +15,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:textColor="#2C3E50"
+            android:textColor="@color/artistlan_text_primary"
             android:textSize="14sp"
             android:textStyle="bold"
             android:visibility="gone" />
@@ -25,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
-            android:textColor="#5D6D7E"
+            android:textColor="@color/artistlan_text_secondary"
             android:textSize="14sp" />
 
         <TextView
@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="6dp"
             android:text="Motivo"
-            android:textColor="#2C3E50"
+            android:textColor="@color/artistlan_text_primary"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -48,7 +48,7 @@
             android:layout_marginTop="14dp"
             android:layout_marginBottom="6dp"
             android:text="Descripción adicional (opcional)"
-            android:textColor="#2C3E50"
+            android:textColor="@color/artistlan_text_primary"
             android:textSize="14sp"
             android:textStyle="bold" />
 

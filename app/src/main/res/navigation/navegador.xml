@@ -15,6 +15,14 @@
         tools:layout="@layout/fragment_frag_main" />
 
     <fragment
+        android:id="@+id/navCalendario"
+        android:name="com.example.artistlan.Fragments.FragCalendarioEventos"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_calendario_eventos" />
+    <fragment
         android:id="@+id/fragServicios"
         android:name="com.example.artistlan.Fragments.FragServicios"
         app:enterAnim="@anim/nav_enter"

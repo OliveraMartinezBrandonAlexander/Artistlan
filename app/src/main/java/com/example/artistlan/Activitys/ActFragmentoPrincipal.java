@@ -482,11 +482,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                     return true;
                 }
                 if (itemId == R.id.navCalendario) {
-                    if (navController != null) {
-                        Bundle args = new Bundle();
-                        args.putBoolean("scroll_to_convocatorias", true);
-                        navController.navigate(R.id.fragMain, args);
-                    }
+                    if (navController != null) navegarSinDuplicar(R.id.navCalendario);
                     drawerLayout.closeDrawer(GravityCompat.START);
                     return true;
                 }

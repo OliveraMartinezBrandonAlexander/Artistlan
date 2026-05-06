@@ -114,6 +114,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
                 .into(holder.imgAutor);
 
         boolean expandido = (tarjetaExpandida == position);
+        holder.descripcion.setMaxLines(expandido ? Integer.MAX_VALUE : 2);
         animarVista(holder.expandedSection, expandido);
         configurarMenuOpciones(holder);
 

@@ -10,7 +10,7 @@
         android:layout_height="20dp"
         android:layout_gravity="top"
         android:alpha="0.08"
-        android:background="@android:color/white" />
+        android:background="@color/artistlan_text_primary" />
 
     <LinearLayout
         android:id="@+id/layoutBarraSuperior"
@@ -102,7 +102,7 @@
                     android:paddingStart="4dp"
                     android:paddingEnd="4dp"
                     android:text="0"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/artistlan_text_primary"
                     android:textSize="10sp"
                     android:textStyle="bold"
                     android:visibility="gone" />

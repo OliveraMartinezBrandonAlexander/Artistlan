@@ -1,6 +1,7 @@
 package com.example.artistlan.Fragments;
 
 import android.app.Dialog;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -21,7 +22,11 @@ import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.ReporteApi;
 import com.example.artistlan.Conector.model.CrearReporteRequestDTO;
+import com.example.artistlan.Conector.model.ReporteDetalleDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.util.ArrayList;
@@ -82,7 +87,9 @@ public class DialogReportarContenido extends DialogFragment {
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         reporteApi = RetrofitClient.getClient().create(ReporteApi.class);
 
-        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_reportar_contenido, null, false);
+        View view = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_reportar_contenido, null, false);
+
         spinnerMotivo = view.findViewById(R.id.spinnerMotivoReporte);
         etDescripcion = view.findViewById(R.id.etDescripcionReporte);
         tvMensaje = view.findViewById(R.id.tvMensajeReporte);
@@ -98,8 +105,30 @@ public class DialogReportarContenido extends DialogFragment {
                 .create();
 
         dialog.setOnShowListener(d -> {
+            ThemeManager tm = new ThemeManager(requireContext());
+
+            ThemeApplier.applyTextSecondary(tvMensaje, tm);
+            ThemeApplier.applyTextPrimary(tvTituloObjetivo, tm);
+            ThemeApplier.applyInput(etDescripcion, tm);
+
+            if (view.getBackground() != null) {
+                view.getBackground().setColorFilter(
+                        tm.color(ThemeKeys.DIALOG_BG),
+                        PorterDuff.Mode.SRC_ATOP
+                );
+            }
+
+            Button btnCancelar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
             Button btnEnviar = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            btnEnviar.setOnClickListener(v -> intentarEnviarReporte(dialog));
+
+            if (btnCancelar != null) {
+                ThemeApplier.applySecondaryButton(btnCancelar, tm);
+            }
+
+            if (btnEnviar != null) {
+                ThemeApplier.applyPrimaryButton(btnEnviar, tm);
+                btnEnviar.setOnClickListener(v -> intentarEnviarReporte(dialog));
+            }
         });
 
         return dialog;
@@ -109,6 +138,7 @@ public class DialogReportarContenido extends DialogFragment {
         tvMensaje.setText("Selecciona el motivo del reporte y agrega una descripción si lo consideras necesario.");
 
         String tituloObjetivo = getTituloObjetivo();
+
         if (!TextUtils.isEmpty(tituloObjetivo)) {
             tvTituloObjetivo.setText("Contenido: " + tituloObjetivo);
             tvTituloObjetivo.setVisibility(View.VISIBLE);
@@ -130,30 +160,44 @@ public class DialogReportarContenido extends DialogFragment {
                 android.R.layout.simple_spinner_item,
                 motivos
         );
+
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMotivo.setAdapter(adapter);
     }
 
     private void intentarEnviarReporte(@NonNull AlertDialog dialog) {
         CrearReporteRequestDTO request = construirRequestValidado();
+
         if (request == null) {
             return;
         }
+
         enviarReporte(dialog, request);
     }
 
     @Nullable
     private CrearReporteRequestDTO construirRequestValidado() {
         String tipoObjetivo = normalizarTipoObjetivo();
-        int idObjetivo = getArguments() != null ? getArguments().getInt(ARG_ID_OBJETIVO, INVALID_ID) : INVALID_ID;
-        int idUsuarioReportante = getArguments() != null ? getArguments().getInt(ARG_ID_USUARIO_REPORTANTE, INVALID_ID) : INVALID_ID;
+
+        int idObjetivo = getArguments() != null
+                ? getArguments().getInt(ARG_ID_OBJETIVO, INVALID_ID)
+                : INVALID_ID;
+
+        int idUsuarioReportante = getArguments() != null
+                ? getArguments().getInt(ARG_ID_USUARIO_REPORTANTE, INVALID_ID)
+                : INVALID_ID;
 
         if (idUsuarioReportante <= 0) {
-            Toast.makeText(requireContext(), "No se pudo identificar al usuario que reporta.", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    requireContext(),
+                    "No se pudo identificar al usuario que reporta.",
+                    Toast.LENGTH_LONG
+            ).show();
             return null;
         }
 
         String rolActual = ReporteUiPermissions.resolveCurrentUserRole(requireContext());
+
         if (ReporteUiPermissions.esRolAdminOModerador(rolActual)) {
             Toast.makeText(
                     requireContext(),
@@ -164,25 +208,43 @@ public class DialogReportarContenido extends DialogFragment {
         }
 
         if (TextUtils.isEmpty(tipoObjetivo)) {
-            Toast.makeText(requireContext(), "El tipo de contenido a reportar no es válido.", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    requireContext(),
+                    "El tipo de contenido a reportar no es válido.",
+                    Toast.LENGTH_LONG
+            ).show();
             return null;
         }
 
         if (idObjetivo <= 0) {
-            Toast.makeText(requireContext(), "El contenido seleccionado no es válido.", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    requireContext(),
+                    "El contenido seleccionado no es válido.",
+                    Toast.LENGTH_LONG
+            ).show();
             return null;
         }
 
         if (spinnerMotivo.getSelectedItemPosition() <= 0 || spinnerMotivo.getSelectedItem() == null) {
-            Toast.makeText(requireContext(), "Selecciona un motivo para el reporte.", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    requireContext(),
+                    "Selecciona un motivo para el reporte.",
+                    Toast.LENGTH_LONG
+            ).show();
             return null;
         }
 
         String motivo = spinnerMotivo.getSelectedItem().toString().trim();
-        String descripcion = etDescripcion.getText() != null ? etDescripcion.getText().toString().trim() : "";
+        String descripcion = etDescripcion.getText() != null
+                ? etDescripcion.getText().toString().trim()
+                : "";
 
         if (TextUtils.isEmpty(motivo) || MOTIVO_PLACEHOLDER.equals(motivo)) {
-            Toast.makeText(requireContext(), "Selecciona un motivo para el reporte.", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    requireContext(),
+                    "Selecciona un motivo para el reporte.",
+                    Toast.LENGTH_LONG
+            ).show();
             return null;
         }
 
@@ -205,7 +267,11 @@ public class DialogReportarContenido extends DialogFragment {
         } else if (TIPO_USUARIO.equals(tipoObjetivo)) {
             request.setIdUsuarioReportado(idObjetivo);
         } else {
-            Toast.makeText(requireContext(), "El tipo de contenido a reportar no es válido.", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    requireContext(),
+                    "El tipo de contenido a reportar no es válido.",
+                    Toast.LENGTH_LONG
+            ).show();
             return null;
         }
 
@@ -215,12 +281,16 @@ public class DialogReportarContenido extends DialogFragment {
     private void enviarReporte(@NonNull AlertDialog dialog, @NonNull CrearReporteRequestDTO request) {
         setDialogLoading(dialog, true);
 
-        reporteApi.crearReporte(request).enqueue(new Callback<com.example.artistlan.Conector.model.ReporteDetalleDTO>() {
+        reporteApi.crearReporte(request).enqueue(new Callback<ReporteDetalleDTO>() {
             @Override
             public void onResponse(
-                    @NonNull Call<com.example.artistlan.Conector.model.ReporteDetalleDTO> call,
-                    @NonNull Response<com.example.artistlan.Conector.model.ReporteDetalleDTO> response
+                    @NonNull Call<ReporteDetalleDTO> call,
+                    @NonNull Response<ReporteDetalleDTO> response
             ) {
+                if (!isAdded()) {
+                    return;
+                }
+
                 setDialogLoading(dialog, false);
 
                 if (response.isSuccessful()) {
@@ -229,10 +299,13 @@ public class DialogReportarContenido extends DialogFragment {
                             "Reporte enviado. El equipo de moderación lo revisará.",
                             Toast.LENGTH_LONG
                     ).show();
+
                     dismissAllowingStateLoss();
+
                     if (onReporteEnviadoListener != null) {
                         onReporteEnviadoListener.onReporteEnviado();
                     }
+
                     return;
                 }
 
@@ -241,13 +314,19 @@ public class DialogReportarContenido extends DialogFragment {
                 String message;
 
                 if (code == 409) {
-                    message = backendMessage != null ? backendMessage : "Ya existe un reporte activo o el contenido no puede reportarse.";
+                    message = backendMessage != null
+                            ? backendMessage
+                            : "Ya existe un reporte activo o el contenido no puede reportarse.";
                 } else if (code == 403) {
-                    message = backendMessage != null ? backendMessage : "No puedes reportar este contenido.";
+                    message = backendMessage != null
+                            ? backendMessage
+                            : "No puedes reportar este contenido.";
                 } else if (code == 404) {
                     message = "El contenido ya no está disponible.";
                 } else if (code == 400) {
-                    message = backendMessage != null ? backendMessage : "Revisa los datos del reporte.";
+                    message = backendMessage != null
+                            ? backendMessage
+                            : "Revisa los datos del reporte.";
                 } else {
                     message = "No se pudo enviar el reporte. Inténtalo más tarde.";
                 }
@@ -257,11 +336,20 @@ public class DialogReportarContenido extends DialogFragment {
 
             @Override
             public void onFailure(
-                    @NonNull Call<com.example.artistlan.Conector.model.ReporteDetalleDTO> call,
+                    @NonNull Call<ReporteDetalleDTO> call,
                     @NonNull Throwable t
             ) {
+                if (!isAdded()) {
+                    return;
+                }
+
                 setDialogLoading(dialog, false);
-                Toast.makeText(requireContext(), "Error de conexión al enviar reporte.", Toast.LENGTH_LONG).show();
+
+                Toast.makeText(
+                        requireContext(),
+                        "Error de conexión al enviar reporte.",
+                        Toast.LENGTH_LONG
+                ).show();
             }
         });
     }
@@ -272,45 +360,66 @@ public class DialogReportarContenido extends DialogFragment {
 
         if (positiveButton != null) {
             positiveButton.setEnabled(!loading);
+            positiveButton.setText(loading ? "Enviando..." : "Enviar reporte");
         }
+
         if (negativeButton != null) {
             negativeButton.setEnabled(!loading);
         }
 
-        spinnerMotivo.setEnabled(!loading);
-        etDescripcion.setEnabled(!loading);
+        if (spinnerMotivo != null) {
+            spinnerMotivo.setEnabled(!loading);
+        }
+
+        if (etDescripcion != null) {
+            etDescripcion.setEnabled(!loading);
+        }
     }
 
     @Nullable
     private String normalizarTipoObjetivo() {
-        String tipoObjetivo = getArguments() != null ? getArguments().getString(ARG_TIPO_OBJETIVO) : null;
+        String tipoObjetivo = getArguments() != null
+                ? getArguments().getString(ARG_TIPO_OBJETIVO)
+                : null;
+
         if (TextUtils.isEmpty(tipoObjetivo)) {
             return null;
         }
+
         String normalizado = tipoObjetivo.trim().toUpperCase(Locale.ROOT);
-        if (TIPO_OBRA.equals(normalizado) || TIPO_SERVICIO.equals(normalizado) || TIPO_USUARIO.equals(normalizado)) {
+
+        if (TIPO_OBRA.equals(normalizado)
+                || TIPO_SERVICIO.equals(normalizado)
+                || TIPO_USUARIO.equals(normalizado)) {
             return normalizado;
         }
+
         return null;
     }
 
     @NonNull
     private String obtenerTituloDialogo() {
         String tipoObjetivo = normalizarTipoObjetivo();
+
         if (TIPO_OBRA.equals(tipoObjetivo)) {
             return "Reportar obra";
         }
+
         if (TIPO_SERVICIO.equals(tipoObjetivo)) {
             return "Reportar servicio";
         }
+
         if (TIPO_USUARIO.equals(tipoObjetivo)) {
             return "Reportar usuario";
         }
+
         return "Reportar contenido";
     }
 
     @Nullable
     private String getTituloObjetivo() {
-        return getArguments() != null ? getArguments().getString(ARG_TITULO_OBJETIVO) : null;
+        return getArguments() != null
+                ? getArguments().getString(ARG_TITULO_OBJETIVO)
+                : null;
     }
 }

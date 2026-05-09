@@ -58,6 +58,7 @@ import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.pagos.PagoPaypalSessionManager;
 import com.example.artistlan.pagos.PagoSyncManager;
+import com.example.artistlan.utils.ScrollMenuVisibilityHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 
@@ -75,6 +76,8 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private View cartContainer;
     private View topBar;
     private View bottomBarContainer;
+    private View topBarFrame;
+    private View bottomBarFrame;
     private View mainContent;
 
     private View topBarLight, bottomBarLight;
@@ -110,6 +113,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private Auth2FAApi auth2FAApi;
     private AlertDialog twoFactorPromptDialog;
     private AlertDialog twoFactorLoadingDialog;
+    private ScrollMenuVisibilityHelper scrollMenuVisibilityHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,6 +132,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         cargarHeaderDrawer();
         configurarAdminDrawerSection();
         configurarNavegacion();
+        conectarScrollMenuHelper();
         handlePaypalDeepLinkIntent(getIntent());
         configurarEventos();
         prepararAnimacionesIniciales();
@@ -148,6 +153,8 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         cartContainer = findViewById(R.id.cartContainer);
         topBar = findViewById(R.id.layoutBarraSuperior);
+        topBarFrame = findViewById(R.id.topBarFrame);
+        bottomBarFrame = findViewById(R.id.MenuInferiorFrame);
         bottomBarContainer = findViewById(R.id.MenuInferior);
         mainContent = findViewById(R.id.mainContent);
 
@@ -366,6 +373,18 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         }
         if (navigationView != null) {
             NavigationUI.setupWithNavController(navigationView, navController);
+        }
+    }
+
+
+    private void conectarScrollMenuHelper() {
+        if (topBar == null || bottomBarContainer == null) return;
+        scrollMenuVisibilityHelper = new ScrollMenuVisibilityHelper(topBar, bottomBarContainer);
+
+        NavHostFragment navHostFragment =
+                (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);
+        if (navHostFragment != null) {
+            scrollMenuVisibilityHelper.registerWith(navHostFragment.getChildFragmentManager());
         }
     }
 
@@ -1023,6 +1042,12 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        NavHostFragment navHostFragment =
+                (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);
+        if (scrollMenuVisibilityHelper != null && navHostFragment != null) {
+            scrollMenuVisibilityHelper.unregisterFrom(navHostFragment.getChildFragmentManager());
+        }
+
         super.onDestroy();
         ocultarLoadingActivacion();
         if (twoFactorPromptDialog != null && twoFactorPromptDialog.isShowing()) {

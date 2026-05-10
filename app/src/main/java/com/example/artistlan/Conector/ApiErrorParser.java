@@ -1,5 +1,6 @@
 package com.example.artistlan.Conector;
 
+import com.example.artistlan.Conector.model.AuthErrorResponseDTO;
 import com.example.artistlan.Conector.model.ErrorResponseDTO;
 import com.google.gson.Gson;
 
@@ -34,5 +35,21 @@ public final class ApiErrorParser {
             return null;
         }
     }
-}
 
+    public static AuthErrorResponseDTO extractAuthError(Response<?> response) {
+        if (response == null || response.errorBody() == null) {
+            return null;
+        }
+        try {
+            String raw = response.errorBody().string();
+            if (raw == null || raw.trim().isEmpty()) {
+                return null;
+            }
+            return GSON.fromJson(raw, AuthErrorResponseDTO.class);
+        } catch (IOException ignored) {
+            return null;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+}

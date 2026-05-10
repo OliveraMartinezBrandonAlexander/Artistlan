@@ -3,6 +3,7 @@ package com.example.artistlan.Conector.api;
 import com.example.artistlan.Conector.model.ActualizarFotoPerfilRequestDTO;
 import com.example.artistlan.Conector.model.ArtistaDTO;
 import com.example.artistlan.Conector.model.DesactivarCuentaRequestDTO;
+import com.example.artistlan.Conector.model.LoginRequestDTO;
 import com.example.artistlan.Conector.model.LoginResponseDTO;
 import com.example.artistlan.Conector.model.RespuestaModeracionDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
@@ -29,12 +30,8 @@ public interface UsuarioApi {
     @POST("usuarios")
     Call<List<UsuariosDTO>> crearUsuarios(@Body List<UsuariosDTO> usuarios);
 
-    @GET("usuarios/login")
-    Call<LoginResponseDTO> login(
-            @Query("usuario") String usuario,
-            @Query("correo") String correo,
-            @Query("contrasena") String contrasena
-    );
+    @POST("usuarios/login")
+    Call<LoginResponseDTO> login(@Body LoginRequestDTO request);
 
     @GET("usuarios/{id}")
     Call<UsuariosDTO> obtenerUsuarioPorId(@Path("id") int id);

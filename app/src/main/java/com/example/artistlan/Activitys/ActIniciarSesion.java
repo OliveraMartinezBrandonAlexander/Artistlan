@@ -31,6 +31,8 @@ import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.SessionManager;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.UsuarioApi;
+import com.example.artistlan.Conector.model.AuthErrorResponseDTO;
+import com.example.artistlan.Conector.model.LoginRequestDTO;
 import com.example.artistlan.Conector.model.LoginResponseDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
@@ -477,6 +479,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         String correo = etCorreo.getText().toString().trim();
         String usuario = etUsuario.getText().toString().trim();
         String contrasena = etContrasena.getText().toString().trim();
+        String usuarioOCorreo = !usuario.isEmpty() ? usuario : correo;
         if (correo.isEmpty() && usuario.isEmpty()) {
             etUsuario.requestFocus();
             showErrorDialog("Faltan datos", "Debes ingresar tu usuario o tu correo.");
@@ -488,7 +491,8 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
             return;
         }
         showWaitingDialog();
-        Call<LoginResponseDTO> call = api.login(usuario, correo, contrasena);
+        LoginRequestDTO request = new LoginRequestDTO(usuarioOCorreo, contrasena);
+        Call<LoginResponseDTO> call = api.login(request);
         call.enqueue(new Callback<LoginResponseDTO>() {
             @Override
             public void onResponse(Call<LoginResponseDTO> call, Response<LoginResponseDTO> response) {
@@ -530,24 +534,27 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
     }
 
     private void handleLoginErrorResponse(Response<LoginResponseDTO> response) {
-        String backendMessage = ApiErrorParser.extractMessage(response);
         int code = response != null ? response.code() : -1;
 
         if (code == 423) {
-            showErrorDialog(
-                    "Cuenta suspendida",
+            AuthErrorResponseDTO authError = ApiErrorParser.extractAuthError(response);
+            showErrorDialog("Cuenta suspendida", buildReadableAuthErrorMessage(
+                    authError,
                     "Tu cuenta está suspendida temporalmente. Intenta nuevamente cuando termine la suspensión."
-            );
+            ));
             return;
         }
 
         if (code == 403) {
-            showErrorDialog(
-                    "Acceso bloqueado",
-                    backendMessage != null ? backendMessage : "Tu cuenta no puede iniciar sesión. Puede estar desactivada o bloqueada."
-            );
+            AuthErrorResponseDTO authError = ApiErrorParser.extractAuthError(response);
+            showErrorDialog("Acceso bloqueado", buildReadableAuthErrorMessage(
+                    authError,
+                    "Tu cuenta no puede iniciar sesión. Puede estar desactivada o bloqueada."
+            ));
             return;
         }
+
+        String backendMessage = ApiErrorParser.extractMessage(response);
 
         if (code == 401) {
             showErrorDialog("Credenciales incorrectas", "Revisa tu usuario, correo o contraseña.");
@@ -558,6 +565,41 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                 "No se pudo iniciar sesión",
                 backendMessage != null ? backendMessage : "Ocurrió un error al iniciar sesión. Intenta de nuevo."
         );
+    }
+
+    private String buildReadableAuthErrorMessage(AuthErrorResponseDTO authError, String fallbackMessage) {
+        if (authError == null) {
+            return fallbackMessage;
+        }
+        String message = authError.getMessage();
+        if (message == null || message.trim().isEmpty()) {
+            message = fallbackMessage;
+        }
+        String fechaFormateada = formatFechaFinSuspension(authError.getFechaFinSuspension());
+        if (fechaFormateada != null && !fechaFormateada.isEmpty()) {
+            return message + "\nHasta: " + fechaFormateada;
+        }
+        return message;
+    }
+
+    private String formatFechaFinSuspension(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String value = raw.trim();
+        if (value.length() < 16 || value.charAt(4) != '-' || value.charAt(7) != '-' || value.charAt(10) != 'T') {
+            return value;
+        }
+        try {
+            String yyyy = value.substring(0, 4);
+            String mm = value.substring(5, 7);
+            String dd = value.substring(8, 10);
+            String hh = value.substring(11, 13);
+            String min = value.substring(14, 16);
+            return dd + "/" + mm + "/" + yyyy + " " + hh + ":" + min;
+        } catch (Exception ex) {
+            return value;
+        }
     }
 
     private void cargarCategoriaUsuario(Integer idUsuario) {

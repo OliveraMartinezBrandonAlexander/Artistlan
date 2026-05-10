@@ -15,6 +15,7 @@ import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.SessionManager;
 import com.example.artistlan.Conector.api.Auth2FAApi;
+import com.example.artistlan.Conector.model.AuthErrorResponseDTO;
 import com.example.artistlan.Conector.model.TwoFactorResendRequest;
 import com.example.artistlan.Conector.model.TwoFactorResponse;
 import com.example.artistlan.Conector.model.TwoFactorVerifyActivationRequest;
@@ -172,20 +173,27 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
     }
 
     private void handleVerifyLoginErrorResponse(Response<TwoFactorVerifyLoginResponse> response) {
-        String backendMessage = ApiErrorParser.extractMessage(response);
         int code = response != null ? response.code() : -1;
 
         if (code == 423) {
-            handleBlockedVerifyLogin("Tu cuenta está suspendida temporalmente. Intenta nuevamente cuando termine la suspensión.");
+            AuthErrorResponseDTO authError = ApiErrorParser.extractAuthError(response);
+            handleBlockedVerifyLogin(buildReadableAuthErrorMessage(
+                    authError,
+                    "Tu cuenta está suspendida temporalmente. Intenta nuevamente cuando termine la suspensión."
+            ));
             return;
         }
 
         if (code == 403) {
-            handleBlockedVerifyLogin(
-                    backendMessage != null ? backendMessage : "Tu cuenta no puede iniciar sesión. Puede estar desactivada o bloqueada."
-            );
+            AuthErrorResponseDTO authError = ApiErrorParser.extractAuthError(response);
+            handleBlockedVerifyLogin(buildReadableAuthErrorMessage(
+                    authError,
+                    "Tu cuenta no puede iniciar sesión. Puede estar desactivada o bloqueada."
+            ));
             return;
         }
+
+        String backendMessage = ApiErrorParser.extractMessage(response);
 
         if (code == 400 || code == 401) {
             Toast.makeText(
@@ -201,6 +209,41 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                 backendMessage != null ? backendMessage : "No se pudo verificar el código",
                 Toast.LENGTH_LONG
         ).show();
+    }
+
+    private String buildReadableAuthErrorMessage(AuthErrorResponseDTO authError, String fallbackMessage) {
+        if (authError == null) {
+            return fallbackMessage;
+        }
+        String message = authError.getMessage();
+        if (message == null || message.trim().isEmpty()) {
+            message = fallbackMessage;
+        }
+        String fechaFormateada = formatFechaFinSuspension(authError.getFechaFinSuspension());
+        if (fechaFormateada != null && !fechaFormateada.isEmpty()) {
+            return message + "\nHasta: " + fechaFormateada;
+        }
+        return message;
+    }
+
+    private String formatFechaFinSuspension(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String value = raw.trim();
+        if (value.length() < 16 || value.charAt(4) != '-' || value.charAt(7) != '-' || value.charAt(10) != 'T') {
+            return value;
+        }
+        try {
+            String yyyy = value.substring(0, 4);
+            String mm = value.substring(5, 7);
+            String dd = value.substring(8, 10);
+            String hh = value.substring(11, 13);
+            String min = value.substring(14, 16);
+            return dd + "/" + mm + "/" + yyyy + " " + hh + ":" + min;
+        } catch (Exception ex) {
+            return value;
+        }
     }
 
     private void handleBlockedVerifyLogin(String message) {

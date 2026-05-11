@@ -19,19 +19,22 @@
             android:id="@+id/tvTituloConvocatoria"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="@color/artistlan_menu_text_primary"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvDescripcionConvocatoria"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp" />
+            android:layout_marginTop="6dp"
+            android:textColor="@color/artistlan_menu_text_secondary" />
 
         <TextView
             android:id="@+id/tvFechaConvocatoria"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
+            android:textColor="@color/artistlan_menu_text_secondary"
             android:textStyle="italic" />
 
         <LinearLayout

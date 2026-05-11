@@ -1,8 +1,11 @@
 package com.example.artistlan.Fragments;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -26,6 +29,10 @@ import java.util.List;
 
 public class FragExplorar extends Fragment {
 
+    private static final String TAG_PERF = "ExplorarPerfDebug";
+    private static final String TAG_INIT = "ExplorarInitDebug";
+    private static final boolean ENABLE_EXPLORAR_DEBUG_LOGS = false;
+    private static final long MIN_REPLACE_INTERVAL_MS = 450L;
     private static final int MENU_GROUP_FILTERS = 100;
     private static final int MENU_ID_CLEAR_FILTERS = 1000;
 
@@ -33,6 +40,10 @@ public class FragExplorar extends Fragment {
     private SearchView searchView;
     private ImageButton btnFiltros;
     private boolean filtrosVisibles = false;
+    private int currentChipId = View.NO_ID;
+    private int lastLoadedChipId = View.NO_ID;
+    private long lastReplaceTimestampMs = 0L;
+    private boolean ignorarEventosBusqueda = false;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -51,11 +62,25 @@ public class FragExplorar extends Fragment {
         configurarBotonFiltros();
         configurarChips();
 
-        if (savedInstanceState == null) {
-            cargarFragment(new FragArte());
-        }
-
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        logInit("onViewCreated -> checkedChipId=" + (chipGroup != null ? chipGroup.getCheckedChipId() : View.NO_ID)
+                + ", currentChipId=" + currentChipId
+                + ", fragmentActual=" + nombreFragment(obtenerFragmentActual()));
+        asegurarTabActualCargado("onViewCreated");
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        logInit("onResume -> checkedChipId=" + (chipGroup != null ? chipGroup.getCheckedChipId() : View.NO_ID)
+                + ", currentChipId=" + currentChipId
+                + ", fragmentActual=" + nombreFragment(obtenerFragmentActual()));
+        asegurarTabActualCargado("onResume");
     }
 
     private void configurarBuscador() {
@@ -74,9 +99,11 @@ public class FragExplorar extends Fragment {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                boolean hayTexto = !TextUtils.isEmpty(query != null ? query.trim() : "");
-                mostrarBotonFiltros(hayTexto);
+                if (ignorarEventosBusqueda) {
+                    return true;
+                }
                 aplicarBusquedaAlFragmentActual(query);
+                actualizarVisibilidadBotonFiltros();
                 cerrarTeclado();
                 searchView.clearFocus();
                 return true;
@@ -84,22 +111,21 @@ public class FragExplorar extends Fragment {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                boolean hayTexto = !TextUtils.isEmpty(newText != null ? newText.trim() : "");
-                mostrarBotonFiltros(hayTexto);
+                if (ignorarEventosBusqueda) {
+                    return true;
+                }
                 aplicarBusquedaAlFragmentActual(newText);
+                actualizarVisibilidadBotonFiltros();
                 return true;
             }
         });
 
-        searchView.setOnQueryTextFocusChangeListener((v, hasFocus) -> {
-            CharSequence query = searchView.getQuery();
-            boolean hayTexto = query != null && query.toString().trim().length() > 0;
-            mostrarBotonFiltros(hasFocus || hayTexto);
-        });
+        searchView.setOnQueryTextFocusChangeListener((v, hasFocus) -> actualizarVisibilidadBotonFiltros());
 
         searchView.setOnCloseListener(() -> {
-            mostrarBotonFiltros(false);
+            limpiarBusquedaSinNotificar();
             aplicarBusquedaAlFragmentActual("");
+            actualizarVisibilidadBotonFiltros();
             return false;
         });
     }
@@ -115,51 +141,55 @@ public class FragExplorar extends Fragment {
     private void configurarChips() {
         if (chipGroup == null) return;
 
+        int chipInicial = chipGroup.getCheckedChipId();
+        if (chipInicial == View.NO_ID) {
+            chipInicial = R.id.chipObras;
+            chipGroup.check(chipInicial);
+        }
+
+        Fragment actual = getChildFragmentManager().findFragmentById(R.id.fragmentContainerExplorar);
+        if (actual == null) {
+            Fragment inicial = crearFragmentPorChip(chipInicial);
+            if (inicial != null) {
+                logInit("configurarChips -> carga inicial, chip=" + chipInicial
+                        + ", fragment=" + inicial.getClass().getSimpleName());
+                cargarFragment(inicial, chipInicial, "configurarChips-inicial");
+            }
+        } else if (coincideFragmentConChip(actual, chipInicial)) {
+            lastLoadedChipId = chipInicial;
+        }
+        currentChipId = chipInicial;
+        actualizarVisibilidadBotonFiltros();
+        logPerf("Tab inicial -> chipId=" + currentChipId);
+        logInit("configurarChips -> currentChipId=" + currentChipId
+                + ", fragmentActual=" + nombreFragment(actual));
+
         chipGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == View.NO_ID || checkedId == currentChipId) {
+                return;
+            }
+
             cerrarTeclado();
+            limpiarBusquedaSinNotificar();
+            actualizarVisibilidadBotonFiltros();
 
-            if (searchView != null) {
-                searchView.setQuery("", false);
-                searchView.clearFocus();
-            }
-
-            mostrarBotonFiltros(false);
-            animarBuscador();
-
-            Fragment fragment = null;
-
-            if (checkedId == R.id.chipObras) {
-                fragment = new FragArte();
-            } else if (checkedId == R.id.chipServicios) {
-                fragment = new FragServicios();
-            } else if (checkedId == R.id.chipArtistas) {
-                fragment = new FragArtistas();
-            }
-
+            Fragment fragment = crearFragmentPorChip(checkedId);
             if (fragment != null) {
-                cargarFragment(fragment);
+                logInit("onCheckedChange -> checkedId=" + checkedId
+                        + ", currentChipId(before)=" + currentChipId
+                        + ", fragmentNuevo=" + fragment.getClass().getSimpleName());
+                cargarFragment(fragment, checkedId, "onCheckedChange");
+                currentChipId = checkedId;
+                logPerf("Cambio tab -> chipId=" + currentChipId
+                        + ", fragment=" + fragment.getClass().getSimpleName());
+                logInit("onCheckedChange -> currentChipId(after)=" + currentChipId);
+                actualizarVisibilidadBotonFiltros();
             }
         });
     }
 
-    private void animarBuscador() {
-        if (searchView == null) return;
-
-        searchView.animate()
-                .alpha(0.5f)
-                .setDuration(100)
-                .withEndAction(() ->
-                        searchView.animate()
-                                .alpha(1f)
-                                .setDuration(100)
-                                .start()
-                )
-                .start();
-    }
-
     private void aplicarBusquedaAlFragmentActual(String texto) {
-        Fragment fragmentActual = getChildFragmentManager()
-                .findFragmentById(R.id.fragmentContainerExplorar);
+        Fragment fragmentActual = obtenerFragmentActual();
 
         if (fragmentActual instanceof FragArte) {
             ((FragArte) fragmentActual).filtrarBusqueda(texto);
@@ -211,8 +241,7 @@ public class FragExplorar extends Fragment {
     }
 
     private void mostrarMenuFiltros() {
-        Fragment fragmentActual = getChildFragmentManager()
-                .findFragmentById(R.id.fragmentContainerExplorar);
+        Fragment fragmentActual = obtenerFragmentActual();
 
         if (!(fragmentActual instanceof FilterableExplorarFragment)) {
             return;
@@ -270,16 +299,145 @@ public class FragExplorar extends Fragment {
         }
     }
 
-    private void cargarFragment(Fragment fragment) {
+    private void cargarFragment(@NonNull Fragment fragment, int chipId, @NonNull String motivo) {
+        lastLoadedChipId = chipId;
+        lastReplaceTimestampMs = SystemClock.elapsedRealtime();
+        logInit("cargarFragment(" + motivo + ") -> chipId=" + chipId
+                + ", fragment=" + fragment.getClass().getSimpleName()
+                + ", currentChipId=" + currentChipId);
         getChildFragmentManager()
                 .beginTransaction()
-                .setCustomAnimations(
-                        android.R.anim.fade_in,
-                        android.R.anim.fade_out,
-                        android.R.anim.fade_in,
-                        android.R.anim.fade_out
-                )
+                .setReorderingAllowed(true)
                 .replace(R.id.fragmentContainerExplorar, fragment)
                 .commit();
+    }
+
+    private void limpiarBusquedaSinNotificar() {
+        if (searchView == null) {
+            return;
+        }
+        ignorarEventosBusqueda = true;
+        searchView.setQuery("", false);
+        searchView.clearFocus();
+        ignorarEventosBusqueda = false;
+    }
+
+    private void actualizarVisibilidadBotonFiltros() {
+        mostrarBotonFiltros(fragmentActualSoportaFiltros());
+    }
+
+    @Nullable
+    private Fragment obtenerFragmentActual() {
+        return getChildFragmentManager().findFragmentById(R.id.fragmentContainerExplorar);
+    }
+
+    @Nullable
+    private Fragment crearFragmentPorChip(int chipId) {
+        if (chipId == R.id.chipObras) {
+            return new FragArte();
+        }
+        if (chipId == R.id.chipServicios) {
+            return new FragServicios();
+        }
+        if (chipId == R.id.chipArtistas) {
+            return new FragArtistas();
+        }
+        return null;
+    }
+
+    private void asegurarTabActualCargado(@NonNull String motivo) {
+        if (!isAdded() || chipGroup == null) {
+            return;
+        }
+        int chipSeleccionado = chipGroup.getCheckedChipId();
+        if (chipSeleccionado == View.NO_ID) {
+            chipSeleccionado = R.id.chipObras;
+            chipGroup.check(chipSeleccionado);
+        }
+
+        Fragment actual = obtenerFragmentActual();
+        boolean coincide = coincideFragmentConChip(actual, chipSeleccionado);
+        boolean necesitaCarga = actual == null || !coincide || actual.getView() == null;
+        boolean replaceRecienteMismoChip = chipSeleccionado == lastLoadedChipId
+                && (SystemClock.elapsedRealtime() - lastReplaceTimestampMs) < MIN_REPLACE_INTERVAL_MS;
+
+        logInit("asegurarTabActualCargado(" + motivo + ") -> chip=" + chipSeleccionado
+                + ", currentChipId=" + currentChipId
+                + ", fragmentActual=" + nombreFragment(actual)
+                + ", coincide=" + coincide
+                + ", viewNull=" + (actual == null || actual.getView() == null)
+                + ", necesitaCarga=" + necesitaCarga
+                + ", replaceRecienteMismoChip=" + replaceRecienteMismoChip);
+
+        if (!necesitaCarga) {
+            currentChipId = chipSeleccionado;
+            actualizarVisibilidadBotonFiltros();
+            return;
+        }
+
+        if (replaceRecienteMismoChip) {
+            logInit("asegurarTabActualCargado(" + motivo + ") -> omitido replace reciente");
+            return;
+        }
+
+        Fragment nuevo = crearFragmentPorChip(chipSeleccionado);
+        if (nuevo == null) {
+            return;
+        }
+
+        cargarFragment(nuevo, chipSeleccionado, "asegurarTabActualCargado:" + motivo);
+        currentChipId = chipSeleccionado;
+        actualizarVisibilidadBotonFiltros();
+        logInit("asegurarTabActualCargado(" + motivo + ") -> recargado "
+                + nuevo.getClass().getSimpleName());
+    }
+
+    private boolean coincideFragmentConChip(@Nullable Fragment fragment, int chipId) {
+        if (fragment == null) {
+            return false;
+        }
+        if (chipId == R.id.chipObras) {
+            return fragment instanceof FragArte;
+        }
+        if (chipId == R.id.chipServicios) {
+            return fragment instanceof FragServicios;
+        }
+        if (chipId == R.id.chipArtistas) {
+            return fragment instanceof FragArtistas;
+        }
+        return false;
+    }
+
+    @NonNull
+    private String nombreFragment(@Nullable Fragment fragment) {
+        return fragment == null ? "null" : fragment.getClass().getSimpleName();
+    }
+
+    private boolean fragmentActualSoportaFiltros() {
+        return obtenerFragmentActual() instanceof FilterableExplorarFragment;
+    }
+
+    private void logPerf(String message) {
+        if (!ENABLE_EXPLORAR_DEBUG_LOGS) {
+            return;
+        }
+        Context context = getContext();
+        if (context != null
+                && context.getApplicationInfo() != null
+                && (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            Log.d(TAG_PERF, message);
+        }
+    }
+
+    private void logInit(String message) {
+        if (!ENABLE_EXPLORAR_DEBUG_LOGS) {
+            return;
+        }
+        Context context = getContext();
+        if (context != null
+                && context.getApplicationInfo() != null
+                && (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            Log.d(TAG_INIT, message);
+        }
     }
 }

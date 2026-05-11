@@ -13,7 +13,6 @@ public class SessionManager {
     private static final String KEY_USUARIO = "usuario";
     private static final String KEY_CORREO = "correo";
     private static final String KEY_NOMBRE_COMPLETO = "nombreCompleto";
-    private static final String KEY_CONTRASENA = "contrasena";
     private static final String KEY_ROL = "rol";
     private static final String KEY_DESCRIPCION = "descripcion";
     private static final String KEY_FOTO_PERFIL = "fotoPerfil";
@@ -48,7 +47,6 @@ public class SessionManager {
         editor.putString(KEY_USUARIO, valueOrEmpty(user.getUsuario()));
         editor.putString(KEY_CORREO, valueOrEmpty(user.getCorreo()));
         editor.putString(KEY_NOMBRE_COMPLETO, valueOrEmpty(user.getNombreCompleto()));
-        editor.putString(KEY_CONTRASENA, valueOrEmpty(user.getContrasena()));
         editor.putString(KEY_ROL, valueOrDefault(user.getRol(), "USER"));
         editor.putString(KEY_DESCRIPCION, valueOrEmpty(user.getDescripcion()));
         editor.putString(KEY_FOTO_PERFIL, valueOrEmpty(user.getFotoPerfil()));
@@ -60,17 +58,20 @@ public class SessionManager {
         editor.putString(KEY_UBICACION, valueOrEmpty(user.getUbicacion()));
         editor.putBoolean(KEY_TWO_FACTOR_ENABLED, Boolean.TRUE.equals(user.getTwoFactorEnabled()));
 
-        if (token != null && !token.trim().isEmpty()) {
-            editor.putString(KEY_JWT_TOKEN, token.trim());
+        String tokenNormalizado = sanitizeToken(token);
+        if (tokenNormalizado != null) {
+            editor.putString(KEY_JWT_TOKEN, tokenNormalizado);
         } else {
             editor.remove(KEY_JWT_TOKEN);
         }
 
+        // Limpieza de datos sensibles de versiones anteriores.
+        editor.remove("contrasena");
         editor.apply();
     }
 
     public String getToken() {
-        return prefs.getString(KEY_JWT_TOKEN, null);
+        return sanitizeToken(prefs.getString(KEY_JWT_TOKEN, null));
     }
 
     public boolean isLoggedIn() {
@@ -89,11 +90,26 @@ public class SessionManager {
         prefs.edit().clear().apply();
     }
 
+    public boolean hasValidToken() {
+        return getToken() != null;
+    }
+
     private String valueOrEmpty(String value) {
         return value != null ? value : "";
     }
 
     private String valueOrDefault(String value, String defaultValue) {
         return value != null && !value.trim().isEmpty() ? value : defaultValue;
+    }
+
+    private String sanitizeToken(String token) {
+        if (token == null) {
+            return null;
+        }
+        String trimmed = token.trim();
+        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) {
+            return null;
+        }
+        return trimmed;
     }
 }

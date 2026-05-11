@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.artistlan.Conector.model.NotificacionDTO;
 import com.example.artistlan.Fragments.MensajeUiUtils;
 import com.example.artistlan.R;
@@ -94,6 +95,8 @@ public class NotificacionesAdapter extends RecyclerView.Adapter<NotificacionesAd
                 .load(item.getFotoOrigen())
                 .placeholder(R.drawable.cuenta)
                 .error(R.drawable.cuenta)
+                .thumbnail(0.25f)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .circleCrop()
                 .into(holder.ivOrigen);
 
@@ -129,6 +132,32 @@ public class NotificacionesAdapter extends RecyclerView.Adapter<NotificacionesAd
             items.addAll(nuevos);
         }
         notifyDataSetChanged();
+    }
+
+    public void agregarItems(List<NotificacionDTO> nuevos) {
+        if (nuevos == null || nuevos.isEmpty()) {
+            return;
+        }
+        int inicio = items.size();
+        items.addAll(nuevos);
+        notifyItemRangeInserted(inicio, nuevos.size());
+    }
+
+    public void marcarComoLeida(@NonNull NotificacionDTO target) {
+        Integer idTarget = target.getIdNotificacion();
+        for (int i = 0; i < items.size(); i++) {
+            NotificacionDTO item = items.get(i);
+            if (item == target) {
+                item.setLeida(true);
+                notifyItemChanged(i);
+                return;
+            }
+            if (idTarget != null && idTarget.equals(item.getIdNotificacion())) {
+                item.setLeida(true);
+                notifyItemChanged(i);
+                return;
+            }
+        }
     }
 
     public void removeItem(@NonNull NotificacionDTO target) {

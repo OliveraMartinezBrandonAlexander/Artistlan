@@ -281,8 +281,8 @@ public class FragGestionConvocatorias extends Fragment {
             @Override
             public void onFailure(@NonNull Call<ConvocatoriaDTO> call, @NonNull Throwable t) {
                 mostrarLoading(false);
-                mostrarError("Error de conexion al crear convocatoria.");
-                mostrarDialogoResultado("Error de conexion", "No fue posible crear la convocatoria en este momento.");
+                mostrarError("Error de conexión al crear convocatoria.");
+                mostrarDialogoResultado("Error de conexión", "No fue posible crear la convocatoria en este momento.");
             }
         });
     }
@@ -305,8 +305,8 @@ public class FragGestionConvocatorias extends Fragment {
             @Override
             public void onFailure(@NonNull Call<ConvocatoriaDTO> call, @NonNull Throwable t) {
                 mostrarLoading(false);
-                mostrarError("Error de conexion al actualizar convocatoria.");
-                mostrarDialogoResultado("Error de conexion", "No fue posible actualizar la convocatoria en este momento.");
+                mostrarError("Error de conexión al actualizar convocatoria.");
+                mostrarDialogoResultado("Error de conexión", "No fue posible actualizar la convocatoria en este momento.");
             }
         });
     }

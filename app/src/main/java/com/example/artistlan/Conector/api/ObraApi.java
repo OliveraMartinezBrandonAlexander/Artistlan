@@ -2,6 +2,7 @@ package com.example.artistlan.Conector.api;
 
 import com.example.artistlan.Conector.model.ActualizarImagenObraRequestDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
+import com.example.artistlan.Conector.model.PageResponseObraDTO;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -18,6 +19,17 @@ public interface ObraApi {
 
     @GET("obras")
     Call<List<ObraDTO>> obtenerTodasLasObras(@Query("usuarioId") Integer usuarioId);
+
+    @GET("obras/paginado")
+    Call<PageResponseObraDTO> obtenerObrasPaginadas(
+            @Query("usuarioId") Integer usuarioId,
+            @Query("q") String q,
+            @Query("categoria") String categoria,
+            @Query("idCategoria") Integer idCategoria,
+            @Query("page") int page,
+            @Query("size") int size,
+            @Query("sort") String sort
+    );
 
     @GET("obras/{id}")
     Call<ObraDTO> obtenerObraPorId(@Path("id") int idObra, @Query("usuarioId") Integer usuarioId);
@@ -61,7 +73,4 @@ public interface ObraApi {
             @Path("idUsuario") int idUsuario,
             @Query("usuarioIdConsulta") Integer usuarioIdConsulta
     );
-
-    @DELETE("usuarios")
-    Call<Void> eliminarTodos();
 }

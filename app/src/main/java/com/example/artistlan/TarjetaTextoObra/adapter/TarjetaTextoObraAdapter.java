@@ -2,6 +2,9 @@ package com.example.artistlan.TarjetaTextoObra.adapter;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +22,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.artistlan.Conector.SessionManager;
 import com.example.artistlan.Fragments.DialogReportarContenido;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
@@ -35,6 +40,8 @@ import java.util.Locale;
 import java.util.Set;
 
 public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoObraAdapter.ViewHolder> {
+    private static final String TAG_REPORTE_DEBUG = "ReporteUiDebug";
+    private static final boolean ENABLE_REPORTE_UI_DEBUG_LOGS = false;
 
     public interface OnLikeClickListener {
         void onLikeClick(TarjetaTextoObraItem obraItem, int position);
@@ -82,6 +89,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     private ModoTarjetaObra modoTarjeta;
     private int tarjetaExpandida = -1;
     private int lastAnimatedPosition = -1;
+    private boolean entryAnimationsEnabled = true;
 
     public TarjetaTextoObraAdapter(List<TarjetaTextoObraItem> listaObras, Context context) {
         this(listaObras, context, ModoTarjetaObra.EXPLORAR);
@@ -102,6 +110,10 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     public void setModoTarjeta(ModoTarjetaObra modoTarjeta) {
         this.modoTarjeta = modoTarjeta != null ? modoTarjeta : ModoTarjetaObra.EXPLORAR;
         notifyDataSetChanged();
+    }
+
+    public void setEntryAnimationsEnabled(boolean enabled) {
+        this.entryAnimationsEnabled = enabled;
     }
 
     public void setOnLikeClickListener(OnLikeClickListener listener) {
@@ -135,13 +147,19 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     }
 
     public void setOwnedObraIds(Set<Integer> ownedObraIds) {
+        setOwnedObraIds(ownedObraIds, true);
+    }
+
+    public void setOwnedObraIds(Set<Integer> ownedObraIds, boolean notifyChanges) {
         this.ownedObraIds.clear();
 
         if (ownedObraIds != null) {
             this.ownedObraIds.addAll(ownedObraIds);
         }
 
-        notifyDataSetChanged();
+        if (notifyChanges) {
+            notifyDataSetChanged();
+        }
     }
 
     @NonNull
@@ -158,7 +176,9 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         TarjetaTextoObraItem obra = listaObras.get(position);
 
-        animateFeedEntry(holder, position);
+        if (entryAnimationsEnabled) {
+            animateFeedEntry(holder, position);
+        }
 
         aplicarTema(holder, tm);
         llenarDatosBasicos(holder, obra);
@@ -252,6 +272,8 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
                         : R.drawable.fotoperfilprueba)
                 .placeholder(R.drawable.fotoperfilprueba)
                 .error(R.drawable.fotoperfilprueba)
+                .thumbnail(0.25f)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .circleCrop()
                 .into(holder.imgAutor);
 
@@ -277,6 +299,9 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
                     .load(imagenObra)
                     .placeholder(R.drawable.imagencargaobras)
                     .error(R.drawable.imagencargaobras)
+                    .thumbnail(0.25f)
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                    .centerCrop()
                     .into(holder.imgObra);
         } else {
             holder.imgObra.setImageResource(R.drawable.imagencargaobras);
@@ -501,22 +526,44 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
     private boolean puedeReportarseObra(TarjetaTextoObraItem obra) {
         if (obra == null || obra.getIdObra() <= 0) {
+            logReporteDebug("puedeReportarseObra=false -> obra nula o idObra invalido");
             return false;
         }
 
         Integer usuarioActual = currentUserId != null ? currentUserId : resolveCurrentUserId();
         String rolActual = resolveCurrentUserRole();
-
-        if (!ReporteUiPermissions.puedeMostrarReportar(usuarioActual, rolActual)) {
-            return false;
-        }
-
-        if (modoTarjeta == ModoTarjetaObra.MIS_OBRAS || ownedObraIds.contains(obra.getIdObra())) {
-            return false;
-        }
-
+        Integer idAutorObra = obra.getIdAutor();
+        boolean esObraPropiaPorAutor = idAutorObra != null && usuarioActual != null && idAutorObra.equals(usuarioActual);
+        boolean esObraPropiaPorOwnedIds = ownedObraIds.contains(obra.getIdObra());
+        boolean esObraPropia = esObraPropiaPorAutor || esObraPropiaPorOwnedIds;
         String estado = normalizarEstado(obra.getEstado());
-        return !estado.contains("reservad") && !estado.contains("vendid");
+        boolean estadoBloqueado = estado.contains("reservad") || estado.contains("vendid");
+        boolean puedeMostrarSegunRol = ReporteUiPermissions.puedeMostrarReportar(usuarioActual, rolActual);
+        boolean esModoMisObras = modoTarjeta == ModoTarjetaObra.MIS_OBRAS;
+        boolean puedeReportar = puedeMostrarSegunRol && !esModoMisObras && !esObraPropia && !estadoBloqueado;
+
+        SharedPreferences prefs = context.getSharedPreferences(SessionManager.PREF_NAME, Context.MODE_PRIVATE);
+        String rolPrefs = prefs.getString("rol", null);
+        String modoPrefs = prefs.getString("modo", null);
+        logReporteDebug("obraId=" + obra.getIdObra()
+                + ", rolDetectado=" + rolActual
+                + ", rolPrefs=" + rolPrefs
+                + ", modoDetectado=" + modoPrefs
+                + ", idUsuarioActual=" + usuarioActual
+                + ", idUsuarioObra/idAutor=" + idAutorObra
+                + ", esObraPropia=" + esObraPropia
+                + ", esObraPropiaPorAutor=" + esObraPropiaPorAutor
+                + ", esObraPropiaPorOwnedIds=" + esObraPropiaPorOwnedIds
+                + ", estadoObra=" + obra.getEstado()
+                + ", estadoNormalizado=" + estado
+                + ", editable=" + obra.isEditable()
+                + ", eliminable=" + obra.isEliminable()
+                + ", puedeSolicitarCompra=" + obra.isPuedeSolicitarCompra()
+                + ", modoTarjeta=" + modoTarjeta
+                + ", puedeMostrarSegunRol=" + puedeMostrarSegunRol
+                + ", puedeReportar=" + puedeReportar);
+
+        return puedeReportar;
     }
 
     private String safeText(String value, String fallback) {
@@ -644,6 +691,17 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         }
 
         return builder.toString();
+    }
+
+    private void logReporteDebug(String message) {
+        if (!ENABLE_REPORTE_UI_DEBUG_LOGS) {
+            return;
+        }
+        if (context != null
+                && context.getApplicationInfo() != null
+                && (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            Log.d(TAG_REPORTE_DEBUG, message);
+        }
     }
 
     private void animateLikeButton(LottieAnimationView btnLike, boolean wasLiked) {
@@ -786,6 +844,16 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         if (nuevaLista != null && !nuevaLista.isEmpty()) {
             notifyItemRangeInserted(0, nuevaLista.size());
         }
+    }
+
+    public void agregarItems(List<TarjetaTextoObraItem> nuevosItems) {
+        if (nuevosItems == null || nuevosItems.isEmpty()) {
+            return;
+        }
+        int start = listaObras.size();
+        listaObras.addAll(nuevosItems);
+        listaOriginal.addAll(nuevosItems);
+        notifyItemRangeInserted(start, nuevosItems.size());
     }
 
     public void removeItemAt(int position) {

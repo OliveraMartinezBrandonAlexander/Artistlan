@@ -43,7 +43,6 @@ public class LoginResponseDTO {
         legacyUser.setUsuario(usuario);
         legacyUser.setCorreo(correo);
         legacyUser.setNombreCompleto(nombreCompleto);
-        legacyUser.setContrasena(contrasena);
         legacyUser.setRol(rol);
         legacyUser.setDescripcion(descripcion);
         legacyUser.setFotoPerfil(fotoPerfil);

@@ -1,6 +1,7 @@
 package com.example.artistlan.Conector.api;
 
 import com.example.artistlan.Conector.model.ContadorPendientesDTO;
+import com.example.artistlan.Conector.model.PageResponseSolicitudDTO;
 import com.example.artistlan.Conector.model.ResolverSolicitudRequestDTO;
 import com.example.artistlan.Conector.model.SolicitudCompraCrearRequestDTO;
 import com.example.artistlan.Conector.model.SolicitudDTO;
@@ -24,6 +25,24 @@ public interface SolicitudesApi {
 
     @GET("solicitudes-compra/enviadas/{compradorId}")
     Call<List<SolicitudDTO>> obtenerSolicitudesEnviadas(@Path("compradorId") int compradorId);
+
+    @GET("solicitudes-compra/recibidas/{vendedorId}/paginado")
+    Call<PageResponseSolicitudDTO> obtenerSolicitudesRecibidasPaginadas(
+            @Path("vendedorId") int vendedorId,
+            @Query("page") int page,
+            @Query("size") int size,
+            @Query("sort") String sort,
+            @Query("estado") String estado
+    );
+
+    @GET("solicitudes-compra/enviadas/{compradorId}/paginado")
+    Call<PageResponseSolicitudDTO> obtenerSolicitudesEnviadasPaginadas(
+            @Path("compradorId") int compradorId,
+            @Query("page") int page,
+            @Query("size") int size,
+            @Query("sort") String sort,
+            @Query("estado") String estado
+    );
 
     @GET("solicitudes-compra/{idSolicitud}")
     Call<SolicitudDTO> obtenerSolicitudPorId(

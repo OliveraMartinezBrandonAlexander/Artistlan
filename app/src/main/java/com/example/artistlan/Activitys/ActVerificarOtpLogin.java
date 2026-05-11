@@ -157,7 +157,13 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                     return;
                 }
 
-                sessionManager.saveUserSession(user, body.getToken());
+                String token = body.getToken();
+                if (token == null || token.trim().isEmpty() || "null".equalsIgnoreCase(token.trim())) {
+                    Toast.makeText(ActVerificarOtpLogin.this, "No se recibió token de sesión válido", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                sessionManager.saveUserSession(user, token);
 
                 Intent intent = new Intent(ActVerificarOtpLogin.this, ActFragmentoPrincipal.class);
                 startActivity(intent);
@@ -406,7 +412,10 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
     private String buildAuthorizationHeader() {
         jwtToken = sessionManager.getToken();
-        return "Bearer " + jwtToken;
+        if (jwtToken == null || jwtToken.trim().isEmpty()) {
+            return null;
+        }
+        return "Bearer " + jwtToken.trim();
     }
 
     private void setLoadingState(boolean loading) {

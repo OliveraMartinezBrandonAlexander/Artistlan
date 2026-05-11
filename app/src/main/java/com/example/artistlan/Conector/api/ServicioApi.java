@@ -1,4 +1,5 @@
 package com.example.artistlan.Conector.api;
+import com.example.artistlan.Conector.model.PageResponseServicioDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import java.util.List;
 import retrofit2.Call;
@@ -16,6 +17,17 @@ public interface ServicioApi {
 
     @GET("servicios")
     Call<List<ServicioDTO>> obtenerTodos(@Query("usuarioId") Integer usuarioId);
+
+    @GET("servicios/paginado")
+    Call<PageResponseServicioDTO> obtenerServiciosPaginados(
+            @Query("usuarioId") Integer usuarioId,
+            @Query("q") String q,
+            @Query("categoria") String categoria,
+            @Query("idCategoria") Integer idCategoria,
+            @Query("page") int page,
+            @Query("size") int size,
+            @Query("sort") String sort
+    );
 
     @GET("servicios/{id}")
     Call<ServicioDTO> obtenerPorId(@Path("id") int id);

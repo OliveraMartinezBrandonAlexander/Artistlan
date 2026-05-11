@@ -304,7 +304,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="18dp"
-                    android:text="Confirmo que esta obra es de mi autoria y asumo la responsabilidad de su publicacion."
+                    android:text="Confirmo que esta obra es de mi autoria y asumo la responsabilidad de su publicación."
                     android:textColor="#202020" />
 
 

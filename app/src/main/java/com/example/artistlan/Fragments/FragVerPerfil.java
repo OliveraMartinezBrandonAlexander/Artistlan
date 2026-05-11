@@ -59,6 +59,9 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FragVerPerfil extends Fragment implements View.OnClickListener {
+    private static final long PERFIL_REFRESH_MIN_INTERVAL_MS = 3500L;
+    private static final long FAVORITOS_REFRESH_MIN_INTERVAL_MS = 2500L;
+    private static final String PREF_KEY_PERFIL_TAB_INDEX = "perfil_favoritos_tab_index";
 
     private TextView tvNombre, tvUsuario, tvCorreo, tvDescripcion, tvTelefono, tvRedes, tvFecNac, tvCategoria, tvUbicacion, tvFavoritosVacio;
     private ImageView imgFotoPerfil;
@@ -85,6 +88,10 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private TarjetaTextoObraAdapter obraAdapter;
     private TarjetaTextoServicioAdapter servicioAdapter;
     private TarjetaTextoArtistaAdapter artistaAdapter;
+    private long ultimoRefreshPerfilMs = 0L;
+    private long ultimoRefreshFavoritosMs = 0L;
+    private int selectedTabIndex = 0;
+    private int ultimoTabFavoritosCargado = -1;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -146,6 +153,8 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
         setupTabs();
         cargarDatosUsuario();
+        selectedTabIndex = obtenerTabFavoritosPersistido();
+        restaurarTabFavoritos();
         refrescarDatosPerfilDesdeApi();
     }
 
@@ -153,8 +162,11 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     public void onResume() {
         super.onResume();
         cargarDatosUsuario();
-        refrescarDatosPerfilDesdeApi();
-        cargarFavoritosPorTab(0);
+        long ahora = android.os.SystemClock.elapsedRealtime();
+        if (ahora - ultimoRefreshPerfilMs >= PERFIL_REFRESH_MIN_INTERVAL_MS) {
+            refrescarDatosPerfilDesdeApi();
+            solicitarCargaFavoritos(selectedTabIndex, false);
+        }
     }
 
     private void setupTabs() {
@@ -165,7 +177,9 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tabFavoritos.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                cargarFavoritosPorTab(tab.getPosition());
+                selectedTabIndex = clampTabIndex(tab.getPosition());
+                guardarTabFavoritosPersistido(selectedTabIndex);
+                solicitarCargaFavoritos(selectedTabIndex, false);
             }
 
             @Override
@@ -174,9 +188,56 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
-                cargarFavoritosPorTab(tab.getPosition());
+                selectedTabIndex = clampTabIndex(tab.getPosition());
+                guardarTabFavoritosPersistido(selectedTabIndex);
+                solicitarCargaFavoritos(selectedTabIndex, false);
             }
         });
+    }
+
+    private void restaurarTabFavoritos() {
+        if (tabFavoritos == null || tabFavoritos.getTabCount() == 0) {
+            return;
+        }
+        int safeTabIndex = clampTabIndex(selectedTabIndex);
+        TabLayout.Tab targetTab = tabFavoritos.getTabAt(safeTabIndex);
+        if (targetTab == null) {
+            solicitarCargaFavoritos(0, true);
+            return;
+        }
+        TabLayout.Tab selectedTab = tabFavoritos.getTabAt(tabFavoritos.getSelectedTabPosition());
+        if (selectedTab != null && selectedTab.getPosition() == safeTabIndex) {
+            solicitarCargaFavoritos(safeTabIndex, true);
+            return;
+        }
+        targetTab.select();
+    }
+
+    private void solicitarCargaFavoritos(int tabIndex, boolean forzar) {
+        int safeTabIndex = clampTabIndex(tabIndex);
+        long ahora = android.os.SystemClock.elapsedRealtime();
+        if (!forzar
+                && safeTabIndex == ultimoTabFavoritosCargado
+                && ahora - ultimoRefreshFavoritosMs < FAVORITOS_REFRESH_MIN_INTERVAL_MS) {
+            return;
+        }
+        ultimoTabFavoritosCargado = safeTabIndex;
+        ultimoRefreshFavoritosMs = ahora;
+        cargarFavoritosPorTab(safeTabIndex);
+    }
+
+    private int obtenerTabFavoritosPersistido() {
+        SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        return clampTabIndex(prefs.getInt(PREF_KEY_PERFIL_TAB_INDEX, 0));
+    }
+
+    private void guardarTabFavoritosPersistido(int tabIndex) {
+        SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        prefs.edit().putInt(PREF_KEY_PERFIL_TAB_INDEX, clampTabIndex(tabIndex)).apply();
+    }
+
+    private int clampTabIndex(int tabIndex) {
+        return Math.max(0, Math.min(2, tabIndex));
     }
 
     private void cargarDatosUsuario() {
@@ -288,6 +349,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 }
 
                 actualizarEstadoBoton2FA();
+                ultimoRefreshPerfilMs = android.os.SystemClock.elapsedRealtime();
             }
 
             @Override
@@ -354,7 +416,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
         String token = sessionManager.getToken();
         if (token == null || token.trim().isEmpty()) {
-            Toast.makeText(requireContext(), "Sesion no valida. Vuelve a iniciar sesion.", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), "Sesión no válida. Vuelve a iniciar sesión.", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -409,7 +471,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 if (btnDesactivar2FA != null) {
                     btnDesactivar2FA.setEnabled(true);
                 }
-                Toast.makeText(requireContext(), "Error de conexion al desactivar 2FA", Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), "Error de conexión al desactivar 2FA", Toast.LENGTH_LONG).show();
             }
         });
     }

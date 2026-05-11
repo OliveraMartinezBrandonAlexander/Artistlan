@@ -2,30 +2,37 @@ package com.example.artistlan.Fragments;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.FavoritosApi;
-import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.api.UsuarioApi;
-import com.example.artistlan.Conector.model.ArtistaDTO;
+import com.example.artistlan.Conector.model.ArtistaResumenDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
+import com.example.artistlan.Conector.model.PageResponseArtistaDTO;
 import com.example.artistlan.R;
-import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoArtista.adapter.TarjetaTextoArtistaAdapter;
 import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +41,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -42,16 +48,32 @@ import retrofit2.Response;
 
 public class FragArtistas extends Fragment implements FilterableExplorarFragment {
 
+    private static final String TAG_PAGINATION = "FragArtistasPagination";
+    private static final boolean ENABLE_PAGINATION_DEBUG_LOGS = false;
     private static final long LIKE_THROTTLE_MS = 500L;
+    private static final long SEARCH_DEBOUNCE_MS = 400L;
+    private static final int PAGE_SIZE = 10;
+    private static final String SORT_DEFAULT = "idUsuario,desc";
+    private static final int NESTED_SCROLL_BOTTOM_THRESHOLD_PX = 180;
 
+    private NestedScrollView nestedScrollArtistas;
     private RecyclerView recyclerViewArtistas;
+    private Button btnCargarMasArtistas;
+    private LinearLayout layoutLoaderMasArtistas;
     private TarjetaTextoArtistaAdapter adapter;
-    private String profesionFiltroActual = "";
-    private List<TarjetaTextoArtistaItem> listaArtistas = new ArrayList<>();
-    private int idUsuarioLogueado = -1;
+    private UsuarioApi usuarioApi;
     private FavoritosApi favoritosApi;
-    private ObraApi obraApi;
-    private int cargaArtistasToken = 0;
+    private String profesionFiltroActual = "";
+    private String textoBusquedaActual = "";
+    private int idUsuarioLogueado = -1;
+    private int nextPageToLoad = 0;
+    private boolean isLoading = false;
+    private boolean isLastPage = false;
+    private boolean cargaInicialHecha = false;
+    private int requestToken = 0;
+    private final Handler searchHandler = new Handler(Looper.getMainLooper());
+    private Runnable pendingSearchRunnable;
+    private final List<TarjetaTextoArtistaItem> artistasAcumulados = new ArrayList<>();
     private final Map<Integer, Long> ultimoToqueLikePorArtista = new HashMap<>();
     private final Set<Integer> likesEnVuelo = new HashSet<>();
 
@@ -61,9 +83,12 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     }
 
     public void filtrarBusqueda(String texto) {
-        if (adapter != null) {
-            adapter.filtrar(texto);
+        String nuevoTexto = texto != null ? texto.trim() : "";
+        if (nuevoTexto.equals(textoBusquedaActual)) {
+            return;
         }
+        textoBusquedaActual = nuevoTexto;
+        programarRecargaDebounce();
     }
 
     @Override
@@ -73,10 +98,11 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
         new BotonesMenuSuperior(this);
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
-        obraApi = RetrofitClient.getClient().create(ObraApi.class);
+        usuarioApi = RetrofitClient.getClient().create(UsuarioApi.class);
+
         configurarArtistas(view);
-        cargarArtistas();
     }
 
     @Override
@@ -108,33 +134,75 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
             profesionFiltroActual = filter;
             Toast.makeText(getContext(), "Filtrando: " + filter, Toast.LENGTH_SHORT).show();
         }
-
-        cargarArtistas();
+        reiniciarYCargarPrimeraPagina();
     }
 
     @Override
     public void clearFilter() {
         profesionFiltroActual = "";
-        cargarArtistas();
+        reiniciarYCargarPrimeraPagina();
     }
 
     private void configurarArtistas(View view) {
+        nestedScrollArtistas = view.findViewById(R.id.nestedScrollArtistas);
         recyclerViewArtistas = view.findViewById(R.id.recyclerArtistas);
+        btnCargarMasArtistas = view.findViewById(R.id.btnCargarMasArtistas);
+        layoutLoaderMasArtistas = view.findViewById(R.id.layoutLoaderMasArtistas);
+
         recyclerViewArtistas.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new TarjetaTextoArtistaAdapter(listaArtistas, requireContext());
+        recyclerViewArtistas.setItemAnimator(null);
+        adapter = new TarjetaTextoArtistaAdapter(new ArrayList<>(), requireContext());
         adapter.setCurrentUserId(idUsuarioLogueado);
         adapter.setOnLikeClickListener(this::toggleLikeArtista);
         adapter.setOnVisitarClickListener(this::abrirPerfilPublico);
         recyclerViewArtistas.setAdapter(adapter);
+
+        if (btnCargarMasArtistas != null) {
+            btnCargarMasArtistas.setOnClickListener(v -> {
+                if (isLoading || isLastPage) {
+                    return;
+                }
+                cargarSiguientePagina();
+            });
+        }
+
+        if (nestedScrollArtistas != null) {
+            nestedScrollArtistas.setOnScrollChangeListener((NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) -> {
+                if (scrollY <= oldScrollY || isLoading || isLastPage) {
+                    return;
+                }
+                View contenido = v.getChildAt(0);
+                if (contenido == null) {
+                    return;
+                }
+                int distanciaAlFinal = contenido.getBottom() - (v.getHeight() + v.getScrollY());
+                if (distanciaAlFinal <= NESTED_SCROLL_BOTTOM_THRESHOLD_PX) {
+                    logPagination("Trigger nested scroll -> distanciaAlFinal=" + distanciaAlFinal
+                            + ", nextPageToLoad=" + nextPageToLoad);
+                    cargarSiguientePagina();
+                }
+            });
+        }
+
+        if (!cargaInicialHecha) {
+            cargaInicialHecha = true;
+            reiniciarYCargarPrimeraPagina();
+        }
     }
+
     private void abrirPerfilPublico(TarjetaTextoArtistaItem artistaItem, int position) {
-        if (!isAdded() || artistaItem.getIdArtista() == null) return;
+        if (!isAdded() || artistaItem.getIdArtista() == null) {
+            return;
+        }
         Bundle args = new Bundle();
         args.putInt("idArtista", artistaItem.getIdArtista());
         NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfilPublico, args);
     }
+
     private void toggleLikeArtista(TarjetaTextoArtistaItem artistaItem, int position) {
-        if (idUsuarioLogueado <= 0 || artistaItem.getIdArtista() == null) return;
+        if (idUsuarioLogueado <= 0 || artistaItem.getIdArtista() == null) {
+            return;
+        }
         Integer idArtistaTarget = artistaItem.getIdArtista();
         long ahora = System.currentTimeMillis();
         Long ultimoToque = ultimoToqueLikePorArtista.get(idArtistaTarget);
@@ -168,6 +236,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
                     Toast.makeText(getContext(), "No se pudo actualizar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
                 }
             }
+
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 likesEnVuelo.remove(idArtistaTarget);
@@ -179,68 +248,123 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
         });
     }
 
-    private void cargarArtistas() {
-        final int tokenActual = ++cargaArtistasToken;
-        UsuarioApi api = RetrofitClient.getClient().create(UsuarioApi.class);
-        api.getArtistas(idUsuarioLogueado > 0 ? idUsuarioLogueado : null).enqueue(new Callback<List<ArtistaDTO>>() {
+    private void programarRecargaDebounce() {
+        if (pendingSearchRunnable != null) {
+            searchHandler.removeCallbacks(pendingSearchRunnable);
+        }
+        pendingSearchRunnable = this::reiniciarYCargarPrimeraPagina;
+        searchHandler.postDelayed(pendingSearchRunnable, SEARCH_DEBOUNCE_MS);
+    }
+
+    private void reiniciarYCargarPrimeraPagina() {
+        if (pendingSearchRunnable != null) {
+            searchHandler.removeCallbacks(pendingSearchRunnable);
+            pendingSearchRunnable = null;
+        }
+
+        requestToken++;
+        nextPageToLoad = 0;
+        isLastPage = false;
+        isLoading = false;
+
+        artistasAcumulados.clear();
+        adapter.actualizarLista(new ArrayList<>());
+        mostrarBotonCargarMas(false, false);
+        mostrarLoaderMasArtistas(false);
+
+        logPagination("Reset paginacion -> page=0, size=" + PAGE_SIZE
+                + ", q=" + textoBusquedaActual
+                + ", categoria=" + profesionFiltroActual);
+        cargarPagina(0);
+    }
+
+    private void cargarSiguientePagina() {
+        if (isLoading || isLastPage) {
+            return;
+        }
+        logPagination("Solicitando siguiente pagina -> page=" + nextPageToLoad + ", size=" + PAGE_SIZE);
+        cargarPagina(nextPageToLoad);
+    }
+
+    private void cargarPagina(int pageObjetivo) {
+        if (isLoading || (isLastPage && pageObjetivo > 0)) {
+            return;
+        }
+
+        isLoading = true;
+        mostrarLoaderMasArtistas(pageObjetivo > 0);
+        if (pageObjetivo > 0) {
+            mostrarBotonCargarMas(false, false);
+        }
+
+        final int tokenLocal = ++requestToken;
+        Integer usuarioIdParam = idUsuarioLogueado > 0 ? idUsuarioLogueado : null;
+        String qParam = textoBusquedaActual.isEmpty() ? null : textoBusquedaActual;
+        String categoriaParam = profesionFiltroActual.isEmpty() ? null : profesionFiltroActual;
+
+        usuarioApi.getArtistasPaginados(
+                usuarioIdParam,
+                qParam,
+                categoriaParam,
+                null,
+                pageObjetivo,
+                PAGE_SIZE,
+                SORT_DEFAULT
+        ).enqueue(new Callback<PageResponseArtistaDTO>() {
             @Override
-            public void onResponse(Call<List<ArtistaDTO>> call, Response<List<ArtistaDTO>> response) {
-                if (!isAdded() || tokenActual != cargaArtistasToken) return;
-                if (response.code() == 204) { adapter.actualizarLista(new ArrayList<>()); return; }
-                if (response.isSuccessful() && response.body() != null) {
-                    List<ArtistaDTO> artistasFiltrados = new ArrayList<>();
-                    for (ArtistaDTO artista : response.body()) {
-                        if (!profesionFiltroActual.isEmpty()) {
-                            String profesionArtista = artista.getCategoria();
-                            if (profesionArtista == null ||
-                                    !profesionFiltroActual.equalsIgnoreCase(profesionArtista)) {
-                                continue;
-                            }
-                        }
-                        artistasFiltrados.add(artista);
-                    }
+            public void onResponse(@NonNull Call<PageResponseArtistaDTO> call, @NonNull Response<PageResponseArtistaDTO> response) {
+                if (!isAdded() || tokenLocal != requestToken) {
+                    return;
+                }
 
-                    if (artistasFiltrados.isEmpty()) {
-                        listaArtistas.clear();
-                        adapter.actualizarLista(new ArrayList<>());
-                        return;
-                    }
-
-                    List<TarjetaTextoArtistaItem> nuevaLista = new ArrayList<>();
-                    AtomicInteger pendientes = new AtomicInteger(artistasFiltrados.size());
-                    for (ArtistaDTO artista : artistasFiltrados) {
-                        obtenerMiniObras(artista, miniObras -> {
-                            if (!isAdded() || tokenActual != cargaArtistasToken) return;
-                            TarjetaTextoArtistaItem item = new TarjetaTextoArtistaItem(
-                                    artista.getIdUsuario(),
-                                    artista.getUsuario(),
-                                    artista.getCategoria(),
-                                    artista.getDescripcion(),
-                                    artista.getFotoPerfil(),
-                                    miniObras,
-                                    artista.getLikes() != null ? artista.getLikes() : 0,
-                                    Boolean.TRUE.equals(artista.getEsFavorito())
-                            );
-                            nuevaLista.add(item);
-
-                            if (pendientes.decrementAndGet() == 0) {
-                                listaArtistas.clear();
-                                listaArtistas.addAll(nuevaLista);
-                                adapter.actualizarLista(new ArrayList<>(listaArtistas));
-                            }
-                        });
-                    }
-                } else {
+                isLoading = false;
+                mostrarLoaderMasArtistas(false);
+                if (!response.isSuccessful() || response.body() == null) {
                     Toast.makeText(getContext(),
                             "Error al obtener artistas: " + response.code(),
                             Toast.LENGTH_LONG).show();
+                    return;
                 }
+
+                PageResponseArtistaDTO pageResponse = response.body();
+                List<TarjetaTextoArtistaItem> nuevosItems = convertir(pageResponse.getContent());
+
+                if (pageObjetivo == 0) {
+                    artistasAcumulados.clear();
+                }
+                artistasAcumulados.addAll(nuevosItems);
+
+                if (pageObjetivo == 0) {
+                    adapter.actualizarLista(new ArrayList<>(artistasAcumulados));
+                } else {
+                    adapter.agregarItems(nuevosItems);
+                }
+
+                nextPageToLoad = pageObjetivo + 1;
+                isLastPage = pageResponse.isLast();
+                mostrarBotonCargarMas(!isLastPage, false);
+
+                logPagination("Response pagina -> page=" + pageObjetivo
+                        + ", size=" + PAGE_SIZE
+                        + ", recibidas=" + nuevosItems.size()
+                        + ", totalAcumuladas=" + artistasAcumulados.size()
+                        + ", last=" + pageResponse.isLast()
+                        + ", totalPages=" + pageResponse.getTotalPages()
+                        + ", nextPageToLoad=" + nextPageToLoad);
             }
 
             @Override
-            public void onFailure(Call<List<ArtistaDTO>> call, Throwable t) {
-                if (!isAdded() || tokenActual != cargaArtistasToken) return;
-                t.printStackTrace();
+            public void onFailure(@NonNull Call<PageResponseArtistaDTO> call, @NonNull Throwable t) {
+                if (!isAdded() || tokenLocal != requestToken) {
+                    return;
+                }
+                isLoading = false;
+                mostrarLoaderMasArtistas(false);
+                if (pageObjetivo > 0) {
+                    mostrarBotonCargarMas(!isLastPage, true);
+                } else {
+                    mostrarBotonCargarMas(false, false);
+                }
                 Toast.makeText(getContext(),
                         "Error de conexión al cargar artistas",
                         Toast.LENGTH_LONG).show();
@@ -248,7 +372,65 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
         });
     }
 
-    private void obtenerMiniObras(ArtistaDTO artista, ArtistaMiniObrasLoader.MiniObrasCallback callback) {
-        ArtistaMiniObrasLoader.cargarMiniObrasPorUsuario(obraApi, artista.getIdUsuario(), callback);
+    private void mostrarLoaderMasArtistas(boolean mostrar) {
+        if (layoutLoaderMasArtistas == null) {
+            return;
+        }
+        layoutLoaderMasArtistas.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+    }
+
+    private void mostrarBotonCargarMas(boolean mostrar, boolean reintento) {
+        if (btnCargarMasArtistas == null) {
+            return;
+        }
+        btnCargarMasArtistas.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        if (mostrar) {
+            btnCargarMasArtistas.setText(reintento ? "Reintentar cargar más artistas" : "Cargar más artistas");
+        }
+    }
+
+    private List<TarjetaTextoArtistaItem> convertir(List<ArtistaResumenDTO> dtoList) {
+        List<TarjetaTextoArtistaItem> lista = new ArrayList<>();
+        if (dtoList == null) {
+            return lista;
+        }
+        for (ArtistaResumenDTO dto : dtoList) {
+            List<String> miniObras = new ArrayList<>(dto.getMiniObras());
+            while (miniObras.size() < 3) {
+                miniObras.add(null);
+            }
+            lista.add(new TarjetaTextoArtistaItem(
+                    dto.getIdUsuario(),
+                    dto.getUsuario(),
+                    dto.getCategoria(),
+                    dto.getDescripcion(),
+                    dto.getFotoPerfil(),
+                    miniObras,
+                    dto.getLikes() != null ? dto.getLikes() : 0,
+                    Boolean.TRUE.equals(dto.getEsFavorito())
+            ));
+        }
+        return lista;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (pendingSearchRunnable != null) {
+            searchHandler.removeCallbacks(pendingSearchRunnable);
+            pendingSearchRunnable = null;
+        }
+    }
+
+    private void logPagination(String message) {
+        if (!ENABLE_PAGINATION_DEBUG_LOGS) {
+            return;
+        }
+        Context context = getContext();
+        if (context != null
+                && context.getApplicationInfo() != null
+                && (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            Log.d(TAG_PAGINATION, message);
+        }
     }
 }

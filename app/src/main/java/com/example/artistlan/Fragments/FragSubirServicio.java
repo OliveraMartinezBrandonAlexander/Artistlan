@@ -154,7 +154,7 @@ public class FragSubirServicio extends Fragment {
     private void configurarModoPantalla(View view) {
         if (!modoEdicion) return;
         ((TextView) view.findViewById(R.id.lsTxtTitulo)).setText("Editar Servicio");
-        ((TextView) view.findViewById(R.id.lsTxtDesc)).setText("Actualiza la informacion de tu servicio. El precio no se puede editar.");
+        ((TextView) view.findViewById(R.id.lsTxtDesc)).setText("Actualiza la informaci\u00F3n de tu servicio. El precio no se puede editar.");
         btnPublicarServicio.setText("GUARDAR CAMBIOS");
         etPrecioMinServicio.setEnabled(false);
         etPrecioMaxServicio.setEnabled(false);
@@ -259,14 +259,14 @@ public class FragSubirServicio extends Fragment {
         String minTxt = etPrecioMinServicio.getText().toString().trim();
         String maxTxt = etPrecioMaxServicio.getText().toString().trim();
 
-        if (TextUtils.isEmpty(titulo)) { etTituloServicio.setError("Ingresa un titulo"); return; }
-        if (TextUtils.isEmpty(descripcion)) { etDescripcionServicio.setError("Ingresa una descripcion"); return; }
-        if (TextUtils.isEmpty(tecnica)) { etTecnicaServicio.setError("Indica tecnica"); return; }
+        if (TextUtils.isEmpty(titulo)) { etTituloServicio.setError("Ingresa un t\u00EDtulo"); return; }
+        if (TextUtils.isEmpty(descripcion)) { etDescripcionServicio.setError("Ingresa una descripci\u00F3n"); return; }
+        if (TextUtils.isEmpty(tecnica)) { etTecnicaServicio.setError("Indica t\u00E9cnica"); return; }
 
         int posCategoria = spinnerCategoriaServicio.getSelectedItemPosition();
         if (posCategoria <= 0 || posCategoria > listaCategoriasProfesiones.size()) {
             if (!(modoEdicion && servicioActual != null && servicioActual.getIdCategoria() != null)) {
-                Toast.makeText(requireContext(), "Selecciona una categoria valida", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Selecciona una categor\u00EDa v\u00E1lida", Toast.LENGTH_SHORT).show();
                 return;
             }
         }
@@ -284,22 +284,22 @@ public class FragSubirServicio extends Fragment {
             max = servicioActual != null ? servicioActual.getPrecioMax() : null;
         } else {
             if (TextUtils.isEmpty(minTxt)) {
-                etPrecioMinServicio.setError("Ingresa un precio minimo");
+                etPrecioMinServicio.setError("Ingresa un precio m\u00EDnimo");
                 etPrecioMinServicio.requestFocus();
                 return;
             }
             if (TextUtils.isEmpty(maxTxt)) {
-                etPrecioMaxServicio.setError("Ingresa un precio maximo");
+                etPrecioMaxServicio.setError("Ingresa un precio m\u00E1ximo");
                 etPrecioMaxServicio.requestFocus();
                 return;
             }
-            min = parsePrecio(minTxt, etPrecioMinServicio, "Precio minimo invalido");
-            max = parsePrecio(maxTxt, etPrecioMaxServicio, "Precio maximo invalido");
+            min = parsePrecio(minTxt, etPrecioMinServicio, "Precio m\u00EDnimo inv\u00E1lido");
+            max = parsePrecio(maxTxt, etPrecioMaxServicio, "Precio m\u00E1ximo inv\u00E1lido");
             if (min == null || max == null) {
                 return;
             }
             if (min >= max) {
-                etPrecioMaxServicio.setError("El precio maximo debe ser mayor al minimo");
+                etPrecioMaxServicio.setError("El precio m\u00E1ximo debe ser mayor al m\u00EDnimo");
                 etPrecioMaxServicio.requestFocus();
                 return;
             }
@@ -332,7 +332,7 @@ public class FragSubirServicio extends Fragment {
                 if (v.length() < 2) { etContactoServicio.setError("Usuario de Instagram inválido"); return false; }
                 break;
             default:
-                if (v.length() < 2) { etContactoServicio.setError("Contacto invÃ¡lido"); return false; }
+                if (v.length() < 2) { etContactoServicio.setError("Contacto inválido"); return false; }
         }
         return true;
         }
@@ -364,12 +364,12 @@ public class FragSubirServicio extends Fragment {
 
         String categoriaTxt = categoria != null ? categoria.getNombreCategoria() : "Sin cambio";
         String precioTxt = (min == null && max == null) ? "A convenir" : ((min != null ? min : "-") + " / " + (max != null ? max : "-"));
-        txtResumen.setText("Titulo:\n" + titulo
-                + "\n\nDescripcion:\n" + descripcion
-                + "\n\nTecnica:\n" + tecnica
+        txtResumen.setText("Título:\n" + titulo
+                + "\n\nDescripci\u00F3n:\n" + descripcion
+                + "\n\nT\u00E9cnica:\n" + tecnica
                 + "\n\nContacto:\n" + tipoContacto + " - " + contacto
                 + "\n\nRango de precio (este campo no se puede actualizar):\n" + precioTxt
-                + "\n\nCategoria:\n" + categoriaTxt);
+                + "\n\nCategor\u00EDa:\n" + categoriaTxt);
 
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext()).setView(view).setCancelable(false).create();
 
@@ -413,7 +413,7 @@ public class FragSubirServicio extends Fragment {
         servicioApi.crearServicioDeUsuario(idUsuario, servicio).enqueue(new Callback<ServicioDTO>() {
             @Override public void onResponse(@NonNull Call<ServicioDTO> call, @NonNull Response<ServicioDTO> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(getContext(), "Servicio subido con exito", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Servicio subido con ?xito", Toast.LENGTH_LONG).show();
                     NavHostFragment.findNavController(FragSubirServicio.this).popBackStack();
                     return;
                 }
@@ -433,7 +433,7 @@ public class FragSubirServicio extends Fragment {
 
             @Override public void onResponse(@NonNull Call<ServicioDTO> call, @NonNull Response<ServicioDTO> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(getContext(), "Servicio actualizado con exito", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Servicio actualizado con ?xito", Toast.LENGTH_LONG).show();
                     NavHostFragment.findNavController(FragSubirServicio.this).popBackStack();
                     return;
                 }

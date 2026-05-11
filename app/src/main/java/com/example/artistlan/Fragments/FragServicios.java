@@ -2,14 +2,21 @@ package com.example.artistlan.Fragments;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.os.Handler;
 import android.os.Bundle;
+import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,8 +25,9 @@ import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.ServicioApi;
 import com.example.artistlan.Conector.api.FavoritosApi;
-import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
+import com.example.artistlan.Conector.model.PageResponseServicioDTO;
+import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
@@ -39,14 +47,32 @@ import retrofit2.Response;
 
 public class FragServicios extends Fragment implements FilterableExplorarFragment {
 
+    private static final String TAG_PAGINATION = "FragServiciosPagination";
+    private static final boolean ENABLE_PAGINATION_DEBUG_LOGS = false;
     private static final long LIKE_THROTTLE_MS = 500L;
+    private static final long SEARCH_DEBOUNCE_MS = 400L;
+    private static final int PAGE_SIZE = 10;
+    private static final String SORT_DEFAULT = "idServicio,desc";
+    private static final int NESTED_SCROLL_BOTTOM_THRESHOLD_PX = 180;
 
+    private NestedScrollView nestedScrollServicios;
     private RecyclerView recyclerServicios;
+    private Button btnCargarMasServicios;
+    private LinearLayout layoutLoaderMasServicios;
     private TarjetaTextoServicioAdapter adapter;
-    private List<TarjetaTextoServicioItem> listaServicios = new ArrayList<>();
+    private ServicioApi servicioApi;
     private String tipoServicioFiltroActual = "";
+    private String textoBusquedaActual = "";
     private int idUsuarioLogueado = -1;
     private FavoritosApi favoritosApi;
+    private int nextPageToLoad = 0;
+    private boolean isLoading = false;
+    private boolean isLastPage = false;
+    private boolean cargaInicialHecha = false;
+    private int requestToken = 0;
+    private final Handler searchHandler = new Handler(Looper.getMainLooper());
+    private Runnable pendingSearchRunnable;
+    private final List<TarjetaTextoServicioItem> serviciosAcumulados = new ArrayList<>();
     private final Map<Integer, Long> ultimoToqueLikePorServicio = new HashMap<>();
     private final Set<Integer> likesEnVuelo = new HashSet<>();
 
@@ -56,9 +82,12 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
     }
 
     public void filtrarBusqueda(String texto) {
-        if (adapter != null) {
-            adapter.filtrar(texto);
+        String nuevoTexto = texto != null ? texto.trim() : "";
+        if (nuevoTexto.equals(textoBusquedaActual)) {
+            return;
         }
+        textoBusquedaActual = nuevoTexto;
+        programarRecargaDebounce();
     }
 
     @Override
@@ -69,9 +98,9 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
+        servicioApi = RetrofitClient.getClient().create(ServicioApi.class);
 
         configurarServicios(view);
-        cargarTodosLosServicios();
     }
 
     @Override
@@ -99,47 +128,65 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
         if (tipoServicioFiltroActual.equalsIgnoreCase(filter)) {
             tipoServicioFiltroActual = "";
             Toast.makeText(getContext(), "Filtro desactivado", Toast.LENGTH_SHORT).show();
-
-            if (adapter != null) {
-                adapter.actualizarLista(new ArrayList<>(listaServicios));
-            }
-            return;
+        } else {
+            tipoServicioFiltroActual = filter;
+            Toast.makeText(getContext(), "Filtrando: " + filter, Toast.LENGTH_SHORT).show();
         }
 
-        tipoServicioFiltroActual = filter;
-        filtrarServiciosLocalmente(filter);
+        reiniciarYCargarPrimeraPagina();
     }
 
     @Override
     public void clearFilter() {
         tipoServicioFiltroActual = "";
-
-        if (adapter != null) {
-            adapter.actualizarLista(new ArrayList<>(listaServicios));
-        }
-
         Toast.makeText(getContext(), "Filtros borrados", Toast.LENGTH_SHORT).show();
-    }
-
-    private void filtrarServiciosLocalmente(String tipoServicio) {
-        List<TarjetaTextoServicioItem> serviciosFiltrados = new ArrayList<>();
-
-        for (TarjetaTextoServicioItem servicio : listaServicios) {
-            String categoria = servicio.getCategoria();
-            if (categoria != null && categoria.equalsIgnoreCase(tipoServicio)) {
-                serviciosFiltrados.add(servicio);
-            }
-        }
-        adapter.actualizarLista(serviciosFiltrados);
+        reiniciarYCargarPrimeraPagina();
     }
 
     private void configurarServicios(View view) {
+        nestedScrollServicios = view.findViewById(R.id.nestedScrollServicios);
         recyclerServicios = view.findViewById(R.id.recyclerServicios);
+        btnCargarMasServicios = view.findViewById(R.id.btnCargarMasServicios);
+        layoutLoaderMasServicios = view.findViewById(R.id.layoutLoaderMasServicios);
         recyclerServicios.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerServicios.setItemAnimator(null);
         adapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
+        adapter.setEntryAnimationsEnabled(false);
         adapter.setCurrentUserId(idUsuarioLogueado);
         adapter.setOnLikeClickListener(this::toggleLikeServicio);
         recyclerServicios.setAdapter(adapter);
+
+        if (btnCargarMasServicios != null) {
+            btnCargarMasServicios.setOnClickListener(v -> {
+                if (isLoading || isLastPage) {
+                    return;
+                }
+                cargarSiguientePagina();
+            });
+        }
+
+        if (nestedScrollServicios != null) {
+            nestedScrollServicios.setOnScrollChangeListener((NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) -> {
+                if (scrollY <= oldScrollY || isLoading || isLastPage) {
+                    return;
+                }
+                View contenido = v.getChildAt(0);
+                if (contenido == null) {
+                    return;
+                }
+                int distanciaAlFinal = contenido.getBottom() - (v.getHeight() + v.getScrollY());
+                if (distanciaAlFinal <= NESTED_SCROLL_BOTTOM_THRESHOLD_PX) {
+                    logPagination("Trigger nested scroll -> distanciaAlFinal=" + distanciaAlFinal
+                            + ", nextPageToLoad=" + nextPageToLoad);
+                    cargarSiguientePagina();
+                }
+            });
+        }
+
+        if (!cargaInicialHecha) {
+            cargaInicialHecha = true;
+            reiniciarYCargarPrimeraPagina();
+        }
     }
 
     private void toggleLikeServicio(TarjetaTextoServicioItem servicioItem, int position) {
@@ -188,28 +235,142 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
         });
     }
 
-    private void cargarTodosLosServicios() {
-        ServicioApi api = RetrofitClient.getClient().create(ServicioApi.class);
-        api.obtenerTodos(idUsuarioLogueado > 0 ? idUsuarioLogueado : null).enqueue(new Callback<List<ServicioDTO>>() {
-            @Override
-            public void onResponse(Call<List<ServicioDTO>> call, Response<List<ServicioDTO>> response) {
-                if (response.code() == 204) { adapter.actualizarLista(new ArrayList<>()); return; }
-                if (response.isSuccessful() && response.body() != null) {
-                    List<TarjetaTextoServicioItem> items = convertir(response.body());
-                    listaServicios = new ArrayList<>(items);
-                    if (tipoServicioFiltroActual.isEmpty()) adapter.actualizarLista(items);
-                    else filtrarServiciosLocalmente(tipoServicioFiltroActual);
+    private void programarRecargaDebounce() {
+        if (pendingSearchRunnable != null) {
+            searchHandler.removeCallbacks(pendingSearchRunnable);
+        }
+        pendingSearchRunnable = this::reiniciarYCargarPrimeraPagina;
+        searchHandler.postDelayed(pendingSearchRunnable, SEARCH_DEBOUNCE_MS);
+    }
 
-                } else {
-                    Toast.makeText(requireContext(), "Error al obtener servicios: " + response.code(), Toast.LENGTH_SHORT).show();
+    private void reiniciarYCargarPrimeraPagina() {
+        if (pendingSearchRunnable != null) {
+            searchHandler.removeCallbacks(pendingSearchRunnable);
+            pendingSearchRunnable = null;
+        }
+
+        requestToken++;
+        nextPageToLoad = 0;
+        isLastPage = false;
+        isLoading = false;
+
+        serviciosAcumulados.clear();
+        adapter.actualizarLista(new ArrayList<>());
+        mostrarBotonCargarMas(false, false);
+        mostrarLoaderMasServicios(false);
+
+        logPagination("Reset paginacion -> page=0, size=" + PAGE_SIZE
+                + ", q=" + textoBusquedaActual
+                + ", categoria=" + tipoServicioFiltroActual);
+        cargarPagina(0);
+    }
+
+    private void cargarSiguientePagina() {
+        if (isLoading || isLastPage) {
+            return;
+        }
+        logPagination("Solicitando siguiente pagina -> page=" + nextPageToLoad + ", size=" + PAGE_SIZE);
+        cargarPagina(nextPageToLoad);
+    }
+
+    private void cargarPagina(int pageObjetivo) {
+        if (isLoading || (isLastPage && pageObjetivo > 0)) {
+            return;
+        }
+
+        isLoading = true;
+        mostrarLoaderMasServicios(pageObjetivo > 0);
+        if (pageObjetivo > 0) {
+            mostrarBotonCargarMas(false, false);
+        }
+
+        final int tokenLocal = ++requestToken;
+        Integer usuarioIdParam = idUsuarioLogueado > 0 ? idUsuarioLogueado : null;
+        String qParam = textoBusquedaActual.isEmpty() ? null : textoBusquedaActual;
+        String categoriaParam = tipoServicioFiltroActual.isEmpty() ? null : tipoServicioFiltroActual;
+
+        servicioApi.obtenerServiciosPaginados(
+                usuarioIdParam,
+                qParam,
+                categoriaParam,
+                null,
+                pageObjetivo,
+                PAGE_SIZE,
+                SORT_DEFAULT
+        ).enqueue(new Callback<PageResponseServicioDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<PageResponseServicioDTO> call, @NonNull Response<PageResponseServicioDTO> response) {
+                if (!isAdded() || tokenLocal != requestToken) {
+                    return;
                 }
+
+                isLoading = false;
+                mostrarLoaderMasServicios(false);
+                if (!response.isSuccessful() || response.body() == null) {
+                    Toast.makeText(requireContext(), "Error al obtener servicios: " + response.code(), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                PageResponseServicioDTO pageResponse = response.body();
+                List<ServicioDTO> servicios = pageResponse.getContent();
+                List<TarjetaTextoServicioItem> nuevosItems = convertir(servicios);
+
+                if (pageObjetivo == 0) {
+                    serviciosAcumulados.clear();
+                }
+                serviciosAcumulados.addAll(nuevosItems);
+
+                if (pageObjetivo == 0) {
+                    adapter.actualizarLista(new ArrayList<>(serviciosAcumulados));
+                } else {
+                    adapter.agregarItems(nuevosItems);
+                }
+
+                nextPageToLoad = pageObjetivo + 1;
+                isLastPage = pageResponse.isLast();
+                mostrarBotonCargarMas(!isLastPage, false);
+
+                logPagination("Response pagina -> page=" + pageObjetivo
+                        + ", size=" + PAGE_SIZE
+                        + ", recibidas=" + nuevosItems.size()
+                        + ", totalAcumuladas=" + serviciosAcumulados.size()
+                        + ", last=" + pageResponse.isLast()
+                        + ", totalPages=" + pageResponse.getTotalPages()
+                        + ", nextPageToLoad=" + nextPageToLoad);
             }
 
             @Override
-            public void onFailure(Call<List<ServicioDTO>> call, Throwable t) {
+            public void onFailure(@NonNull Call<PageResponseServicioDTO> call, @NonNull Throwable t) {
+                if (!isAdded() || tokenLocal != requestToken) {
+                    return;
+                }
+                isLoading = false;
+                mostrarLoaderMasServicios(false);
+                if (pageObjetivo > 0) {
+                    mostrarBotonCargarMas(!isLastPage, true);
+                } else {
+                    mostrarBotonCargarMas(false, false);
+                }
                 Toast.makeText(requireContext(), "Error de red al cargar servicios.", Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void mostrarLoaderMasServicios(boolean mostrar) {
+        if (layoutLoaderMasServicios == null) {
+            return;
+        }
+        layoutLoaderMasServicios.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+    }
+
+    private void mostrarBotonCargarMas(boolean mostrar, boolean reintento) {
+        if (btnCargarMasServicios == null) {
+            return;
+        }
+        btnCargarMasServicios.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        if (mostrar) {
+            btnCargarMasServicios.setText(reintento ? "Reintentar cargar m\u00E1s servicios" : "Cargar m\u00E1s servicios");
+        }
     }
 
     private List<TarjetaTextoServicioItem> convertir(List<ServicioDTO> dtoList) {
@@ -217,7 +378,27 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
         for (ServicioDTO dto : dtoList) {
             lista.add(new TarjetaTextoServicioItem(dto.getIdServicio(), dto.getIdUsuario(), dto.getTitulo(), dto.getDescripcion(), dto.getContacto(), dto.getTipoContacto(), dto.getTecnicas(), dto.getNombreUsuario(), dto.getCategoria(), dto.getFotoPerfilAutor(), dto.getPrecioMin(), dto.getPrecioMax(), dto.getLikes() != null ? dto.getLikes() : 0, Boolean.TRUE.equals(dto.getEsFavorito()), false));
         }
-
         return lista;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (pendingSearchRunnable != null) {
+            searchHandler.removeCallbacks(pendingSearchRunnable);
+            pendingSearchRunnable = null;
+        }
+    }
+
+    private void logPagination(String message) {
+        if (!ENABLE_PAGINATION_DEBUG_LOGS) {
+            return;
+        }
+        Context context = getContext();
+        if (context != null
+                && context.getApplicationInfo() != null
+                && (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            Log.d(TAG_PAGINATION, message);
+        }
     }
 }

@@ -34,7 +34,6 @@ import com.example.artistlan.adapter.TransaccionAdapter;
 import com.example.artistlan.pagos.PagoSyncManager;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeManager;
-import com.example.artistlan.pagos.PagoSyncManager;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -183,7 +182,7 @@ public abstract class BaseTransaccionesFragment extends Fragment {
 
     private void onTransaccionClick(TransaccionResumenDTO item, int position) {
         if (item == null || item.getIdTransaccion() == null || item.getIdTransaccion() <= 0) {
-            Toast.makeText(requireContext(), "No se pudo abrir el detalle de la transaccion", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "No se pudo abrir el detalle de la transacci\u00F3n", Toast.LENGTH_SHORT).show();
             return;
         }
         cargarDetalleTransaccion(item);
@@ -192,7 +191,7 @@ public abstract class BaseTransaccionesFragment extends Fragment {
     private void cargarDetalleTransaccion(TransaccionResumenDTO resumen) {
         String tipoOrigen = resumen != null ? resumen.getTipoOrigen() : null;
         if (tipoOrigen == null || tipoOrigen.trim().isEmpty()) {
-            Toast.makeText(requireContext(), "No se pudo identificar el tipo de transaccion.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "No se pudo identificar el tipo de transacci\u00F3n.", Toast.LENGTH_SHORT).show();
             return;
         }
         progressTransacciones.setVisibility(View.VISIBLE);
@@ -255,7 +254,7 @@ public abstract class BaseTransaccionesFragment extends Fragment {
         TextView tvVendedorSecundario = dialogView.findViewById(R.id.tvDetalleVendedorSecundario);
         TextView tvConfianzaTexto = dialogView.findViewById(R.id.tvDetalleConfianzaTexto);
 
-        String titulo = safe(detalle != null ? detalle.getTituloObra() : null, resumen != null ? resumen.getTituloObra() : null, "Obra sin titulo");
+        String titulo = safe(detalle != null ? detalle.getTituloObra() : null, resumen != null ? resumen.getTituloObra() : null, "Obra sin t\u00EDtulo");
         String imagen = safe(detalle != null ? detalle.getImagenObra() : null, resumen != null ? resumen.getImagenObra() : null, "");
         Double monto = detalle != null ? detalle.getMonto() : null;
         if (monto == null && resumen != null) {
@@ -343,7 +342,7 @@ public abstract class BaseTransaccionesFragment extends Fragment {
             } else {
                 btnReportarTop.setVisibility(View.VISIBLE);
                 btnReportarTop.setOnClickListener(v -> Toast.makeText(requireContext(),
-                        "Esta funcion estara disponible proximamente",
+                        "Esta funci\u00F3n estar\u00E1 disponible pr\u00F3ximamente",
                         Toast.LENGTH_SHORT).show());
             }
         }

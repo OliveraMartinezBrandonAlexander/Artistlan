@@ -9,10 +9,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.artistlan.Activitys.ActFragmentoPrincipal;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.SolicitudesApi;
+import com.example.artistlan.Conector.model.PageResponseSolicitudDTO;
 import com.example.artistlan.Conector.model.ResolverSolicitudRequestDTO;
 import com.example.artistlan.Conector.model.SolicitudDTO;
 import com.example.artistlan.R;
@@ -33,10 +34,10 @@ import com.example.artistlan.adapter.SolicitudesAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -46,6 +47,9 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
 
     public static final int MODO_RECIBIDAS = 0;
     public static final int MODO_ENVIADAS = 1;
+
+    private static final int PAGE_SIZE = 10;
+    private static final String SORT_DEFAULT = "fechaCreacion,desc";
 
     private enum ModoSolicitudes {
         RECIBIDAS,
@@ -64,12 +68,22 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
     private Button btnRecibidas;
     private Button btnEnviadas;
     private View layoutAccionesLocal;
+    private TextView btnCargarMasSolicitudes;
+    private View layoutLoaderMasSolicitudes;
 
     private SolicitudesAdapter adapter;
     private SolicitudesApi solicitudesApi;
     private int idUsuario = -1;
     private ModoSolicitudes modoActual = ModoSolicitudes.RECIBIDAS;
     private Integer modoExternoPendiente = null;
+
+    private int nextPageToLoad = 0;
+    private boolean isLoading = false;
+    private boolean isLastPage = false;
+    private int requestToken = 0;
+    private String estadoFiltroActual = null;
+    private final List<SolicitudDTO> solicitudesAcumuladas = new ArrayList<>();
+    private final Set<Integer> idsSolicitudesCargadas = new HashSet<>();
 
     @Nullable
     @Override
@@ -99,6 +113,8 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
         btnRecibidas = view.findViewById(R.id.btnSolicitudesRecibidas);
         btnEnviadas = view.findViewById(R.id.btnSolicitudesEnviadas);
         layoutAccionesLocal = view.findViewById(R.id.layoutSolicitudesAccionesLocal);
+        btnCargarMasSolicitudes = view.findViewById(R.id.btnCargarMasSolicitudes);
+        layoutLoaderMasSolicitudes = view.findViewById(R.id.layoutLoaderMasSolicitudes);
 
         recyclerSolicitudes.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new SolicitudesAdapter(this);
@@ -107,8 +123,20 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
         if (layoutAccionesLocal != null) {
             layoutAccionesLocal.setVisibility(View.GONE);
         }
-        btnMarcarTodasLeidas.setVisibility(View.GONE);
-        btnRecargar.setOnClickListener(v -> cargarSolicitudes());
+        if (btnMarcarTodasLeidas != null) {
+            btnMarcarTodasLeidas.setVisibility(View.GONE);
+        }
+        if (btnRecargar != null) {
+            btnRecargar.setOnClickListener(v -> cargarSolicitudes());
+        }
+        if (btnCargarMasSolicitudes != null) {
+            btnCargarMasSolicitudes.setOnClickListener(v -> {
+                if (isLoading || isLastPage) {
+                    return;
+                }
+                cargarPagina(nextPageToLoad);
+            });
+        }
 
         configurarSegmento();
         ModoSolicitudes inicial = modoExternoPendiente != null && modoExternoPendiente == MODO_ENVIADAS
@@ -174,74 +202,182 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
             return;
         }
         if (idUsuario <= 0) {
-            mostrarVacio("Sin sesion activa", "Inicia sesion para ver tus solicitudes.");
+            mostrarVacio("Sin sesi\u00F3n activa", "Inicia sesi\u00F3n para ver tus solicitudes.");
+            return;
+        }
+        reiniciarYCargarPrimeraPagina();
+    }
+
+    private void reiniciarYCargarPrimeraPagina() {
+        requestToken++;
+        nextPageToLoad = 0;
+        isLastPage = false;
+        isLoading = false;
+
+        solicitudesAcumuladas.clear();
+        idsSolicitudesCargadas.clear();
+        adapter.submitList(new ArrayList<>());
+
+        mostrarBotonCargarMas(false, false);
+        mostrarLoaderMasSolicitudes(false);
+        emptyState.setVisibility(View.GONE);
+
+        cargarPagina(0);
+    }
+
+    private void cargarPagina(int pageObjetivo) {
+        if (isLoading || (isLastPage && pageObjetivo > 0)) {
             return;
         }
 
-        progressSolicitudes.setVisibility(View.VISIBLE);
-        recyclerSolicitudes.setVisibility(View.GONE);
-        emptyState.setVisibility(View.GONE);
+        isLoading = true;
+        if (pageObjetivo == 0) {
+            progressSolicitudes.setVisibility(View.VISIBLE);
+            recyclerSolicitudes.setVisibility(View.GONE);
+            emptyState.setVisibility(View.GONE);
+            mostrarLoaderMasSolicitudes(false);
+            mostrarBotonCargarMas(false, false);
+        } else {
+            progressSolicitudes.setVisibility(View.GONE);
+            recyclerSolicitudes.setVisibility(View.VISIBLE);
+            mostrarLoaderMasSolicitudes(true);
+            mostrarBotonCargarMas(false, false);
+        }
 
-        Call<List<SolicitudDTO>> call = modoActual == ModoSolicitudes.RECIBIDAS
-                ? solicitudesApi.obtenerSolicitudesRecibidas(idUsuario)
-                : solicitudesApi.obtenerSolicitudesEnviadas(idUsuario);
+        final int tokenLocal = ++requestToken;
+        Call<PageResponseSolicitudDTO> call = modoActual == ModoSolicitudes.RECIBIDAS
+                ? solicitudesApi.obtenerSolicitudesRecibidasPaginadas(idUsuario, pageObjetivo, PAGE_SIZE, SORT_DEFAULT, estadoFiltroActual)
+                : solicitudesApi.obtenerSolicitudesEnviadasPaginadas(idUsuario, pageObjetivo, PAGE_SIZE, SORT_DEFAULT, estadoFiltroActual);
 
-        call.enqueue(new Callback<List<SolicitudDTO>>() {
+        call.enqueue(new Callback<PageResponseSolicitudDTO>() {
             @Override
-            public void onResponse(@NonNull Call<List<SolicitudDTO>> call, @NonNull Response<List<SolicitudDTO>> response) {
-                if (!isAdded()) {
+            public void onResponse(@NonNull Call<PageResponseSolicitudDTO> call, @NonNull Response<PageResponseSolicitudDTO> response) {
+                if (!isAdded() || tokenLocal != requestToken) {
                     return;
                 }
+
+                isLoading = false;
                 progressSolicitudes.setVisibility(View.GONE);
+                mostrarLoaderMasSolicitudes(false);
 
                 if (!response.isSuccessful() || response.body() == null) {
-                    mostrarVacio("No se pudieron cargar solicitudes", "Verifica tu conexion y vuelve a intentar.");
-                    return;
-                }
-
-                List<SolicitudDTO> solicitudes = ordenarPorFecha(response.body());
-                if (solicitudes.isEmpty()) {
-                    if (modoActual == ModoSolicitudes.RECIBIDAS) {
-                        mostrarVacio("No tienes solicitudes recibidas", "Cuando recibas solicitudes de compra apareceran aqui.");
+                    if (pageObjetivo == 0) {
+                        mostrarVacio("No se pudieron cargar solicitudes", "Verifica tu conexi\u00F3n y vuelve a intentar.");
                     } else {
-                        mostrarVacio("No has enviado solicitudes", "Las solicitudes que envies se mostraran aqui.");
+                        mostrarBotonCargarMas(true, true);
+                        Toast.makeText(requireContext(), "No se pudo cargar m\u00E1s solicitudes.", Toast.LENGTH_SHORT).show();
                     }
                     return;
                 }
 
-                adapter.submitList(solicitudes);
-                recyclerSolicitudes.setVisibility(View.VISIBLE);
-                emptyState.setVisibility(View.GONE);
+                PageResponseSolicitudDTO pageResponse = response.body();
+                List<SolicitudDTO> nuevos = sanitizar(pageResponse.getContent());
+
+                if (pageObjetivo == 0) {
+                    solicitudesAcumuladas.clear();
+                    idsSolicitudesCargadas.clear();
+                }
+
+                List<SolicitudDTO> agregados = new ArrayList<>();
+                for (SolicitudDTO item : nuevos) {
+                    Integer idSolicitud = item.getIdSolicitud();
+                    if (idSolicitud != null && idsSolicitudesCargadas.contains(idSolicitud)) {
+                        continue;
+                    }
+                    if (idSolicitud != null) {
+                        idsSolicitudesCargadas.add(idSolicitud);
+                    }
+                    solicitudesAcumuladas.add(item);
+                    agregados.add(item);
+                }
+
+                if (pageObjetivo == 0) {
+                    adapter.submitList(new ArrayList<>(solicitudesAcumuladas));
+                } else {
+                    adapter.agregarItems(agregados);
+                }
+
+                nextPageToLoad = pageObjetivo + 1;
+                isLastPage = pageResponse.isLast();
+
+                if (solicitudesAcumuladas.isEmpty()) {
+                    mostrarVacio(tituloVacioPorModo(), subtituloVacioPorModo());
+                    mostrarBotonCargarMas(false, false);
+                } else {
+                    recyclerSolicitudes.setVisibility(View.VISIBLE);
+                    emptyState.setVisibility(View.GONE);
+                    mostrarBotonCargarMas(!isLastPage, false);
+                }
+
                 refrescarBadge();
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<SolicitudDTO>> call, @NonNull Throwable t) {
-                if (!isAdded()) {
+            public void onFailure(@NonNull Call<PageResponseSolicitudDTO> call, @NonNull Throwable t) {
+                if (!isAdded() || tokenLocal != requestToken) {
                     return;
                 }
+                isLoading = false;
                 progressSolicitudes.setVisibility(View.GONE);
-                mostrarVacio("Error de conexion", "No fue posible cargar solicitudes.");
+                mostrarLoaderMasSolicitudes(false);
+                if (pageObjetivo == 0) {
+                    mostrarVacio("Error de conexi\u00F3n", "No fue posible cargar solicitudes.");
+                } else {
+                    mostrarBotonCargarMas(true, true);
+                    Toast.makeText(requireContext(), "Error de red al cargar m\u00E1s solicitudes.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
 
-    private List<SolicitudDTO> ordenarPorFecha(List<SolicitudDTO> source) {
-        List<SolicitudDTO> salida = new ArrayList<>(source);
-        Collections.sort(salida, new Comparator<SolicitudDTO>() {
-            @Override
-            public int compare(SolicitudDTO o1, SolicitudDTO o2) {
-                return Long.compare(
-                        MensajeUiUtils.toEpochMillis(o2 != null ? o2.getFecha() : null),
-                        MensajeUiUtils.toEpochMillis(o1 != null ? o1.getFecha() : null)
-                );
+    private List<SolicitudDTO> sanitizar(List<SolicitudDTO> source) {
+        List<SolicitudDTO> salida = new ArrayList<>();
+        if (source == null) {
+            return salida;
+        }
+        for (SolicitudDTO item : source) {
+            if (item != null) {
+                salida.add(item);
             }
-        });
+        }
         return salida;
+    }
+
+    private String tituloVacioPorModo() {
+        return modoActual == ModoSolicitudes.RECIBIDAS
+                ? "No tienes solicitudes recibidas"
+                : "No has enviado solicitudes";
+    }
+
+    private String subtituloVacioPorModo() {
+        return modoActual == ModoSolicitudes.RECIBIDAS
+                ? "Cuando recibas solicitudes de compra aparecer\u00E1n aqu\u00ED."
+                : "Las solicitudes que env\u00EDes se mostrar\u00E1n aqu\u00ED.";
+    }
+
+    private void mostrarBotonCargarMas(boolean mostrar, boolean reintento) {
+        if (btnCargarMasSolicitudes == null) {
+            return;
+        }
+        btnCargarMasSolicitudes.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        if (mostrar) {
+            btnCargarMasSolicitudes.setText(reintento
+                    ? "Reintentar cargar m\u00E1s solicitudes"
+                    : "Cargar m\u00E1s solicitudes");
+        }
+    }
+
+    private void mostrarLoaderMasSolicitudes(boolean mostrar) {
+        if (layoutLoaderMasSolicitudes == null) {
+            return;
+        }
+        layoutLoaderMasSolicitudes.setVisibility(mostrar ? View.VISIBLE : View.GONE);
     }
 
     private void mostrarVacio(String titulo, String subtitulo) {
         adapter.submitList(new ArrayList<>());
+        solicitudesAcumuladas.clear();
+        idsSolicitudesCargadas.clear();
         recyclerSolicitudes.setVisibility(View.GONE);
         emptyState.setVisibility(View.VISIBLE);
         emptyTitle.setText(titulo);
@@ -278,7 +414,7 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
         boolean esRecibida = modoActual == ModoSolicitudes.RECIBIDAS;
         StringBuilder detalle = new StringBuilder();
         detalle.append("Estado: ").append(item.getEstadoVisual()).append("\n")
-                .append("Fecha solicitud: ").append(MensajeUiUtils.formatearFechaCorta(item.getFecha())).append("\n")
+                .append("Fecha de solicitud: ").append(MensajeUiUtils.formatearFechaCorta(item.getFecha())).append("\n")
                 .append(esRecibida ? "De: " : "Para: ")
                 .append(item.getNombreActorContextual(esRecibida)).append("\n")
                 .append("Obra: ").append(item.getTituloSeguro()).append("\n")
@@ -286,7 +422,7 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
 
         appendBloqueSiTieneTexto(detalle, "Motivo rechazo", item.getMotivoRechazo());
         appendLineaSiTieneTexto(detalle, "Fecha respuesta", MensajeUiUtils.formatearFechaCorta(item.getFechaRespuesta()));
-        appendLineaSiTieneTexto(detalle, "Expiracion reserva", MensajeUiUtils.formatearFechaCorta(item.getFechaExpiracionReserva()));
+        appendLineaSiTieneTexto(detalle, "Expiraci\u00F3n de reserva", MensajeUiUtils.formatearFechaCorta(item.getFechaExpiracionReserva()));
 
         if (item.getReferenciaTipo() != null
                 && !item.getReferenciaTipo().trim().isEmpty()
@@ -350,7 +486,7 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
 
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Aceptar solicitud")
-                .setMessage("Al aceptar, otras solicitudes pendientes de esta obra pueden cerrarse automaticamente.")
+                .setMessage("Al aceptar, otras solicitudes pendientes de esta obra pueden cerrarse autom\u00E1ticamente.")
                 .setNegativeButton("Cancelar", null)
                 .setPositiveButton("Aceptar", (dialog, which) -> ejecutarAceptar(item))
                 .show();
@@ -416,9 +552,10 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
                     Toast.makeText(requireContext(), "No se pudo aceptar la solicitud.", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                item.marcarComoAtendida(true);
+                adapter.notificarCambioPorId(item.getIdSolicitud());
                 Toast.makeText(requireContext(), "Solicitud aceptada.", Toast.LENGTH_SHORT).show();
                 refrescarBadge();
-                cargarSolicitudes();
             }
 
             @Override
@@ -442,9 +579,10 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
                     Toast.makeText(requireContext(), "No se pudo rechazar la solicitud.", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                item.marcarComoAtendida(false);
+                adapter.notificarCambioPorId(item.getIdSolicitud());
                 Toast.makeText(requireContext(), "Solicitud rechazada.", Toast.LENGTH_SHORT).show();
                 refrescarBadge();
-                cargarSolicitudes();
             }
 
             @Override
@@ -467,9 +605,10 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
                     Toast.makeText(requireContext(), "No se pudo cancelar la solicitud.", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                item.marcarComoCancelada();
+                adapter.notificarCambioPorId(item.getIdSolicitud());
                 Toast.makeText(requireContext(), "Solicitud cancelada.", Toast.LENGTH_SHORT).show();
                 refrescarBadge();
-                cargarSolicitudes();
             }
 
             @Override
@@ -479,17 +618,6 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
                 }
             }
         });
-    }
-
-    private void revisarVacio() {
-        if (!adapter.getItems().isEmpty()) {
-            return;
-        }
-        if (modoActual == ModoSolicitudes.RECIBIDAS) {
-            mostrarVacio("No tienes solicitudes recibidas", "Cuando recibas solicitudes de compra apareceran aqui.");
-        } else {
-            mostrarVacio("No has enviado solicitudes", "Las solicitudes que envies se mostraran aqui.");
-        }
     }
 
     private void refrescarBadge() {

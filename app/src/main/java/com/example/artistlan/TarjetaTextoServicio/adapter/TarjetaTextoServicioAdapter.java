@@ -21,6 +21,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.artistlan.Fragments.DialogReportarContenido;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
@@ -52,6 +53,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     private int tarjetaExpandida = -1;
     private int lastAnimatedPosition = -1;
     private Integer currentUserId;
+    private boolean entryAnimationsEnabled = true;
 
     public TarjetaTextoServicioAdapter(List<TarjetaTextoServicioItem> listaServicios, Context context) {
         this.listaServicios = listaServicios;
@@ -63,6 +65,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     public void setOnEditClickListener(OnEditClickListener onEditClickListener) { this.onEditClickListener = onEditClickListener; notifyDataSetChanged(); }
     public void setOnDeleteClickListener(OnDeleteClickListener onDeleteClickListener) { this.onDeleteClickListener = onDeleteClickListener; notifyDataSetChanged(); }
     public void setOnAuthorClickListener(OnAuthorClickListener onAuthorClickListener) { this.onAuthorClickListener = onAuthorClickListener; }
+    public void setEntryAnimationsEnabled(boolean enabled) { this.entryAnimationsEnabled = enabled; }
     public void setCurrentUserId(Integer currentUserId) {
         this.currentUserId = currentUserId;
         notifyDataSetChanged();
@@ -80,7 +83,9 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         TarjetaTextoServicioItem servicio = listaServicios.get(position);
-        animateFeedEntry(holder, position);
+        if (entryAnimationsEnabled) {
+            animateFeedEntry(holder, position);
+        }
         ThemeApplier.applyTextPrimary(holder.titulo, tm);
         ThemeApplier.applyTextSecondary(holder.autor, tm);
         ThemeApplier.applyTextSecondary(holder.descripcion, tm);
@@ -117,6 +122,9 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         Glide.with(holder.itemView.getContext())
                 .load((servicio.getFotoPerfilAutor() != null && servicio.getFotoPerfilAutor().startsWith("http")) ? servicio.getFotoPerfilAutor() : R.drawable.fotoperfilprueba)
                 .placeholder(R.drawable.fotoperfilprueba)
+                .error(R.drawable.fotoperfilprueba)
+                .thumbnail(0.25f)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .circleCrop()
                 .into(holder.imgAutor);
 
@@ -338,6 +346,16 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         tarjetaExpandida = -1;
         if (oldSize > 0) notifyItemRangeRemoved(0, oldSize);
         if (!nuevaLista.isEmpty()) notifyItemRangeInserted(0, nuevaLista.size());
+    }
+
+    public void agregarItems(List<TarjetaTextoServicioItem> nuevosItems) {
+        if (nuevosItems == null || nuevosItems.isEmpty()) {
+            return;
+        }
+        int start = listaServicios.size();
+        listaServicios.addAll(nuevosItems);
+        listaOriginal.addAll(nuevosItems);
+        notifyItemRangeInserted(start, nuevosItems.size());
     }
 
     public void removeItemAt(int position) {

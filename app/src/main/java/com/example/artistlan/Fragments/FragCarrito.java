@@ -73,7 +73,9 @@ public class FragCarrito extends Fragment {
     private boolean compraEnProceso = false;
     private long ultimaVersionPagoRefrescada = 0L;
     private long ultimoIntentoCompraMs = 0L;
+    private long ultimaCargaCarritoMs = 0L;
     private static final long COMPRA_TAP_GUARD_MS = 1200L;
+    private static final long RESUME_RELOAD_MIN_INTERVAL_MS = 3500L;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -132,10 +134,15 @@ public class FragCarrito extends Fragment {
             PagoPaypalSessionManager.clear(requireContext());
         }
         long ultimaVersionCaptura = PagoSyncManager.getLastCaptureAt(requireContext());
+        boolean cambioPago = false;
         if (ultimaVersionCaptura > ultimaVersionPagoRefrescada) {
             ultimaVersionPagoRefrescada = ultimaVersionCaptura;
+            cambioPago = true;
         }
-        cargarCarrito();
+        long ahora = SystemClock.elapsedRealtime();
+        if (cambioPago || ahora - ultimaCargaCarritoMs >= RESUME_RELOAD_MIN_INTERVAL_MS) {
+            cargarCarrito();
+        }
     }
 
     @Override
@@ -169,9 +176,10 @@ public class FragCarrito extends Fragment {
     }
 
     private void cargarCarrito() {
+        ultimaCargaCarritoMs = SystemClock.elapsedRealtime();
         if (idUsuarioLogueado <= 0) {
             adapter.submitList(new ArrayList<>());
-            actualizarEstadoVacio(true, "Debes iniciar sesion para ver tu carrito", "Inicia sesion para consultar tus reservas.");
+            actualizarEstadoVacio(true, "Debes iniciar sesión para ver tu carrito", "Inicia sesión para consultar tus reservas.");
             actualizarResumen(0, 0d);
             actualizarEstadoBotonComprar(false);
             return;
@@ -222,7 +230,7 @@ public class FragCarrito extends Fragment {
                 }
                 progressCarrito.setVisibility(View.GONE);
                 adapter.submitList(new ArrayList<>());
-                actualizarEstadoVacio(true, "No se pudo conectar con el carrito", "Revisa tu conexion e intentalo de nuevo.");
+                actualizarEstadoVacio(true, "No se pudo conectar con el carrito", "Revisa tu conexión e inténtalo de nuevo.");
                 actualizarResumen(0, 0d);
                 actualizarEstadoBotonComprar(false);
                 Toast.makeText(requireContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
@@ -507,7 +515,7 @@ public class FragCarrito extends Fragment {
             return;
         }
         if (idUsuarioLogueado <= 0) {
-            Toast.makeText(requireContext(), "Debes iniciar sesion para comprar", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Debes iniciar sesión para comprar", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -566,7 +574,7 @@ public class FragCarrito extends Fragment {
             return;
         }
         if (idUsuarioLogueado <= 0) {
-            Toast.makeText(requireContext(), "Debes iniciar sesion para comprar", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Debes iniciar sesión para comprar", Toast.LENGTH_SHORT).show();
             return;
         }
 

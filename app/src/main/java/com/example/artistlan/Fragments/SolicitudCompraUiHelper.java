@@ -35,7 +35,7 @@ public final class SolicitudCompraUiHelper {
             return;
         }
         if (idUsuario <= 0) {
-            Toast.makeText(fragment.requireContext(), "Debes iniciar sesion para solicitar compra", Toast.LENGTH_SHORT).show();
+            Toast.makeText(fragment.requireContext(), "Debes iniciar sesión para solicitar compra", Toast.LENGTH_SHORT).show();
             return;
         }
 

@@ -70,7 +70,6 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     private EditText etCorreo, etNombre, etDescripcion, etRedes, etTelefono, etFecha, etUsuario, etUbicacion;
     private ImageView btnCambiarFoto, imgFotoPerfil;
     private Spinner spinnerCategoriaUsuario;
-    private String contrasenaOriginal;
 
     private UsuarioApi api;
     private List<CategoriaDTO> listaCategorias;
@@ -355,7 +354,6 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         etTelefono.setText(prefs.getString("telefono", ""));
         etFecha.setText(prefs.getString("fechaNac", ""));
         etUbicacion.setText(prefs.getString("ubicacion", ""));
-        contrasenaOriginal = prefs.getString("contrasena", "");
 
         String foto = prefs.getString("fotoPerfil", "");
         if (!foto.isEmpty()) {
@@ -735,7 +733,6 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         usuarioActualizado.setFechaNacimiento(etFecha.getText().toString().trim());
         usuarioActualizado.setUbicacion(etUbicacion.getText().toString().trim());
         usuarioActualizado.setFotoPerfil(prefs.getString("fotoPerfil", ""));
-        usuarioActualizado.setContrasena(contrasenaOriginal);
         String rolActual = prefs.getString("rol", null);
         if (rolActual != null && !rolActual.trim().isEmpty()) {
             usuarioActualizado.setRol(rolActual);

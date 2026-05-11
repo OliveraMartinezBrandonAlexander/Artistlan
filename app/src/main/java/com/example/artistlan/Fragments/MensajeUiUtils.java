@@ -454,7 +454,7 @@ public final class MensajeUiUtils {
         return contieneAlguno(contexto,
                 "tu solicitud",
                 "agregada al carrito",
-                "expira en 7 dias",
+                "expira en 7 d?as",
                 "expirara en",
                 "comprador");
     }

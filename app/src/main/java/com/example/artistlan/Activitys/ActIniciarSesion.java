@@ -518,8 +518,12 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                         showErrorDialog("Error de autenticación", "No se recibió id de usuario válido.");
                         return;
                     }
-                    user.setContrasena(contrasena);
-                    guardarUsuarioLogeado(user, loginResponse.getToken());
+                    String jwt = loginResponse.getToken();
+                    if (jwt == null || jwt.trim().isEmpty() || "null".equalsIgnoreCase(jwt.trim())) {
+                        showErrorDialog("Error de autenticación", "No se recibió token de sesión válido.");
+                        return;
+                    }
+                    guardarUsuarioLogeado(user, jwt);
                     cargarCategoriaUsuario(idUsuario);
                     showSuccessAndNavigate();
                 } else {

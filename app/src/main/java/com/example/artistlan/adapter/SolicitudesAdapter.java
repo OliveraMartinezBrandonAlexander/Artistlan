@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.artistlan.Conector.model.SolicitudDTO;
 import com.example.artistlan.Fragments.MensajeUiUtils;
 import com.example.artistlan.R;
@@ -127,6 +128,8 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
                 .load(item.getFotoActorContextual(esRecibida))
                 .placeholder(R.drawable.cuenta)
                 .error(R.drawable.cuenta)
+                .thumbnail(0.25f)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .circleCrop()
                 .into(holder.ivOrigen);
 
@@ -155,6 +158,15 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
         notifyDataSetChanged();
     }
 
+    public void agregarItems(List<SolicitudDTO> nuevos) {
+        if (nuevos == null || nuevos.isEmpty()) {
+            return;
+        }
+        int inicio = items.size();
+        items.addAll(nuevos);
+        notifyItemRangeInserted(inicio, nuevos.size());
+    }
+
     public void setModoLista(ModoLista modoLista) {
         this.modoLista = modoLista == null ? ModoLista.RECIBIDAS : modoLista;
         notifyDataSetChanged();
@@ -176,6 +188,20 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
 
     public List<SolicitudDTO> getItems() {
         return items;
+    }
+
+    public void notificarCambioPorId(Integer idSolicitud) {
+        if (idSolicitud == null) {
+            notifyDataSetChanged();
+            return;
+        }
+        for (int i = 0; i < items.size(); i++) {
+            SolicitudDTO item = items.get(i);
+            if (idSolicitud.equals(item.getIdSolicitud())) {
+                notifyItemChanged(i);
+                return;
+            }
+        }
     }
 
     private int obtenerFondoEstado(SolicitudDTO item) {

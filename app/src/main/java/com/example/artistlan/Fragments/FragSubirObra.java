@@ -197,14 +197,14 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private void mostrarOpcionesImagen() {
         if (!isAdded()) return;
         if (modoEdicion) {
-            Toast.makeText(getContext(), "Las imagenes no se pueden modificar despues de publicar la obra.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Las im\u00E1genes no se pueden modificar despu\u00E9s de publicar la obra.", Toast.LENGTH_LONG).show();
             return;
         }
 
         String[] opciones = {"Elegir de galería", "Tomar foto con cámara"};
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("Selecciona una opcion")
+                .setTitle("Selecciona una opci\u00F3n")
                 .setItems(opciones, (dialog, which) -> {
                     if (which == 0) {
                         Toast.makeText(getContext(), "Se recomienda una imagen en formato 4:3 para mejor visualización. No se deformará tu imagen.", Toast.LENGTH_SHORT).show();
@@ -307,7 +307,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             return;
         }
         txtTituloPantalla.setText("Editar Obra");
-        txtDescripcionPantalla.setText("Actualiza la informacion de tu obra. Las imagenes no pueden modificarse tras su publicacion.");
+        txtDescripcionPantalla.setText("Actualiza la informaci\u00F3n de tu obra. Las im\u00E1genes no pueden modificarse tras su publicaci\u00F3n.");
         btnSubirImg.setVisibility(View.GONE);
         btnSubirImg.setEnabled(false);
         btnSubirObra.setText("GUARDAR CAMBIOS");
@@ -671,19 +671,19 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         boolean hayError = false;
 
         if (titulo.isEmpty()) {
-            etTituloObra.setError("Ingresa un titulo");
+            etTituloObra.setError("Ingresa un t\u00EDtulo");
             etTituloObra.requestFocus();
             hayError = true;
         }
 
         if (descripcion.isEmpty()) {
-            etDescripcion.setError("Ingresa una descripcion");
+            etDescripcion.setError("Ingresa una descripci\u00F3n");
             if (!hayError) etDescripcion.requestFocus();
             hayError = true;
         }
 
         if (tecnica.isEmpty()) {
-            etTecnicas.setError("Ingresa una tecnica");
+            etTecnicas.setError("Ingresa una t\u00E9cnica");
             if (!hayError) etTecnicas.requestFocus();
             hayError = true;
         }
@@ -748,7 +748,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         int idUsuario = prefs.getInt("id", -1);
 
         if (idUsuario == -1) {
-            Toast.makeText(getContext(), "Error: No se encontrÃ³ ID de usuario.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -760,7 +760,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
         int pos = spinnerCategoria.getSelectedItemPosition();
         if (pos == 0) {
-            Toast.makeText(getContext(), "Selecciona una categorÃ­a vÃ¡lida.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Selecciona una categoría válida.", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -783,7 +783,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                     return;
                 }
             } catch (NumberFormatException e) {
-                Toast.makeText(getContext(), "Formato de precio invÃƒÂ¡lido.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "Formato de precio inválido.", Toast.LENGTH_LONG).show();
                 return;
             }
         }
@@ -792,7 +792,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         RadioButton rb = rgOpciones.findViewById(radioId);
         String estado = rb.getText().toString();
 
-        Toast.makeText(getContext(), "Cargando....", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), "Cargando...", Toast.LENGTH_SHORT).show();
 
         final Double precioFinal = precioDouble;
         firebaseRepo.subirImagenSolo(idUsuario, uriImagenObra, new FirebaseImageRepository.ImagenListener() {
@@ -828,12 +828,12 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private void guardarObra() {
         int idUsuario = obtenerIdUsuarioLogueado();
         if (idUsuario == -1) {
-            Toast.makeText(getContext(), "Error: No se encontrÃ³ ID de usuario.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
             return;
         }
 
         if (!modoEdicion && uriImagenObra != null) {
-            Toast.makeText(getContext(), "Cargando....", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Cargando...", Toast.LENGTH_SHORT).show();
             firebaseRepo.subirImagenSolo(idUsuario, uriImagenObra, new FirebaseImageRepository.ImagenListener() {
                 @Override
                 public void onSuccess(String imageUrl) {
@@ -861,7 +861,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
         CategoriaDTO categoria = obtenerCategoriaSeleccionada();
         if (categoria == null || categoria.getIdCategoria() <= 0) {
-            Toast.makeText(getContext(), "Selecciona una categoria valida.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Selecciona una categor\u00EDa v\u00E1lida.", Toast.LENGTH_LONG).show();
             return;
         }
         if (titulo.isEmpty() || descripcion.isEmpty() || medidas.isEmpty() || radioId == -1 || tecnica.isEmpty()) {
@@ -889,7 +889,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                         return;
                     }
                 } catch (NumberFormatException e) {
-                    Toast.makeText(getContext(), "Formato de precio invalido.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Formato de precio inv\u00E1lido.", Toast.LENGTH_LONG).show();
                     return;
                 }
             }
@@ -985,12 +985,12 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             @Override
             public void onResponse(@NonNull Call<ObraDTO> call, @NonNull Response<ObraDTO> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    Toast.makeText(getContext(), "Obra subida con exito", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Obra subida con ?xito", Toast.LENGTH_LONG).show();
                     NavHostFragment.findNavController(FragSubirObra.this).popBackStack();
                 } else {
                     String backendMessage = ApiErrorParser.extractMessage(response);
                     Toast.makeText(getContext(),
-                            backendMessage != null ? backendMessage : "Error al insertar obra. Codigo " + response.code(),
+                            backendMessage != null ? backendMessage : "Error al insertar obra. C\u00F3digo " + response.code(),
                             Toast.LENGTH_LONG).show();
                 }
             }
@@ -1017,12 +1017,12 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                     return;
                 }
                 if (response.isSuccessful()) {
-                    Toast.makeText(getContext(), "Obra actualizada con exito", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Obra actualizada con ?xito", Toast.LENGTH_LONG).show();
                     NavHostFragment.findNavController(FragSubirObra.this).popBackStack();
                 } else {
                     String backendMessage = ApiErrorParser.extractMessage(response);
                     Toast.makeText(getContext(),
-                            backendMessage != null ? backendMessage : "Error al actualizar obra. Codigo " + response.code(),
+                            backendMessage != null ? backendMessage : "Error al actualizar obra. C\u00F3digo " + response.code(),
                             Toast.LENGTH_LONG).show();
                 }
             }

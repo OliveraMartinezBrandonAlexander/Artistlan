@@ -47,7 +47,7 @@ public class ReportesModeracionAdapter extends RecyclerView.Adapter<ReportesMode
         holder.tvEstado.setText("Estado: " + ModeracionUiMapper.formatEstadoReporte(reporte.getEstado()));
         holder.tvPrioridad.setText("Prioridad: " + ModeracionUiMapper.formatPrioridad(reporte.getPrioridad()));
         holder.tvReportante.setText("Reportante: " + safeText(reporte.getNombreUsuarioReportante(), "No disponible"));
-        holder.tvModeradorAsignado.setText("Moderador: " + safeText(reporte.getNombreModeradorAsignado(), "Sin asignar"));
+        holder.tvModeradorAsignado.setText("Moderador: " + ModeracionUiMapper.formatModeradorAsignado(reporte.getNombreModeradorAsignado()));
         holder.tvFechaReporte.setText("Fecha: " + safeText(reporte.getFechaReporte(), "No disponible"));
 
         holder.itemView.setOnClickListener(v -> {

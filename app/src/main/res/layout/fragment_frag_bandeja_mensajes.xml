@@ -26,7 +26,7 @@
             android:paddingEnd="14dp"
             android:layout_marginLeft="60dp"
             android:paddingBottom="8dp"
-            android:text="Marcar todas leidas"
+            android:text="Marcar todas le&#237;das"
             android:textColor="@color/artistlan_menu_text_primary"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -54,12 +54,69 @@
         android:layout_marginTop="10dp"
         android:layout_weight="1">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerBandejaMensajes"
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/nestedScrollBandejaMensajes"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingBottom="10dp" />
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerBandejaMensajes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipToPadding="false"
+                    android:nestedScrollingEnabled="false"
+                    android:paddingBottom="10dp" />
+
+                <TextView
+                    android:id="@+id/btnCargarMasNotificaciones"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_action_outline_soft"
+                    android:paddingStart="14dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="8dp"
+                    android:text="Cargar m&#225;s notificaciones"
+                    android:textColor="@color/artistlan_menu_text_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/layoutLoaderMasNotificaciones"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingTop="8dp"
+                    android:visibility="gone">
+
+                    <ProgressBar
+                        android:id="@+id/progressMasNotificaciones"
+                        style="?android:attr/progressBarStyleSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:id="@+id/txtCargandoMasNotificaciones"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cargando m&#225;s notificaciones..."
+                        android:textColor="@color/artistlan_menu_text_secondary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
 
         <LinearLayout
             android:id="@+id/layoutBandejaVacia"
@@ -82,7 +139,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:gravity="center"
-                android:text="Tu bandeja esta al dia"
+                android:text="Tu bandeja est&#225; al d&#237;a"
                 android:textColor="@color/artistlan_menu_text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -93,7 +150,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:gravity="center"
-                android:text="Cuando recibas mensajes o alertas, apareceran aqui."
+                android:text="Cuando recibas mensajes o alertas, aparecer&#225;n aqu&#237;."
                 android:textColor="@color/artistlan_menu_text_secondary"
                 android:textSize="13sp" />
 

@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
@@ -19,6 +20,7 @@ import com.example.artistlan.Theme.ThemeManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapter.ViewHolder> {
 
@@ -27,7 +29,6 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
     }
 
     private final List<UsuariosDTO> items = new ArrayList<>();
-    private final List<UsuariosDTO> itemsOriginal = new ArrayList<>();
     private final OnCambiarRolListener listener;
 
     public UsuarioAdminAdapter(OnCambiarRolListener listener) {
@@ -35,27 +36,31 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
     }
 
     public void actualizar(List<UsuariosDTO> nuevos) {
-        itemsOriginal.clear();
-        if (nuevos != null) itemsOriginal.addAll(nuevos);
-        filtrarPorUsuario("");
-    }
-
-    public void filtrarPorUsuario(String query) {
         items.clear();
-        if (query == null || query.trim().isEmpty()) {
-            items.addAll(itemsOriginal);
-            notifyDataSetChanged();
-            return;
-        }
-
-        String filtro = query.trim().toLowerCase();
-        for (UsuariosDTO usuario : itemsOriginal) {
-            String username = usuario.getUsuario() != null ? usuario.getUsuario().toLowerCase() : "";
-            if (username.contains(filtro)) {
-                items.add(usuario);
-            }
+        if (nuevos != null) {
+            items.addAll(nuevos);
         }
         notifyDataSetChanged();
+    }
+
+    public void agregarItems(List<UsuariosDTO> nuevos) {
+        if (nuevos == null || nuevos.isEmpty()) {
+            return;
+        }
+        int inicio = items.size();
+        items.addAll(nuevos);
+        notifyItemRangeInserted(inicio, nuevos.size());
+    }
+
+    public void actualizarRolUsuario(int idUsuario, String nuevoRol) {
+        for (int i = 0; i < items.size(); i++) {
+            UsuariosDTO usuario = items.get(i);
+            if (Objects.equals(usuario.getIdUsuario(), idUsuario)) {
+                usuario.setRol(nuevoRol);
+                notifyItemChanged(i);
+                break;
+            }
+        }
     }
 
     @NonNull
@@ -91,6 +96,8 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
                     .load(fotoPerfil)
                     .placeholder(R.drawable.fotoperfilprueba)
                     .error(R.drawable.fotoperfilprueba)
+                    .thumbnail(0.25f)
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .circleCrop()
                     .into(holder.imgUsuario);
         }

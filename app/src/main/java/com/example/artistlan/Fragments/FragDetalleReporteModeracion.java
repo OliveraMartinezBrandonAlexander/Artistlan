@@ -4,10 +4,15 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
+import android.view.ViewParent;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -27,6 +32,7 @@ import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.artistlan.Activitys.ActFragmentoPrincipal;
 import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.SessionManager;
@@ -56,6 +62,9 @@ public class FragDetalleReporteModeracion extends Fragment {
     private static final String ARG_ID_REPORTE = "idReporte";
     private static final Locale LOCALE_ES_MX = new Locale("es", "MX");
     private static final String ACTION_SUSPENDER_USUARIO = "SUSPENDER_USUARIO";
+    private static final String TAG_MODERACION_DEBUG = "ModeracionErrorDebug";
+    private static final String TAG_NAV_CRASH_DEBUG = "ModeracionNavCrashDebug";
+    private static final boolean ENABLE_MODERACION_DEBUG_LOGS = false;
 
     private NestedScrollView detailScrollView;
     private View contenedorDetalle;
@@ -96,6 +105,13 @@ public class FragDetalleReporteModeracion extends Fragment {
     private final List<AccionResolucionOption> opcionesResolucionActuales = new ArrayList<>();
     private String fechaFinSuspensionBackend;
     private int previousSoftInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
+    private int scrollBasePaddingBottom = 0;
+    private boolean tecladoVisible = false;
+    private final Handler uiHandler = new Handler(Looper.getMainLooper());
+    private boolean viewDestroyed = true;
+    @Nullable private Call<ReporteDetalleDTO> detalleCall;
+    @Nullable private Call<RespuestaModeracionDTO> tomarReporteCall;
+    @Nullable private Call<RespuestaModeracionDTO> resolverReporteCall;
 
     public FragDetalleReporteModeracion() {
         super(R.layout.fragment_frag_detalle_reporte_moderacion);
@@ -104,6 +120,8 @@ public class FragDetalleReporteModeracion extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        viewDestroyed = false;
+        logDebug(TAG_NAV_CRASH_DEBUG, "onViewCreated -> viewDestroyed=false");
         ThemeModuleStyler.styleFragment(this, view);
 
         moderacionApi = RetrofitClient.getClient().create(ModeracionApi.class);
@@ -164,23 +182,56 @@ public class FragDetalleReporteModeracion extends Fragment {
         contenedorFechaFinSuspension = view.findViewById(R.id.contenedorFechaFinSuspensionModeracion);
         etFechaFinSuspension = view.findViewById(R.id.etFechaFinSuspensionModeracion);
         btnResolverReporte = view.findViewById(R.id.btnResolverReporteModeracion);
+        if (detailScrollView != null) {
+            scrollBasePaddingBottom = detailScrollView.getPaddingBottom();
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (requireActivity().getWindow() != null) {
-            previousSoftInputMode = requireActivity().getWindow().getAttributes().softInputMode;
-            requireActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        if (getActivity() != null && getActivity().getWindow() != null) {
+            previousSoftInputMode = getActivity().getWindow().getAttributes().softInputMode;
+            getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
         }
     }
 
     @Override
     public void onPause() {
+        logDebug(TAG_NAV_CRASH_DEBUG, "onPause -> cancelando callbacks UI");
+        cancelarUiCallbacks("onPause");
+        notificarTecladoVisible(false);
         if (getActivity() != null && getActivity().getWindow() != null) {
             getActivity().getWindow().setSoftInputMode(previousSoftInputMode);
         }
         super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        logDebug(TAG_NAV_CRASH_DEBUG, "onStop -> cancelando callbacks UI");
+        cancelarUiCallbacks("onStop");
+        cancelarLlamadasEnCurso("onStop");
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroyView() {
+        logDebug(TAG_NAV_CRASH_DEBUG, "onDestroyView -> cleanup completo");
+        viewDestroyed = true;
+        cancelarUiCallbacks("onDestroyView");
+        cancelarLlamadasEnCurso("onDestroyView");
+        notificarTecladoVisible(false);
+        if (detailScrollView != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(detailScrollView, null);
+        }
+        if (etMensajeRespuesta != null) {
+            etMensajeRespuesta.setOnFocusChangeListener(null);
+        }
+        if (etMotivoAccion != null) {
+            etMotivoAccion.setOnFocusChangeListener(null);
+        }
+        super.onDestroyView();
     }
 
     private void cargarSesionActual() {
@@ -214,10 +265,25 @@ public class FragDetalleReporteModeracion extends Fragment {
     }
 
     private void cargarDetalleReporte() {
+        if (!canInteractWithUi()) {
+            return;
+        }
+        if (detalleCall != null) {
+            detalleCall.cancel();
+        }
         mostrarCarga(true);
-        moderacionApi.obtenerDetalleReporte(idReporte, idUsuarioActual).enqueue(new Callback<ReporteDetalleDTO>() {
+        detalleCall = moderacionApi.obtenerDetalleReporte(idReporte, idUsuarioActual);
+        final Call<ReporteDetalleDTO> callRef = detalleCall;
+        callRef.enqueue(new Callback<ReporteDetalleDTO>() {
             @Override
             public void onResponse(@NonNull Call<ReporteDetalleDTO> call, @NonNull Response<ReporteDetalleDTO> response) {
+                if (detalleCall == callRef) {
+                    detalleCall = null;
+                }
+                if (call.isCanceled() || !canInteractWithUi()) {
+                    logDebug(TAG_NAV_CRASH_DEBUG, "cargarDetalleReporte.onResponse ignorado (cancelado o UI inactiva)");
+                    return;
+                }
                 mostrarCarga(false);
 
                 if (response.isSuccessful() && response.body() != null) {
@@ -240,6 +306,13 @@ public class FragDetalleReporteModeracion extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<ReporteDetalleDTO> call, @NonNull Throwable t) {
+                if (detalleCall == callRef) {
+                    detalleCall = null;
+                }
+                if (call.isCanceled() || !canInteractWithUi()) {
+                    logDebug(TAG_NAV_CRASH_DEBUG, "cargarDetalleReporte.onFailure ignorado (cancelado o UI inactiva)");
+                    return;
+                }
                 mostrarCarga(false);
                 mostrarError("Error de conexi\u00f3n al cargar el detalle del reporte.");
             }
@@ -260,7 +333,7 @@ public class FragDetalleReporteModeracion extends Fragment {
         tvDescripcionReporte.setText("Descripci\u00f3n del reporte: " + safeText(reporte.getDescripcion(), "Sin descripci\u00f3n adicional"));
         tvEstado.setText("Estado: " + ModeracionUiMapper.formatEstadoReporte(reporte.getEstado()));
         tvPrioridad.setText("Prioridad: " + ModeracionUiMapper.formatPrioridad(reporte.getPrioridad()));
-        tvModeradorAsignado.setText("Moderador asignado: " + safeText(reporte.getNombreModeradorAsignado(), "Sin asignar"));
+        tvModeradorAsignado.setText("Moderador asignado: " + ModeracionUiMapper.formatModeradorAsignado(reporte.getNombreModeradorAsignado()));
         tvFechaReporte.setText("Fecha del reporte: " + safeText(reporte.getFechaReporte(), "No disponible"));
         tvFechaInicioRevision.setText("Inicio de revisi\u00f3n: " + safeText(reporte.getFechaInicioRevision(), "A\u00fan no iniciado"));
 
@@ -318,13 +391,25 @@ public class FragDetalleReporteModeracion extends Fragment {
         request.setPrioridad(reporteActual != null ? reporteActual.getPrioridad() : null);
 
         setEstadoTomarReporte(true);
-        moderacionApi.tomarReporte(idReporte, request).enqueue(new Callback<RespuestaModeracionDTO>() {
+        if (tomarReporteCall != null) {
+            tomarReporteCall.cancel();
+        }
+        tomarReporteCall = moderacionApi.tomarReporte(idReporte, request);
+        final Call<RespuestaModeracionDTO> callRef = tomarReporteCall;
+        callRef.enqueue(new Callback<RespuestaModeracionDTO>() {
             @Override
             public void onResponse(@NonNull Call<RespuestaModeracionDTO> call, @NonNull Response<RespuestaModeracionDTO> response) {
+                if (tomarReporteCall == callRef) {
+                    tomarReporteCall = null;
+                }
+                if (call.isCanceled() || !canInteractWithUi()) {
+                    logDebug(TAG_NAV_CRASH_DEBUG, "tomarReporte.onResponse ignorado (cancelado o UI inactiva)");
+                    return;
+                }
                 setEstadoTomarReporte(false);
 
                 if (response.isSuccessful()) {
-                    Toast.makeText(requireContext(), "Reporte tomado para revisi\u00f3n", Toast.LENGTH_LONG).show();
+                    mostrarToastSeguro("Reporte tomado para revisi\u00f3n");
                     cargarDetalleReporte();
                     return;
                 }
@@ -340,13 +425,24 @@ public class FragDetalleReporteModeracion extends Fragment {
                 } else {
                     mensaje = backendMessage != null ? backendMessage : "No se pudo tomar el reporte.";
                 }
-                Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show();
+                logDebug(TAG_MODERACION_DEBUG, "tomarReporte error -> status=" + response.code()
+                        + ", endpoint=/api/moderacion/reportes/" + idReporte + "/tomar"
+                        + ", backendMessage=" + backendMessage
+                        + ", toastEspecificoMostrado=true");
+                mostrarToastSeguro(mensaje);
             }
 
             @Override
             public void onFailure(@NonNull Call<RespuestaModeracionDTO> call, @NonNull Throwable t) {
+                if (tomarReporteCall == callRef) {
+                    tomarReporteCall = null;
+                }
+                if (call.isCanceled() || !canInteractWithUi()) {
+                    logDebug(TAG_NAV_CRASH_DEBUG, "tomarReporte.onFailure ignorado (cancelado o UI inactiva)");
+                    return;
+                }
                 setEstadoTomarReporte(false);
-                Toast.makeText(requireContext(), "Error de conexi\u00f3n al tomar el reporte.", Toast.LENGTH_LONG).show();
+                mostrarToastSeguro("Error de conexi\u00f3n al tomar el reporte.");
             }
         });
     }
@@ -453,7 +549,7 @@ public class FragDetalleReporteModeracion extends Fragment {
 
         AccionResolucionOption accion = getAccionSeleccionada();
         if (accion == null || accion.backendAction == null) {
-            Toast.makeText(requireContext(), "Selecciona una acci\u00f3n para resolver el reporte.", Toast.LENGTH_LONG).show();
+            mostrarToastSeguro("Selecciona una acci\u00f3n para resolver el reporte.");
             return;
         }
 
@@ -489,9 +585,21 @@ public class FragDetalleReporteModeracion extends Fragment {
         request.setFechaFinSuspension(TextUtils.isEmpty(fechaFinSuspensionBackend) ? null : fechaFinSuspensionBackend);
 
         setEstadoResolverReporte(true);
-        moderacionApi.resolverReporte(idReporte, request).enqueue(new Callback<RespuestaModeracionDTO>() {
+        if (resolverReporteCall != null) {
+            resolverReporteCall.cancel();
+        }
+        resolverReporteCall = moderacionApi.resolverReporte(idReporte, request);
+        final Call<RespuestaModeracionDTO> callRef = resolverReporteCall;
+        callRef.enqueue(new Callback<RespuestaModeracionDTO>() {
             @Override
             public void onResponse(@NonNull Call<RespuestaModeracionDTO> call, @NonNull Response<RespuestaModeracionDTO> response) {
+                if (resolverReporteCall == callRef) {
+                    resolverReporteCall = null;
+                }
+                if (call.isCanceled() || !canInteractWithUi()) {
+                    logDebug(TAG_NAV_CRASH_DEBUG, "resolverReporte.onResponse ignorado (cancelado o UI inactiva)");
+                    return;
+                }
                 setEstadoResolverReporte(false);
 
                 if (response.isSuccessful()) {
@@ -499,11 +607,7 @@ public class FragDetalleReporteModeracion extends Fragment {
                     if (response.body() != null) {
                         successMessage = safeText(response.body().getMessage(), null);
                     }
-                    Toast.makeText(
-                            requireContext(),
-                            successMessage != null ? successMessage : "Reporte resuelto correctamente",
-                            Toast.LENGTH_LONG
-                    ).show();
+                    mostrarToastSeguro(successMessage != null ? successMessage : "Reporte resuelto correctamente");
                     cargarDetalleReporte();
                     return;
                 }
@@ -521,13 +625,20 @@ public class FragDetalleReporteModeracion extends Fragment {
                 } else {
                     mensaje = backendMessage != null ? backendMessage : "No se pudo resolver el reporte.";
                 }
-                Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show();
+                mostrarToastSeguro(mensaje);
             }
 
             @Override
             public void onFailure(@NonNull Call<RespuestaModeracionDTO> call, @NonNull Throwable t) {
+                if (resolverReporteCall == callRef) {
+                    resolverReporteCall = null;
+                }
+                if (call.isCanceled() || !canInteractWithUi()) {
+                    logDebug(TAG_NAV_CRASH_DEBUG, "resolverReporte.onFailure ignorado (cancelado o UI inactiva)");
+                    return;
+                }
                 setEstadoResolverReporte(false);
-                Toast.makeText(requireContext(), "Error de conexi\u00f3n al resolver reporte.", Toast.LENGTH_LONG).show();
+                mostrarToastSeguro("Error de conexi\u00f3n al resolver reporte.");
             }
         });
     }
@@ -625,12 +736,16 @@ public class FragDetalleReporteModeracion extends Fragment {
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(detailScrollView, (v, insets) -> {
+            int bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
             int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            boolean imeVisible = imeBottom > bottomInset;
+            notificarTecladoVisible(imeVisible);
+            int extraImePadding = imeVisible ? Math.max(0, imeBottom - bottomInset) : 0;
             v.setPadding(
                     v.getPaddingLeft(),
                     v.getPaddingTop(),
                     v.getPaddingRight(),
-                    imeBottom
+                    scrollBasePaddingBottom + bottomInset + extraImePadding
             );
             return insets;
         });
@@ -646,21 +761,41 @@ public class FragDetalleReporteModeracion extends Fragment {
         target.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
                 scrollToField(v);
+                uiHandler.postDelayed(() -> scrollToField(v), 180);
             }
         });
     }
 
     private void scrollToField(@NonNull View target) {
-        if (detailScrollView == null) {
+        if (!canInteractWithUi() || !isResumed() || detailScrollView == null) {
             return;
         }
-
+        if (!target.isAttachedToWindow() || !isDescendantOf(detailScrollView, target)) {
+            return;
+        }
         detailScrollView.post(() -> {
+            if (!canInteractWithUi() || !isResumed() || detailScrollView == null) {
+                return;
+            }
+            if (!target.isAttachedToWindow() || !isDescendantOf(detailScrollView, target)) {
+                return;
+            }
             Rect rect = new Rect();
             target.getDrawingRect(rect);
             detailScrollView.offsetDescendantRectToMyCoords(target, rect);
             detailScrollView.smoothScrollTo(0, Math.max(0, rect.top - dpToPx(24)));
         });
+    }
+
+    private boolean isDescendantOf(@NonNull View ancestor, @NonNull View child) {
+        ViewParent current = child.getParent();
+        while (current instanceof View) {
+            if (current == ancestor) {
+                return true;
+            }
+            current = current.getParent();
+        }
+        return false;
     }
 
     private int dpToPx(int dp) {
@@ -679,13 +814,16 @@ public class FragDetalleReporteModeracion extends Fragment {
     }
 
     private void mostrarError(@NonNull String mensaje) {
+        if (!canInteractWithUi()) {
+            return;
+        }
         contenedorDetalle.setVisibility(View.GONE);
         progressBar.setVisibility(View.GONE);
         btnTomarReporte.setVisibility(View.GONE);
         ocultarSeccionResolucion();
         tvError.setVisibility(View.VISIBLE);
         tvError.setText(mensaje);
-        Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show();
+        mostrarToastSeguro(mensaje);
     }
 
     private void configurarCampoOpcional(@NonNull TextView textView, @NonNull String label, @Nullable String value) {
@@ -729,6 +867,63 @@ public class FragDetalleReporteModeracion extends Fragment {
             return fallback;
         }
         return value.trim();
+    }
+
+    private void notificarTecladoVisible(boolean visible) {
+        if (tecladoVisible == visible) {
+            return;
+        }
+        tecladoVisible = visible;
+        if (viewDestroyed) {
+            return;
+        }
+        if (getActivity() instanceof ActFragmentoPrincipal) {
+            ((ActFragmentoPrincipal) getActivity()).setBottomMenuHiddenByKeyboard(visible);
+        }
+    }
+
+    private void mostrarToastSeguro(@NonNull String mensaje) {
+        Context context = getContext();
+        if (context != null) {
+            Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void cancelarUiCallbacks(@NonNull String origen) {
+        uiHandler.removeCallbacksAndMessages(null);
+        logDebug(TAG_NAV_CRASH_DEBUG, origen + " -> callbacks UI cancelados");
+    }
+
+    private void cancelarLlamadasEnCurso(@NonNull String origen) {
+        if (detalleCall != null) {
+            detalleCall.cancel();
+            detalleCall = null;
+        }
+        if (tomarReporteCall != null) {
+            tomarReporteCall.cancel();
+            tomarReporteCall = null;
+        }
+        if (resolverReporteCall != null) {
+            resolverReporteCall.cancel();
+            resolverReporteCall = null;
+        }
+        logDebug(TAG_NAV_CRASH_DEBUG, origen + " -> calls retrofit canceladas");
+    }
+
+    private boolean canInteractWithUi() {
+        return isAdded() && getView() != null && !viewDestroyed;
+    }
+
+    private void logDebug(String tag, String message) {
+        if (!ENABLE_MODERACION_DEBUG_LOGS) {
+            return;
+        }
+        Context context = getContext();
+        if (context != null
+                && context.getApplicationInfo() != null
+                && (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            Log.d(tag, message);
+        }
     }
 
     private String safeNumero(@Nullable Integer value) {

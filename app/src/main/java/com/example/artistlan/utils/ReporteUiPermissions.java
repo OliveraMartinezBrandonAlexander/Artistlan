@@ -11,12 +11,13 @@ import com.example.artistlan.Conector.SessionManager;
 import java.util.Locale;
 
 public final class ReporteUiPermissions {
-
     private ReporteUiPermissions() {
     }
 
     public static boolean esRolUsuarioReportanteValido(@Nullable String rolActual) {
-        return "USER".equals(normalizarRol(rolActual));
+        String rolNormalizado = normalizarRol(rolActual);
+        boolean permitido = "USER".equals(rolNormalizado) || "USUARIO".equals(rolNormalizado);
+        return permitido;
     }
 
     public static boolean esRolAdminOModerador(@Nullable String rolActual) {
@@ -25,15 +26,17 @@ public final class ReporteUiPermissions {
     }
 
     public static boolean puedeMostrarReportar(@Nullable Integer idUsuarioActual, @Nullable String rolActual) {
-        return idUsuarioActual != null
+        boolean resultado = idUsuarioActual != null
                 && idUsuarioActual > 0
                 && esRolUsuarioReportanteValido(rolActual);
+        return resultado;
     }
 
     public static boolean puedeReportarContenidoAjeno(@Nullable Integer idUsuarioActual, @Nullable Integer idDueno, @Nullable String rolActual) {
-        return puedeMostrarReportar(idUsuarioActual, rolActual)
+        boolean resultado = puedeMostrarReportar(idUsuarioActual, rolActual)
                 && idDueno != null
                 && !idDueno.equals(idUsuarioActual);
+        return resultado;
     }
 
     @Nullable
@@ -52,7 +55,12 @@ public final class ReporteUiPermissions {
         if (prefs == null) {
             return "";
         }
-        String rol = prefs.getString("rol", "");
+        String rol = prefs.getString("rol", null);
+        String modo = prefs.getString("modo", "");
+        if (rol == null || rol.trim().isEmpty()) {
+            // Compatibilidad con sesiones antiguas donde el rol se guardaba en "modo".
+            rol = modo;
+        }
         return rol != null ? rol : "";
     }
 

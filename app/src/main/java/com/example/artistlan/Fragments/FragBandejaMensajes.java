@@ -20,20 +20,25 @@ import com.example.artistlan.Activitys.ActFragmentoPrincipal;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.NotificacionesApi;
 import com.example.artistlan.Conector.model.NotificacionDTO;
+import com.example.artistlan.Conector.model.PageResponseNotificacionDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.adapter.NotificacionesAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FragBandejaMensajes extends Fragment implements NotificacionesAdapter.Listener {
+
+    private static final int PAGE_SIZE = 10;
+    private static final String SORT_DEFAULT = "fechaCreacion,desc";
 
     private RecyclerView recyclerMensajes;
     private ProgressBar progressMensajes;
@@ -43,10 +48,18 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
     private TextView btnMarcarTodasLeidas;
     private TextView btnRecargar;
     private View layoutAccionesLocal;
+    private TextView btnCargarMasNotificaciones;
+    private View layoutLoaderMasNotificaciones;
 
     private NotificacionesAdapter adapter;
     private NotificacionesApi notificacionesApi;
     private int idUsuario = -1;
+    private int nextPageToLoad = 0;
+    private boolean isLoading = false;
+    private boolean isLastPage = false;
+    private int requestToken = 0;
+    private final List<NotificacionDTO> notificacionesAcumuladas = new ArrayList<>();
+    private final Set<Integer> idsNotificacionCargados = new HashSet<>();
 
     @Nullable
     @Override
@@ -71,6 +84,8 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
         btnMarcarTodasLeidas = view.findViewById(R.id.btnBandejaMarcarTodasLeidas);
         btnRecargar = view.findViewById(R.id.btnBandejaRecargar);
         layoutAccionesLocal = view.findViewById(R.id.layoutBandejaAccionesLocal);
+        btnCargarMasNotificaciones = view.findViewById(R.id.btnCargarMasNotificaciones);
+        layoutLoaderMasNotificaciones = view.findViewById(R.id.layoutLoaderMasNotificaciones);
 
         recyclerMensajes.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new NotificacionesAdapter(this);
@@ -79,8 +94,17 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
         if (layoutAccionesLocal != null) {
             layoutAccionesLocal.setVisibility(View.GONE);
         }
+
         btnMarcarTodasLeidas.setOnClickListener(v -> confirmarMarcarTodas());
         btnRecargar.setOnClickListener(v -> cargarNotificaciones());
+        if (btnCargarMasNotificaciones != null) {
+            btnCargarMasNotificaciones.setOnClickListener(v -> {
+                if (isLoading || isLastPage) {
+                    return;
+                }
+                cargarPagina(nextPageToLoad);
+            });
+        }
 
         cargarNotificaciones();
     }
@@ -90,71 +114,173 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
             return;
         }
         if (idUsuario <= 0) {
-            mostrarVacio("Sin sesion activa", "Inicia sesion para ver tu bandeja de mensajes.");
+            mostrarVacio("Sin sesi\u00F3n activa", "Inicia sesi\u00F3n para ver tu bandeja de mensajes.");
+            return;
+        }
+        reiniciarYCargarPrimeraPagina();
+    }
+
+    private void reiniciarYCargarPrimeraPagina() {
+        requestToken++;
+        nextPageToLoad = 0;
+        isLastPage = false;
+        isLoading = false;
+
+        notificacionesAcumuladas.clear();
+        idsNotificacionCargados.clear();
+        adapter.submitList(new ArrayList<>());
+
+        mostrarBotonCargarMas(false, false);
+        mostrarLoaderMasNotificaciones(false);
+        emptyState.setVisibility(View.GONE);
+
+        cargarPagina(0);
+    }
+
+    private void cargarPagina(int pageObjetivo) {
+        if (isLoading || (isLastPage && pageObjetivo > 0)) {
             return;
         }
 
-        progressMensajes.setVisibility(View.VISIBLE);
-        recyclerMensajes.setVisibility(View.GONE);
-        emptyState.setVisibility(View.GONE);
+        isLoading = true;
+        if (pageObjetivo == 0) {
+            progressMensajes.setVisibility(View.VISIBLE);
+            recyclerMensajes.setVisibility(View.GONE);
+            emptyState.setVisibility(View.GONE);
+        } else {
+            progressMensajes.setVisibility(View.GONE);
+            recyclerMensajes.setVisibility(View.VISIBLE);
+            mostrarLoaderMasNotificaciones(true);
+            mostrarBotonCargarMas(false, false);
+        }
 
-        notificacionesApi.obtenerNotificacionesPorUsuario(idUsuario).enqueue(new Callback<List<NotificacionDTO>>() {
+        final int tokenLocal = ++requestToken;
+        notificacionesApi.obtenerNotificacionesPaginadas(
+                idUsuario,
+                pageObjetivo,
+                PAGE_SIZE,
+                SORT_DEFAULT,
+                null,
+                null
+        ).enqueue(new Callback<PageResponseNotificacionDTO>() {
             @Override
-            public void onResponse(@NonNull Call<List<NotificacionDTO>> call, @NonNull Response<List<NotificacionDTO>> response) {
-                if (!isAdded()) {
+            public void onResponse(@NonNull Call<PageResponseNotificacionDTO> call, @NonNull Response<PageResponseNotificacionDTO> response) {
+                if (!isAdded() || tokenLocal != requestToken) {
                     return;
                 }
+
+                isLoading = false;
                 progressMensajes.setVisibility(View.GONE);
+                mostrarLoaderMasNotificaciones(false);
 
                 if (!response.isSuccessful() || response.body() == null) {
-                    mostrarVacio("No se pudo cargar la bandeja", "Intenta nuevamente en unos segundos.");
+                    if (pageObjetivo == 0) {
+                        mostrarVacio("No se pudo cargar la bandeja", "Intenta nuevamente en unos segundos.");
+                    } else {
+                        mostrarBotonCargarMas(true, true);
+                        Toast.makeText(requireContext(), "No se pudo cargar m\u00E1s notificaciones.", Toast.LENGTH_SHORT).show();
+                    }
                     return;
                 }
 
-                List<NotificacionDTO> mensajes = filtrarMensajes(response.body());
-                if (mensajes.isEmpty()) {
-                    mostrarVacio("Tu bandeja esta al dia", "Cuando recibas mensajes o alertas, apareceran aqui.");
-                    return;
+                PageResponseNotificacionDTO pageResponse = response.body();
+                List<NotificacionDTO> nuevos = sanitizar(pageResponse.getContent());
+
+                if (pageObjetivo == 0) {
+                    notificacionesAcumuladas.clear();
+                    idsNotificacionCargados.clear();
                 }
 
-                adapter.submitList(mensajes);
-                recyclerMensajes.setVisibility(View.VISIBLE);
-                emptyState.setVisibility(View.GONE);
+                List<NotificacionDTO> agregados = new ArrayList<>();
+                for (NotificacionDTO item : nuevos) {
+                    Integer id = item.getIdNotificacion();
+                    if (id != null && idsNotificacionCargados.contains(id)) {
+                        continue;
+                    }
+                    if (id != null) {
+                        idsNotificacionCargados.add(id);
+                    }
+                    notificacionesAcumuladas.add(item);
+                    agregados.add(item);
+                }
+
+                if (pageObjetivo == 0) {
+                    adapter.submitList(new ArrayList<>(notificacionesAcumuladas));
+                } else {
+                    adapter.agregarItems(agregados);
+                }
+
+                nextPageToLoad = pageObjetivo + 1;
+                isLastPage = pageResponse.isLast();
+
+                if (notificacionesAcumuladas.isEmpty()) {
+                    mostrarVacio("Tu bandeja est\u00E1 al d\u00EDa", "Cuando recibas mensajes o alertas, aparecer\u00E1n aqu\u00ED.");
+                    mostrarBotonCargarMas(false, false);
+                } else {
+                    recyclerMensajes.setVisibility(View.VISIBLE);
+                    emptyState.setVisibility(View.GONE);
+                    mostrarBotonCargarMas(!isLastPage, false);
+                }
+
                 refrescarBadge();
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<NotificacionDTO>> call, @NonNull Throwable t) {
-                if (!isAdded()) {
+            public void onFailure(@NonNull Call<PageResponseNotificacionDTO> call, @NonNull Throwable t) {
+                if (!isAdded() || tokenLocal != requestToken) {
                     return;
                 }
+
+                isLoading = false;
                 progressMensajes.setVisibility(View.GONE);
-                mostrarVacio("Error de conexion", "No fue posible cargar tus mensajes.");
+                mostrarLoaderMasNotificaciones(false);
+
+                if (pageObjetivo == 0) {
+                    mostrarVacio("Error de conexi\u00F3n", "No fue posible cargar tus mensajes.");
+                } else {
+                    mostrarBotonCargarMas(true, true);
+                    Toast.makeText(requireContext(), "Error de conexi\u00F3n al cargar m\u00E1s notificaciones.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
 
-    private List<NotificacionDTO> filtrarMensajes(List<NotificacionDTO> source) {
+    private List<NotificacionDTO> sanitizar(List<NotificacionDTO> source) {
         List<NotificacionDTO> salida = new ArrayList<>();
+        if (source == null) {
+            return salida;
+        }
         for (NotificacionDTO item : source) {
             if (item != null) {
                 salida.add(item);
             }
         }
-        Collections.sort(salida, new Comparator<NotificacionDTO>() {
-            @Override
-            public int compare(NotificacionDTO o1, NotificacionDTO o2) {
-                return Long.compare(
-                        MensajeUiUtils.toEpochMillis(o2 != null ? o2.getFecha() : null),
-                        MensajeUiUtils.toEpochMillis(o1 != null ? o1.getFecha() : null)
-                );
-            }
-        });
         return salida;
+    }
+
+    private void mostrarBotonCargarMas(boolean mostrar, boolean reintento) {
+        if (btnCargarMasNotificaciones == null) {
+            return;
+        }
+        btnCargarMasNotificaciones.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        if (mostrar) {
+            btnCargarMasNotificaciones.setText(reintento
+                    ? "Reintentar cargar m\u00E1s notificaciones"
+                    : "Cargar m\u00E1s notificaciones");
+        }
+    }
+
+    private void mostrarLoaderMasNotificaciones(boolean mostrar) {
+        if (layoutLoaderMasNotificaciones == null) {
+            return;
+        }
+        layoutLoaderMasNotificaciones.setVisibility(mostrar ? View.VISIBLE : View.GONE);
     }
 
     private void mostrarVacio(String titulo, String subtitulo) {
         adapter.submitList(new ArrayList<>());
+        notificacionesAcumuladas.clear();
+        idsNotificacionCargados.clear();
         recyclerMensajes.setVisibility(View.GONE);
         emptyState.setVisibility(View.VISIBLE);
         emptyTitle.setText(titulo);
@@ -170,8 +296,8 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
             return;
         }
         new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Marcar todo como leido")
-                .setMessage("Se marcaran como leidos todos los mensajes de la bandeja.")
+                .setTitle("Marcar todo como le\u00EDdo")
+                .setMessage("Se marcar\u00E1n como le\u00EDdos todos los mensajes de la bandeja.")
                 .setNegativeButton("Cancelar", null)
                 .setPositiveButton("Marcar", (dialog, which) -> marcarTodasLeidas())
                 .show();
@@ -189,8 +315,10 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
                     return;
                 }
                 adapter.marcarTodasLeidas();
+                for (NotificacionDTO item : notificacionesAcumuladas) {
+                    item.setLeida(true);
+                }
                 refrescarBadge();
-                cargarNotificaciones();
             }
 
             @Override
@@ -304,8 +432,7 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
             return;
         }
         if (item.getIdNotificacion() == null) {
-            Toast.makeText(requireContext(), "No se pudo identificar la notificacion.", Toast.LENGTH_SHORT).show();
-            cargarNotificaciones();
+            Toast.makeText(requireContext(), "No se pudo identificar la notificaci\u00F3n.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -316,13 +443,12 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
                     return;
                 }
                 if (!response.isSuccessful()) {
-                    Toast.makeText(requireContext(), "No se pudo marcar como leido.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "No se pudo marcar como le\u00EDdo.", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 item.setLeida(true);
-                adapter.notifyDataSetChanged();
+                adapter.marcarComoLeida(item);
                 refrescarBadge();
-                cargarNotificaciones();
             }
 
             @Override
@@ -338,7 +464,7 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
     public void onEliminar(@NonNull NotificacionDTO item) {
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Eliminar mensaje")
-                .setMessage("Esta accion eliminara el mensaje de forma permanente.")
+                .setMessage("Esta acci\u00F3n eliminar\u00E1 el mensaje de forma permanente.")
                 .setNegativeButton("Cancelar", null)
                 .setPositiveButton("Eliminar", (dialog, which) -> eliminarNotificacion(item))
                 .show();
@@ -346,8 +472,7 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
 
     private void eliminarNotificacion(@NonNull NotificacionDTO item) {
         if (item.getIdNotificacion() == null) {
-            Toast.makeText(requireContext(), "No se pudo identificar la notificacion.", Toast.LENGTH_SHORT).show();
-            cargarNotificaciones();
+            Toast.makeText(requireContext(), "No se pudo identificar la notificaci\u00F3n.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -362,9 +487,10 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
                     return;
                 }
                 adapter.removeItem(item);
+                notificacionesAcumuladas.remove(item);
+                idsNotificacionCargados.remove(item.getIdNotificacion());
                 revisarVacio();
                 refrescarBadge();
-                cargarNotificaciones();
             }
 
             @Override
@@ -378,7 +504,8 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
 
     private void revisarVacio() {
         if (adapter.getItems().isEmpty()) {
-            mostrarVacio("Tu bandeja esta al dia", "Cuando recibas mensajes o alertas, apareceran aqui.");
+            mostrarVacio("Tu bandeja est\u00E1 al d\u00EDa", "Cuando recibas mensajes o alertas, aparecer\u00E1n aqu\u00ED.");
+            mostrarBotonCargarMas(false, false);
         }
     }
 

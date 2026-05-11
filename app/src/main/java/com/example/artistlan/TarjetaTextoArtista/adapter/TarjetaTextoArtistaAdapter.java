@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
@@ -55,8 +56,8 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
 
 
     public TarjetaTextoArtistaAdapter(List<TarjetaTextoArtistaItem> listaArtistas, Context context) {
-        this.listaArtistas = listaArtistas;
-        this.listaOriginal = new ArrayList<>(listaArtistas);
+        this.listaArtistas = listaArtistas != null ? listaArtistas : new ArrayList<>();
+        this.listaOriginal = new ArrayList<>(this.listaArtistas);
         this.context = context;
     }
 
@@ -119,12 +120,22 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             }
         });
 
-        Glide.with(context).load((artista.getFotoPerfil() != null && !artista.getFotoPerfil().isEmpty()) ? artista.getFotoPerfil() : R.drawable.fotoperfilprueba).placeholder(R.drawable.fotoperfilprueba).error(R.drawable.fotoperfilprueba).circleCrop().into(holder.imgPerfil);
+        Glide.with(context)
+                .load((artista.getFotoPerfil() != null && !artista.getFotoPerfil().isEmpty())
+                        ? artista.getFotoPerfil()
+                        : R.drawable.fotoperfilprueba)
+                .placeholder(R.drawable.fotoperfilprueba)
+                .error(R.drawable.fotoperfilprueba)
+                .thumbnail(0.25f)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .circleCrop()
+                .into(holder.imgPerfil);
 
         List<String> obras = artista.getMiniObras();
-        if (obras.size() > 0) Glide.with(context).load(obras.get(0)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini1); else holder.imgMini1.setImageResource(R.drawable.imagencargaobras);
-        if (obras.size() > 1) Glide.with(context).load(obras.get(1)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini2); else holder.imgMini2.setImageResource(R.drawable.imagencargaobras);
-        if (obras.size() > 2) Glide.with(context).load(obras.get(2)).placeholder(R.drawable.imagencargaobras).into(holder.imgMini3); else holder.imgMini3.setImageResource(R.drawable.imagencargaobras);
+        int miniSizePx = (int) (76 * holder.itemView.getResources().getDisplayMetrics().density);
+        if (obras.size() > 0) cargarMiniObra(holder.imgMini1, obras.get(0), miniSizePx); else holder.imgMini1.setImageResource(R.drawable.imagencargaobras);
+        if (obras.size() > 1) cargarMiniObra(holder.imgMini2, obras.get(1), miniSizePx); else holder.imgMini2.setImageResource(R.drawable.imagencargaobras);
+        if (obras.size() > 2) cargarMiniObra(holder.imgMini3, obras.get(2), miniSizePx); else holder.imgMini3.setImageResource(R.drawable.imagencargaobras);
 
         boolean expandido = (tarjetaExpandida == position);
         animarVista(holder.expandedSection, expandido);
@@ -238,19 +249,45 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             }
         }
 
+        int oldSize = listaArtistas.size();
         listaArtistas.clear();
         listaArtistas.addAll(listaFiltrada);
         tarjetaExpandida = -1;
-        notifyDataSetChanged();
+        if (oldSize > 0) {
+            notifyItemRangeRemoved(0, oldSize);
+        }
+        if (!listaFiltrada.isEmpty()) {
+            notifyItemRangeInserted(0, listaFiltrada.size());
+        }
     }
 
     public void actualizarLista(List<TarjetaTextoArtistaItem> nuevaLista) {
+        int oldSize = listaArtistas.size();
         listaOriginal.clear();
-        listaOriginal.addAll(nuevaLista);
+        if (nuevaLista != null) {
+            listaOriginal.addAll(nuevaLista);
+        }
         listaArtistas.clear();
-        listaArtistas.addAll(nuevaLista);
+        if (nuevaLista != null) {
+            listaArtistas.addAll(nuevaLista);
+        }
         tarjetaExpandida = -1;
-        notifyDataSetChanged();
+        if (oldSize > 0) {
+            notifyItemRangeRemoved(0, oldSize);
+        }
+        if (nuevaLista != null && !nuevaLista.isEmpty()) {
+            notifyItemRangeInserted(0, nuevaLista.size());
+        }
+    }
+
+    public void agregarItems(List<TarjetaTextoArtistaItem> nuevosItems) {
+        if (nuevosItems == null || nuevosItems.isEmpty()) {
+            return;
+        }
+        int start = listaArtistas.size();
+        listaArtistas.addAll(nuevosItems);
+        listaOriginal.addAll(nuevosItems);
+        notifyItemRangeInserted(start, nuevosItems.size());
     }
 
     public void removeItemAt(int position) {
@@ -262,5 +299,17 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
 
     public void notifyLikeChanged(int position) {
         if (position >= 0 && position < listaArtistas.size()) notifyItemChanged(position);
+    }
+
+    private void cargarMiniObra(@NonNull ImageView target, String url, int miniSizePx) {
+        Glide.with(context)
+                .load(url)
+                .placeholder(R.drawable.imagencargaobras)
+                .error(R.drawable.imagencargaobras)
+                .thumbnail(0.25f)
+                .override(miniSizePx, miniSizePx)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .centerCrop()
+                .into(target);
     }
 }

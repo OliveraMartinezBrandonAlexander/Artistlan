@@ -2,6 +2,7 @@
 <androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nestedScrollObras"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
@@ -24,6 +25,40 @@
             android:layout_height="wrap_content"
             android:nestedScrollingEnabled="false"
             android:padding="12dp"/>
+
+        <Button
+            android:id="@+id/btnCargarMasObras"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="6dp"
+            android:text="Cargar m&#225;s obras"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/layoutLoaderMasObras"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingTop="8dp"
+            android:paddingBottom="16dp"
+            android:visibility="gone">
+
+            <ProgressBar
+                android:id="@+id/progressMasObras"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"/>
+
+            <TextView
+                android:id="@+id/txtCargandoMasObras"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cargando m&#225;s obras..."
+                android:textSize="13sp"/>
+        </LinearLayout>
 
     </LinearLayout>
 

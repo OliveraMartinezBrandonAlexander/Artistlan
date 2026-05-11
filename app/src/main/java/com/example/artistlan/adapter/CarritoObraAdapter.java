@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.artistlan.Conector.model.CarritoDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
@@ -88,6 +89,9 @@ public class CarritoObraAdapter extends RecyclerView.Adapter<CarritoObraAdapter.
                     .load(imagen)
                     .placeholder(R.drawable.imagencargaobras)
                     .error(R.drawable.imagencargaobras)
+                    .thumbnail(0.25f)
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                    .centerCrop()
                     .into(holder.imgObra);
         } else {
             holder.imgObra.setImageResource(R.drawable.imagencargaobras);

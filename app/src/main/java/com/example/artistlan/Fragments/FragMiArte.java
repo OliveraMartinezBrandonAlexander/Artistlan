@@ -228,7 +228,7 @@ public class FragMiArte extends Fragment {
 
         new AlertDialog.Builder(requireContext())
                 .setTitle("Eliminar obra")
-                .setMessage("Esta accion eliminara la obra de forma permanente.\n\n"
+                .setMessage("Esta acci\u00F3n eliminar\u00E1 la obra de forma permanente.\n\n"
                         + "Si hay solicitudes activas relacionadas, pueden cancelarse y "
                         + "se notificara a compradores afectados.\n\n"
                         + "Deseas continuar?")
@@ -297,7 +297,7 @@ public class FragMiArte extends Fragment {
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 obrasEnEliminacion.remove(idObra);
                 if (isAdded()) {
-                    Toast.makeText(requireContext(), "Error de conexion al eliminar la obra", Toast.LENGTH_LONG).show();
+                    Toast.makeText(requireContext(), "Error de conexi\u00F3n al eliminar la obra", Toast.LENGTH_LONG).show();
                     cargarObrasDelUsuario();
                 }
             }

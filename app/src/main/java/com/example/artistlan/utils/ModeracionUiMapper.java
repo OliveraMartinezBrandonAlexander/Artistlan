@@ -94,6 +94,21 @@ public final class ModeracionUiMapper {
         }
     }
 
+    public static String formatModeradorAsignado(String value) {
+        String normalized = normalize(value);
+        if (normalized.isEmpty()) {
+            return "Sin asignar";
+        }
+        if ("USUARIO_NO_ENCONTRADO".equals(normalized)
+                || "USUARIO_NO_DISPONIBLE".equals(normalized)
+                || "NO_DISPONIBLE".equals(normalized)
+                || "NO_ENCONTRADO".equals(normalized)
+                || "N_A".equals(normalized)) {
+            return "Sin asignar";
+        }
+        return value.trim();
+    }
+
     private static String normalize(String value) {
         if (value == null) {
             return "";

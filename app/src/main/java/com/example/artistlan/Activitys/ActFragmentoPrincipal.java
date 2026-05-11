@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.net.Uri;
@@ -17,6 +18,7 @@ import android.view.View;
 import android.os.SystemClock;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -64,6 +66,8 @@ import com.google.android.material.navigation.NavigationView;
 
 public class ActFragmentoPrincipal extends AppCompatActivity {
     private static final String TAG = "ActFragmentoPrincipal";
+    private static final String TAG_NAV_CRASH_DEBUG = "ModeracionNavCrashDebug";
+    private static final boolean ENABLE_NAV_DEBUG_LOGS = false;
 
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
@@ -105,7 +109,11 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private ObjectAnimator drawerGlow2Y, drawerGlow2Alpha;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final long NAV_DEBOUNCE_MS = 400L;
+    private static final long CENTRO_MENSAJES_NAV_DEBOUNCE_MS = 500L;
+    private static final long BADGE_REFRESH_MIN_INTERVAL_MS = 1500L;
     private long ultimaAccionNavegacion = 0L;
+    private long ultimaNavegacionCentroMensajes = 0L;
+    private long ultimoRefrescoBadgeMs = 0L;
     private boolean capturandoPagoDeepLink = false;
     private boolean activationPromptShown = false;
     private boolean activationRequestInProgress = false;
@@ -114,6 +122,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private AlertDialog twoFactorPromptDialog;
     private AlertDialog twoFactorLoadingDialog;
     private ScrollMenuVisibilityHelper scrollMenuVisibilityHelper;
+    private boolean bottomMenuHiddenByKeyboard = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,7 +148,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         animarEntradaUI();
         animarCampana();
         animarGlows();
-        refrescarBadgeMensajes();
+        refrescarBadgeMensajes(true);
         mostrarModalActivacion2FAIfNeeded();
     }
 
@@ -359,6 +368,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
             bottomBar.setOnItemSelectedListener(item -> {
                 if (!puedeEjecutarNavegacion()) return false;
+                ocultarTecladoAntesDeNavegar();
                 animarBottomNavTap(bottomBar);
                 animarItemActivoBottomNav(bottomBar);
                 return navegarSinDuplicar(item.getItemId());
@@ -482,6 +492,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         if (navigationView != null) {
             navigationView.setNavigationItemSelectedListener(item -> {
                 if (!puedeEjecutarNavegacion()) return true;
+                ocultarTecladoAntesDeNavegar();
                 int itemId = item.getItemId();
 
                 if (itemId == R.id.navAdminGestionarUsuarios) {
@@ -568,6 +579,16 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
     public void abrirCentroMensajes(int tabInicial, int solicitudesModo) {
         if (navController == null) return;
+        long ahora = SystemClock.elapsedRealtime();
+        if (ahora - ultimaNavegacionCentroMensajes < CENTRO_MENSAJES_NAV_DEBOUNCE_MS) {
+            logDebug(TAG_NAV_CRASH_DEBUG, "abrirCentroMensajes ignorado por debounce");
+            return;
+        }
+        ultimaNavegacionCentroMensajes = ahora;
+        ocultarTecladoAntesDeNavegar();
+        NavDestination currentDestination = navController.getCurrentDestination();
+        logDebug(TAG_NAV_CRASH_DEBUG, "abrirCentroMensajes currentDestination="
+                + (currentDestination != null ? currentDestination.getId() : -1));
 
         Bundle args = new Bundle();
         args.putInt(FragCentroMensajes.ARG_TAB_INICIAL, Math.max(0, Math.min(1, tabInicial)));
@@ -614,6 +635,16 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     }
 
     public void refrescarBadgeMensajes() {
+        refrescarBadgeMensajes(false);
+    }
+
+    private void refrescarBadgeMensajes(boolean force) {
+        long ahora = SystemClock.elapsedRealtime();
+        if (!force && (ahora - ultimoRefrescoBadgeMs) < BADGE_REFRESH_MIN_INTERVAL_MS) {
+            logDebug(TAG, "refrescarBadgeMensajes omitido por throttle");
+            return;
+        }
+        ultimoRefrescoBadgeMs = ahora;
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
         int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
         MensajesBadgeManager.refrescarBadge(idUsuario, this::actualizarBadgeMensajesVisual);
@@ -621,6 +652,47 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
     public boolean navegarDesdeCentroMensajes(int destinationId, Bundle args) {
         return navegarSinDuplicar(destinationId, args);
+    }
+
+    public void setBottomMenuHiddenByKeyboard(boolean hidden) {
+        logDebug(TAG_NAV_CRASH_DEBUG, "setBottomMenuHiddenByKeyboard hidden=" + hidden);
+        if (bottomBarContainer == null || isFinishing() || isDestroyed() || !bottomBarContainer.isAttachedToWindow()) {
+            return;
+        }
+        if (hidden == bottomMenuHiddenByKeyboard) {
+            return;
+        }
+        bottomMenuHiddenByKeyboard = hidden;
+
+        bottomBarContainer.animate().cancel();
+        float hiddenTranslation = bottomBarContainer.getHeight() > 0 ? bottomBarContainer.getHeight() : 42f;
+
+        if (hidden) {
+            bottomBarContainer.animate()
+                    .alpha(0f)
+                    .translationY(hiddenTranslation)
+                    .setDuration(160)
+                    .withEndAction(() -> {
+                        if (bottomMenuHiddenByKeyboard
+                                && bottomBarContainer != null
+                                && !isFinishing()
+                                && !isDestroyed()
+                                && bottomBarContainer.isAttachedToWindow()) {
+                            bottomBarContainer.setVisibility(View.GONE);
+                        }
+                    })
+                    .start();
+            return;
+        }
+
+        bottomBarContainer.setVisibility(View.VISIBLE);
+        bottomBarContainer.setAlpha(0f);
+        bottomBarContainer.setTranslationY(hiddenTranslation);
+        bottomBarContainer.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(180)
+                .start();
     }
 
     private void prepararAnimacionesIniciales() {
@@ -869,9 +941,23 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         try {
             navController.navigate(destinationId, args, navOptions);
             return true;
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            Log.w(TAG_NAV_CRASH_DEBUG, "navigate bloqueado destinationId=" + destinationId, e);
             return false;
         }
+    }
+
+    private void ocultarTecladoAntesDeNavegar() {
+        View focused = getCurrentFocus();
+        if (focused != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(focused.getWindowToken(), 0);
+            }
+            focused.clearFocus();
+        }
+        setBottomMenuHiddenByKeyboard(false);
+        logDebug(TAG_NAV_CRASH_DEBUG, "ocultarTecladoAntesDeNavegar ejecutado");
     }
 
     private void cerrarSesion() {
@@ -896,7 +982,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         boolean loggedIn = sessionManager.isLoggedIn();
         boolean twoFactorEnabled = sessionManager.isTwoFactorEnabled();
-        Log.d(TAG, "twoFactorEnabled guardado = " + twoFactorEnabled + ", loggedIn = " + loggedIn);
+        logDebug(TAG, "twoFactorEnabled guardado = " + twoFactorEnabled + ", loggedIn = " + loggedIn);
 
         if (!loggedIn || twoFactorEnabled) {
             return;
@@ -912,7 +998,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         }
         String token = sessionManager.getToken();
         if (token == null || token.trim().isEmpty()) {
-            Toast.makeText(this, "Sesion no valida. Vuelve a iniciar sesion.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Sesión no válida. Vuelve a iniciar sesión.", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -953,7 +1039,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             public void onFailure(retrofit2.Call<TwoFactorResponse> call, Throwable t) {
                 activationRequestInProgress = false;
                 ocultarLoadingActivacion();
-                Toast.makeText(ActFragmentoPrincipal.this, "Error de conexion al solicitar activacion 2FA", Toast.LENGTH_LONG).show();
+                Toast.makeText(ActFragmentoPrincipal.this, "Error de conexión al solicitar activación 2FA", Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -1034,7 +1120,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         applyThemeOnlyColors();
         cargarHeaderDrawer();
         configurarAdminDrawerSection();
-        refrescarBadgeMensajes();
+        refrescarBadgeMensajes(false);
         if (navController != null) {
             actualizarBotonesTopBar(navController.getCurrentDestination());
         }
@@ -1076,6 +1162,17 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
     private void cancelAnimator(ObjectAnimator animator) {
         if (animator != null) animator.cancel();
+    }
+
+    private void logDebug(String tag, String message) {
+        if (ENABLE_NAV_DEBUG_LOGS && isDebugBuild()) {
+            Log.d(tag, message);
+        }
+    }
+
+    private boolean isDebugBuild() {
+        ApplicationInfo info = getApplicationInfo();
+        return info != null && (info.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
     }
 
     private boolean puedeEjecutarNavegacion() {
@@ -1254,7 +1351,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
     private void onPagoCapturadoExitoso() {
         PagoSyncManager.markCaptureSuccess(this);
-        refrescarBadgeMensajes();
+        refrescarBadgeMensajes(true);
 
         NavHostFragment navHostFragment =
                 (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);

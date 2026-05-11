@@ -5,6 +5,8 @@ import com.example.artistlan.Conector.model.ArtistaDTO;
 import com.example.artistlan.Conector.model.DesactivarCuentaRequestDTO;
 import com.example.artistlan.Conector.model.LoginRequestDTO;
 import com.example.artistlan.Conector.model.LoginResponseDTO;
+import com.example.artistlan.Conector.model.PageResponseArtistaDTO;
+import com.example.artistlan.Conector.model.PageResponseUsuariosDTO;
 import com.example.artistlan.Conector.model.RespuestaModeracionDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.Conector.model.CambiarRolRequestDTO;
@@ -26,6 +28,17 @@ public interface UsuarioApi {
 
     @GET("usuarios")
     Call<List<ArtistaDTO>> getArtistas(@Query("usuarioId") Integer usuarioId);
+
+    @GET("usuarios/artistas/paginado")
+    Call<PageResponseArtistaDTO> getArtistasPaginados(
+            @Query("usuarioId") Integer usuarioId,
+            @Query("q") String q,
+            @Query("categoria") String categoria,
+            @Query("idCategoria") Integer idCategoria,
+            @Query("page") int page,
+            @Query("size") int size,
+            @Query("sort") String sort
+    );
 
     @POST("usuarios")
     Call<List<UsuariosDTO>> crearUsuarios(@Body List<UsuariosDTO> usuarios);
@@ -70,6 +83,17 @@ public interface UsuarioApi {
 
     @GET("usuarios")
     Call<List<UsuariosDTO>> getUsuarios();
+
+    @GET("usuarios/paginado")
+    Call<PageResponseUsuariosDTO> getUsuariosPaginados(
+            @Query("q") String q,
+            @Query("rol") String rol,
+            @Query("estadoCuenta") String estadoCuenta,
+            @Query("idCategoria") Integer idCategoria,
+            @Query("page") int page,
+            @Query("size") int size,
+            @Query("sort") String sort
+    );
 
     @PUT("usuarios/{id}/rol")
     Call<UsuariosDTO> cambiarRol(

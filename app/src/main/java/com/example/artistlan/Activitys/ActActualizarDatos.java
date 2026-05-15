@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.InputType;
+import android.util.Patterns;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -149,9 +150,6 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
         api = RetrofitClient.getClient().create(UsuarioApi.class);
         sessionManager = new SessionManager(this);
-
-        etCorreo.setEnabled(false);
-        etUsuario.setEnabled(false);
 
         etFecha.setOnClickListener(v -> mostrarDatePicker());
 
@@ -657,9 +655,32 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             return;
         }
 
-        String nombre = etNombre.getText().toString().trim();
-        String fechaNac = etFecha.getText().toString().trim();
+        etCorreo.setError(null);
+        etUsuario.setError(null);
+        etNombre.setError(null);
+        etTelefono.setError(null);
+
+        String correo = getTrimmedText(etCorreo);
+        String usuario = getTrimmedText(etUsuario);
+        String nombre = getTrimmedText(etNombre);
+        String fechaNac = getTrimmedText(etFecha);
+        if (usuario.isEmpty()) {
+            etUsuario.setError("El nombre de usuario es obligatorio.");
+            etUsuario.requestFocus();
+            return;
+        }
+        if (correo.isEmpty()) {
+            etCorreo.setError("El correo es obligatorio.");
+            etCorreo.requestFocus();
+            return;
+        }
+        if (!Patterns.EMAIL_ADDRESS.matcher(correo).matches()) {
+            etCorreo.setError("Ingresa un correo vÃ¡lido.");
+            etCorreo.requestFocus();
+            return;
+        }
         if (nombre.isEmpty()) {
+            etNombre.setError("El nombre no puede estar vacÃ­o.");
             etNombre.requestFocus();
             Toast.makeText(this, "El nombre no puede estar vacío.", Toast.LENGTH_SHORT).show();
             return;
@@ -738,42 +759,134 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             usuarioActualizado.setRol(rolActual);
         }
 
-        api.actualizarUsuario(idUsuario, usuarioActualizado).enqueue(new Callback<Void>() {
+        api.actualizarUsuario(idUsuario, usuarioActualizado).enqueue(new Callback<UsuariosDTO>() {
             @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
+            public void onResponse(Call<UsuariosDTO> call, Response<UsuariosDTO> response) {
                 if (response.isSuccessful()) {
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putString("nombreCompleto", usuarioActualizado.getNombreCompleto());
-                    editor.putString("descripcion", usuarioActualizado.getDescripcion());
-                    editor.putString("redes", usuarioActualizado.getRedesSociales());
-                    editor.putString("telefono", usuarioActualizado.getTelefono());
-                    editor.putString("fechaNac", usuarioActualizado.getFechaNacimiento());
-                    editor.putString("ubicacion", usuarioActualizado.getUbicacion());
-                    String ocupacionSeleccionada = ocupacionActual;
-                    if (posicionSeleccionada > 0 && posicionSeleccionada <= listaCategorias.size()) {
-                        ocupacionSeleccionada = listaCategorias.get(posicionSeleccionada - 1).getNombreCategoria();
-                    }
-                    if (ocupacionSeleccionada != null) {
-                        editor.putString("categoria", ocupacionSeleccionada);
-                        editor.putString("ocupacion", ocupacionSeleccionada);
-                    }
-                    editor.apply();
-
+                    persistirUsuarioActualizado(
+                            prefs,
+                            idUsuario,
+                            usuarioActualizado,
+                            response.body(),
+                            posicionSeleccionada,
+                            ocupacionActual
+                    );
                     Toast.makeText(ActActualizarDatos.this, "Datos actualizados correctamente", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
-                    String backendMessage = ApiErrorParser.extractMessage(response);
-                    Toast.makeText(ActActualizarDatos.this,
-                            backendMessage != null ? backendMessage : "Error al actualizar (Código: " + response.code() + ")",
-                            Toast.LENGTH_LONG).show();
+                    manejarErrorActualizacion(response);
                 }
             }
 
             @Override
-            public void onFailure(Call<Void> call, Throwable t) {
+            public void onFailure(Call<UsuariosDTO> call, Throwable t) {
                 Toast.makeText(ActActualizarDatos.this, "Fallo de conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void persistirUsuarioActualizado(
+            SharedPreferences prefs,
+            int idUsuario,
+            UsuariosDTO usuarioEnviado,
+            UsuariosDTO usuarioRespuesta,
+            int posicionSeleccionada,
+            String ocupacionActual
+    ) {
+        UsuariosDTO usuarioPersistido = usuarioRespuesta != null ? usuarioRespuesta : usuarioEnviado;
+        usuarioPersistido.setIdUsuario(idUsuario);
+
+        if (isBlank(usuarioPersistido.getRol())) {
+            usuarioPersistido.setRol(prefs.getString("rol", "USER"));
+        }
+        if (isBlank(usuarioPersistido.getFotoPerfil())) {
+            usuarioPersistido.setFotoPerfil(prefs.getString("fotoPerfil", ""));
+        }
+
+        String tokenActual = sessionManager != null ? sessionManager.getToken() : null;
+        if (sessionManager != null && tokenActual != null) {
+            sessionManager.saveUserSession(usuarioPersistido, tokenActual);
+        }
+
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt("id", idUsuario);
+        editor.putInt("idUsuario", idUsuario);
+        editor.putString("usuario", valueOrEmpty(usuarioPersistido.getUsuario()));
+        editor.putString("correo", valueOrEmpty(usuarioPersistido.getCorreo()));
+        editor.putString("nombreCompleto", valueOrEmpty(usuarioPersistido.getNombreCompleto()));
+        editor.putString("descripcion", valueOrEmpty(usuarioPersistido.getDescripcion()));
+        editor.putString("fotoPerfil", valueOrEmpty(usuarioPersistido.getFotoPerfil()));
+        editor.putString("telefono", valueOrEmpty(usuarioPersistido.getTelefono()));
+        editor.putString("redesSociales", valueOrEmpty(usuarioPersistido.getRedesSociales()));
+        editor.putString("redes", valueOrEmpty(usuarioPersistido.getRedesSociales()));
+        editor.putString("fechaNacimiento", valueOrEmpty(usuarioPersistido.getFechaNacimiento()));
+        editor.putString("fechaNac", valueOrEmpty(usuarioPersistido.getFechaNacimiento()));
+        editor.putString("ubicacion", valueOrEmpty(usuarioPersistido.getUbicacion()));
+        editor.putString("rol", valueOrEmpty(usuarioPersistido.getRol()));
+        editor.putBoolean("twoFactorEnabled", Boolean.TRUE.equals(usuarioPersistido.getTwoFactorEnabled()));
+
+        String ocupacionPersistida = resolverOcupacionPersistida(usuarioPersistido, posicionSeleccionada, ocupacionActual);
+        if (!isBlank(ocupacionPersistida)) {
+            editor.putString("categoria", ocupacionPersistida);
+            editor.putString("ocupacion", ocupacionPersistida);
+        }
+
+        editor.apply();
+    }
+
+    private String resolverOcupacionPersistida(
+            UsuariosDTO usuarioPersistido,
+            int posicionSeleccionada,
+            String ocupacionActual
+    ) {
+        if (usuarioPersistido != null && !isBlank(usuarioPersistido.getCategoria())) {
+            return usuarioPersistido.getCategoria().trim();
+        }
+        if (posicionSeleccionada > 0
+                && listaCategorias != null
+                && posicionSeleccionada <= listaCategorias.size()) {
+            String nombreCategoria = listaCategorias.get(posicionSeleccionada - 1).getNombreCategoria();
+            if (!isBlank(nombreCategoria)) {
+                return nombreCategoria.trim();
+            }
+        }
+        return isBlank(ocupacionActual) ? null : ocupacionActual.trim();
+    }
+
+    private void manejarErrorActualizacion(Response<?> response) {
+        String backendMessage = ApiErrorParser.extractMessage(response);
+        String mensaje = backendMessage != null
+                ? backendMessage
+                : "Error al actualizar (CÃ³digo: " + response.code() + ")";
+
+        if (response.code() == 409) {
+            String mensajeNormalizado = backendMessage == null ? "" : backendMessage.toLowerCase(Locale.ROOT);
+            if (mensajeNormalizado.contains("correo")) {
+                mensaje = "El correo ya estÃ¡ en uso.";
+                etCorreo.setError(mensaje);
+                etCorreo.requestFocus();
+            } else if (mensajeNormalizado.contains("usuario")) {
+                mensaje = "El nombre de usuario ya estÃ¡ en uso.";
+                etUsuario.setError(mensaje);
+                etUsuario.requestFocus();
+            }
+        }
+
+        Toast.makeText(this, mensaje, Toast.LENGTH_LONG).show();
+    }
+
+    private String getTrimmedText(EditText editText) {
+        return editText != null && editText.getText() != null
+                ? editText.getText().toString().trim()
+                : "";
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private String valueOrEmpty(String value) {
+        return value != null ? value : "";
     }
 
     private boolean esTelefonoValido(String telefono) {

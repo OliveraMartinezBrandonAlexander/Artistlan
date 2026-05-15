@@ -110,10 +110,7 @@
                     android:paddingTop="8dp"
                     android:paddingBottom="8dp"
                     android:textColor="#202020"
-                    android:inputType="textEmailAddress"
-                    android:enabled="false"
-                    android:focusable="false"
-                    android:clickable="false" />
+                    android:inputType="textEmailAddress" />
 
                 <TextView
                     android:id="@+id/tvUsuario"
@@ -135,10 +132,7 @@
                     android:paddingTop="8dp"
                     android:paddingBottom="8dp"
                     android:textColor="#202020"
-                    android:inputType="textPersonName"
-                    android:enabled="false"
-                    android:focusable="false"
-                    android:clickable="false" />
+                    android:inputType="textPersonName" />
 
                 <TextView
                     android:id="@+id/tvFotoPerfil"

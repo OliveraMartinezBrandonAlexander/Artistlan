@@ -8,7 +8,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.artistlan.Activitys.ActIniciarSesion;
+import com.example.artistlan.Activitys.MainActivity;
 import com.example.artistlan.ArtistlanApp;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -156,7 +156,7 @@ public class RetrofitClient {
                     Toast.LENGTH_LONG
             ).show();
 
-            Intent intent = new Intent(appContext, ActIniciarSesion.class);
+            Intent intent = new Intent(appContext, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             appContext.startActivity(intent);
         });

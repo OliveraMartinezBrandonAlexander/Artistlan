@@ -3,6 +3,7 @@ package com.example.artistlan.Fragments;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,13 +41,18 @@ import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FragMain extends Fragment {
+    private static final long LIKE_THROTTLE_MS = 500L;
 
     private ViewPager2 viewPager;
     private RecyclerView rvFeedPublicacionesMain;
@@ -61,6 +67,10 @@ public class FragMain extends Fragment {
     private Call<List<ServicioDTO>> serviciosFeedCall;
     private Call<List<ObraDTO>> obrasCarruselCall;
     private FavoritosApi favoritosApi;
+    private final Map<Integer, Long> ultimoToqueLikePorObra = new HashMap<>();
+    private final Set<Integer> likesObraEnVuelo = new HashSet<>();
+    private final Map<Integer, Long> ultimoToqueLikePorServicio = new HashMap<>();
+    private final Set<Integer> likesServicioEnVuelo = new HashSet<>();
 
     @Nullable
     @Override
@@ -299,12 +309,15 @@ public class FragMain extends Fragment {
 
         for (RecyclerView.Adapter<? extends RecyclerView.ViewHolder> adapter : bloques) {
             if (adapter instanceof TarjetaTextoObraAdapter) {
-                ((TarjetaTextoObraAdapter) adapter).setOnAuthorClickListener((obraItem, position) -> abrirPerfilPublico(obraItem.getIdAutor()));
-                ((TarjetaTextoObraAdapter) adapter).setOnLikeClickListener(this::toggleLikeObraEnFeed);
-                ((TarjetaTextoObraAdapter) adapter).setOnPrimaryActionClickListener((obraItem, position) -> abrirDetalleObra(obraItem.getIdObra()));
+                TarjetaTextoObraAdapter obraAdapter = (TarjetaTextoObraAdapter) adapter;
+                obraAdapter.setOnAuthorClickListener((obraItem, position) -> abrirPerfilPublico(obraItem.getIdAutor()));
+                obraAdapter.setOnLikeClickListener((obraItem, position) -> toggleLikeObraEnFeed(obraItem, position, obraAdapter));
+                obraAdapter.setOnPrimaryActionClickListener((obraItem, position) -> abrirDetalleObra(obraItem.getIdObra()));
             }
             if (adapter instanceof TarjetaTextoServicioAdapter) {
-                ((TarjetaTextoServicioAdapter) adapter).setOnAuthorClickListener((servicioItem, position) -> abrirPerfilPublico(servicioItem.getIdUsuario()));
+                TarjetaTextoServicioAdapter servicioAdapter = (TarjetaTextoServicioAdapter) adapter;
+                servicioAdapter.setOnAuthorClickListener((servicioItem, position) -> abrirPerfilPublico(servicioItem.getIdUsuario()));
+                servicioAdapter.setOnLikeClickListener((servicioItem, position) -> toggleLikeServicioEnFeed(servicioItem, position, servicioAdapter));
             }
         }
         rvFeedPublicacionesMain.setAdapter(new ConcatAdapter(bloques));
@@ -351,7 +364,7 @@ public class FragMain extends Fragment {
                     dto.getNombreAutor(),
                     dto.getNombreCategoria(),
                     dto.getFotoPerfilAutor(),
-                    false,
+                    Boolean.TRUE.equals(dto.getEsFavorito()),
                     false
             );
 
@@ -533,7 +546,35 @@ public class FragMain extends Fragment {
         Toast.makeText(requireContext(), "Detalle completo no disponible en Home aún", Toast.LENGTH_SHORT).show();
     }
 
-    private void toggleLikeObraEnFeed(TarjetaTextoObraItem obraItem, int position) {
+    private boolean puedeProcesarLikeObra(int idObra) {
+        long ahora = SystemClock.elapsedRealtime();
+        Long ultimoToque = ultimoToqueLikePorObra.get(idObra);
+        if (ultimoToque != null && ahora - ultimoToque < LIKE_THROTTLE_MS) {
+            return false;
+        }
+        if (likesObraEnVuelo.contains(idObra)) {
+            return false;
+        }
+        ultimoToqueLikePorObra.put(idObra, ahora);
+        likesObraEnVuelo.add(idObra);
+        return true;
+    }
+
+    private boolean puedeProcesarLikeServicio(int idServicio) {
+        long ahora = SystemClock.elapsedRealtime();
+        Long ultimoToque = ultimoToqueLikePorServicio.get(idServicio);
+        if (ultimoToque != null && ahora - ultimoToque < LIKE_THROTTLE_MS) {
+            return false;
+        }
+        if (likesServicioEnVuelo.contains(idServicio)) {
+            return false;
+        }
+        ultimoToqueLikePorServicio.put(idServicio, ahora);
+        likesServicioEnVuelo.add(idServicio);
+        return true;
+    }
+
+    private void toggleLikeObraEnFeed(TarjetaTextoObraItem obraItem, int position, @NonNull TarjetaTextoObraAdapter adapter) {
         if (obraItem == null || obraItem.getIdObra() <= 0 || favoritosApi == null || !isAdded()) {
             return;
         }
@@ -543,36 +584,97 @@ public class FragMain extends Fragment {
             return;
         }
 
+        int idObra = obraItem.getIdObra();
+        if (!puedeProcesarLikeObra(idObra)) {
+            return;
+        }
+
         final boolean previo = obraItem.isUserLiked();
         final int likesPrevios = obraItem.getLikes();
         obraItem.setUserLiked(!previo);
         obraItem.setLikes(Math.max(0, likesPrevios + (previo ? -1 : 1)));
-        if (rvFeedPublicacionesMain != null && rvFeedPublicacionesMain.getAdapter() != null) {
-            rvFeedPublicacionesMain.getAdapter().notifyDataSetChanged();
-        }
+        adapter.notifyLikeChangedPartial(position);
 
         FavoritoDTO dto = new FavoritoDTO();
         dto.idUsuario = idUsuario;
-        dto.idObra = obraItem.getIdObra();
+        dto.idObra = idObra;
         Call<Void> call = previo ? favoritosApi.eliminarFavorito(dto) : favoritosApi.agregarFavorito(dto);
         call.enqueue(new Callback<Void>() {
             @Override public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
                 if (!isAdded()) return;
-                if (!response.isSuccessful()) {
-                    obraItem.setUserLiked(previo);
-                    obraItem.setLikes(likesPrevios);
-                    if (rvFeedPublicacionesMain != null && rvFeedPublicacionesMain.getAdapter() != null) {
-                        rvFeedPublicacionesMain.getAdapter().notifyDataSetChanged();
-                    }
+                likesObraEnVuelo.remove(idObra);
+                if (response.isSuccessful()) {
+                    return;
                 }
+                if (!previo && response.code() == 409) {
+                    obraItem.setUserLiked(true);
+                    syncLikeCountObra(obraItem, position, adapter);
+                    return;
+                }
+                obraItem.setUserLiked(previo);
+                obraItem.setLikes(likesPrevios);
+                adapter.notifyLikeChanged(position);
+                Toast.makeText(requireContext(), "No se pudo actualizar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
             }
             @Override public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
+                likesObraEnVuelo.remove(idObra);
                 obraItem.setUserLiked(previo);
                 obraItem.setLikes(likesPrevios);
-                if (rvFeedPublicacionesMain != null && rvFeedPublicacionesMain.getAdapter() != null) {
-                    rvFeedPublicacionesMain.getAdapter().notifyDataSetChanged();
+                adapter.notifyLikeChanged(position);
+                Toast.makeText(requireContext(), "Error de red al actualizar favorito", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void toggleLikeServicioEnFeed(TarjetaTextoServicioItem servicioItem, int position, @NonNull TarjetaTextoServicioAdapter adapter) {
+        if (servicioItem == null || servicioItem.getIdServicio() == null || servicioItem.getIdServicio() <= 0 || favoritosApi == null || !isAdded()) {
+            return;
+        }
+        Integer idUsuario = ReporteUiPermissions.resolveCurrentUserId(requireContext());
+        if (idUsuario == null || idUsuario <= 0) {
+            Toast.makeText(requireContext(), "Inicia sesion para dar like", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Integer idServicio = servicioItem.getIdServicio();
+        if (!puedeProcesarLikeServicio(idServicio)) {
+            return;
+        }
+
+        final boolean previo = servicioItem.isFavorito();
+        final int likesPrevios = servicioItem.getLikes();
+        servicioItem.setFavorito(!previo);
+        servicioItem.setLikes(Math.max(0, likesPrevios + (previo ? -1 : 1)));
+        adapter.notifyLikeChangedPartial(position);
+
+        FavoritoDTO dto = new FavoritoDTO();
+        dto.idUsuario = idUsuario;
+        dto.idServicio = idServicio;
+        Call<Void> call = previo ? favoritosApi.eliminarFavorito(dto) : favoritosApi.agregarFavorito(dto);
+        call.enqueue(new Callback<Void>() {
+            @Override public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (!isAdded()) return;
+                likesServicioEnVuelo.remove(idServicio);
+                if (response.isSuccessful()) {
+                    return;
                 }
+                if (!previo && response.code() == 409) {
+                    servicioItem.setFavorito(true);
+                    syncLikeCountServicio(servicioItem, position, adapter);
+                    return;
+                }
+                servicioItem.setFavorito(previo);
+                servicioItem.setLikes(likesPrevios);
+                adapter.notifyLikeChanged(position);
+                Toast.makeText(requireContext(), "No se pudo actualizar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
+            }
+            @Override public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                likesServicioEnVuelo.remove(idServicio);
+                servicioItem.setFavorito(previo);
+                servicioItem.setLikes(likesPrevios);
+                adapter.notifyLikeChanged(position);
+                Toast.makeText(requireContext(), "Error de red al actualizar favorito", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -586,30 +688,125 @@ public class FragMain extends Fragment {
             Toast.makeText(requireContext(), "Inicia sesión para dar like", Toast.LENGTH_SHORT).show();
             return;
         }
+        Integer idObra = item.getIdObra();
+        if (!puedeProcesarLikeObra(idObra)) {
+            return;
+        }
         final boolean previo = item.isUserLiked();
         final int likesPrevios = item.getLikesCount();
         item.setUserLiked(!previo);
         item.setLikesCount(Math.max(0, likesPrevios + (previo ? -1 : 1)));
-        adapter.notifyItemChanged(position);
+        adapter.notifyLikeChangedPartial(position);
 
         FavoritoDTO dto = new FavoritoDTO();
         dto.idUsuario = idUsuario;
-        dto.idObra = item.getIdObra();
+        dto.idObra = idObra;
         Call<Void> call = previo ? favoritosApi.eliminarFavorito(dto) : favoritosApi.agregarFavorito(dto);
         call.enqueue(new Callback<Void>() {
             @Override public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
                 if (!isAdded()) return;
-                if (!response.isSuccessful()) {
-                    item.setUserLiked(previo);
-                    item.setLikesCount(likesPrevios);
-                    adapter.notifyItemChanged(position);
+                likesObraEnVuelo.remove(idObra);
+                if (response.isSuccessful()) {
+                    return;
                 }
+                if (!previo && response.code() == 409) {
+                    item.setUserLiked(true);
+                    syncLikeCountCarrusel(item, position, adapter);
+                    return;
+                }
+                item.setUserLiked(previo);
+                item.setLikesCount(likesPrevios);
+                adapter.notifyLikeChanged(position);
+                Toast.makeText(requireContext(), "No se pudo actualizar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
             }
             @Override public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
+                likesObraEnVuelo.remove(idObra);
                 item.setUserLiked(previo);
                 item.setLikesCount(likesPrevios);
-                adapter.notifyItemChanged(position);
+                adapter.notifyLikeChanged(position);
+                Toast.makeText(requireContext(), "Error de red al actualizar favorito", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void syncLikeCountObra(@NonNull TarjetaTextoObraItem item, int position, @NonNull TarjetaTextoObraAdapter adapter) {
+        favoritosApi.likesObra(item.getIdObra()).enqueue(new Callback<Integer>() {
+            @Override
+            public void onResponse(@NonNull Call<Integer> call, @NonNull Response<Integer> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    item.setLikes(Math.max(0, response.body()));
+                }
+                adapter.notifyLikeChanged(position);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Integer> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                adapter.notifyLikeChanged(position);
+            }
+        });
+    }
+
+    private void syncLikeCountServicio(@NonNull TarjetaTextoServicioItem item, int position, @NonNull TarjetaTextoServicioAdapter adapter) {
+        Integer idServicio = item.getIdServicio();
+        if (idServicio == null) {
+            adapter.notifyLikeChanged(position);
+            return;
+        }
+
+        favoritosApi.likesServicio(idServicio).enqueue(new Callback<Integer>() {
+            @Override
+            public void onResponse(@NonNull Call<Integer> call, @NonNull Response<Integer> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    item.setLikes(Math.max(0, response.body()));
+                }
+                adapter.notifyLikeChanged(position);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Integer> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                adapter.notifyLikeChanged(position);
+            }
+        });
+    }
+
+    private void syncLikeCountCarrusel(@NonNull ObraCarruselItem item, int position, @NonNull CarruselAdapter adapter) {
+        Integer idObra = item.getIdObra();
+        if (idObra == null || idObra <= 0) {
+            adapter.notifyLikeChanged(position);
+            return;
+        }
+
+        favoritosApi.likesObra(idObra).enqueue(new Callback<Integer>() {
+            @Override
+            public void onResponse(@NonNull Call<Integer> call, @NonNull Response<Integer> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    item.setLikesCount(Math.max(0, response.body()));
+                }
+                adapter.notifyLikeChanged(position);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Integer> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                adapter.notifyLikeChanged(position);
             }
         });
     }
@@ -632,6 +829,11 @@ public class FragMain extends Fragment {
             obrasCarruselCall.cancel();
             obrasCarruselCall = null;
         }
+
+        likesObraEnVuelo.clear();
+        likesServicioEnVuelo.clear();
+        ultimoToqueLikePorObra.clear();
+        ultimoToqueLikePorServicio.clear();
 
         if (rvFeedPublicacionesMain != null) {
             rvFeedPublicacionesMain.setAdapter(null);

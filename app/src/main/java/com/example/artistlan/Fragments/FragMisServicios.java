@@ -46,6 +46,7 @@ public class FragMisServicios extends Fragment {
     private FavoritosApi favoritosApi;
     private int idUsuarioLogueado = -1;
     private final Map<Integer, Long> lastLikeClickByServicio = new HashMap<>();
+    private final Set<Integer> likesEnVuelo = new HashSet<>();
     private boolean debeRecargarEnResume = false;
 
     public static final String ARG_MODO_EDICION = "modo_edicion";
@@ -124,13 +125,14 @@ public class FragMisServicios extends Fragment {
 
     private void toggleLikeServicio(TarjetaTextoServicioItem servicioItem, int position) {
         if (idUsuarioLogueado <= 0 || servicioItem.getIdServicio() == null) return;
-        if (isLikeActionBlocked(servicioItem.getIdServicio())) return;
+        if (isLikeActionBlocked(servicioItem.getIdServicio()) || likesEnVuelo.contains(servicioItem.getIdServicio())) return;
+        likesEnVuelo.add(servicioItem.getIdServicio());
 
         final boolean favoritoAnterior = servicioItem.isFavorito();
         final int likesAnterior = servicioItem.getLikes();
         servicioItem.setFavorito(!favoritoAnterior);
         servicioItem.setLikes(Math.max(0, likesAnterior + (favoritoAnterior ? -1 : 1)));
-        adapter.notifyLikeChanged(position);
+        adapter.notifyLikeChangedPartial(position);
 
         FavoritoDTO dto = new FavoritoDTO();
         dto.idUsuario = idUsuarioLogueado;
@@ -140,14 +142,13 @@ public class FragMisServicios extends Fragment {
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                likesEnVuelo.remove(servicioItem.getIdServicio());
                 if (response.isSuccessful()) {
-                    refreshLikeCount(servicioItem, position);
                     return;
                 }
 
                 if (!favoritoAnterior && response.code() == 409) {
                     servicioItem.setFavorito(true);
-                    adapter.notifyLikeChanged(position);
                     refreshLikeCount(servicioItem, position);
                     return;
                 }
@@ -160,6 +161,7 @@ public class FragMisServicios extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                likesEnVuelo.remove(servicioItem.getIdServicio());
                 servicioItem.setFavorito(favoritoAnterior);
                 servicioItem.setLikes(likesAnterior);
                 adapter.notifyLikeChanged(position);

@@ -92,10 +92,11 @@
             android:id="@+id/likeContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="@id/imgAutor"
-            app:layout_constraintEnd_toEndOf="parent">
+            app:layout_constraintEnd_toStartOf="@id/btnMoreOptions">
 
             <TextView
                 android:id="@+id/likes"

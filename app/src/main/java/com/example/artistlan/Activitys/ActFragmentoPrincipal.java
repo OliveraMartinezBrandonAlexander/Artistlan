@@ -68,6 +68,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private static final String TAG = "ActFragmentoPrincipal";
     private static final String TAG_NAV_CRASH_DEBUG = "ModeracionNavCrashDebug";
     private static final boolean ENABLE_NAV_DEBUG_LOGS = false;
+    private static final long MAX_REUSABLE_SESSION_IDLE_MS = 7L * 24L * 60L * 60L * 1000L;
 
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
@@ -132,6 +133,10 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         themeManager = new ThemeManager(this);
         sessionManager = new SessionManager(this);
         auth2FAApi = RetrofitClient.getClient().create(Auth2FAApi.class);
+
+        if (!ensureReusableSessionOrRedirect()) {
+            return;
+        }
 
         initViews();
         applyThemeOnlyColors();
@@ -961,18 +966,31 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     }
 
     private void cerrarSesion() {
-        SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.remove("idUsuario");
-        editor.remove("usuario");
-        editor.remove("rol");
-        editor.clear();
-        editor.apply();
+        if (sessionManager != null) {
+            sessionManager.clearSession();
+        }
 
         Intent irLogin = new Intent(this, MainActivity.class);
         irLogin.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(irLogin);
         finish();
+    }
+
+    private boolean ensureReusableSessionOrRedirect() {
+        if (sessionManager == null) {
+            return true;
+        }
+
+        if (sessionManager.hasReusableSession(MAX_REUSABLE_SESSION_IDLE_MS)) {
+            sessionManager.touchSession();
+            return true;
+        }
+
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+        return false;
     }
 
     private void mostrarModalActivacion2FAIfNeeded() {
@@ -1116,13 +1134,25 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (!ensureReusableSessionOrRedirect()) {
+            return;
+        }
         themeManager = new ThemeManager(this);
+        sessionManager.touchSession();
         applyThemeOnlyColors();
         cargarHeaderDrawer();
         configurarAdminDrawerSection();
         refrescarBadgeMensajes(false);
         if (navController != null) {
             actualizarBotonesTopBar(navController.getCurrentDestination());
+        }
+    }
+
+    @Override
+    public void onUserInteraction() {
+        super.onUserInteraction();
+        if (sessionManager != null && sessionManager.isLoggedIn()) {
+            sessionManager.touchSession();
         }
     }
 

@@ -20,13 +20,17 @@ import com.airbnb.lottie.LottieAnimationView;
 import com.airbnb.lottie.LottieProperty;
 import com.airbnb.lottie.model.KeyPath;
 import com.airbnb.lottie.value.LottieValueCallback;
+import com.example.artistlan.Conector.SessionManager;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 
+import java.util.concurrent.TimeUnit;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private static final long MAX_REUSABLE_SESSION_IDLE_MS = TimeUnit.DAYS.toMillis(7);
 
     private View btnInicioSesion, btnCrearCuenta;
     private View glowTopLeft, glowTopRight, glowBottomRight, glowBottomLeft;
@@ -37,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private LottieAnimationView lottieLogin, lottieCrear;
 
     private ThemeManager themeManager;
+    private SessionManager sessionManager;
 
     private final Handler pulseHandler = new Handler(Looper.getMainLooper());
     private boolean animateLogin = true;
@@ -65,6 +70,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        sessionManager = new SessionManager(this);
+        if (sessionManager.hasReusableSession(MAX_REUSABLE_SESSION_IDLE_MS)) {
+            sessionManager.touchSession();
+            launchReusableSession();
+            return;
+        }
+
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
@@ -101,6 +114,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         prepareIntroState();
         startGlowAnimations();
         startIntroAnimation();
+    }
+
+    private void launchReusableSession() {
+        Intent intent = new Intent(this, ActFragmentoPrincipal.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        finish();
     }
 
     private void applyThemeOnlyColors() {

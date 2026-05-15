@@ -46,6 +46,7 @@ public class FragMiArte extends Fragment {
     private FavoritosApi favoritosApi;
     private int idUsuarioLogueado = -1;
     private final Map<Integer, Long> lastLikeClickByObra = new HashMap<>();
+    private final Set<Integer> likesEnVuelo = new HashSet<>();
     private final Set<Integer> obrasEnEliminacion = new HashSet<>();
     private boolean debeRecargarEnResume = false;
 
@@ -140,13 +141,14 @@ public class FragMiArte extends Fragment {
 
     private void toggleLikeObra(TarjetaTextoObraItem obraItem, int position) {
         int idObra = obraItem.getIdObra();
-        if (idUsuarioLogueado <= 0 || isLikeActionBlocked(idObra)) return;
+        if (idUsuarioLogueado <= 0 || isLikeActionBlocked(idObra) || likesEnVuelo.contains(idObra)) return;
+        likesEnVuelo.add(idObra);
 
         final boolean favoritoAnterior = obraItem.isUserLiked();
         final int likesAnterior = obraItem.getLikes();
         obraItem.setUserLiked(!favoritoAnterior);
         obraItem.setLikes(Math.max(0, likesAnterior + (favoritoAnterior ? -1 : 1)));
-        adapter.notifyLikeChanged(position);
+        adapter.notifyLikeChangedPartial(position);
 
         FavoritoDTO dto = new FavoritoDTO();
         dto.idUsuario = idUsuarioLogueado;
@@ -156,14 +158,13 @@ public class FragMiArte extends Fragment {
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                likesEnVuelo.remove(idObra);
                 if (response.isSuccessful()) {
-                    refreshLikeCount(obraItem, position);
                     return;
                 }
 
                 if (!favoritoAnterior && response.code() == 409) {
                     obraItem.setUserLiked(true);
-                    adapter.notifyLikeChanged(position);
                     refreshLikeCount(obraItem, position);
                     return;
                 }
@@ -176,6 +177,7 @@ public class FragMiArte extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                likesEnVuelo.remove(idObra);
                 obraItem.setUserLiked(favoritoAnterior);
                 obraItem.setLikes(likesAnterior);
                 adapter.notifyLikeChanged(position);

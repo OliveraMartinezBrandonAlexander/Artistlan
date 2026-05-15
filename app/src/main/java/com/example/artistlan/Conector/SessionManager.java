@@ -2,8 +2,13 @@ package com.example.artistlan.Conector;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Base64;
 
 import com.example.artistlan.Conector.model.UsuariosDTO;
+
+import org.json.JSONObject;
+
+import java.nio.charset.StandardCharsets;
 
 public class SessionManager {
 
@@ -24,6 +29,7 @@ public class SessionManager {
     private static final String KEY_UBICACION = "ubicacion";
     private static final String KEY_TWO_FACTOR_ENABLED = "twoFactorEnabled";
     private static final String KEY_JWT_TOKEN = "jwtToken";
+    private static final String KEY_LAST_ACTIVE_AT = "lastActiveAt";
 
     private final SharedPreferences prefs;
 
@@ -64,6 +70,7 @@ public class SessionManager {
         } else {
             editor.remove(KEY_JWT_TOKEN);
         }
+        editor.putLong(KEY_LAST_ACTIVE_AT, System.currentTimeMillis());
 
         // Limpieza de datos sensibles de versiones anteriores.
         editor.remove("contrasena");
@@ -76,6 +83,40 @@ public class SessionManager {
 
     public boolean isLoggedIn() {
         return prefs.contains(KEY_ID_USUARIO) && prefs.getInt(KEY_ID_USUARIO, -1) > 0;
+    }
+
+    public boolean hasReusableSession(long maxIdleMs) {
+        String token = getToken();
+        if (!isLoggedIn() || token == null) {
+            clearSession();
+            return false;
+        }
+
+        long now = System.currentTimeMillis();
+        if (isTokenExpired(token, now)) {
+            clearSession();
+            return false;
+        }
+
+        long lastActiveAt = prefs.getLong(KEY_LAST_ACTIVE_AT, 0L);
+        if (lastActiveAt <= 0L) {
+            touchSession();
+            return true;
+        }
+
+        if (maxIdleMs > 0L && now - lastActiveAt > maxIdleMs) {
+            clearSession();
+            return false;
+        }
+
+        return true;
+    }
+
+    public void touchSession() {
+        if (!isLoggedIn() || !hasValidToken()) {
+            return;
+        }
+        prefs.edit().putLong(KEY_LAST_ACTIVE_AT, System.currentTimeMillis()).apply();
     }
 
     public boolean isTwoFactorEnabled() {
@@ -92,6 +133,34 @@ public class SessionManager {
 
     public boolean hasValidToken() {
         return getToken() != null;
+    }
+
+    private boolean isTokenExpired(String token, long nowMs) {
+        Long expirationMs = extractJwtExpirationMillis(token);
+        return expirationMs == null || nowMs >= expirationMs;
+    }
+
+    private Long extractJwtExpirationMillis(String token) {
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length < 2) {
+                return null;
+            }
+
+            byte[] decodedPayload = Base64.decode(
+                    parts[1],
+                    Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING
+            );
+            String payloadJson = new String(decodedPayload, StandardCharsets.UTF_8);
+            JSONObject payload = new JSONObject(payloadJson);
+            long expSeconds = payload.optLong("exp", -1L);
+            if (expSeconds <= 0L) {
+                return null;
+            }
+            return expSeconds * 1000L;
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private String valueOrEmpty(String value) {

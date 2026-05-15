@@ -436,6 +436,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
     private void launchMainScreen() {
         Intent ir = new Intent(ActIniciarSesion.this, ActFragmentoPrincipal.class);
+        ir.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(ir);
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         finish();

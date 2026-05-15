@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTextoServicioAdapter.ViewHolder> {
+    private static final String PAYLOAD_LIKE_STATE = "payload_like_state";
 
     public interface OnLikeClickListener { void onLikeClick(TarjetaTextoServicioItem servicioItem, int position); }
     public interface OnEditClickListener { void onEditClick(TarjetaTextoServicioItem servicioItem, int position); }
@@ -106,16 +107,26 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         holder.tecnicas.setText("Técnicas: " + safe(servicio.getTecnicas(), "No especificadas"));
         holder.precioRango.setText(formatearPrecioRango(servicio.getPrecioMin(), servicio.getPrecioMax()));
         holder.categoria.setText("Categoría: " + safe(servicio.getCategoria(), "Sin categoría"));
-        holder.likes.setText(String.valueOf(servicio.getLikes()));
-        holder.btnLike.setProgress(servicio.isFavorito() ? 1f : 0f);
+        bindLikeUi(holder, servicio, true);
         holder.btnLike.setOnClickListener(v -> {
+            if (onLikeClickListener == null) {
+                return;
+            }
             animatePress(v);
             v.setEnabled(false);
             v.postDelayed(() -> v.setEnabled(true), LIKE_BUTTON_COOLDOWN_MS);
-            animateLikeButton(holder.btnLike, servicio.isFavorito());
-            int adapterPosition = holder.getAdapterPosition();
-            if (onLikeClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
-                onLikeClickListener.onLikeClick(listaServicios.get(adapterPosition), adapterPosition);
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (adapterPosition != RecyclerView.NO_POSITION) {
+                TarjetaTextoServicioItem currentServicio = listaServicios.get(adapterPosition);
+                boolean favoritoAntesDelClick = currentServicio.isFavorito();
+                int likesAntesDelClick = currentServicio.getLikes();
+
+                onLikeClickListener.onLikeClick(currentServicio, adapterPosition);
+
+                if (favoritoAntesDelClick != currentServicio.isFavorito()
+                        || likesAntesDelClick != currentServicio.getLikes()) {
+                    animateLikeButton(holder.btnLike, favoritoAntesDelClick);
+                }
             }
         });
 
@@ -165,6 +176,38 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         };
         holder.itemView.setOnClickListener(toggleExpandListener);
         holder.layoutServicioCard.setOnClickListener(toggleExpandListener);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (!payloads.isEmpty() && payloads.contains(PAYLOAD_LIKE_STATE)) {
+            if (position < 0 || position >= listaServicios.size()) {
+                return;
+            }
+            bindLikeUi(holder, listaServicios.get(position), false);
+            return;
+        }
+        super.onBindViewHolder(holder, position, payloads);
+    }
+
+    private void bindLikeUi(@NonNull ViewHolder holder, @NonNull TarjetaTextoServicioItem servicio, boolean forceVisualState) {
+        holder.likes.setText(String.valueOf(servicio.getLikes()));
+
+        if (forceVisualState) {
+            holder.btnLike.animate().cancel();
+            holder.btnLike.cancelAnimation();
+            holder.btnLike.setScaleX(1f);
+            holder.btnLike.setScaleY(1f);
+            holder.btnLike.setAlpha(1f);
+            holder.btnLike.setSpeed(1f);
+            holder.btnLike.setProgress(servicio.isFavorito() ? 1f : 0f);
+            return;
+        }
+
+        if (!holder.btnLike.isAnimating()) {
+            holder.btnLike.setSpeed(1f);
+            holder.btnLike.setProgress(servicio.isFavorito() ? 1f : 0f);
+        }
     }
 
     private String formatearPrecioRango(Double min, Double max) {
@@ -372,6 +415,12 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
     public void notifyLikeChanged(int position) {
         if (position >= 0 && position < listaServicios.size()) notifyItemChanged(position);
+    }
+
+    public void notifyLikeChangedPartial(int position) {
+        if (position >= 0 && position < listaServicios.size()) {
+            notifyItemChanged(position, PAYLOAD_LIKE_STATE);
+        }
     }
 
 

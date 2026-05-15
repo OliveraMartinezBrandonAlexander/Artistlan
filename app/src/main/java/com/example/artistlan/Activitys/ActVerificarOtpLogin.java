@@ -1,6 +1,7 @@
 package com.example.artistlan.Activitys;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.View;
@@ -15,6 +16,7 @@ import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.SessionManager;
 import com.example.artistlan.Conector.api.Auth2FAApi;
+import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.AuthErrorResponseDTO;
 import com.example.artistlan.Conector.model.TwoFactorResendRequest;
 import com.example.artistlan.Conector.model.TwoFactorResponse;
@@ -49,6 +51,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
     private TextView tvResendCooldown;
 
     private Auth2FAApi auth2FAApi;
+    private UsuarioApi usuarioApi;
     private SessionManager sessionManager;
     private CountDownTimer otpCountDownTimer;
     private CountDownTimer resendCountDownTimer;
@@ -71,6 +74,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
         tvResendCooldown = findViewById(R.id.otpResendCooldownText);
 
         auth2FAApi = RetrofitClient.getClient().create(Auth2FAApi.class);
+        usuarioApi = RetrofitClient.getClient().create(UsuarioApi.class);
         sessionManager = new SessionManager(this);
 
         mode = getIntent().getStringExtra(EXTRA_MODE);
@@ -163,9 +167,11 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                     return;
                 }
 
-                sessionManager.saveUserSession(user, token);
+                guardarUsuarioLogeado(user, token);
+                cargarCategoriaUsuario(user.getIdUsuario());
 
                 Intent intent = new Intent(ActVerificarOtpLogin.this, ActFragmentoPrincipal.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
                 finish();
             }
@@ -416,6 +422,55 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
             return null;
         }
         return "Bearer " + jwtToken.trim();
+    }
+
+    private void guardarUsuarioLogeado(UsuariosDTO usuario, String jwtToken) {
+        SharedPreferences prefs = getSharedPreferences(SessionManager.PREF_NAME, MODE_PRIVATE);
+        String categoria = usuario.getCategoria();
+
+        sessionManager.saveUserSession(usuario, jwtToken);
+
+        if (categoria != null && !categoria.trim().isEmpty()) {
+            prefs.edit()
+                    .putString("categoria", categoria)
+                    .putString("ocupacion", categoria)
+                    .apply();
+        }
+    }
+
+    private void cargarCategoriaUsuario(Integer idUsuario) {
+        if (idUsuario == null || idUsuario <= 0) {
+            return;
+        }
+
+        usuarioApi.obtenerCategoriaUsuario(idUsuario).enqueue(new Callback<UsuariosDTO>() {
+            @Override
+            public void onResponse(Call<UsuariosDTO> call, Response<UsuariosDTO> response) {
+                if (!response.isSuccessful() || response.body() == null) {
+                    return;
+                }
+
+                String categoria = response.body().getCategoria();
+                if (categoria == null || categoria.trim().isEmpty()) {
+                    categoria = "Sin categoria";
+                }
+
+                SharedPreferences prefs = getSharedPreferences(SessionManager.PREF_NAME, MODE_PRIVATE);
+                prefs.edit()
+                        .putString("categoria", categoria)
+                        .putString("ocupacion", categoria)
+                        .apply();
+            }
+
+            @Override
+            public void onFailure(Call<UsuariosDTO> call, Throwable t) {
+                SharedPreferences prefs = getSharedPreferences(SessionManager.PREF_NAME, MODE_PRIVATE);
+                prefs.edit()
+                        .putString("categoria", "Sin categoria")
+                        .putString("ocupacion", "Sin categoria")
+                        .apply();
+            }
+        });
     }
 
     private void setLoadingState(boolean loading) {

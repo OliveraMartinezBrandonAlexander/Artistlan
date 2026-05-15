@@ -28,11 +28,14 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.RadioButton;
+import android.widget.RadioGroup;
 
 import com.bumptech.glide.Glide;
 import com.example.artistlan.Conector.ApiErrorParser;
@@ -54,6 +57,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -75,10 +79,14 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private ActivityResultLauncher<Void> tomarFotoLauncher;
     private ActivityResultLauncher<String> permisoCamaraLauncher;
 
-    private android.widget.EditText etTituloObra, etDescripcion, etPrecio, etMedidaAncho, etMedidaAlto, etTecnicas;
+    private EditText etTituloObra, etDescripcion, etPrecio, etMedidaAncho, etMedidaAlto, etMedidaProfundidad, etTecnicas;
     private CheckBox cbAutoriaObra;
-    private android.widget.RadioGroup rgOpciones;
+    private RadioGroup rgOpciones;
+    private RadioGroup rgTipoMedida;
+    private RadioButton rbMedida2d;
+    private RadioButton rbMedida3d;
     private Spinner spinnerCategoria;
+    private LinearLayout layoutMedidaProfundidad;
     private List<CategoriaDTO> listaCategorias = new ArrayList<>();
     private boolean modoEdicion = false;
     private int idObraEditar = -1;
@@ -159,10 +167,15 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         etPrecio      = view.findViewById(R.id.precio);
         etMedidaAncho = view.findViewById(R.id.medidaAncho);
         etMedidaAlto = view.findViewById(R.id.medidaAlto);
+        etMedidaProfundidad = view.findViewById(R.id.medidaProfundidad);
         etTecnicas    = view.findViewById(R.id.edit_text_tecnica);
         cbAutoriaObra = view.findViewById(R.id.checkAutoriaObra);
         txtTituloPantalla = view.findViewById(R.id.IsTxtTitulo);
         txtDescripcionPantalla = view.findViewById(R.id.IsTxtDesc);
+        rgTipoMedida = view.findViewById(R.id.radioGroupTipoMedida);
+        rbMedida2d = view.findViewById(R.id.rbMedida2d);
+        rbMedida3d = view.findViewById(R.id.rbMedida3d);
+        layoutMedidaProfundidad = view.findViewById(R.id.layoutMedidaProfundidad);
 
         spinnerCategoria = view.findViewById(R.id.categoria);
         cargarCategorias();
@@ -190,6 +203,10 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         rgOpciones.setOnCheckedChangeListener((group, checkedId) ->
                 actualizarBloquePrecioSegunEstado(checkedId)
         );
+        rgTipoMedida.setOnCheckedChangeListener((group, checkedId) ->
+                actualizarCamposMedidas()
+        );
+        actualizarCamposMedidas();
 
         return view;
     }
@@ -401,22 +418,43 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     }
 
     private void cargarCamposDeMedidas(String medidas) {
-        if (medidas == null) {
-            etMedidaAncho.setText("");
-            etMedidaAlto.setText("");
+        if (medidas == null || medidas.trim().isEmpty()) {
+            limpiarCamposMedidas();
+            if (rbMedida2d != null) {
+                rbMedida2d.setChecked(true);
+            }
+            actualizarCamposMedidas();
             return;
         }
 
-        String limpio = medidas.toLowerCase().replace("cm", "").trim();
-        String[] partes = limpio.split("[xX]");
+        String limpio = medidas
+                .replaceAll("(?i)cm", "")
+                .trim();
+        String[] partes = limpio.split("(?i)\\s*x\\s*");
+
+        if (partes.length >= 3) {
+            if (rbMedida3d != null) {
+                rbMedida3d.setChecked(true);
+            }
+            etMedidaAncho.setText(normalizarCampoMedida(partes[0]));
+            etMedidaAlto.setText(normalizarCampoMedida(partes[1]));
+            etMedidaProfundidad.setText(normalizarCampoMedida(partes[2]));
+            actualizarCamposMedidas();
+            return;
+        }
+
+        if (rbMedida2d != null) {
+            rbMedida2d.setChecked(true);
+        }
         if (partes.length >= 2) {
-            etMedidaAncho.setText(partes[0].trim());
-            etMedidaAlto.setText(partes[1].trim());
-            return;
+            etMedidaAncho.setText(normalizarCampoMedida(partes[0]));
+            etMedidaAlto.setText(normalizarCampoMedida(partes[1]));
+        } else {
+            etMedidaAncho.setText(normalizarCampoMedida(limpio));
+            etMedidaAlto.setText("");
         }
-
-        etMedidaAncho.setText(limpio);
-        etMedidaAlto.setText("");
+        etMedidaProfundidad.setText("");
+        actualizarCamposMedidas();
     }
 
     private String construirMedidas() {
@@ -425,12 +463,44 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         if (ancho.isEmpty() || alto.isEmpty()) {
             return "";
         }
+        if (esMedida3DSeleccionada()) {
+            String profundidad = normalizarCampoMedida(etMedidaProfundidad.getText().toString());
+            if (profundidad.isEmpty()) {
+                return "";
+            }
+            return ancho + " x " + alto + " x " + profundidad + " cm";
+        }
         return ancho + " x " + alto + " cm";
     }
 
     private String normalizarCampoMedida(String valor) {
         if (valor == null) return "";
-        return valor.replace("cm", "").trim();
+        return valor
+                .replaceAll("(?i)cm", "")
+                .trim();
+    }
+
+    private void actualizarCamposMedidas() {
+        if (layoutMedidaProfundidad == null || etMedidaProfundidad == null) {
+            return;
+        }
+
+        boolean es3D = esMedida3DSeleccionada();
+        layoutMedidaProfundidad.setVisibility(es3D ? View.VISIBLE : View.GONE);
+        if (!es3D) {
+            etMedidaProfundidad.setError(null);
+            etMedidaProfundidad.setText("");
+        }
+    }
+
+    private boolean esMedida3DSeleccionada() {
+        return rgTipoMedida != null && rgTipoMedida.getCheckedRadioButtonId() == R.id.rbMedida3d;
+    }
+
+    private void limpiarCamposMedidas() {
+        if (etMedidaAncho != null) etMedidaAncho.setText("");
+        if (etMedidaAlto != null) etMedidaAlto.setText("");
+        if (etMedidaProfundidad != null) etMedidaProfundidad.setText("");
     }
 
     private CategoriaDTO obtenerCategoriaSeleccionada() {
@@ -644,6 +714,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         if (etTecnicas != null) etTecnicas.setError(null);
         if (etMedidaAncho != null) etMedidaAncho.setError(null);
         if (etMedidaAlto != null) etMedidaAlto.setError(null);
+        if (etMedidaProfundidad != null) etMedidaProfundidad.setError(null);
         if (etPrecio != null) etPrecio.setError(null);
         if (cbAutoriaObra != null) cbAutoriaObra.setError(null);
 
@@ -691,6 +762,9 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         if (medidas.isEmpty()) {
             String ancho = normalizarCampoMedida(etMedidaAncho.getText().toString());
             String alto = normalizarCampoMedida(etMedidaAlto.getText().toString());
+            String profundidad = normalizarCampoMedida(
+                    etMedidaProfundidad != null ? etMedidaProfundidad.getText().toString() : ""
+            );
             if (ancho.isEmpty()) {
                 etMedidaAncho.setError("Ingresa el ancho");
                 if (!hayError) etMedidaAncho.requestFocus();
@@ -699,6 +773,11 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             if (alto.isEmpty()) {
                 etMedidaAlto.setError("Ingresa el alto");
                 if (!hayError) etMedidaAlto.requestFocus();
+                hayError = true;
+            }
+            if (esMedida3DSeleccionada() && profundidad.isEmpty()) {
+                etMedidaProfundidad.setError("Ingresa la profundidad");
+                if (!hayError) etMedidaProfundidad.requestFocus();
                 hayError = true;
             }
         }

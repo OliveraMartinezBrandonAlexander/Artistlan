@@ -142,7 +142,7 @@
                 app:layout_constraintTop_toTopOf="@id/txtBtnInicioSesion"
                 app:lottie_autoPlay="true"
                 app:lottie_loop="true"
-                app:lottie_rawRes="@raw/paint" />
+                app:lottie_rawRes="@raw/login" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

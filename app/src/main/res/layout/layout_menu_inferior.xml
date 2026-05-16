@@ -2,7 +2,12 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/MenuInferiorFrame"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent"
+    android:clipToPadding="false"
+    android:clipChildren="false"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp">
 
     <View
         android:id="@+id/bottomBarLight"
@@ -10,21 +15,27 @@
         android:layout_height="18dp"
         android:layout_gravity="top"
         android:background="@color/artistlan_text_primary"
-        android:alpha="0.06" />
+        android:alpha="0"
+        android:visibility="gone" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/MenuInferior"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/navCard"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:layout_marginBottom="8dp"
             app:cardBackgroundColor="@android:color/transparent"
-            app:cardCornerRadius="30dp"
-            app:cardElevation="18dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="8dp"
             app:contentPadding="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -38,13 +49,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
-                android:minHeight="86dp"
-                android:paddingStart="8dp"
-                android:paddingTop="10dp"
-                android:paddingEnd="8dp"
-                android:paddingBottom="10dp"
+                android:minHeight="64dp"
+                android:paddingStart="6dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="6dp"
+                android:paddingBottom="4dp"
                 app:itemActiveIndicatorStyle="@style/ArtistlanBottomNavActiveIndicator"
-                app:itemIconSize="30dp"
+                app:itemBackground="@android:color/transparent"
+                app:itemIconSize="26dp"
                 app:labelVisibilityMode="labeled"
                 app:menu="@menu/menu_inferior" />
 

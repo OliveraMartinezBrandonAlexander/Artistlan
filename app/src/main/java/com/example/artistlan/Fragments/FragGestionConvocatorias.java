@@ -72,7 +72,7 @@ public class FragGestionConvocatorias extends Fragment {
         tvEstado = view.findViewById(R.id.tvEstadoConvocatorias);
         FloatingActionButton btnNueva = view.findViewById(R.id.fabNuevaConvocatoria);
 
-        menuInferior = requireActivity().findViewById(R.id.MenuInferior);
+        menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) menuInferior.setVisibility(View.GONE);
 
         btnRegresar.setOnClickListener(v -> {

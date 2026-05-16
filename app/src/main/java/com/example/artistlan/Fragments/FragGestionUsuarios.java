@@ -91,7 +91,7 @@ public class FragGestionUsuarios extends Fragment {
         btnCargarMasUsuarios = view.findViewById(R.id.btnCargarMasUsuarios);
         layoutLoaderMasUsuarios = view.findViewById(R.id.layoutLoaderMasUsuarios);
 
-        menuInferior = requireActivity().findViewById(R.id.MenuInferior);
+        menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
             menuInferior.setVisibility(View.GONE);
         }

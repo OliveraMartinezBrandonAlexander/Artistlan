@@ -35,7 +35,7 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
         super.onViewCreated(view, savedInstanceState);
         ThemeModuleStyler.styleFragment(this, view);
 
-        requireActivity().findViewById(R.id.MenuInferior).setVisibility(View.GONE);
+        requireActivity().findViewById(R.id.MenuInferiorFrame).setVisibility(View.GONE);
         new BotonesMenuSuperior(this);
 
         // Referencias
@@ -66,7 +66,7 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        requireActivity().findViewById(R.id.MenuInferior).setVisibility(View.VISIBLE);
+        requireActivity().findViewById(R.id.MenuInferiorFrame).setVisibility(View.VISIBLE);
     }
 
     @Override

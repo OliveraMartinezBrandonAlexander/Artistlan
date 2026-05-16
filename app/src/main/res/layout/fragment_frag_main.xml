@@ -13,6 +13,7 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:fillViewport="true"
+        android:paddingTop="102dp"
         android:paddingBottom="4dp">
 
         <LinearLayout

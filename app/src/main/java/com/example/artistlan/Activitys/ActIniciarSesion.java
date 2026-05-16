@@ -40,6 +40,7 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.PasswordPressVisibilityHelper;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -162,6 +163,11 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         ThemeApplier.applyInput(etCorreo, themeManager);
         ThemeApplier.applyInput(etUsuario, themeManager);
         ThemeApplier.applyInput(etContrasena, themeManager);
+        PasswordPressVisibilityHelper.attach(
+                etContrasena,
+                R.drawable.ic_eye,
+                themeManager.color(ThemeKeys.ICON_ACTIVE)
+        );
 
         ThemeApplier.applyPrimaryButton(btnIniciarSesion, themeManager);
         ThemeApplier.applySecondaryButton(resultOk, themeManager);

@@ -27,6 +27,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -62,6 +63,7 @@ import com.example.artistlan.pagos.PagoPaypalSessionManager;
 import com.example.artistlan.pagos.PagoSyncManager;
 import com.example.artistlan.utils.ScrollMenuVisibilityHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.navigation.NavigationView;
 
 public class ActFragmentoPrincipal extends AppCompatActivity {
@@ -81,6 +83,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private View cartContainer;
     private View topBar;
     private View bottomBarContainer;
+    private MaterialCardView navCard;
     private View topBarFrame;
     private View bottomBarFrame;
     private View mainContent;
@@ -170,6 +173,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         topBarFrame = findViewById(R.id.topBarFrame);
         bottomBarFrame = findViewById(R.id.MenuInferiorFrame);
         bottomBarContainer = findViewById(R.id.MenuInferior);
+        navCard = findViewById(R.id.navCard);
         mainContent = findViewById(R.id.mainContent);
 
         topBarLight = findViewById(R.id.topBarLight);
@@ -194,13 +198,16 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         }
 
         BottomNavigationView bottomBar = findViewById(R.id.bottomBar);
+        if (navCard != null) {
+            navCard.setCardBackgroundColor(ColorUtils.setAlphaComponent(
+                    themeManager.color(ThemeKeys.MENU_BOTTOMBAR),
+                    218
+            ));
+            navCard.setStrokeColor(themeManager.color(ThemeKeys.MENU_ITEM_ACTIVE_STROKE));
+        }
+
         if (bottomBar != null) {
-            if (bottomBar.getBackground() != null) {
-                bottomBar.getBackground().setColorFilter(
-                        themeManager.color(ThemeKeys.MENU_BOTTOMBAR),
-                        PorterDuff.Mode.SRC_ATOP
-                );
-            }
+            bottomBar.setBackgroundColor(android.graphics.Color.TRANSPARENT);
 
             ColorStateList iconStates = new ColorStateList(
                     new int[][]{
@@ -393,8 +400,8 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
 
     private void conectarScrollMenuHelper() {
-        if (topBar == null || bottomBarContainer == null) return;
-        scrollMenuVisibilityHelper = new ScrollMenuVisibilityHelper(topBar, bottomBarContainer);
+        if (topBarFrame == null || bottomBarFrame == null) return;
+        scrollMenuVisibilityHelper = new ScrollMenuVisibilityHelper(topBarFrame, bottomBarFrame);
 
         NavHostFragment navHostFragment =
                 (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);

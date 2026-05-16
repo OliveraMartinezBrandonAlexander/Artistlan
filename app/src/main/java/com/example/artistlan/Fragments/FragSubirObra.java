@@ -543,7 +543,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             return insets;
         });
 
-        View menuInferior = requireActivity().findViewById(R.id.MenuInferior);
+        View menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
             menuInferior.setVisibility(View.GONE);
         }
@@ -558,7 +558,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     public void onDestroyView() {
         super.onDestroyView();
         if (getActivity() == null) return;
-        View menuInferior = getActivity().findViewById(R.id.MenuInferior);
+        View menuInferior = getActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
             menuInferior.setVisibility(View.VISIBLE);
         }

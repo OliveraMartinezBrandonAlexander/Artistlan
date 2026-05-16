@@ -103,7 +103,7 @@ public class FragCarrito extends Fragment {
         tvResumenTotal = view.findViewById(R.id.tvResumenTotal);
         layoutCarritoVacio = view.findViewById(R.id.layoutCarritoVacio);
         progressCarrito = view.findViewById(R.id.progressCarrito);
-        menuInferior = requireActivity().findViewById(R.id.MenuInferior);
+        menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
             menuInferior.setVisibility(View.GONE);
         }

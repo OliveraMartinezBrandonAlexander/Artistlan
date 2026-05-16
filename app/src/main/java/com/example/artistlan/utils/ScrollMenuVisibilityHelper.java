@@ -2,6 +2,8 @@ package com.example.artistlan.utils;
 
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.AbsListView;
 import android.widget.ScrollView;
 
@@ -12,20 +14,44 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.artistlan.Fragments.FragMain;
+
 /** Helper reutilizable para ocultar/mostrar menús según dirección del scroll. */
 public class ScrollMenuVisibilityHelper {
     private static final long ANIM_DURATION_MS = 320L;
+    private static final int DEFAULT_HIDE_THRESHOLD_DP = 24;
+    private static final int DEFAULT_SHOW_THRESHOLD_DP = 24;
+    private static final int HOME_HIDE_THRESHOLD_DP = 88;
+    private static final int HOME_SHOW_THRESHOLD_DP = 72;
+
+    private enum MenuState {
+        SHOWN,
+        HIDDEN,
+        ANIMATING_TO_SHOWN,
+        ANIMATING_TO_HIDDEN
+    }
 
     private final View topMenu;
     private final View bottomMenu;
 
-    private boolean menusVisible = true;
-    private int topExpandedHeight = -1;
+    private MenuState menuState = MenuState.SHOWN;
+    private int accumulatedDownDy = 0;
+    private int accumulatedUpDy = 0;
+    private int hideThresholdPx = -1;
+    private int showThresholdPx = -1;
     private RecyclerView attachedRecyclerView;
-    private NestedScrollView attachedNestedScroll;
-    private ScrollView attachedScrollView;
+    private View attachedScrollableView;
+    private ViewTreeObserver.OnScrollChangedListener viewTreeScrollListener;
+    private int lastScrollY = 0;
     private AbsListView attachedListView;
+    private Fragment attachedFragment;
+    private boolean homeFragmentAttached = false;
+    private int topExpandedHeight = -1;
+    private int bottomExpandedHeight = -1;
     private FragmentManager.FragmentLifecycleCallbacks callbacks;
+    private final AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
+    private int animationVersion = 0;
+    private int pendingAnimationEnds = 0;
 
     public ScrollMenuVisibilityHelper(@NonNull View topMenu, @NonNull View bottomMenu) {
         this.topMenu = topMenu;
@@ -38,13 +64,15 @@ public class ScrollMenuVisibilityHelper {
         callbacks = new FragmentManager.FragmentLifecycleCallbacks() {
             @Override
             public void onFragmentViewCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @NonNull View v, @Nullable android.os.Bundle savedInstanceState) {
-                attachToScrollable(v);
+                attachToScrollable(f, v);
             }
 
             @Override
             public void onFragmentViewDestroyed(@NonNull FragmentManager fm, @NonNull Fragment f) {
-                detachCurrentScrollable();
-                showMenus();
+                if (f == attachedFragment) {
+                    detachCurrentScrollable();
+                    showMenus();
+                }
             }
         };
 
@@ -59,20 +87,28 @@ public class ScrollMenuVisibilityHelper {
         }
     }
 
-    private void attachToScrollable(@NonNull View root) {
+    private void attachToScrollable(@NonNull Fragment fragment, @NonNull View root) {
         detachCurrentScrollable();
+        resetScrollAccumulators();
+        hideThresholdPx = -1;
+        showThresholdPx = -1;
         View scrollable = findScrollable(root);
-        if (scrollable == null) return;
+        if (scrollable == null) {
+            attachedFragment = null;
+            showMenus();
+            return;
+        }
 
+        attachedFragment = fragment;
+        homeFragmentAttached = fragment instanceof FragMain;
+        cacheExpandedHeights();
         if (scrollable instanceof RecyclerView) {
             attachedRecyclerView = (RecyclerView) scrollable;
             attachedRecyclerView.addOnScrollListener(recyclerListener);
         } else if (scrollable instanceof NestedScrollView) {
-            attachedNestedScroll = (NestedScrollView) scrollable;
-            attachedNestedScroll.setOnScrollChangeListener(nestedListener);
+            attachViewTreeScrollListener(scrollable);
         } else if (scrollable instanceof ScrollView) {
-            attachedScrollView = (ScrollView) scrollable;
-            attachedScrollView.setOnScrollChangeListener(scrollListener);
+            attachViewTreeScrollListener(scrollable);
         } else if (scrollable instanceof AbsListView) {
             attachedListView = (AbsListView) scrollable;
             attachedListView.setOnScrollListener(listScrollListener);
@@ -84,32 +120,51 @@ public class ScrollMenuVisibilityHelper {
             attachedRecyclerView.removeOnScrollListener(recyclerListener);
             attachedRecyclerView = null;
         }
-        if (attachedNestedScroll != null) {
-            attachedNestedScroll.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener) null);
-            attachedNestedScroll = null;
-        }
-        if (attachedScrollView != null) {
-            attachedScrollView.setOnScrollChangeListener(null);
-            attachedScrollView = null;
+        if (attachedScrollableView != null && viewTreeScrollListener != null) {
+            ViewTreeObserver observer = attachedScrollableView.getViewTreeObserver();
+            if (observer.isAlive()) {
+                observer.removeOnScrollChangedListener(viewTreeScrollListener);
+            }
+            attachedScrollableView = null;
+            viewTreeScrollListener = null;
         }
         if (attachedListView != null) {
             attachedListView.setOnScrollListener(null);
             attachedListView = null;
         }
+        attachedFragment = null;
+        homeFragmentAttached = false;
+    }
+
+    private void attachViewTreeScrollListener(@NonNull View scrollable) {
+        attachedScrollableView = scrollable;
+        lastScrollY = scrollable.getScrollY();
+        viewTreeScrollListener = () -> {
+            if (attachedScrollableView == null) return;
+            int scrollY = attachedScrollableView.getScrollY();
+            if (scrollY <= 0 || !attachedScrollableView.canScrollVertically(-1)) {
+                resetScrollAccumulators();
+                showMenusIfNeeded();
+                lastScrollY = scrollY;
+                return;
+            }
+            handleScrollDirection(scrollY - lastScrollY);
+            lastScrollY = scrollY;
+        };
+        scrollable.getViewTreeObserver().addOnScrollChangedListener(viewTreeScrollListener);
     }
 
     private final RecyclerView.OnScrollListener recyclerListener = new RecyclerView.OnScrollListener() {
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+            if (!recyclerView.canScrollVertically(-1)) {
+                resetScrollAccumulators();
+                showMenusIfNeeded();
+                return;
+            }
             handleScrollDirection(dy);
         }
     };
-
-    private final NestedScrollView.OnScrollChangeListener nestedListener =
-            (v, scrollX, scrollY, oldScrollX, oldScrollY) -> handleScrollDirection(scrollY - oldScrollY);
-
-    private final View.OnScrollChangeListener scrollListener =
-            (v, scrollX, scrollY, oldScrollX, oldScrollY) -> handleScrollDirection(scrollY - oldScrollY);
 
     private final AbsListView.OnScrollListener listScrollListener = new AbsListView.OnScrollListener() {
         private int lastFirstVisibleItem = 0;
@@ -128,85 +183,138 @@ public class ScrollMenuVisibilityHelper {
                     : (firstVisibleItem > lastFirstVisibleItem ? 1 : -1);
             lastFirstVisibleItem = firstVisibleItem;
             lastTop = top;
+            if (firstVisibleItem == 0 && top >= 0) {
+                resetScrollAccumulators();
+                showMenusIfNeeded();
+                return;
+            }
             handleScrollDirection(dy);
         }
     };
 
     private void handleScrollDirection(int dy) {
-        if (dy > 0) hideMenus();
-        else if (dy < 0) showMenus();
+        if (dy == 0) return;
+
+        ensureThresholds();
+        if (dy > 0) {
+            accumulatedDownDy += dy;
+            accumulatedUpDy = 0;
+            if (accumulatedDownDy >= hideThresholdPx) {
+                hideMenusIfNeeded();
+                resetScrollAccumulators();
+            }
+        } else {
+            accumulatedUpDy += Math.abs(dy);
+            accumulatedDownDy = 0;
+            if (accumulatedUpDy >= showThresholdPx) {
+                showMenusIfNeeded();
+                resetScrollAccumulators();
+            }
+        }
     }
 
-    private void hideMenus() {
-        if (!menusVisible) return;
-        menusVisible = false;
+    private void ensureThresholds() {
+        if (hideThresholdPx > 0 && showThresholdPx > 0) return;
+        float density = topMenu.getResources().getDisplayMetrics().density;
+        int hideThresholdDp = homeFragmentAttached ? HOME_HIDE_THRESHOLD_DP : DEFAULT_HIDE_THRESHOLD_DP;
+        int showThresholdDp = homeFragmentAttached ? HOME_SHOW_THRESHOLD_DP : DEFAULT_SHOW_THRESHOLD_DP;
+        hideThresholdPx = Math.round(hideThresholdDp * density);
+        showThresholdPx = Math.round(showThresholdDp * density);
+    }
 
-        topMenu.animate().cancel();
-        bottomMenu.animate().cancel();
+    private void resetScrollAccumulators() {
+        accumulatedDownDy = 0;
+        accumulatedUpDy = 0;
+    }
 
-        topMenu.animate()
-                .translationY(-topMenu.getHeight())
-                .setDuration(ANIM_DURATION_MS)
-                .withEndAction(() -> {
-                    if (!menusVisible) {
-                        cacheTopExpandedHeight();
-                        ViewGroup.LayoutParams lp = topMenu.getLayoutParams();
-                        lp.height = 0;
-                        topMenu.setLayoutParams(lp);
-                        topMenu.setVisibility(View.GONE);
-                    }
-                })
-                .start();
+    private void hideMenusIfNeeded() {
+        if (menuState == MenuState.HIDDEN || menuState == MenuState.ANIMATING_TO_HIDDEN) return;
+        menuState = MenuState.ANIMATING_TO_HIDDEN;
+        animateBars(false);
+    }
 
-        bottomMenu.animate()
-                .translationY(bottomMenu.getHeight())
-                .setDuration(ANIM_DURATION_MS)
-                .withEndAction(() -> {
-                    if (!menusVisible) bottomMenu.setVisibility(View.GONE);
-                })
-                .start();
+    private void showMenusIfNeeded() {
+        if (menuState == MenuState.SHOWN || menuState == MenuState.ANIMATING_TO_SHOWN) return;
+        menuState = MenuState.ANIMATING_TO_SHOWN;
+        animateBars(true);
     }
 
     private void showMenus() {
-        if (menusVisible) return;
-        menusVisible = true;
+        showMenusIfNeeded();
+    }
+
+    private void animateBars(boolean show) {
+        cacheExpandedHeights();
+
+        topMenu.setClickable(show);
+        bottomMenu.setClickable(show);
 
         topMenu.animate().cancel();
         bottomMenu.animate().cancel();
 
-        restoreTopExpandedHeight();
-        topMenu.setVisibility(View.VISIBLE);
-        bottomMenu.setVisibility(View.VISIBLE);
-        topMenu.setTranslationY(-topMenu.getHeight());
-        bottomMenu.setTranslationY(bottomMenu.getHeight());
+        if (show && (topMenu.getTranslationY() == 0f && bottomMenu.getTranslationY() == 0f)) {
+            topMenu.setTranslationY(-Math.max(topMenu.getHeight(), 1));
+            bottomMenu.setTranslationY(Math.max(bottomMenu.getHeight(), 1));
+        }
 
-        topMenu.animate().translationY(0f).setDuration(ANIM_DURATION_MS).start();
-        bottomMenu.animate().translationY(0f).setDuration(ANIM_DURATION_MS).start();
+        float topTarget = show ? 0f : -Math.max(topMenu.getHeight(), 1);
+        float bottomTarget = show ? 0f : Math.max(bottomMenu.getHeight(), 1);
+        int currentAnimationVersion = ++animationVersion;
+        pendingAnimationEnds = 2;
+
+        topMenu.animate()
+                .translationY(topTarget)
+                .setDuration(ANIM_DURATION_MS)
+                .setInterpolator(interpolator)
+                .withEndAction(() -> onBarAnimationEnd(show, currentAnimationVersion))
+                .start();
+
+        bottomMenu.animate()
+                .translationY(bottomTarget)
+                .setDuration(ANIM_DURATION_MS)
+                .setInterpolator(interpolator)
+                .withEndAction(() -> onBarAnimationEnd(show, currentAnimationVersion))
+                .start();
     }
 
+    private void onBarAnimationEnd(boolean show, int completedAnimationVersion) {
+        if (completedAnimationVersion != animationVersion) return;
+        pendingAnimationEnds--;
+        if (pendingAnimationEnds > 0) return;
+        settleBars(show);
+    }
 
-    private void cacheTopExpandedHeight() {
-        if (topExpandedHeight > 0) return;
-        int measured = topMenu.getHeight();
-        if (measured > 0) {
-            topExpandedHeight = measured;
-            return;
-        }
-        ViewGroup.LayoutParams lp = topMenu.getLayoutParams();
-        if (lp != null && lp.height > 0) {
-            topExpandedHeight = lp.height;
+    private void settleBars(boolean show) {
+        if (show && menuState != MenuState.ANIMATING_TO_SHOWN) return;
+        if (!show && menuState != MenuState.ANIMATING_TO_HIDDEN) return;
+
+        if (show) {
+            topMenu.setTranslationY(0f);
+            bottomMenu.setTranslationY(0f);
+            topMenu.setClickable(true);
+            bottomMenu.setClickable(true);
+            menuState = MenuState.SHOWN;
+        } else {
+            topMenu.setTranslationY(-Math.max(topMenu.getHeight(), 1));
+            bottomMenu.setTranslationY(Math.max(bottomMenu.getHeight(), 1));
+            topMenu.setClickable(false);
+            bottomMenu.setClickable(false);
+            menuState = MenuState.HIDDEN;
         }
     }
 
-    private void restoreTopExpandedHeight() {
-        ViewGroup.LayoutParams lp = topMenu.getLayoutParams();
-        if (lp == null) return;
+    private void cacheExpandedHeights() {
         if (topExpandedHeight <= 0) {
-            cacheTopExpandedHeight();
+            int height = topMenu.getHeight();
+            if (height > 0) {
+                topExpandedHeight = height;
+            }
         }
-        if (topExpandedHeight > 0) {
-            lp.height = topExpandedHeight;
-            topMenu.setLayoutParams(lp);
+        if (bottomExpandedHeight <= 0) {
+            int height = bottomMenu.getHeight();
+            if (height > 0) {
+                bottomExpandedHeight = height;
+            }
         }
     }
 

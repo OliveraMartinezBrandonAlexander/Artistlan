@@ -44,7 +44,7 @@ public class FragTransacciones extends Fragment {
         ThemeModuleStyler.styleFragment(this, view);
 
         new BotonesMenuSuperior(this);
-        menuInferior = requireActivity().findViewById(R.id.MenuInferior);
+        menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
             menuInferior.setVisibility(View.GONE);
         }

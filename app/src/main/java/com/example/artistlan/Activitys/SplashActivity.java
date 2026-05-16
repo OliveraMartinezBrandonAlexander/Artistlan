@@ -23,7 +23,7 @@ import com.example.artistlan.Theme.ThemeManager;
 public class SplashActivity extends AppCompatActivity {
 
     private static final long ENTRY_DURATION_MS = 650L;
-    private static final long VISIBLE_DURATION_MS = 1500L;
+    private static final long VISIBLE_DURATION_MS = 2000L;
     private static final long FADE_DURATION_MS = 500L;
 
     private final Handler handler = new Handler(Looper.getMainLooper());

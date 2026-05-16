@@ -73,14 +73,19 @@
             android:windowSoftInputMode="stateHidden|adjustResize" />
 
         <activity
-            android:name=".Activitys.MainActivity"
+            android:name=".Activitys.SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.Artistlan">
+            android:theme="@style/Theme.Artistlan.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".Activitys.MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Artistlan" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

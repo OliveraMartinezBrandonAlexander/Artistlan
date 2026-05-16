@@ -115,7 +115,7 @@
                         android:layout_centerVertical="true"
                         app:lottie_autoPlay="true"
                         app:lottie_loop="true"
-                        app:lottie_rawRes="@raw/login" />
+                        app:lottie_rawRes="@raw/paint" />
 
                     <TextView
                         android:id="@+id/IsTxtTitulo"

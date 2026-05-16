@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final long MAX_REUSABLE_SESSION_IDLE_MS = TimeUnit.DAYS.toMillis(7);
+    private static final long AUTO_SESSION_CHECK_DELAY_MS = 1000L;
 
     private View btnInicioSesion, btnCrearCuenta;
     private View glowTopLeft, glowTopRight, glowBottomRight, glowBottomLeft;
@@ -52,6 +53,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ObjectAnimator glowBottomLeftX, glowBottomLeftY, glowBottomLeftAlpha, glowBottomLeftScaleX, glowBottomLeftScaleY;
 
     private ObjectAnimator dividerShimmerAnim;
+    private final Handler autoSessionHandler = new Handler(Looper.getMainLooper());
+    private boolean autoSessionCheckScheduled = false;
+    private boolean autoSessionCheckDone = false;
+    private boolean navigatingToReusableSession = false;
+
+    private final Runnable autoSessionRunnable = new Runnable() {
+        @Override
+        public void run() {
+            autoSessionCheckScheduled = false;
+            autoSessionCheckDone = true;
+
+            if (isFinishing() || isDestroyed() || navigatingToReusableSession || sessionManager == null) {
+                return;
+            }
+
+            if (sessionManager.hasReusableSession(MAX_REUSABLE_SESSION_IDLE_MS)) {
+                sessionManager.touchSession();
+                launchReusableSession();
+            }
+        }
+    };
 
     private final Runnable pulseRunnable = new Runnable() {
         @Override
@@ -72,11 +94,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
 
         sessionManager = new SessionManager(this);
-        if (sessionManager.hasReusableSession(MAX_REUSABLE_SESSION_IDLE_MS)) {
-            sessionManager.touchSession();
-            launchReusableSession();
-            return;
-        }
 
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
@@ -114,14 +131,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         prepareIntroState();
         startGlowAnimations();
         startIntroAnimation();
+        scheduleAutoSessionCheck();
     }
 
     private void launchReusableSession() {
+        if (navigatingToReusableSession) {
+            return;
+        }
+        navigatingToReusableSession = true;
+        autoSessionHandler.removeCallbacks(autoSessionRunnable);
         Intent intent = new Intent(this, ActFragmentoPrincipal.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         finish();
+    }
+
+    private void scheduleAutoSessionCheck() {
+        if (autoSessionCheckDone || autoSessionCheckScheduled || navigatingToReusableSession) {
+            return;
+        }
+        autoSessionCheckScheduled = true;
+        autoSessionHandler.postDelayed(autoSessionRunnable, AUTO_SESSION_CHECK_DELAY_MS);
     }
 
     private void applyThemeOnlyColors() {
@@ -381,6 +412,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Intent irActivity = null;
 
         if (idClick == R.id.btnInicioSesion) {
+            if (sessionManager != null && sessionManager.hasReusableSession(MAX_REUSABLE_SESSION_IDLE_MS)) {
+                sessionManager.touchSession();
+                launchReusableSession();
+                return;
+            }
             irActivity = new Intent(this, ActIniciarSesion.class);
         } else if (idClick == R.id.btnCrearCuenta) {
             irActivity = new Intent(this, ActCrearCuenta.class);
@@ -395,6 +431,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onPause() {
         super.onPause();
+        if (!autoSessionCheckDone) {
+            autoSessionHandler.removeCallbacks(autoSessionRunnable);
+            autoSessionCheckScheduled = false;
+        }
         pulseHandler.removeCallbacks(pulseRunnable);
         cancelAnimations();
     }
@@ -409,6 +449,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startGlowAnimations();
         startButtonPulseLoop();
         startDividerShimmer();
+        scheduleAutoSessionCheck();
 
         if (lottieLogin != null && !lottieLogin.isAnimating()) {
             lottieLogin.playAnimation();
@@ -421,6 +462,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        autoSessionHandler.removeCallbacks(autoSessionRunnable);
         pulseHandler.removeCallbacks(pulseRunnable);
         cancelAnimations();
     }

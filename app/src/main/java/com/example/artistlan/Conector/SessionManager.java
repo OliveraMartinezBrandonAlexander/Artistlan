@@ -30,6 +30,8 @@ public class SessionManager {
     private static final String KEY_TWO_FACTOR_ENABLED = "twoFactorEnabled";
     private static final String KEY_JWT_TOKEN = "jwtToken";
     private static final String KEY_LAST_ACTIVE_AT = "lastActiveAt";
+    private static final String KEY_LAST_CORREO = "lastCorreo";
+    private static final String KEY_LAST_USUARIO = "lastUsuario";
 
     private final SharedPreferences prefs;
 
@@ -52,6 +54,8 @@ public class SessionManager {
         editor.putInt(KEY_ID_USUARIO, idUsuario);
         editor.putString(KEY_USUARIO, valueOrEmpty(user.getUsuario()));
         editor.putString(KEY_CORREO, valueOrEmpty(user.getCorreo()));
+        editor.putString(KEY_LAST_USUARIO, valueOrEmpty(user.getUsuario()));
+        editor.putString(KEY_LAST_CORREO, valueOrEmpty(user.getCorreo()));
         editor.putString(KEY_NOMBRE_COMPLETO, valueOrEmpty(user.getNombreCompleto()));
         editor.putString(KEY_ROL, valueOrDefault(user.getRol(), "USER"));
         editor.putString(KEY_DESCRIPCION, valueOrEmpty(user.getDescripcion()));
@@ -83,6 +87,22 @@ public class SessionManager {
 
     public boolean isLoggedIn() {
         return prefs.contains(KEY_ID_USUARIO) && prefs.getInt(KEY_ID_USUARIO, -1) > 0;
+    }
+
+    public String getLastCorreo() {
+        String correo = prefs.getString(KEY_LAST_CORREO, null);
+        if (correo == null || correo.trim().isEmpty()) {
+            correo = prefs.getString(KEY_CORREO, "");
+        }
+        return correo != null ? correo.trim() : "";
+    }
+
+    public String getLastUsuario() {
+        String usuario = prefs.getString(KEY_LAST_USUARIO, null);
+        if (usuario == null || usuario.trim().isEmpty()) {
+            usuario = prefs.getString(KEY_USUARIO, "");
+        }
+        return usuario != null ? usuario.trim() : "";
     }
 
     public boolean hasReusableSession(long maxIdleMs) {
@@ -128,7 +148,17 @@ public class SessionManager {
     }
 
     public void clearSession() {
-        prefs.edit().clear().apply();
+        String lastCorreo = getLastCorreo();
+        String lastUsuario = getLastUsuario();
+
+        SharedPreferences.Editor editor = prefs.edit().clear();
+        if (!lastCorreo.isEmpty()) {
+            editor.putString(KEY_LAST_CORREO, lastCorreo);
+        }
+        if (!lastUsuario.isEmpty()) {
+            editor.putString(KEY_LAST_USUARIO, lastUsuario);
+        }
+        editor.apply();
     }
 
     public boolean hasValidToken() {

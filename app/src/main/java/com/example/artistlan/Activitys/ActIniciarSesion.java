@@ -47,6 +47,8 @@ import retrofit2.Response;
 
 public class ActIniciarSesion extends AppCompatActivity implements View.OnClickListener {
 
+    private static final long MAX_REUSABLE_SESSION_IDLE_MS = 7L * 24L * 60L * 60L * 1000L;
+
     private View btnIniciarSesion;
     private ImageButton btnRegresar;
     private EditText etCorreo, etUsuario, etContrasena;
@@ -126,6 +128,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
         api = RetrofitClient.getClient().create(UsuarioApi.class);
         sessionManager = new SessionManager(this);
+        preloadSavedAccountFields(true);
 
         ScrollView scrollView = findViewById(R.id.IsScroll);
         ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
@@ -477,6 +480,15 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
     }
 
     private void iniciarSesion() {
+        preloadSavedAccountFields(false);
+
+        if (sessionManager != null && sessionManager.hasReusableSession(MAX_REUSABLE_SESSION_IDLE_MS)) {
+            sessionManager.touchSession();
+            showWaitingDialog();
+            showSuccessAndNavigate();
+            return;
+        }
+
         String correo = etCorreo.getText().toString().trim();
         String usuario = etUsuario.getText().toString().trim();
         String contrasena = etContrasena.getText().toString().trim();
@@ -630,6 +642,30 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                 editor.apply();
             }
         });
+    }
+
+    private void preloadSavedAccountFields(boolean clearPassword) {
+        if (sessionManager == null) {
+            return;
+        }
+
+        String lastCorreo = sessionManager.getLastCorreo();
+        if (etCorreo != null
+                && etCorreo.getText().toString().trim().isEmpty()
+                && !lastCorreo.isEmpty()) {
+            etCorreo.setText(lastCorreo);
+        }
+
+        String lastUsuario = sessionManager.getLastUsuario();
+        if (etUsuario != null
+                && etUsuario.getText().toString().trim().isEmpty()
+                && !lastUsuario.isEmpty()) {
+            etUsuario.setText(lastUsuario);
+        }
+
+        if (clearPassword && etContrasena != null) {
+            etContrasena.setText("");
+        }
     }
     private void openOtpVerificationScreen(String temporaryToken, String usuario, String correo) {
         waitingMode = false;

@@ -7,4 +7,13 @@
 
     <style name="Theme.Artistlan" parent="Base.Theme.Artistlan" />
 
+    <style name="Theme.Artistlan.Splash" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/artistlan_menu_bg</item>
+        <item name="android:colorAccent">@color/artistlan_primary</item>
+        <item name="android:navigationBarColor">@color/artistlan_menu_bg</item>
+        <item name="android:statusBarColor">@color/artistlan_menu_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+    </style>
+
 </resources>

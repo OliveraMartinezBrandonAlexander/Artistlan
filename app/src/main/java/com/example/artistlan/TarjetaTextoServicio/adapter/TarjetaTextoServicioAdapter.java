@@ -125,7 +125,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
                 if (favoritoAntesDelClick != currentServicio.isFavorito()
                         || likesAntesDelClick != currentServicio.getLikes()) {
-                    animateLikeButton(holder.btnLike, favoritoAntesDelClick);
+                    animateLikeButton(holder.btnLike, currentServicio.isFavorito());
                 }
             }
         });
@@ -339,14 +339,17 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         });
     }
 
-    private void animateLikeButton(LottieAnimationView btnLike, boolean wasLiked) {
+    private void animateLikeButton(LottieAnimationView btnLike, boolean targetLiked) {
         btnLike.animate().cancel();
+        btnLike.cancelAnimation();
         btnLike.setScaleX(0.82f);
         btnLike.setScaleY(0.82f);
         btnLike.setAlpha(0.75f);
 
         btnLike.setMinAndMaxProgress(0f,1f);
-        if (!wasLiked) { btnLike.playAnimation(); } else { btnLike.reverseAnimationSpeed(); btnLike.playAnimation(); }
+        btnLike.setSpeed(targetLiked ? 1.15f : -1.15f);
+        btnLike.setProgress(targetLiked ? 0f : 1f);
+        btnLike.playAnimation();
 
         btnLike.animate()
                 .scaleX(1.24f)
@@ -354,7 +357,8 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
                 .alpha(1f)
                 .setDuration(140)
                 .withEndAction(() -> {
-                    btnLike.setProgress(wasLiked ? 0f : 1f);
+                    btnLike.setSpeed(1f);
+                    btnLike.setProgress(targetLiked ? 1f : 0f);
                     btnLike.animate()
                             .scaleX(1f)
                             .scaleY(1f)

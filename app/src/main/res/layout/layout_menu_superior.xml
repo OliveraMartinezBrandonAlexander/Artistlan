@@ -15,8 +15,7 @@
     <LinearLayout
         android:id="@+id/layoutBarraSuperior"
         android:layout_width="match_parent"
-        android:layout_height="82dp"
-        android:layout_gravity="bottom"
+        android:layout_height="match_parent"
         android:background="@drawable/bg_topbar_artistlan"
         android:elevation="10dp"
         android:gravity="center_vertical"

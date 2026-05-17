@@ -49,7 +49,7 @@ public class FragExplorar extends Fragment {
     private Button btnSegmentServicios;
     private Button btnSegmentArtistas;
     private boolean filtrosVisibles = false;
-    private boolean panelFiltrosVisible = false;
+    private boolean panelFiltrosVisible = true;
     private int currentTipoId = View.NO_ID;
     private int lastLoadedTipoId = View.NO_ID;
     private long lastReplaceTimestampMs = 0L;
@@ -156,13 +156,7 @@ public class FragExplorar extends Fragment {
 
         btnFiltros.setVisibility(View.GONE);
         btnFiltros.setAlpha(0f);
-        btnFiltros.setOnClickListener(v -> {
-            if (!panelFiltrosVisible) {
-                mostrarPanelFiltros(true);
-                return;
-            }
-            mostrarMenuFiltros();
-        });
+        btnFiltros.setOnClickListener(v -> mostrarMenuFiltros());
     }
 
     private void configurarSelectorTipos() {
@@ -221,7 +215,6 @@ public class FragExplorar extends Fragment {
         currentTipoId = tipoId;
         moverIndicadorTipo(tipoId, animar);
         actualizarVisibilidadBotonFiltros();
-        mostrarPanelFiltros(false);
         logPerf("Cambio tab -> tipoId=" + currentTipoId
                 + ", fragment=" + fragment.getClass().getSimpleName());
     }

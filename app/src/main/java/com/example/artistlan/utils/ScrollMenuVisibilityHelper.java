@@ -15,6 +15,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.artistlan.Fragments.FragMain;
+import com.example.artistlan.R;
 
 /** Helper reutilizable para ocultar/mostrar menús según dirección del scroll. */
 public class ScrollMenuVisibilityHelper {
@@ -52,6 +53,7 @@ public class ScrollMenuVisibilityHelper {
     private final AccelerateDecelerateInterpolator interpolator = new AccelerateDecelerateInterpolator();
     private int animationVersion = 0;
     private int pendingAnimationEnds = 0;
+    private View topCompanionView;
 
     public ScrollMenuVisibilityHelper(@NonNull View topMenu, @NonNull View bottomMenu) {
         this.topMenu = topMenu;
@@ -64,11 +66,18 @@ public class ScrollMenuVisibilityHelper {
         callbacks = new FragmentManager.FragmentLifecycleCallbacks() {
             @Override
             public void onFragmentViewCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @NonNull View v, @Nullable android.os.Bundle savedInstanceState) {
+                registerTopCompanionIfPresent(v);
                 attachToScrollable(f, v);
             }
 
             @Override
             public void onFragmentViewDestroyed(@NonNull FragmentManager fm, @NonNull Fragment f) {
+                View fragmentView = f.getView();
+                if (fragmentView != null && topCompanionView != null
+                        && fragmentView.findViewById(R.id.explorarHeader) == topCompanionView) {
+                    topCompanionView.animate().cancel();
+                    topCompanionView = null;
+                }
                 if (f == attachedFragment) {
                     detachCurrentScrollable();
                     showMenus();
@@ -213,6 +222,21 @@ public class ScrollMenuVisibilityHelper {
         }
     }
 
+    private void registerTopCompanionIfPresent(@NonNull View root) {
+        View companion = root.findViewById(R.id.explorarHeader);
+        if (companion == null) return;
+
+        topCompanionView = companion;
+        topCompanionView.setClickable(menuState == MenuState.SHOWN || menuState == MenuState.ANIMATING_TO_SHOWN);
+        topCompanionView.post(() -> {
+            if (topCompanionView != companion) return;
+            topCompanionView.setTranslationY(menuState == MenuState.HIDDEN
+                    || menuState == MenuState.ANIMATING_TO_HIDDEN
+                    ? -Math.max(topCompanionView.getHeight(), 1)
+                    : 0f);
+        });
+    }
+
     private void ensureThresholds() {
         if (hideThresholdPx > 0 && showThresholdPx > 0) return;
         float density = topMenu.getResources().getDisplayMetrics().density;
@@ -247,20 +271,32 @@ public class ScrollMenuVisibilityHelper {
         cacheExpandedHeights();
 
         topMenu.setClickable(show);
+        if (topCompanionView != null) {
+            topCompanionView.setClickable(show);
+        }
         bottomMenu.setClickable(show);
 
         topMenu.animate().cancel();
+        if (topCompanionView != null) {
+            topCompanionView.animate().cancel();
+        }
         bottomMenu.animate().cancel();
 
         if (show && (topMenu.getTranslationY() == 0f && bottomMenu.getTranslationY() == 0f)) {
             topMenu.setTranslationY(-Math.max(topMenu.getHeight(), 1));
+            if (topCompanionView != null) {
+                topCompanionView.setTranslationY(-Math.max(topCompanionView.getHeight(), 1));
+            }
             bottomMenu.setTranslationY(Math.max(bottomMenu.getHeight(), 1));
         }
 
         float topTarget = show ? 0f : -Math.max(topMenu.getHeight(), 1);
+        float companionTarget = show || topCompanionView == null
+                ? 0f
+                : -Math.max(topCompanionView.getHeight(), 1);
         float bottomTarget = show ? 0f : Math.max(bottomMenu.getHeight(), 1);
         int currentAnimationVersion = ++animationVersion;
-        pendingAnimationEnds = 2;
+        pendingAnimationEnds = topCompanionView == null ? 2 : 3;
 
         topMenu.animate()
                 .translationY(topTarget)
@@ -268,6 +304,15 @@ public class ScrollMenuVisibilityHelper {
                 .setInterpolator(interpolator)
                 .withEndAction(() -> onBarAnimationEnd(show, currentAnimationVersion))
                 .start();
+
+        if (topCompanionView != null) {
+            topCompanionView.animate()
+                    .translationY(companionTarget)
+                    .setDuration(ANIM_DURATION_MS)
+                    .setInterpolator(interpolator)
+                    .withEndAction(() -> onBarAnimationEnd(show, currentAnimationVersion))
+                    .start();
+        }
 
         bottomMenu.animate()
                 .translationY(bottomTarget)
@@ -290,12 +335,20 @@ public class ScrollMenuVisibilityHelper {
 
         if (show) {
             topMenu.setTranslationY(0f);
+            if (topCompanionView != null) {
+                topCompanionView.setTranslationY(0f);
+                topCompanionView.setClickable(true);
+            }
             bottomMenu.setTranslationY(0f);
             topMenu.setClickable(true);
             bottomMenu.setClickable(true);
             menuState = MenuState.SHOWN;
         } else {
             topMenu.setTranslationY(-Math.max(topMenu.getHeight(), 1));
+            if (topCompanionView != null) {
+                topCompanionView.setTranslationY(-Math.max(topCompanionView.getHeight(), 1));
+                topCompanionView.setClickable(false);
+            }
             bottomMenu.setTranslationY(Math.max(bottomMenu.getHeight(), 1));
             topMenu.setClickable(false);
             bottomMenu.setClickable(false);

@@ -115,7 +115,7 @@
                 android:padding="2dp"
                 app:lottie_autoPlay="false"
                 app:lottie_loop="false"
-                app:lottie_rawRes="@raw/lottie_like_heart" />
+                app:lottie_rawRes="@raw/laic" />
         </LinearLayout>
 
         <androidx.constraintlayout.widget.Barrier

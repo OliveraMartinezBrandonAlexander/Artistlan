@@ -50,17 +50,15 @@
             android:textColor="@color/artistlan_text_primary"
             android:textSize="15sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/btnMoreOptions"
+            app:layout_constraintEnd_toStartOf="@id/estadoResumen"
             app:layout_constraintStart_toEndOf="@id/imgAutor"
             app:layout_constraintTop_toTopOf="@id/imgAutor" />
 
         <TextView
             android:id="@+id/categoria"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
             android:layout_marginTop="3dp"
-            android:layout_marginEnd="8dp"
             android:background="@drawable/bg_chip_glass"
             android:ellipsize="end"
             android:maxLines="1"
@@ -72,9 +70,29 @@
             android:textColor="@color/artistlan_text_primary"
             android:textSize="11sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/likeContainer"
-            app:layout_constraintStart_toEndOf="@id/imgAutor"
-            app:layout_constraintTop_toBottomOf="@id/autor" />
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toStartOf="@id/btnMoreOptions"
+            app:layout_constraintTop_toBottomOf="@id/estadoResumen" />
+
+        <TextView
+            android:id="@+id/estadoResumen"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_chip_glass"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingStart="7dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="7dp"
+            android:paddingBottom="4dp"
+            android:text="Estado"
+            android:textColor="@color/artistlan_text_primary"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toStartOf="@id/btnMoreOptions"
+            app:layout_constraintTop_toTopOf="@id/imgAutor" />
 
         <ImageButton
             android:id="@+id/btnMoreOptions"
@@ -91,12 +109,12 @@
         <LinearLayout
             android:id="@+id/likeContainer"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="6dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            app:layout_constraintBottom_toBottomOf="@id/imgAutor"
-            app:layout_constraintEnd_toStartOf="@id/btnMoreOptions">
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/imgObra">
 
             <TextView
                 android:id="@+id/likes"
@@ -107,16 +125,16 @@
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
-            <com.airbnb.lottie.LottieAnimationView
+            <ImageButton
                 android:id="@+id/btnLike"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
                 android:layout_marginStart="2dp"
                 android:background="@android:color/transparent"
-                android:padding="2dp"
-                app:lottie_autoPlay="false"
-                app:lottie_loop="false"
-                app:lottie_rawRes="@raw/lottie_like_heart" />
+                android:contentDescription="Me gusta"
+                android:padding="9dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_like_outline" />
         </LinearLayout>
 
         <androidx.constraintlayout.widget.Barrier
@@ -124,7 +142,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:barrierDirection="bottom"
-            app:constraint_referenced_ids="imgAutor,autor,categoria,likeContainer,btnMoreOptions" />
+            app:constraint_referenced_ids="imgAutor,autor,categoria,estadoResumen,btnMoreOptions" />
 
         <ImageView
             android:id="@+id/imgObra"
@@ -152,24 +170,7 @@
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/imgObra" />
-
-        <TextView
-            android:id="@+id/estadoResumen"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="7dp"
-            android:background="@drawable/bg_chip_glass"
-            android:paddingStart="6dp"
-            android:paddingTop="5dp"
-            android:paddingEnd="6dp"
-            android:paddingBottom="5dp"
-            android:text="Estado: N/A"
-            android:textColor="@color/artistlan_text_primary"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/titulo" />
+            app:layout_constraintTop_toBottomOf="@id/likeContainer" />
 
         <LinearLayout
             android:id="@+id/expanded_section"
@@ -180,7 +181,7 @@
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/estadoResumen">
+            app:layout_constraintTop_toBottomOf="@id/titulo">
 
             <TextView
                 android:id="@+id/descripcion"

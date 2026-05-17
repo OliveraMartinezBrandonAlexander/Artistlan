@@ -13,6 +13,11 @@ public class ObraCarruselItem {
     private Integer idAutor;
     private int likesCount;
     private boolean userLiked;
+    private String estado;
+    private String tecnicas;
+    private String medidas;
+    private Double precio;
+    private String tipoArte;
 
     // 1) Dummy (sin URLs)
     public ObraCarruselItem(int imagen, String titulo, String descripcion, String autor, String likes) {
@@ -65,4 +70,14 @@ public class ObraCarruselItem {
     public void setLikesCount(int likesCount) { this.likesCount = likesCount; }
     public boolean isUserLiked() { return userLiked; }
     public void setUserLiked(boolean userLiked) { this.userLiked = userLiked; }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
+    public String getTecnicas() { return tecnicas; }
+    public void setTecnicas(String tecnicas) { this.tecnicas = tecnicas; }
+    public String getMedidas() { return medidas; }
+    public void setMedidas(String medidas) { this.medidas = medidas; }
+    public Double getPrecio() { return precio; }
+    public void setPrecio(Double precio) { this.precio = precio; }
+    public String getTipoArte() { return tipoArte; }
+    public void setTipoArte(String tipoArte) { this.tipoArte = tipoArte; }
 }

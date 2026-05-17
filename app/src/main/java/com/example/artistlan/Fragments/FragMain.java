@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.graphics.PorterDuff;
+import android.view.MotionEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,9 +17,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.CompositePageTransformer;
+import androidx.viewpager2.widget.MarginPageTransformer;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.artistlan.BotonesMenuSuperior;
@@ -27,6 +32,7 @@ import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.api.ServicioApi;
+import com.example.artistlan.Conector.api.SolicitudesApi;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
@@ -36,6 +42,9 @@ import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.utils.ReporteUiPermissions;
 
@@ -53,20 +62,37 @@ import retrofit2.Response;
 
 public class FragMain extends Fragment {
     private static final long LIKE_THROTTLE_MS = 500L;
+    private static final int CARRUSEL_HEIGHT_COLLAPSED_DP = 410;
+    private static final int CARRUSEL_HEIGHT_EXPANDED_DP = 610;
 
+    private NestedScrollView scrollContenido;
     private ViewPager2 viewPager;
     private RecyclerView rvFeedPublicacionesMain;
     private RecyclerView rvConvocatoriasMain;
     private ProgressBar pbConvocatoriasMain;
     private TextView tvConvocatoriasMainEstado;
+    private View layoutMainHeader;
+    private View layoutMainFeedSeparator;
+    private TextView tvMainWelcomeTitle;
+    private TextView tvMainWelcomeSubtitle;
+    private TextView tvCarruselFamaTitle;
+    private TextView tvMainFeedSeparator;
+    private View viewWelcomeAccent;
+    private View viewFeedSeparatorStart;
+    private View viewFeedSeparatorEnd;
 
     private final Handler carruselHandler = new Handler(Looper.getMainLooper());
     private Runnable carruselRunnable;
+    private CarruselAdapter carruselAdapter;
+    private List<ObraCarruselItem> carruselItems;
+    private final List<TarjetaTextoObraAdapter> obraFeedAdapters = new ArrayList<>();
+    private final List<TarjetaTextoServicioAdapter> servicioFeedAdapters = new ArrayList<>();
 
     private Call<List<ObraDTO>> obrasFeedCall;
     private Call<List<ServicioDTO>> serviciosFeedCall;
     private Call<List<ObraDTO>> obrasCarruselCall;
     private FavoritosApi favoritosApi;
+    private SolicitudesApi solicitudesApi;
     private final Map<Integer, Long> ultimoToqueLikePorObra = new HashMap<>();
     private final Set<Integer> likesObraEnVuelo = new HashSet<>();
     private final Map<Integer, Long> ultimoToqueLikePorServicio = new HashMap<>();
@@ -84,10 +110,13 @@ public class FragMain extends Fragment {
         ThemeModuleStyler.styleFragment(this, root);
         new BotonesMenuSuperior(this);
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
+        solicitudesApi = RetrofitClient.getClient().create(SolicitudesApi.class);
 
         initViews(root);
+        applyCurrentTheme(false);
         ocultarElementosNoVisibles(root);
         configurarCarrusel();
+        configurarContraccionCarrusel(root);
         animarEntradaCarrusel();
         configurarFeed();
         cargarFeedMixto();
@@ -96,11 +125,72 @@ public class FragMain extends Fragment {
     }
 
     private void initViews(@NonNull View root) {
+        scrollContenido = root.findViewById(R.id.scrollContenido);
         viewPager = root.findViewById(R.id.viewPagerCarrusel);
         rvFeedPublicacionesMain = root.findViewById(R.id.rvFeedPublicacionesMain);
         rvConvocatoriasMain = root.findViewById(R.id.rvConvocatoriasMain);
         pbConvocatoriasMain = root.findViewById(R.id.pbConvocatoriasMain);
         tvConvocatoriasMainEstado = root.findViewById(R.id.tvConvocatoriasMainEstado);
+        layoutMainHeader = root.findViewById(R.id.layoutMainHeader);
+        layoutMainFeedSeparator = root.findViewById(R.id.layoutMainFeedSeparator);
+        tvMainWelcomeTitle = root.findViewById(R.id.tvMainWelcomeTitle);
+        tvMainWelcomeSubtitle = root.findViewById(R.id.tvMainWelcomeSubtitle);
+        tvCarruselFamaTitle = root.findViewById(R.id.tvCarruselFamaTitle);
+        tvMainFeedSeparator = root.findViewById(R.id.tvMainFeedSeparator);
+        viewWelcomeAccent = root.findViewById(R.id.viewWelcomeAccent);
+        viewFeedSeparatorStart = root.findViewById(R.id.viewFeedSeparatorStart);
+        viewFeedSeparatorEnd = root.findViewById(R.id.viewFeedSeparatorEnd);
+    }
+
+    private void applyCurrentTheme(boolean animateHeader) {
+        if (!isAdded()) {
+            return;
+        }
+        ThemeManager tm = new ThemeManager(requireContext());
+        ThemeApplier.applyCardContainer(layoutMainHeader, tm);
+        if (tvMainWelcomeTitle != null) {
+            tvMainWelcomeTitle.setTextColor(tm.color(ThemeKeys.ACCENT_PRIMARY_LIGHT));
+        }
+        ThemeApplier.applyTextSecondary(tvMainWelcomeSubtitle, tm);
+        if (tvCarruselFamaTitle != null) {
+            tvCarruselFamaTitle.setTextColor(tm.color(ThemeKeys.ACCENT_PRIMARY_LIGHT));
+        }
+        ThemeApplier.applyTextPrimary(tvMainFeedSeparator, tm);
+        if (tvMainFeedSeparator != null && tvMainFeedSeparator.getBackground() != null) {
+            tvMainFeedSeparator.getBackground().setColorFilter(tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL), PorterDuff.Mode.SRC_ATOP);
+        }
+        tintView(viewWelcomeAccent, tm.color(ThemeKeys.ACCENT_PRIMARY));
+        tintView(viewFeedSeparatorStart, tm.color(ThemeKeys.ACCENT_PRIMARY));
+        tintView(viewFeedSeparatorEnd, tm.color(ThemeKeys.ACCENT_PRIMARY));
+        if (layoutMainHeader != null && animateHeader) {
+            layoutMainHeader.animate().cancel();
+            layoutMainHeader.setAlpha(0f);
+            layoutMainHeader.setTranslationY(14f);
+            layoutMainHeader.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(260)
+                    .start();
+        }
+        if (carruselAdapter != null) {
+            carruselAdapter.refreshTheme();
+        }
+        for (TarjetaTextoObraAdapter adapter : obraFeedAdapters) {
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
+        }
+        for (TarjetaTextoServicioAdapter adapter : servicioFeedAdapters) {
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
+        }
+    }
+
+    private void tintView(@Nullable View view, int color) {
+        if (view != null && view.getBackground() != null) {
+            view.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+        }
     }
 
     private void ocultarElementosNoVisibles(@NonNull View root) {
@@ -129,40 +219,189 @@ public class FragMain extends Fragment {
             return;
         }
 
-        List<ObraCarruselItem> obras = new ArrayList<>();
-        obras.add(new ObraCarruselItem(R.drawable.pin1, "Obra 1", "Descripción 1", "Superman", ""));
-        obras.add(new ObraCarruselItem(R.drawable.pin2, "Obra 2", "Descripción 2", "Batman", ""));
-        obras.add(new ObraCarruselItem(R.drawable.pin3, "Obra 3", "Descripción 3", "Wonder Woman", ""));
+        carruselItems = new ArrayList<>();
+        carruselItems.add(new ObraCarruselItem(R.drawable.pin1, "Obra 1", "Descripción 1", "Superman", ""));
+        carruselItems.add(new ObraCarruselItem(R.drawable.pin2, "Obra 2", "Descripción 2", "Batman", ""));
+        carruselItems.add(new ObraCarruselItem(R.drawable.pin3, "Obra 3", "Descripción 3", "Wonder Woman", ""));
 
-        CarruselAdapter adapter = new CarruselAdapter(obras, requireContext());
-        adapter.setOnCarruselActionListener(new CarruselAdapter.OnCarruselActionListener() {
-            @Override
-            public void onOpen(ObraCarruselItem item, int position) {
-                abrirDetalleObra(item.getIdObra());
-            }
-
+        carruselAdapter = new CarruselAdapter(carruselItems, requireContext());
+        carruselAdapter.setOnCarruselActionListener(new CarruselAdapter.OnCarruselActionListener() {
             @Override
             public void onLike(ObraCarruselItem item, int position) {
-                toggleLikeCarrusel(item, position, adapter);
+                toggleLikeCarrusel(item, position, carruselAdapter);
             }
 
             @Override
             public void onAuthor(ObraCarruselItem item, int position) {
                 abrirPerfilPublico(item.getIdAutor());
             }
+
+            @Override
+            public void onExpandedChanged(boolean expanded) {
+                ajustarAlturaCarrusel(expanded);
+            }
+
         });
-        viewPager.setAdapter(adapter);
-        viewPager.setOffscreenPageLimit(1);
+        viewPager.setAdapter(carruselAdapter);
+        viewPager.setOffscreenPageLimit(3);
         viewPager.setClipToPadding(false);
         viewPager.setClipChildren(false);
-        viewPager.setPageTransformer((page, position) -> {
+        View child = viewPager.getChildAt(0);
+        if (child instanceof RecyclerView) {
+            RecyclerView pagerRecycler = (RecyclerView) child;
+            pagerRecycler.setClipToPadding(false);
+            pagerRecycler.setClipChildren(false);
+            pagerRecycler.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        }
+        viewPager.setPadding(dpToPx(22), 0, dpToPx(22), 0);
+
+        CompositePageTransformer transformer = new CompositePageTransformer();
+        transformer.addTransformer(new MarginPageTransformer(dpToPx(6)));
+        transformer.addTransformer((page, position) -> {
             float abs = Math.abs(position);
-            page.setAlpha(0.86f + (1f - abs) * 0.14f);
-            page.setScaleY(0.95f + (1f - abs) * 0.05f);
+            float clamped = Math.min(abs, 1f);
+            float scale = 0.88f + (1f - clamped) * 0.12f;
+            page.setAlpha(0.80f + (1f - clamped) * 0.20f);
+            page.setScaleX(scale);
+            page.setScaleY(0.91f + (1f - clamped) * 0.09f);
+            page.setTranslationZ((1f - clamped) * dpToPx(14));
+            page.setTranslationY(clamped * dpToPx(10));
+        });
+        viewPager.setPageTransformer(transformer);
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                if (state == ViewPager2.SCROLL_STATE_DRAGGING || state == ViewPager2.SCROLL_STATE_SETTLING) {
+                    contraerCarruselExpandido();
+                }
+            }
         });
 
-        cargarObrasCarrusel(obras, adapter);
-        iniciarAutoCarrusel(obras.size());
+        cargarObrasCarrusel(carruselItems, carruselAdapter);
+        iniciarAutoCarrusel(carruselItems.size());
+    }
+
+    private void configurarContraccionCarrusel(@NonNull View root) {
+        if (scrollContenido != null) {
+            scrollContenido.setOnScrollChangeListener((View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) -> {
+                if (scrollY != oldScrollY) {
+                    contraerCarruselExpandido();
+                }
+            });
+            scrollContenido.setOnTouchListener((v, event) -> {
+                if (event.getActionMasked() == MotionEvent.ACTION_DOWN && !isTouchInsideView(event, viewPager)) {
+                    contraerCarruselExpandido();
+                }
+                return false;
+            });
+        }
+        root.setOnClickListener(v -> contraerCarruselExpandido());
+    }
+
+    private boolean isTouchInsideView(@NonNull MotionEvent event, @Nullable View view) {
+        if (view == null) {
+            return false;
+        }
+        int[] location = new int[2];
+        view.getLocationOnScreen(location);
+        float rawX = event.getRawX();
+        float rawY = event.getRawY();
+        return rawX >= location[0]
+                && rawX <= location[0] + view.getWidth()
+                && rawY >= location[1]
+                && rawY <= location[1] + view.getHeight();
+    }
+
+    private void contraerCarruselExpandido() {
+        if (carruselAdapter != null) {
+            carruselAdapter.collapseExpanded();
+        }
+    }
+
+    private void ajustarAlturaCarrusel(boolean expanded) {
+        if (viewPager == null) {
+            return;
+        }
+        viewPager.setUserInputEnabled(!expanded);
+        int targetHeight = dpToPx(expanded ? CARRUSEL_HEIGHT_EXPANDED_DP : CARRUSEL_HEIGHT_COLLAPSED_DP);
+        ViewGroup.LayoutParams params = viewPager.getLayoutParams();
+        if (params == null || params.height == targetHeight) {
+            return;
+        }
+        android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofInt(viewPager.getHeight(), targetHeight);
+        animator.setDuration(220);
+        animator.addUpdateListener(animation -> {
+            ViewGroup.LayoutParams animatedParams = viewPager.getLayoutParams();
+            if (animatedParams != null) {
+                animatedParams.height = (int) animation.getAnimatedValue();
+                viewPager.setLayoutParams(animatedParams);
+            }
+        });
+        animator.start();
+    }
+
+    private void solicitarCompraCarrusel(@Nullable ObraCarruselItem item) {
+        if (item == null || solicitudesApi == null || !isAdded()) {
+            return;
+        }
+        SolicitudCompraUiHelper.mostrarDialogoSolicitudCompra(
+                this,
+                resolveCurrentUserIdForActions(),
+                solicitudesApi,
+                mapCarruselToTarjetaObra(item),
+                null
+        );
+    }
+
+    private void reportarObraCarrusel(@Nullable ObraCarruselItem item) {
+        if (item == null || !isAdded()) {
+            return;
+        }
+        Integer usuarioActual = ReporteUiPermissions.resolveCurrentUserId(requireContext());
+        if (usuarioActual == null || usuarioActual <= 0) {
+            Toast.makeText(requireContext(), "Inicia sesión para reportar", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (item.getIdObra() == null || item.getIdObra() <= 0) {
+            Toast.makeText(requireContext(), "Obra no disponible para reportar", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        DialogReportarContenido dialog = DialogReportarContenido.newInstance(
+                "OBRA",
+                item.getIdObra(),
+                usuarioActual,
+                item.getTitulo()
+        );
+        dialog.show(getParentFragmentManager(), "DialogReportarContenido");
+    }
+
+    private int resolveCurrentUserIdForActions() {
+        Integer idUsuario = ReporteUiPermissions.resolveCurrentUserId(requireContext());
+        return idUsuario != null ? idUsuario : -1;
+    }
+
+    @NonNull
+    private TarjetaTextoObraItem mapCarruselToTarjetaObra(@NonNull ObraCarruselItem item) {
+        TarjetaTextoObraItem mapped = new TarjetaTextoObraItem(
+                item.getIdObra() != null ? item.getIdObra() : -1,
+                item.getTitulo(),
+                item.getDescripcion(),
+                item.getEstado(),
+                item.getPrecio(),
+                item.getImagenUrl(),
+                null,
+                null,
+                item.getTecnicas(),
+                item.getMedidas(),
+                item.getLikesCount(),
+                item.getAutor(),
+                item.getTipoArte(),
+                item.getAutorFotoUrl(),
+                item.isUserLiked(),
+                false
+        );
+        mapped.setIdAutor(item.getIdAutor());
+        return mapped;
     }
 
     private void configurarFeed() {
@@ -264,6 +503,8 @@ public class FragMain extends Fragment {
         Collections.shuffle(servicios);
 
         List<RecyclerView.Adapter<? extends RecyclerView.ViewHolder>> bloques = new ArrayList<>();
+        obraFeedAdapters.clear();
+        servicioFeedAdapters.clear();
 
         int idxObra = 0;
         int idxServicio = 0;
@@ -310,12 +551,14 @@ public class FragMain extends Fragment {
         for (RecyclerView.Adapter<? extends RecyclerView.ViewHolder> adapter : bloques) {
             if (adapter instanceof TarjetaTextoObraAdapter) {
                 TarjetaTextoObraAdapter obraAdapter = (TarjetaTextoObraAdapter) adapter;
+                obraFeedAdapters.add(obraAdapter);
                 obraAdapter.setOnAuthorClickListener((obraItem, position) -> abrirPerfilPublico(obraItem.getIdAutor()));
                 obraAdapter.setOnLikeClickListener((obraItem, position) -> toggleLikeObraEnFeed(obraItem, position, obraAdapter));
                 obraAdapter.setOnPrimaryActionClickListener((obraItem, position) -> abrirDetalleObra(obraItem.getIdObra()));
             }
             if (adapter instanceof TarjetaTextoServicioAdapter) {
                 TarjetaTextoServicioAdapter servicioAdapter = (TarjetaTextoServicioAdapter) adapter;
+                servicioFeedAdapters.add(servicioAdapter);
                 servicioAdapter.setOnAuthorClickListener((servicioItem, position) -> abrirPerfilPublico(servicioItem.getIdUsuario()));
                 servicioAdapter.setOnLikeClickListener((servicioItem, position) -> toggleLikeServicioEnFeed(servicioItem, position, servicioAdapter));
             }
@@ -419,11 +662,19 @@ public class FragMain extends Fragment {
         }
         viewPager.setAlpha(0f);
         viewPager.setTranslationY(24f);
+        viewPager.setScaleX(0.97f);
+        viewPager.setScaleY(0.97f);
         viewPager.animate()
                 .alpha(1f)
                 .translationY(0f)
-                .setDuration(260)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(340)
                 .start();
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     private void iniciarAutoCarrusel(int total) {
@@ -498,6 +749,11 @@ public class FragMain extends Fragment {
                     mapped.setIdAutor(dto.getIdUsuario());
                     mapped.setLikesCount(dto.getLikes() == null ? 0 : dto.getLikes());
                     mapped.setUserLiked(Boolean.TRUE.equals(dto.getEsFavorito()));
+                    mapped.setEstado(dto.getEstado());
+                    mapped.setTecnicas(dto.getTecnicas());
+                    mapped.setMedidas(dto.getMedidas());
+                    mapped.setPrecio(dto.getPrecio());
+                    mapped.setTipoArte(dto.getNombreCategoria());
                     obras.set(i, mapped);
                 }
 
@@ -594,6 +850,7 @@ public class FragMain extends Fragment {
         obraItem.setUserLiked(!previo);
         obraItem.setLikes(Math.max(0, likesPrevios + (previo ? -1 : 1)));
         adapter.notifyLikeChangedPartial(position);
+        syncCarruselLikeState(idObra, obraItem.isUserLiked(), obraItem.getLikes());
 
         FavoritoDTO dto = new FavoritoDTO();
         dto.idUsuario = idUsuario;
@@ -609,11 +866,13 @@ public class FragMain extends Fragment {
                 if (!previo && response.code() == 409) {
                     obraItem.setUserLiked(true);
                     syncLikeCountObra(obraItem, position, adapter);
+                    syncCarruselLikeState(idObra, true, obraItem.getLikes());
                     return;
                 }
                 obraItem.setUserLiked(previo);
                 obraItem.setLikes(likesPrevios);
                 adapter.notifyLikeChanged(position);
+                syncCarruselLikeState(idObra, previo, likesPrevios);
                 Toast.makeText(requireContext(), "No se pudo actualizar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
             }
             @Override public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
@@ -622,6 +881,7 @@ public class FragMain extends Fragment {
                 obraItem.setUserLiked(previo);
                 obraItem.setLikes(likesPrevios);
                 adapter.notifyLikeChanged(position);
+                syncCarruselLikeState(idObra, previo, likesPrevios);
                 Toast.makeText(requireContext(), "Error de red al actualizar favorito", Toast.LENGTH_SHORT).show();
             }
         });
@@ -697,6 +957,7 @@ public class FragMain extends Fragment {
         item.setUserLiked(!previo);
         item.setLikesCount(Math.max(0, likesPrevios + (previo ? -1 : 1)));
         adapter.notifyLikeChangedPartial(position);
+        syncFeedObraLikeState(idObra, item.isUserLiked(), item.getLikesCount());
 
         FavoritoDTO dto = new FavoritoDTO();
         dto.idUsuario = idUsuario;
@@ -712,11 +973,13 @@ public class FragMain extends Fragment {
                 if (!previo && response.code() == 409) {
                     item.setUserLiked(true);
                     syncLikeCountCarrusel(item, position, adapter);
+                    syncFeedObraLikeState(idObra, true, item.getLikesCount());
                     return;
                 }
                 item.setUserLiked(previo);
                 item.setLikesCount(likesPrevios);
                 adapter.notifyLikeChanged(position);
+                syncFeedObraLikeState(idObra, previo, likesPrevios);
                 Toast.makeText(requireContext(), "No se pudo actualizar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
             }
             @Override public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
@@ -725,6 +988,7 @@ public class FragMain extends Fragment {
                 item.setUserLiked(previo);
                 item.setLikesCount(likesPrevios);
                 adapter.notifyLikeChanged(position);
+                syncFeedObraLikeState(idObra, previo, likesPrevios);
                 Toast.makeText(requireContext(), "Error de red al actualizar favorito", Toast.LENGTH_SHORT).show();
             }
         });
@@ -741,6 +1005,7 @@ public class FragMain extends Fragment {
                     item.setLikes(Math.max(0, response.body()));
                 }
                 adapter.notifyLikeChanged(position);
+                syncCarruselLikeState(item.getIdObra(), item.isUserLiked(), item.getLikes());
             }
 
             @Override
@@ -799,6 +1064,10 @@ public class FragMain extends Fragment {
                     item.setLikesCount(Math.max(0, response.body()));
                 }
                 adapter.notifyLikeChanged(position);
+                Integer id = item.getIdObra();
+                if (id != null) {
+                    syncFeedObraLikeState(id, item.isUserLiked(), item.getLikesCount());
+                }
             }
 
             @Override
@@ -809,6 +1078,26 @@ public class FragMain extends Fragment {
                 adapter.notifyLikeChanged(position);
             }
         });
+    }
+
+    private void syncCarruselLikeState(int idObra, boolean liked, int likesCount) {
+        if (carruselAdapter != null) {
+            carruselAdapter.updateLikeStateById(idObra, liked, likesCount);
+        }
+    }
+
+    private void syncFeedObraLikeState(int idObra, boolean liked, int likesCount) {
+        for (TarjetaTextoObraAdapter obraAdapter : obraFeedAdapters) {
+            if (obraAdapter != null) {
+                obraAdapter.updateLikeStateById(idObra, liked, likesCount);
+            }
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        applyCurrentTheme(false);
     }
 
     @Override

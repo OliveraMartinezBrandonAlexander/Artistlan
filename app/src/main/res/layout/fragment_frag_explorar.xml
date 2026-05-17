@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -8,128 +8,119 @@
     android:background="@android:color/transparent"
     tools:context=".Fragments.FragExplorar">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        app:elevation="4dp"
-        app:liftOnScroll="true">
-
-        <LinearLayout
-            android:id="@+id/explorarHeader"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingTop="102dp"
-            app:layout_scrollFlags="scroll|enterAlways">
-
-            <LinearLayout
-                android:id="@+id/searchRowExplorar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginEnd="12dp"
-                android:layout_marginBottom="10dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <SearchView
-                    android:id="@+id/searchExplorar"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_search_bubble"
-                    android:hint="Buscar en Artistlan"
-                    android:iconifiedByDefault="false"
-                    android:queryHint="Buscar en Artistlan" />
-
-                <ImageButton
-                    android:id="@+id/btnFiltrosExplorar"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginStart="8dp"
-                    android:alpha="0"
-                    android:background="@drawable/bg_back_bubble"
-                    android:contentDescription="Mostrar filtros"
-                    android:padding="10dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_filter_artistlan"
-                    android:visibility="gone" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/panelFiltrosExplorar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginEnd="12dp"
-                android:layout_marginBottom="10dp"
-                android:alpha="0"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <FrameLayout
-                    android:id="@+id/segmentContainerExplorar"
-                    android:layout_width="match_parent"
-                    android:layout_height="46dp"
-                    android:background="@drawable/bg_segment_container"
-                    android:padding="4dp">
-
-                    <View
-                        android:id="@+id/segmentIndicatorExplorar"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/bg_segment_indicator" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="horizontal">
-
-                        <Button
-                            android:id="@+id/btnSegmentObras"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@android:color/transparent"
-                            android:text="Obras"
-                            android:textAllCaps="false"
-                            android:textStyle="bold" />
-
-                        <Button
-                            android:id="@+id/btnSegmentServicios"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@android:color/transparent"
-                            android:text="Servicios"
-                            android:textAllCaps="false"
-                            android:textStyle="bold" />
-
-                        <Button
-                            android:id="@+id/btnSegmentArtistas"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@android:color/transparent"
-                            android:text="Artistas"
-                            android:textAllCaps="false"
-                            android:textStyle="bold" />
-
-                    </LinearLayout>
-                </FrameLayout>
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-    </com.google.android.material.appbar.AppBarLayout>
-
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerExplorar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        android:layout_height="match_parent" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+    <LinearLayout
+        android:id="@+id/explorarHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:elevation="16dp"
+        android:orientation="vertical"
+        android:paddingTop="102dp">
+
+        <LinearLayout
+            android:id="@+id/searchRowExplorar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <SearchView
+                android:id="@+id/searchExplorar"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_search_bubble"
+                android:hint="Buscar en Artistlan"
+                android:iconifiedByDefault="false"
+                android:queryHint="Buscar en Artistlan" />
+
+            <ImageButton
+                android:id="@+id/btnFiltrosExplorar"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:alpha="0"
+                android:background="@drawable/bg_back_bubble"
+                android:contentDescription="Mostrar filtros"
+                android:padding="10dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_filter_artistlan"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/panelFiltrosExplorar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="10dp"
+            android:alpha="1"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <FrameLayout
+                android:id="@+id/segmentContainerExplorar"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:background="@drawable/bg_segment_container"
+                android:padding="4dp">
+
+                <View
+                    android:id="@+id/segmentIndicatorExplorar"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_segment_indicator" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnSegmentObras"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:text="Obras"
+                        android:textAllCaps="false"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnSegmentServicios"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:text="Servicios"
+                        android:textAllCaps="false"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnSegmentArtistas"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:text="Artistas"
+                        android:textAllCaps="false"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+            </FrameLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

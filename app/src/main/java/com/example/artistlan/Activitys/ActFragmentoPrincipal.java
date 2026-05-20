@@ -79,6 +79,8 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private ImageButton btnMenuLateral;
     private ImageButton btnCarrito;
     private ImageButton btnNotificaciones;
+    private ImageView ivLogo;
+    private TextView txtTituloTopBar;
 
     private View cartContainer;
     private View topBar;
@@ -167,6 +169,8 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         btnMenuLateral = findViewById(R.id.btnMenuLateral);
         btnCarrito = findViewById(R.id.btnCarrito);
         btnNotificaciones = findViewById(R.id.btnNotificaciones);
+        ivLogo = findViewById(R.id.ivLogo);
+        txtTituloTopBar = findViewById(R.id.txtTituloTopBar);
 
         cartContainer = findViewById(R.id.cartContainer);
         topBar = findViewById(R.id.layoutBarraSuperior);
@@ -266,6 +270,14 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         if (btnMenuLateral != null) {
             btnMenuLateral.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_ATOP);
+        }
+
+        if (ivLogo != null) {
+            ivLogo.setVisibility(View.GONE);
+        }
+
+        if (txtTituloTopBar != null) {
+            txtTituloTopBar.setTextColor(themeManager.color(ThemeKeys.MENU_TITLE));
         }
 
         if (btnCarrito != null) {

@@ -3,33 +3,35 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginStart="0dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginEnd="0dp"
-    android:layout_marginBottom="8dp"
+    android:layout_marginStart="6dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginEnd="6dp"
+    android:layout_marginBottom="6dp"
     app:cardBackgroundColor="@android:color/transparent"
-    app:cardCornerRadius="28dp"
-    app:cardElevation="10dp"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="2dp"
     app:cardUseCompatPadding="true">
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipChildren="true"
-        android:clipToPadding="true">
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
     <LinearLayout
         android:id="@+id/layoutCarruselCard"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/bg_carousel_card_glass"
+        android:background="@android:color/transparent"
         android:clickable="true"
         android:focusable="true"
         android:orientation="vertical"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         android:paddingStart="12dp"
         android:paddingTop="10dp"
         android:paddingEnd="12dp"
-        android:paddingBottom="8dp">
+        android:paddingBottom="4dp">
 
         <LinearLayout
             android:id="@+id/headerCarrusel"
@@ -95,16 +97,35 @@
             </LinearLayout>
         </LinearLayout>
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/imgObra"
+        <FrameLayout
+            android:id="@+id/layoutImagenCarrusel"
             android:layout_width="match_parent"
-            android:layout_height="178dp"
+            android:layout_height="0dp"
             android:layout_marginTop="8dp"
-            android:adjustViewBounds="false"
-            android:background="@drawable/bg_card_feed_glass"
-            android:padding="6dp"
-            android:scaleType="fitCenter"
-            app:shapeAppearanceOverlay="@style/ArtistlanCarouselImageShape" />
+            android:layout_weight="1"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/imgObra"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:adjustViewBounds="false"
+                android:background="@drawable/bg_card_feed_glass"
+                android:padding="6dp"
+                android:scaleType="fitCenter"
+                app:shapeAppearanceOverlay="@style/ArtistlanCarouselImageShape" />
+
+            <ImageView
+                android:id="@+id/imgDoubleTapHeartCarrusel"
+                android:layout_width="104dp"
+                android:layout_height="104dp"
+                android:layout_gravity="center"
+                android:alpha="0"
+                android:elevation="8dp"
+                android:src="@drawable/ic_like_filled"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/tvTitulo"

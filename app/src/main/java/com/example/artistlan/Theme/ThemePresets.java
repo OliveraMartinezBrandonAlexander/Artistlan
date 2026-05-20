@@ -83,6 +83,7 @@ public final class ThemePresets {
         c.put(ThemeKeys.MENU_ITEM_ACTIVE, shiftAlpha(Color.parseColor(accentPrimary), 95));
         c.put(ThemeKeys.MENU_ITEM_ACTIVE_STROKE, Color.parseColor(accentPrimary));
         c.put(ThemeKeys.MENU_BADGE, Color.parseColor(accentSecondary));
+        c.put(ThemeKeys.MENU_TITLE, Color.parseColor(textPrimary));
 
         c.put(ThemeKeys.ICON_DEFAULT, shiftAlpha(Color.parseColor(textSecondary), 230));
         c.put(ThemeKeys.ICON_ACTIVE, Color.parseColor(accentPrimary)); // Ahora el icono activo brilla con el color primario
@@ -94,6 +95,13 @@ public final class ThemePresets {
         c.put(ThemeKeys.BUTTON_SECONDARY_BG, Color.parseColor(accentSecondary));
         c.put(ThemeKeys.BUTTON_TEXT_DARK, chooseTextOn(Color.parseColor(accentPrimary)));
         c.put(ThemeKeys.BUTTON_TEXT_LIGHT, chooseTextOn(Color.parseColor(accentSecondary)));
+
+        c.put(ThemeKeys.CARD_BORDER, Color.parseColor(accentPrimary));
+        c.put(ThemeKeys.CARD_CHIP_BG, shiftAlpha(Color.parseColor(accentPrimary), 42));
+        c.put(ThemeKeys.CARD_CHIP_TEXT, Color.parseColor(textPrimary));
+        c.put(ThemeKeys.LIKE_ACTIVE, Color.parseColor(accentSecondary));
+        c.put(ThemeKeys.FILTER_BUTTON_BG, shiftAlpha(Color.parseColor(accentPrimary), 45));
+        c.put(ThemeKeys.FILTER_BUTTON_STROKE, Color.parseColor(accentPrimary));
 
         c.put(ThemeKeys.INPUT_BG, shiftAlpha(Color.parseColor(textPrimary), 35));
         c.put(ThemeKeys.INPUT_STROKE, shiftAlpha(Color.parseColor(textPrimary), 90));

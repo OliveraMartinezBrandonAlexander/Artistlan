@@ -9,6 +9,8 @@ import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -72,6 +74,8 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
     private boolean waitingMode = false;
     private boolean isNavigating = false;
+    private boolean suppressIdentifierWatchers = false;
+    private String lastEditedIdentifierType = "";
 
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
     private static final long MIN_WAIT_VISIBLE_MS = 1400L;
@@ -129,6 +133,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
         api = RetrofitClient.getClient().create(UsuarioApi.class);
         sessionManager = new SessionManager(this);
+        setupIdentifierTracking();
         preloadSavedAccountFields(true);
 
         ScrollView scrollView = findViewById(R.id.IsScroll);
@@ -486,8 +491,6 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
     }
 
     private void iniciarSesion() {
-        preloadSavedAccountFields(false);
-
         if (sessionManager != null && sessionManager.hasReusableSession(MAX_REUSABLE_SESSION_IDLE_MS)) {
             sessionManager.touchSession();
             showWaitingDialog();
@@ -498,19 +501,29 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         String correo = etCorreo.getText().toString().trim();
         String usuario = etUsuario.getText().toString().trim();
         String contrasena = etContrasena.getText().toString().trim();
-        String usuarioOCorreo = !usuario.isEmpty() ? usuario : correo;
+        String tipoIdentificador = resolveIdentifierType(usuario, correo);
+        String usuarioOCorreo = SessionManager.LOGIN_IDENTIFIER_EMAIL.equals(tipoIdentificador) ? correo : usuario;
         if (correo.isEmpty() && usuario.isEmpty()) {
             etUsuario.requestFocus();
             showErrorDialog("Faltan datos", "Debes ingresar tu usuario o tu correo.");
             return;
+        }
+        if (usuarioOCorreo.isEmpty()) {
+            tipoIdentificador = usuario.isEmpty() ? SessionManager.LOGIN_IDENTIFIER_EMAIL : SessionManager.LOGIN_IDENTIFIER_USERNAME;
+            usuarioOCorreo = usuario.isEmpty() ? correo : usuario;
         }
         if (contrasena.isEmpty()) {
             etContrasena.requestFocus();
             showErrorDialog("Contraseña requerida", "La contraseña es obligatoria.");
             return;
         }
+        clearUnselectedIdentifierField(tipoIdentificador);
+        final String identificadorUsado = usuarioOCorreo;
+        final String tipoIdentificadorUsado = tipoIdentificador;
+        final String usuarioSeleccionado = SessionManager.LOGIN_IDENTIFIER_USERNAME.equals(tipoIdentificadorUsado) ? identificadorUsado : "";
+        final String correoSeleccionado = SessionManager.LOGIN_IDENTIFIER_EMAIL.equals(tipoIdentificadorUsado) ? identificadorUsado : "";
         showWaitingDialog();
-        LoginRequestDTO request = new LoginRequestDTO(usuarioOCorreo, contrasena);
+        LoginRequestDTO request = new LoginRequestDTO(identificadorUsado, contrasena);
         Call<LoginResponseDTO> call = api.login(request);
         call.enqueue(new Callback<LoginResponseDTO>() {
             @Override
@@ -524,7 +537,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                             showErrorDialog("Error de autenticación", "No se recibió temporaryToken para continuar con 2FA.");
                             return;
                         }
-                        openOtpVerificationScreen(temporaryToken, usuario, correo);
+                        openOtpVerificationScreen(temporaryToken, usuarioSeleccionado, correoSeleccionado, tipoIdentificadorUsado, identificadorUsado);
                         return;
                     }
                     UsuariosDTO user = loginResponse.getEffectiveUser();
@@ -543,6 +556,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                         return;
                     }
                     guardarUsuarioLogeado(user, jwt);
+                    sessionManager.saveLastLoginIdentifier(identificadorUsado, tipoIdentificadorUsado);
                     cargarCategoriaUsuario(idUsuario);
                     showSuccessAndNavigate();
                 } else {
@@ -655,25 +669,127 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
             return;
         }
 
-        String lastCorreo = sessionManager.getLastCorreo();
-        if (etCorreo != null
-                && etCorreo.getText().toString().trim().isEmpty()
-                && !lastCorreo.isEmpty()) {
-            etCorreo.setText(lastCorreo);
-        }
+        suppressIdentifierWatchers = true;
+        try {
+            if (etCorreo != null) {
+                etCorreo.setText("");
+            }
+            if (etUsuario != null) {
+                etUsuario.setText("");
+            }
 
-        String lastUsuario = sessionManager.getLastUsuario();
-        if (etUsuario != null
-                && etUsuario.getText().toString().trim().isEmpty()
-                && !lastUsuario.isEmpty()) {
-            etUsuario.setText(lastUsuario);
-        }
+            String type = sessionManager.getLastLoginIdentifierType();
+            String identifier = sessionManager.getLastLoginIdentifier();
 
-        if (clearPassword && etContrasena != null) {
-            etContrasena.setText("");
+            if (identifier.isEmpty()) {
+                if (SessionManager.LOGIN_IDENTIFIER_EMAIL.equals(type)) {
+                    identifier = sessionManager.getLastCorreo();
+                } else if (SessionManager.LOGIN_IDENTIFIER_USERNAME.equals(type)) {
+                    identifier = sessionManager.getLastUsuario();
+                } else if (!sessionManager.getLastUsuario().isEmpty()) {
+                    type = SessionManager.LOGIN_IDENTIFIER_USERNAME;
+                    identifier = sessionManager.getLastUsuario();
+                } else if (!sessionManager.getLastCorreo().isEmpty()) {
+                    type = SessionManager.LOGIN_IDENTIFIER_EMAIL;
+                    identifier = sessionManager.getLastCorreo();
+                }
+            }
+
+            if (SessionManager.LOGIN_IDENTIFIER_EMAIL.equals(type) && etCorreo != null) {
+                etCorreo.setText(identifier);
+            } else if (SessionManager.LOGIN_IDENTIFIER_USERNAME.equals(type) && etUsuario != null) {
+                etUsuario.setText(identifier);
+            }
+
+            if (clearPassword && etContrasena != null) {
+                etContrasena.setText("");
+            }
+        } finally {
+            suppressIdentifierWatchers = false;
         }
     }
-    private void openOtpVerificationScreen(String temporaryToken, String usuario, String correo) {
+
+    private void setupIdentifierTracking() {
+        if (etCorreo != null) {
+            etCorreo.addTextChangedListener(new IdentifierWatcher(SessionManager.LOGIN_IDENTIFIER_EMAIL));
+            etCorreo.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    lastEditedIdentifierType = SessionManager.LOGIN_IDENTIFIER_EMAIL;
+                }
+            });
+        }
+        if (etUsuario != null) {
+            etUsuario.addTextChangedListener(new IdentifierWatcher(SessionManager.LOGIN_IDENTIFIER_USERNAME));
+            etUsuario.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    lastEditedIdentifierType = SessionManager.LOGIN_IDENTIFIER_USERNAME;
+                }
+            });
+        }
+    }
+
+    private String resolveIdentifierType(String usuario, String correo) {
+        boolean hasUsuario = usuario != null && !usuario.trim().isEmpty();
+        boolean hasCorreo = correo != null && !correo.trim().isEmpty();
+        if (hasUsuario && !hasCorreo) {
+            return SessionManager.LOGIN_IDENTIFIER_USERNAME;
+        }
+        if (hasCorreo && !hasUsuario) {
+            return SessionManager.LOGIN_IDENTIFIER_EMAIL;
+        }
+        if (hasUsuario && hasCorreo) {
+            if (SessionManager.LOGIN_IDENTIFIER_EMAIL.equals(lastEditedIdentifierType)
+                    || SessionManager.LOGIN_IDENTIFIER_USERNAME.equals(lastEditedIdentifierType)) {
+                return lastEditedIdentifierType;
+            }
+            if (sessionManager != null) {
+                String savedType = sessionManager.getLastLoginIdentifierType();
+                if (SessionManager.LOGIN_IDENTIFIER_EMAIL.equals(savedType)
+                        || SessionManager.LOGIN_IDENTIFIER_USERNAME.equals(savedType)) {
+                    return savedType;
+                }
+            }
+        }
+        return SessionManager.LOGIN_IDENTIFIER_USERNAME;
+    }
+
+    private void clearUnselectedIdentifierField(String selectedType) {
+        suppressIdentifierWatchers = true;
+        try {
+            if (SessionManager.LOGIN_IDENTIFIER_EMAIL.equals(selectedType)) {
+                if (etUsuario != null) {
+                    etUsuario.setText("");
+                }
+            } else if (etCorreo != null) {
+                etCorreo.setText("");
+            }
+        } finally {
+            suppressIdentifierWatchers = false;
+        }
+    }
+
+    private class IdentifierWatcher implements TextWatcher {
+        private final String type;
+
+        IdentifierWatcher(String type) {
+            this.type = type;
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            if (!suppressIdentifierWatchers) {
+                lastEditedIdentifierType = type;
+            }
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {}
+    }
+
+    private void openOtpVerificationScreen(String temporaryToken, String usuario, String correo, String identifierType, String identifier) {
         waitingMode = false;
         if (resultLottie != null) {
             resultLottie.cancelAnimation();
@@ -688,6 +804,8 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         intent.putExtra(ActVerificarOtpLogin.EXTRA_TEMPORARY_TOKEN, temporaryToken);
         intent.putExtra(ActVerificarOtpLogin.EXTRA_USUARIO, usuario != null ? usuario : "");
         intent.putExtra(ActVerificarOtpLogin.EXTRA_CORREO, correo != null ? correo : "");
+        intent.putExtra(ActVerificarOtpLogin.EXTRA_IDENTIFIER_TYPE, identifierType != null ? identifierType : "");
+        intent.putExtra(ActVerificarOtpLogin.EXTRA_IDENTIFIER, identifier != null ? identifier : "");
         startActivity(intent);
         Toast.makeText(this, "Te enviamos un código a tu correo.", Toast.LENGTH_SHORT).show();
     }

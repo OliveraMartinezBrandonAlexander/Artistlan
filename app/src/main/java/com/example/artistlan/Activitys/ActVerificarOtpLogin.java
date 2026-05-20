@@ -36,6 +36,8 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
     public static final String EXTRA_TEMPORARY_TOKEN = "extra_temporary_token";
     public static final String EXTRA_USUARIO = "extra_usuario";
     public static final String EXTRA_CORREO = "extra_correo";
+    public static final String EXTRA_IDENTIFIER_TYPE = "extra_identifier_type";
+    public static final String EXTRA_IDENTIFIER = "extra_identifier";
 
     public static final String MODE_LOGIN = "MODE_LOGIN";
     public static final String MODE_ACTIVATION = "MODE_ACTIVATION";
@@ -60,6 +62,8 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
     private String mode = MODE_LOGIN;
     private String temporaryToken;
     private String jwtToken;
+    private String loginIdentifierType;
+    private String loginIdentifier;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +87,8 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
         }
 
         temporaryToken = getIntent().getStringExtra(EXTRA_TEMPORARY_TOKEN);
+        loginIdentifierType = getIntent().getStringExtra(EXTRA_IDENTIFIER_TYPE);
+        loginIdentifier = getIntent().getStringExtra(EXTRA_IDENTIFIER);
         jwtToken = sessionManager.getToken();
 
         if (MODE_LOGIN.equals(mode)) {
@@ -168,6 +174,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                 }
 
                 guardarUsuarioLogeado(user, token);
+                sessionManager.saveLastLoginIdentifier(loginIdentifier, loginIdentifierType);
                 cargarCategoriaUsuario(user.getIdUsuario());
 
                 Intent intent = new Intent(ActVerificarOtpLogin.this, ActFragmentoPrincipal.class);

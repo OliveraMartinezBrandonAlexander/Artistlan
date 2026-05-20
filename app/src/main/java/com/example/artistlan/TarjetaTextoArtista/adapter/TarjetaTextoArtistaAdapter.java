@@ -22,6 +22,8 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
+import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.LikeUiHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +39,14 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         void onVisitarClick(TarjetaTextoArtistaItem artistaItem, int position);
     }
 
+    public interface OnCardClickListener {
+        void onCardClick(TarjetaTextoArtistaItem artistaItem, int position);
+    }
+
     private static final long LIKE_BUTTON_COOLDOWN_MS = 500L;
     private OnLikeClickListener onLikeClickListener;
     private OnVisitarClickListener onVisitarClickListener;
+    private OnCardClickListener onCardClickListener;
     private List<TarjetaTextoArtistaItem> listaArtistas;
     private List<TarjetaTextoArtistaItem> listaOriginal;
     private Context context;
@@ -66,6 +73,9 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
     }
     public void setOnVisitarClickListener(OnVisitarClickListener onVisitarClickListener) {
         this.onVisitarClickListener = onVisitarClickListener;
+    }
+    public void setOnCardClickListener(OnCardClickListener onCardClickListener) {
+        this.onCardClickListener = onCardClickListener;
     }
     public void setCurrentUserId(Integer currentUserId) {
         this.currentUserId = currentUserId;
@@ -102,21 +112,29 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         ThemeApplier.applyTextSecondary(holder.descripcion, tm);
         ThemeApplier.applyTextSecondary(holder.likes, tm);
         ThemeApplier.applyPrimaryButton(holder.btnVisitar, tm);
-        ThemeApplier.applyCardContainer(holder.itemView, tm);
+        CardThemeHelper.applyFlatCard(holder.layoutArtistaCard, tm);
+        CardThemeHelper.applyChip(holder.categoria, tm);
 
         holder.nombre.setText(artista.getNombre());
         holder.categoria.setText("Categoría: " + safeText(artista.getCategoria(), "Sin categoria"));
         holder.descripcion.setText((artista.getDescripcion() == null || artista.getDescripcion().trim().isEmpty()) ? descripcionDefaultPara(artista, position) : artista.getDescripcion());
-        holder.likes.setText(String.valueOf(artista.getLikes()));
-        holder.btnLike.setImageResource(artista.isFavorito() ? R.drawable.ic_heart_red : R.drawable.ic_heart_purple);
+        LikeUiHelper.bind(
+                holder.btnLike,
+                holder.likes,
+                artista.isFavorito(),
+                artista.getLikes(),
+                tm.color(ThemeKeys.LIKE_ACTIVE),
+                tm.color(ThemeKeys.TEXT_SECONDARY)
+        );
         holder.btnLike.setOnClickListener(v -> {
             v.setEnabled(false);
             v.postDelayed(() -> v.setEnabled(true), LIKE_BUTTON_COOLDOWN_MS);
-            animateLikeButton(holder.btnLike, artista.isFavorito());
 
             int adapterPosition = holder.getAdapterPosition();
             if (onLikeClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                boolean wasLiked = listaArtistas.get(adapterPosition).isFavorito();
                 onLikeClickListener.onLikeClick(listaArtistas.get(adapterPosition), adapterPosition);
+                animateLikeButton(holder.btnLike, !wasLiked, tm);
             }
         });
 
@@ -144,6 +162,13 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             int previous = tarjetaExpandida;
             int currentPosition = holder.getAdapterPosition();
 
+            if (currentPosition == RecyclerView.NO_POSITION) {
+                return;
+            }
+            if (onCardClickListener != null) {
+                onCardClickListener.onCardClick(listaArtistas.get(currentPosition), currentPosition);
+                return;
+            }
             if (previous == currentPosition) tarjetaExpandida = -1;
             else {
                 tarjetaExpandida = currentPosition;
@@ -176,27 +201,13 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         return listaArtistas.size();
     }
 
-    private void animateLikeButton(ImageButton btnLike, boolean wasLiked) {
-        btnLike.animate().cancel();
-        btnLike.setScaleX(0.82f);
-        btnLike.setScaleY(0.82f);
-        btnLike.setAlpha(0.75f);
-
-        btnLike.animate()
-                .scaleX(1.24f)
-                .scaleY(1.24f)
-                .alpha(1f)
-                .setDuration(140)
-                .withEndAction(() -> {
-                    btnLike.setImageResource(wasLiked ? R.drawable.ic_heart_purple : R.drawable.ic_heart_red);
-                    btnLike.animate()
-                            .scaleX(1f)
-                            .scaleY(1f)
-                            .setDuration(220)
-                            .setInterpolator(new OvershootInterpolator(2.8f))
-                            .start();
-                })
-                .start();
+    private void animateLikeButton(ImageButton btnLike, boolean liked, ThemeManager tm) {
+        LikeUiHelper.animateChange(
+                btnLike,
+                liked,
+                tm.color(ThemeKeys.LIKE_ACTIVE),
+                tm.color(ThemeKeys.TEXT_SECONDARY)
+        );
     }
 
     private void animarVista(View v, boolean expandir) {
@@ -218,7 +229,7 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         TextView nombre, categoria, descripcion, mensaje, likes;
         ImageView imgPerfil, imgMini1, imgMini2, imgMini3;
         ImageButton btnLike;
-        View expandedSection;
+        View expandedSection, layoutArtistaCard;
         Button btnVisitar;
 
         public ViewHolder(@NonNull View itemView) {
@@ -234,6 +245,7 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             likes = itemView.findViewById(R.id.likes);
             btnLike = itemView.findViewById(R.id.btnLike);
             expandedSection = itemView.findViewById(R.id.expanded_section);
+            layoutArtistaCard = itemView.findViewById(R.id.layoutArtistaCard);
             btnVisitar = itemView.findViewById(R.id.btnVisitar);
         }
     }

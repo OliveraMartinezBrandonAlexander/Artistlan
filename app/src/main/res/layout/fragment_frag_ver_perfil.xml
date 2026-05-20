@@ -23,7 +23,10 @@
         android:id="@+id/scrollPerfil"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipToPadding="false"
         android:fillViewport="true"
+        android:paddingTop="96dp"
+        android:paddingBottom="108dp"
         android:clickable="true"
         android:focusable="true">
 

@@ -3,21 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="6dp"
-    android:layout_marginEnd="6dp"
-    android:layout_marginTop="12dp"
-    android:layout_marginBottom="12dp"
-    app:cardBackgroundColor="@color/artistlan_menu_surface_soft"
-    app:cardCornerRadius="22dp"
-    app:cardElevation="10dp">
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="2dp"
+    app:cardUseCompatPadding="false">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layoutArtistaCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingStart="18dp"
-        android:paddingEnd="18dp"
-        android:paddingTop="18dp"
-        android:paddingBottom="18dp">
+        android:background="@android:color/transparent"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
         <ImageView
             android:id="@+id/imgPerfil"
@@ -78,7 +81,6 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
             android:layout_marginEnd="12dp"
-            android:layout_marginTop="6dp"
             android:breakStrategy="high_quality"
             android:ellipsize="end"
             android:gravity="center_vertical"
@@ -90,7 +92,8 @@
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@id/categoria"
             app:layout_constraintStart_toEndOf="@id/imgPerfil"
-            app:layout_constraintTop_toBottomOf="@id/categoria"  />
+            app:layout_constraintTop_toTopOf="@id/imgPerfil"
+            app:layout_constraintBottom_toBottomOf="@id/imgPerfil" />
 
         <TextView
             android:id="@+id/descripcion"
@@ -156,7 +159,7 @@
                     android:id="@+id/imgMini2"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
-                    android:layout_marginStart="10dp"
+                    android:layout_marginStart="0dp"
                     android:layout_weight="1"
                     android:scaleType="centerCrop" />
 
@@ -164,7 +167,7 @@
                     android:id="@+id/imgMini3"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
-                    android:layout_marginStart="10dp"
+                    android:layout_marginStart="0dp"
                     android:layout_weight="1"
                     android:scaleType="centerCrop" />
             </LinearLayout>
@@ -176,7 +179,7 @@
                 android:layout_marginTop="16dp"
                 android:text="Visitar"
                 android:textAllCaps="false"
-                android:backgroundTint="@color/artistlan_secondary" />
+                android:background="@drawable/bg_btn_bubble_glass_primary" />
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -52,16 +52,16 @@ public class ThemeApplier {
     public static void applyPrimaryButton(View button, ThemeManager tm) {
         if (button == null || button.getBackground() == null) return;
         button.getBackground().setColorFilter(tm.color(ThemeKeys.BUTTON_PRIMARY_BG), PorterDuff.Mode.SRC_ATOP);
-        if (button instanceof Button) {
-            ((Button) button).setTextColor(tm.color(ThemeKeys.BUTTON_TEXT_DARK));
+        if (button instanceof TextView) {
+            ((TextView) button).setTextColor(tm.color(ThemeKeys.BUTTON_TEXT_DARK));
         }
     }
 
     public static void applySecondaryButton(View button, ThemeManager tm) {
         if (button == null || button.getBackground() == null) return;
         button.getBackground().setColorFilter(tm.color(ThemeKeys.BUTTON_SECONDARY_BG), PorterDuff.Mode.SRC_ATOP);
-        if (button instanceof Button) {
-            ((Button) button).setTextColor(tm.color(ThemeKeys.BUTTON_TEXT_LIGHT));
+        if (button instanceof TextView) {
+            ((TextView) button).setTextColor(tm.color(ThemeKeys.BUTTON_TEXT_LIGHT));
         }
     }
 

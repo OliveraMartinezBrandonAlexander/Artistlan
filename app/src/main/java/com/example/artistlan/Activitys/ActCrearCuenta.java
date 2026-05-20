@@ -34,6 +34,7 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.PasswordPressVisibilityHelper;
 
 import java.text.SimpleDateFormat;
@@ -197,6 +198,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
 
         ThemeApplier.applyPrimaryButton(btnCrear, themeManager);
         ThemeApplier.applySecondaryButton(resultOk, themeManager);
+        CardThemeHelper.applyFilterButton(btnRegresar, themeManager);
 
         ThemeEffectsApplier.applyGlowIntensity(glowTop, themeManager, ThemeKeys.GLOW_PRIMARY);
         ThemeEffectsApplier.applyGlowIntensity(glowCenter, themeManager, ThemeKeys.GLOW_TERTIARY);

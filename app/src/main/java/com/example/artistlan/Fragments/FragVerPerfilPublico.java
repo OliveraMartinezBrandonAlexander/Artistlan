@@ -2,6 +2,7 @@ package com.example.artistlan.Fragments;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -32,11 +33,14 @@ import com.example.artistlan.Conector.model.PerfilPublicoArtistaDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
+import com.example.artistlan.utils.LikeStateManager;
 import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.util.ArrayList;
@@ -83,6 +87,7 @@ public class FragVerPerfilPublico extends Fragment {
     private FavoritosApi favoritosApi;
     private SolicitudesApi solicitudesApi;
     private UsuarioApi usuarioApi;
+    private ThemeManager themeManager;
 
     private List<TarjetaTextoObraItem> obras = new ArrayList<>();
     private List<TarjetaTextoServicioItem> servicios = new ArrayList<>();
@@ -97,11 +102,13 @@ public class FragVerPerfilPublico extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ThemeModuleStyler.styleFragment(this, view);
+        themeManager = new ThemeManager(requireContext());
         new BotonesMenuSuperior(this);
         root = view;
 
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+        LikeStateManager.setCurrentUserId(idUsuarioLogueado);
         rolUsuarioLogueado = prefs.getString("rol", "");
         idArtista = getArguments() != null ? getArguments().getInt("idArtista", -1) : -1;
 
@@ -171,19 +178,32 @@ public class FragVerPerfilPublico extends Fragment {
         if (!puedeProcesarLike(llave)) {
             return;
         }
+        if (!LikeStateManager.beginObraRequest(item.getIdObra())) {
+            likesEnCurso.remove(llave);
+            return;
+        }
 
         boolean previo = item.isUserLiked();
         int likesPrevios = item.getLikes();
         item.setUserLiked(!previo);
         item.setLikes(Math.max(0, likesPrevios + (previo ? -1 : 1)));
-        obraAdapter.notifyLikeChanged(pos);
+        LikeStateManager.setObraState(item.getIdObra(), item.isUserLiked(), item.getLikes());
+        obraAdapter.updateLikeStateById(item.getIdObra(), item.isUserLiked(), item.getLikes());
 
         Call<Void> call = previo ? favoritosApi.eliminarFavorito(dto) : favoritosApi.agregarFavorito(dto);
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
                 likesEnCurso.remove(llave);
+                LikeStateManager.finishObraRequest(item.getIdObra());
                 if (!response.isSuccessful()) {
+                    if (!previo && response.code() == 409) {
+                        item.setUserLiked(true);
+                        item.setLikes(Math.max(0, likesPrevios + 1));
+                        LikeStateManager.setObraState(item.getIdObra(), true, item.getLikes());
+                        obraAdapter.updateLikeStateById(item.getIdObra(), true, item.getLikes());
+                        return;
+                    }
                     revertir();
                 }
             }
@@ -191,13 +211,15 @@ public class FragVerPerfilPublico extends Fragment {
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 likesEnCurso.remove(llave);
+                LikeStateManager.finishObraRequest(item.getIdObra());
                 revertir();
             }
 
             private void revertir() {
                 item.setUserLiked(previo);
                 item.setLikes(likesPrevios);
-                obraAdapter.notifyLikeChanged(pos);
+                LikeStateManager.setObraState(item.getIdObra(), previo, likesPrevios);
+                obraAdapter.updateLikeStateById(item.getIdObra(), previo, likesPrevios);
             }
         });
     }
@@ -392,8 +414,15 @@ public class FragVerPerfilPublico extends Fragment {
             return items;
         }
         for (ObraDTO dto : dtoList) {
+            int idObra = dto.getIdObra() != null ? dto.getIdObra() : -1;
+            int likesBackend = dto.getLikes() != null ? dto.getLikes() : 0;
+            LikeStateManager.LikeState likeState = LikeStateManager.resolveObraState(
+                    idObra,
+                    Boolean.TRUE.equals(dto.getEsFavorito()),
+                    likesBackend
+            );
             TarjetaTextoObraItem item = new TarjetaTextoObraItem(
-                    dto.getIdObra() != null ? dto.getIdObra() : -1,
+                    idObra,
                     dto.getTitulo(),
                     dto.getDescripcion(),
                     dto.getEstado(),
@@ -403,11 +432,11 @@ public class FragVerPerfilPublico extends Fragment {
                     dto.getImagen3(),
                     dto.getTecnicas(),
                     dto.getMedidas(),
-                    dto.getLikes() != null ? dto.getLikes() : 0,
+                    likeState.getLikesCount(),
                     dto.getNombreAutor(),
                     dto.getNombreCategoria(),
                     dto.getFotoPerfilAutor(),
-                    Boolean.TRUE.equals(dto.getEsFavorito()),
+                    likeState.isLiked(),
                     false
             );
             item.setEditable(!Boolean.FALSE.equals(dto.getEditable()));
@@ -486,6 +515,7 @@ public class FragVerPerfilPublico extends Fragment {
             }
             indicator.getLayoutParams().width = w / 2;
             indicator.requestLayout();
+            aplicarTemaTabsPublicos();
             moverIndicador(true, false);
         });
 
@@ -501,11 +531,23 @@ public class FragVerPerfilPublico extends Fragment {
         });
     }
 
+    private void aplicarTemaTabsPublicos() {
+        if (themeManager == null) {
+            return;
+        }
+        if (tabsContainer != null && tabsContainer.getBackground() != null) {
+            tabsContainer.getBackground().setColorFilter(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), PorterDuff.Mode.SRC_ATOP);
+        }
+        if (indicator != null && indicator.getBackground() != null) {
+            indicator.getBackground().setColorFilter(themeManager.color(ThemeKeys.ACCENT_PRIMARY), PorterDuff.Mode.SRC_ATOP);
+        }
+    }
+
     private void mostrarObras() {
         mostrandoObras = true;
         moverIndicador(true, true);
-        int selected = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_primary);
-        int unselected = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_secondary);
+        int selected = themeManager.color(ThemeKeys.TEXT_PRIMARY);
+        int unselected = themeManager.color(ThemeKeys.TEXT_SECONDARY);
         btnTabObras.setTextColor(selected);
         btnTabServicios.setTextColor(unselected);
         obraAdapter.actualizarLista(obras);
@@ -517,8 +559,8 @@ public class FragVerPerfilPublico extends Fragment {
     private void mostrarServicios() {
         mostrandoObras = false;
         moverIndicador(false, true);
-        int selected = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_primary);
-        int unselected = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_secondary);
+        int selected = themeManager.color(ThemeKeys.TEXT_PRIMARY);
+        int unselected = themeManager.color(ThemeKeys.TEXT_SECONDARY);
         btnTabServicios.setTextColor(selected);
         btnTabObras.setTextColor(unselected);
         servicioAdapter.actualizarLista(servicios);

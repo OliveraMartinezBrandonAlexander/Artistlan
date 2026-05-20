@@ -8,7 +8,6 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.OvershootInterpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -28,8 +27,9 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
+import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.LikeUiHelper;
 import com.example.artistlan.utils.ReporteUiPermissions;
-import com.airbnb.lottie.LottieAnimationView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,12 +42,14 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     public interface OnEditClickListener { void onEditClick(TarjetaTextoServicioItem servicioItem, int position); }
     public interface OnDeleteClickListener { void onDeleteClick(TarjetaTextoServicioItem servicioItem, int position); }
     public interface OnAuthorClickListener { void onAuthorClick(TarjetaTextoServicioItem servicioItem, int position); }
+    public interface OnCardClickListener { void onCardClick(TarjetaTextoServicioItem servicioItem, int position); }
 
     private static final long LIKE_BUTTON_COOLDOWN_MS = 500L;
     private OnLikeClickListener onLikeClickListener;
     private OnEditClickListener onEditClickListener;
     private OnDeleteClickListener onDeleteClickListener;
     private OnAuthorClickListener onAuthorClickListener;
+    private OnCardClickListener onCardClickListener;
     private final List<TarjetaTextoServicioItem> listaServicios;
     private final List<TarjetaTextoServicioItem> listaOriginal;
     private final Context context;
@@ -66,6 +68,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     public void setOnEditClickListener(OnEditClickListener onEditClickListener) { this.onEditClickListener = onEditClickListener; notifyDataSetChanged(); }
     public void setOnDeleteClickListener(OnDeleteClickListener onDeleteClickListener) { this.onDeleteClickListener = onDeleteClickListener; notifyDataSetChanged(); }
     public void setOnAuthorClickListener(OnAuthorClickListener onAuthorClickListener) { this.onAuthorClickListener = onAuthorClickListener; }
+    public void setOnCardClickListener(OnCardClickListener onCardClickListener) { this.onCardClickListener = onCardClickListener; }
     public void setEntryAnimationsEnabled(boolean enabled) { this.entryAnimationsEnabled = enabled; }
     public void setCurrentUserId(Integer currentUserId) {
         this.currentUserId = currentUserId;
@@ -97,7 +100,10 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         ThemeApplier.applyTextSecondary(holder.categoria, tm);
         ThemeApplier.applyPrimaryButton(holder.btnContactar, tm);
         ThemeApplier.applySecondaryButton(holder.btnReportarServicio, tm);
-        ThemeApplier.applyCardContainer(holder.itemView, tm);
+        CardThemeHelper.applyFlatCard(holder.layoutServicioCard, tm);
+        CardThemeHelper.applyChip(holder.categoria, tm);
+        CardThemeHelper.applyChip(holder.precioRango, tm);
+        CardThemeHelper.applyChip(holder.tvBadgeServicio, tm);
 
         holder.autor.setText(safe(servicio.getAutor(), "Autor"));
         holder.titulo.setText(safe(servicio.getTitulo(), "Servicio"));
@@ -167,6 +173,10 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             int currentPosition = holder.getBindingAdapterPosition();
 
             if (currentPosition == RecyclerView.NO_POSITION) return;
+            if (onCardClickListener != null) {
+                onCardClickListener.onCardClick(listaServicios.get(currentPosition), currentPosition);
+                return;
+            }
             if (previous == currentPosition) tarjetaExpandida = -1;
             else {
                 tarjetaExpandida = currentPosition;
@@ -191,23 +201,15 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     }
 
     private void bindLikeUi(@NonNull ViewHolder holder, @NonNull TarjetaTextoServicioItem servicio, boolean forceVisualState) {
-        holder.likes.setText(String.valueOf(servicio.getLikes()));
-
-        if (forceVisualState) {
-            holder.btnLike.animate().cancel();
-            holder.btnLike.cancelAnimation();
-            holder.btnLike.setScaleX(1f);
-            holder.btnLike.setScaleY(1f);
-            holder.btnLike.setAlpha(1f);
-            holder.btnLike.setSpeed(1f);
-            holder.btnLike.setProgress(servicio.isFavorito() ? 1f : 0f);
-            return;
-        }
-
-        if (!holder.btnLike.isAnimating()) {
-            holder.btnLike.setSpeed(1f);
-            holder.btnLike.setProgress(servicio.isFavorito() ? 1f : 0f);
-        }
+        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
+        LikeUiHelper.bind(
+                holder.btnLike,
+                holder.likes,
+                servicio.isFavorito(),
+                servicio.getLikes(),
+                tm.color(ThemeKeys.LIKE_ACTIVE),
+                tm.color(ThemeKeys.TEXT_SECONDARY)
+        );
     }
 
     private String formatearPrecioRango(Double min, Double max) {
@@ -339,33 +341,14 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         });
     }
 
-    private void animateLikeButton(LottieAnimationView btnLike, boolean targetLiked) {
-        btnLike.animate().cancel();
-        btnLike.cancelAnimation();
-        btnLike.setScaleX(0.82f);
-        btnLike.setScaleY(0.82f);
-        btnLike.setAlpha(0.75f);
-
-        btnLike.setMinAndMaxProgress(0f,1f);
-        btnLike.setSpeed(targetLiked ? 1.15f : -1.15f);
-        btnLike.setProgress(targetLiked ? 0f : 1f);
-        btnLike.playAnimation();
-
-        btnLike.animate()
-                .scaleX(1.24f)
-                .scaleY(1.24f)
-                .alpha(1f)
-                .setDuration(140)
-                .withEndAction(() -> {
-                    btnLike.setSpeed(1f);
-                    btnLike.setProgress(targetLiked ? 1f : 0f);
-                    btnLike.animate()
-                            .scaleX(1f)
-                            .scaleY(1f)
-                            .setDuration(220)
-                            .start();
-                })
-                .start();
+    private void animateLikeButton(ImageButton btnLike, boolean targetLiked) {
+        ThemeManager tm = new ThemeManager(btnLike.getContext());
+        LikeUiHelper.animateChange(
+                btnLike,
+                targetLiked,
+                tm.color(ThemeKeys.LIKE_ACTIVE),
+                tm.color(ThemeKeys.TEXT_SECONDARY)
+        );
     }
 
     public void filtrar(String texto) {
@@ -473,9 +456,9 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView titulo, descripcion, contacto, tipoContacto, tecnicas, autor, categoria, precioRango, likes;
+        TextView titulo, descripcion, contacto, tipoContacto, tecnicas, autor, categoria, precioRango, likes, tvBadgeServicio;
         ImageView imgAutor;
-        LottieAnimationView btnLike;
+        ImageButton btnLike;
         ImageButton btnMoreOptions;
         View expandedSection, layoutServicioCard;
         Button btnContactar, btnReportarServicio;
@@ -491,6 +474,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             tecnicas = itemView.findViewById(R.id.tecnicas);
             categoria = itemView.findViewById(R.id.categoria);
             precioRango = itemView.findViewById(R.id.precioRango);
+            tvBadgeServicio = itemView.findViewById(R.id.tvBadgeServicio);
             imgAutor = itemView.findViewById(R.id.imgAutor);
             likes = itemView.findViewById(R.id.likes);
             btnLike = itemView.findViewById(R.id.btnLike);

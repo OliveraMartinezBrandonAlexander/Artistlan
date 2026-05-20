@@ -31,7 +31,9 @@ import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.LikeUiHelper;
+import com.example.artistlan.utils.LikeStateManager;
 import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.text.Normalizer;
@@ -62,6 +64,10 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         void onAuthorClick(TarjetaTextoObraItem obraItem, int position);
     }
 
+    public interface OnCardClickListener {
+        void onCardClick(TarjetaTextoObraItem obraItem, int position);
+    }
+
     public interface OnComprarClickListener {
         void onComprarClick(TarjetaTextoObraItem obraItem, int position);
     }
@@ -82,6 +88,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     private OnEditClickListener onEditClickListener;
     private OnDeleteClickListener onDeleteClickListener;
     private OnAuthorClickListener onAuthorClickListener;
+    private OnCardClickListener onCardClickListener;
 
     private final List<TarjetaTextoObraItem> listaObras;
     private final List<TarjetaTextoObraItem> listaOriginal;
@@ -147,6 +154,10 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
     public void setOnAuthorClickListener(OnAuthorClickListener listener) {
         this.onAuthorClickListener = listener;
+    }
+
+    public void setOnCardClickListener(OnCardClickListener listener) {
+        this.onCardClickListener = listener;
     }
 
     public void setOwnedObraIds(Set<Integer> ownedObraIds) {
@@ -224,6 +235,9 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         ThemeApplier.applyPrimaryButton(holder.btnAccionPrincipal, tm);
         ThemeApplier.applySecondaryButton(holder.btnAccionSecundaria, tm);
         ThemeApplier.applySecondaryButton(holder.btnReportarObra, tm);
+        CardThemeHelper.applyFlatCard(holder.layoutObraCard, tm);
+        CardThemeHelper.applyChip(holder.categoria, tm);
+        CardThemeHelper.applyStatusChip(holder.estadoResumen, null);
     }
 
     private void llenarDatosBasicos(@NonNull ViewHolder holder, @NonNull TarjetaTextoObraItem obra) {
@@ -231,12 +245,14 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.autor.setText(safeText(obra.getNombreAutor(), "Autor"));
         holder.descripcion.setText(safeText(obra.getDescripcion(), "Sin descripción"));
         holder.estadoResumen.setText(formatearEstadoVisual(obra.getEstado()));
+        CardThemeHelper.applyStatusChip(holder.estadoResumen, obra.getEstado());
         holder.estado.setText("Estado: " + formatearEstadoVisual(obra.getEstado()));
         holder.estado.setVisibility(View.GONE);
         holder.tecnica.setText("Técnica: " + safeText(obra.getTecnicas(), "N/A"));
         holder.medidas.setText(formatearMedidas(obra.getMedidas()));
         holder.categoria.setText(safeText(obra.getNombreCategoria(), "Sin categoría"));
         holder.likes.setText(String.valueOf(obra.getLikes()));
+        resetDoubleTapHeart(holder);
 
         if (debeOcultarPrecio(obra)) {
             holder.precio.setVisibility(View.GONE);
@@ -257,6 +273,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         }
 
         TarjetaTextoObraItem obra = listaObras.get(adapterPosition);
+        LikeStateManager.applyTo(obra);
         bindLikeUi(holder, obra, true, tm);
         holder.btnLike.setOnClickListener(v -> {
             LikeUiHelper.animatePress(v);
@@ -277,7 +294,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
                 holder.likes,
                 obra.isUserLiked(),
                 obra.getLikes(),
-                tm.color(ThemeKeys.ACCENT_SECONDARY_LIGHT),
+                tm.color(ThemeKeys.LIKE_ACTIVE),
                 tm.color(ThemeKeys.TEXT_SECONDARY)
         );
     }
@@ -328,7 +345,11 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     }
 
     private void configurarExpansion(@NonNull ViewHolder holder) {
-        View.OnClickListener toggleExpandListener = v -> toggleExpansion(holder);
+        View.OnClickListener toggleExpandListener = v -> {
+            if (!dispatchCardClick(holder)) {
+                toggleExpansion(holder);
+            }
+        };
 
         holder.itemView.setOnClickListener(toggleExpandListener);
 
@@ -364,12 +385,19 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
                 new GestureDetector.SimpleOnGestureListener() {
                     @Override
                     public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
-                        toggleExpansion(holder);
+                        if (!dispatchCardClick(holder)) {
+                            toggleExpansion(holder);
+                        }
                         return true;
                     }
 
                     @Override
                     public boolean onDoubleTap(@NonNull MotionEvent e) {
+                        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
+                        LikeUiHelper.animateInstagramHeart(
+                                holder.imgDoubleTapHeart,
+                                tm.color(ThemeKeys.LIKE_ACTIVE)
+                        );
                         triggerLike(holder, true);
                         return true;
                     }
@@ -379,6 +407,18 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             detector.onTouchEvent(event);
             return true;
         });
+    }
+
+    private boolean dispatchCardClick(@NonNull ViewHolder holder) {
+        if (onCardClickListener == null) {
+            return false;
+        }
+        int adapterPosition = holder.getBindingAdapterPosition();
+        if (adapterPosition == RecyclerView.NO_POSITION) {
+            return true;
+        }
+        onCardClickListener.onCardClick(listaObras.get(adapterPosition), adapterPosition);
+        return true;
     }
 
     private void triggerLike(@NonNull ViewHolder holder, boolean onlyLikeIfNeeded) {
@@ -392,12 +432,13 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         }
 
         TarjetaTextoObraItem currentObra = listaObras.get(currentPosition);
+        LikeStateManager.applyTo(currentObra);
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         if (onlyLikeIfNeeded && currentObra.isUserLiked()) {
             LikeUiHelper.animateChange(
                     holder.btnLike,
                     true,
-                    tm.color(ThemeKeys.ACCENT_SECONDARY_LIGHT),
+                    tm.color(ThemeKeys.LIKE_ACTIVE),
                     tm.color(ThemeKeys.TEXT_SECONDARY)
             );
             return;
@@ -413,10 +454,22 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             LikeUiHelper.animateChange(
                     holder.btnLike,
                     currentObra.isUserLiked(),
-                    tm.color(ThemeKeys.ACCENT_SECONDARY_LIGHT),
+                    tm.color(ThemeKeys.LIKE_ACTIVE),
                     tm.color(ThemeKeys.TEXT_SECONDARY)
             );
         }
+    }
+
+    private void resetDoubleTapHeart(@NonNull ViewHolder holder) {
+        if (holder.imgDoubleTapHeart == null) {
+            return;
+        }
+        holder.imgDoubleTapHeart.animate().cancel();
+        holder.imgDoubleTapHeart.clearAnimation();
+        holder.imgDoubleTapHeart.setVisibility(View.GONE);
+        holder.imgDoubleTapHeart.setAlpha(0f);
+        holder.imgDoubleTapHeart.setScaleX(1f);
+        holder.imgDoubleTapHeart.setScaleY(1f);
     }
 
     private void configurarAcciones(@NonNull ViewHolder holder) {
@@ -959,6 +1012,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
         ImageView imgAutor;
         ImageView imgObra;
+        ImageView imgDoubleTapHeart;
 
         ImageButton btnLike;
         ImageButton btnMoreOptions;
@@ -976,6 +1030,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
             imgAutor = itemView.findViewById(R.id.imgAutor);
             imgObra = itemView.findViewById(R.id.imgObra);
+            imgDoubleTapHeart = itemView.findViewById(R.id.imgDoubleTapHeart);
 
             titulo = itemView.findViewById(R.id.titulo);
             descripcion = itemView.findViewById(R.id.descripcion);

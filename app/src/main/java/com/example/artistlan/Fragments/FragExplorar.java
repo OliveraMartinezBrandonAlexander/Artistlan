@@ -4,12 +4,14 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -17,10 +19,17 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.ScrollView;
 import android.widget.SearchView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
@@ -28,6 +37,8 @@ import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogThemeHelper;
 
 import java.util.List;
 
@@ -55,6 +66,8 @@ public class FragExplorar extends Fragment {
     private long lastReplaceTimestampMs = 0L;
     private boolean ignorarEventosBusqueda = false;
     private ThemeManager themeManager;
+    private float swipeStartX = 0f;
+    private float swipeStartY = 0f;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -78,6 +91,7 @@ public class FragExplorar extends Fragment {
         configurarBuscador();
         configurarBotonFiltros();
         configurarSelectorTipos();
+        configurarDeslizamientoEntreTipos(view);
 
         return view;
     }
@@ -285,37 +299,110 @@ public class FragExplorar extends Fragment {
             return;
         }
 
-        PopupMenu popupMenu = new PopupMenu(requireContext(), btnFiltros);
-        Menu menu = popupMenu.getMenu();
         String filtroActivo = filterableFragment.getActiveFilter();
+        RadioGroup radioGroup = new RadioGroup(requireContext());
+        radioGroup.setOrientation(RadioGroup.VERTICAL);
+        radioGroup.setPadding(dpToPx(10), dpToPx(8), dpToPx(10), dpToPx(8));
 
         for (int i = 0; i < filtros.size(); i++) {
             String filtro = filtros.get(i);
-            menu.add(MENU_GROUP_FILTERS, i, i, filtro)
-                    .setCheckable(true)
-                    .setChecked(filtroActivo != null && filtro.equalsIgnoreCase(filtroActivo));
+            RadioButton radioButton = new RadioButton(requireContext());
+            radioButton.setId(i);
+            radioButton.setText(filtro);
+            radioButton.setTextColor(themeManager.color(ThemeKeys.TEXT_PRIMARY));
+            radioButton.setButtonTintList(android.content.res.ColorStateList.valueOf(themeManager.color(ThemeKeys.ACCENT_PRIMARY)));
+            radioButton.setPadding(0, dpToPx(4), 0, dpToPx(4));
+            radioButton.setChecked(filtroActivo != null && filtro.equalsIgnoreCase(filtroActivo));
+            radioGroup.addView(radioButton, new RadioGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
         }
 
-        menu.setGroupCheckable(MENU_GROUP_FILTERS, true, true);
+        LinearLayout container = new LinearLayout(requireContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(4));
+        container.setBackground(createFilterDialogBackground());
+        ScrollView scrollView = new ScrollView(requireContext());
+        scrollView.setFillViewport(false);
+        scrollView.addView(radioGroup, new ScrollView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        container.addView(scrollView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                Math.min(dpToPx(420), getResources().getDisplayMetrics().heightPixels - dpToPx(220))
+        ));
 
-        menu.add(Menu.NONE, MENU_ID_CLEAR_FILTERS, filtros.size(), "Borrar filtros")
-                .setEnabled(!TextUtils.isEmpty(filtroActivo));
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle("Filtrar")
+                .setView(container)
+                .setNegativeButton("Cerrar", null)
+                .setNeutralButton("Borrar filtros", (d, which) -> filterableFragment.clearFilter())
+                .create();
 
-        popupMenu.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == MENU_ID_CLEAR_FILTERS) {
-                filterableFragment.clearFilter();
-                return true;
+        dialog.setOnShowListener(d -> {
+            DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+            Button clearButton = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
+            if (clearButton != null) {
+                clearButton.setEnabled(!TextUtils.isEmpty(filtroActivo));
             }
-
-            if (item.getGroupId() == MENU_GROUP_FILTERS) {
-                filterableFragment.applyFilter(item.getTitle().toString());
-                return true;
-            }
-
-            return false;
         });
 
-        popupMenu.show();
+        radioGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId >= 0 && checkedId < filtros.size()) {
+                filterableFragment.applyFilter(filtros.get(checkedId));
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void configurarDeslizamientoEntreTipos(@NonNull View root) {
+        View target = root.findViewById(R.id.fragmentContainerExplorar);
+        View.OnTouchListener listener = (v, event) -> {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    swipeStartX = event.getX();
+                    swipeStartY = event.getY();
+                    break;
+                case MotionEvent.ACTION_UP:
+                    float dx = event.getX() - swipeStartX;
+                    float dy = event.getY() - swipeStartY;
+                    if (Math.abs(dx) > dpToPx(72) && Math.abs(dx) > Math.abs(dy) * 1.35f) {
+                        seleccionarTipoPorDeslizamiento(dx < 0 ? 1 : -1);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            return false;
+        };
+        root.setOnTouchListener(listener);
+        if (target != null) {
+            target.setOnTouchListener(listener);
+        }
+    }
+
+    private void seleccionarTipoPorDeslizamiento(int direction) {
+        int nextIndex = Math.max(0, Math.min(2, indexForTipo(currentTipoId) + direction));
+        seleccionarTipo(tipoForIndex(nextIndex), true);
+    }
+
+    private int tipoForIndex(int index) {
+        if (index == 1) return R.id.btnSegmentServicios;
+        if (index == 2) return R.id.btnSegmentArtistas;
+        return R.id.btnSegmentObras;
+    }
+
+    private GradientDrawable createFilterDialogBackground() {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setCornerRadius(dpToPx(18));
+        drawable.setColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), 88));
+        drawable.setStroke(dpToPx(1), themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE));
+        return drawable;
     }
 
     private void mostrarPanelFiltros(boolean mostrar) {
@@ -489,6 +576,7 @@ public class FragExplorar extends Fragment {
         limpiarFondoBotonSegmento(btnSegmentArtistas);
         tintBackground(segmentContainer, themeManager.color(ThemeKeys.ACCOUNT_GLASS_PANEL));
         tintBackground(segmentIndicator, themeManager.color(ThemeKeys.ACCENT_PRIMARY));
+        CardThemeHelper.applyFilterButton(btnFiltros, themeManager);
         aplicarColoresBotonesTipo();
     }
 
@@ -538,6 +626,10 @@ public class FragExplorar extends Fragment {
         if (tipoId == R.id.btnSegmentServicios) return 1;
         if (tipoId == R.id.btnSegmentArtistas) return 2;
         return 0;
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     private void aplicarColoresBotonesTipo() {

@@ -12,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -25,7 +26,9 @@ import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.LikeUiHelper;
+import com.example.artistlan.utils.LikeStateManager;
 import com.google.android.material.imageview.ShapeableImageView;
 
 import java.util.List;
@@ -95,6 +98,8 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         holder.tvTitulo.setText(item.getTitulo());
         holder.tvDescripcion.setText(item.getDescripcion());
         holder.tvAutor.setText(item.getAutor());
+        resetDoubleTapHeart(holder);
+        LikeStateManager.applyTo(item);
         bindExpandedUi(holder, item, position, tm);
         bindLikeUi(holder, item, true, tm);
         configureImageGestures(holder);
@@ -170,8 +175,8 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         holder.tvInfoCompleta.setText(resolveInfoText(item, tm));
         holder.layoutCarruselCard.animate().cancel();
         holder.layoutCarruselCard.animate()
-                .scaleX(expanded ? 1.045f : 1f)
-                .scaleY(expanded ? 1.045f : 1f)
+                .scaleX(1f)
+                .scaleY(1f)
                 .setDuration(220)
                 .start();
         if (expanded) {
@@ -202,6 +207,10 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         } else {
             notifyDataSetChanged();
         }
+    }
+
+    public boolean hasExpandedItem() {
+        return expandedItemKey != null;
     }
 
     public void updateLikeStateById(int idObra, boolean liked, int likesCount) {
@@ -298,7 +307,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
                 holder.tvLikesCarrusel,
                 item.isUserLiked(),
                 item.getLikesCount(),
-                tm.color(ThemeKeys.ACCENT_SECONDARY_LIGHT),
+                tm.color(ThemeKeys.LIKE_ACTIVE),
                 tm.color(ThemeKeys.TEXT_SECONDARY)
         );
     }
@@ -316,6 +325,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         holder.imgObra.setStrokeColor(ColorStateList.valueOf(tm.color(ThemeKeys.ACCOUNT_GLASS_STROKE)));
         holder.imgObra.setStrokeWidth(1f);
         holder.imgAutor.setStrokeColor(ColorStateList.valueOf(tm.color(ThemeKeys.ACCOUNT_GLASS_STROKE)));
+        CardThemeHelper.applyFlatCard(holder.layoutCarruselCard, tm);
     }
 
     private String safeText(String value, String fallback) {
@@ -352,6 +362,11 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
 
                     @Override
                     public boolean onDoubleTap(@NonNull MotionEvent e) {
+                        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
+                        LikeUiHelper.animateInstagramHeart(
+                                holder.imgDoubleTapHeartCarrusel,
+                                tm.color(ThemeKeys.LIKE_ACTIVE)
+                        );
                         triggerLike(holder, true);
                         return true;
                     }
@@ -370,12 +385,13 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         }
 
         ObraCarruselItem currentItem = lista.get(adapterPosition);
+        LikeStateManager.applyTo(currentItem);
         if (onlyLikeIfNeeded && currentItem.isUserLiked()) {
             ThemeManager tm = new ThemeManager(holder.itemView.getContext());
             LikeUiHelper.animateChange(
                     holder.btnLikeCarrusel,
                     true,
-                    tm.color(ThemeKeys.ACCENT_SECONDARY_LIGHT),
+                    tm.color(ThemeKeys.LIKE_ACTIVE),
                     tm.color(ThemeKeys.TEXT_SECONDARY)
             );
             return;
@@ -390,7 +406,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
             LikeUiHelper.animateChange(
                     holder.btnLikeCarrusel,
                     currentItem.isUserLiked(),
-                    tm.color(ThemeKeys.ACCENT_SECONDARY_LIGHT),
+                    tm.color(ThemeKeys.LIKE_ACTIVE),
                     tm.color(ThemeKeys.TEXT_SECONDARY)
             );
         }
@@ -419,9 +435,22 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         }, 420);
     }
 
+    private void resetDoubleTapHeart(@NonNull CarruselViewHolder holder) {
+        if (holder.imgDoubleTapHeartCarrusel == null) {
+            return;
+        }
+        holder.imgDoubleTapHeartCarrusel.animate().cancel();
+        holder.imgDoubleTapHeartCarrusel.clearAnimation();
+        holder.imgDoubleTapHeartCarrusel.setVisibility(View.GONE);
+        holder.imgDoubleTapHeartCarrusel.setAlpha(0f);
+        holder.imgDoubleTapHeartCarrusel.setScaleX(1f);
+        holder.imgDoubleTapHeartCarrusel.setScaleY(1f);
+    }
+
     public static class CarruselViewHolder extends RecyclerView.ViewHolder {
 
         ShapeableImageView imgObra, imgAutor;
+        ImageView imgDoubleTapHeartCarrusel;
         TextView tvTitulo, tvDescripcion, tvAutor, tvLikesCarrusel, tvInfoCompleta;
         View layoutCarruselCard, layoutInfoExpandida;
         View viewCarouselShine;
@@ -430,6 +459,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         public CarruselViewHolder(@NonNull View itemView) {
             super(itemView);
             imgObra       = itemView.findViewById(R.id.imgObra);
+            imgDoubleTapHeartCarrusel = itemView.findViewById(R.id.imgDoubleTapHeartCarrusel);
             layoutCarruselCard = itemView.findViewById(R.id.layoutCarruselCard);
             imgAutor      = itemView.findViewById(R.id.imgAutor);
             tvTitulo      = itemView.findViewById(R.id.tvTitulo);

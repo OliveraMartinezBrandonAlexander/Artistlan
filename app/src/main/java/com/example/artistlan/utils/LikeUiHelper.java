@@ -1,9 +1,11 @@
 package com.example.artistlan.utils;
 
 import android.graphics.PorterDuff;
+import android.graphics.Color;
 import android.view.View;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -72,6 +74,53 @@ public final class LikeUiHelper {
                         .scaleX(1f)
                         .scaleY(1f)
                         .setDuration(100)
+                .start())
+                .start();
+    }
+
+    public static void animateInstagramHeart(@Nullable ImageView heart) {
+        animateInstagramHeart(heart, Color.WHITE);
+    }
+
+    public static void animateInstagramHeart(@Nullable ImageView heart, int color) {
+        if (heart == null) {
+            return;
+        }
+
+        heart.animate().cancel();
+        heart.clearAnimation();
+        heart.setImageResource(R.drawable.ic_like_filled);
+        heart.setColorFilter(color, PorterDuff.Mode.SRC_IN);
+        heart.setVisibility(View.VISIBLE);
+        heart.setAlpha(0.95f);
+        heart.setScaleX(0.2f);
+        heart.setScaleY(0.2f);
+
+        heart.animate()
+                .setStartDelay(0)
+                .scaleX(1.18f)
+                .scaleY(1.18f)
+                .setDuration(150)
+                .setInterpolator(new OvershootInterpolator())
+                .withEndAction(() -> heart.animate()
+                        .setStartDelay(0)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(90)
+                        .withEndAction(() -> heart.animate()
+                                .alpha(0f)
+                                .scaleX(1.32f)
+                                .scaleY(1.32f)
+                                .setStartDelay(260)
+                                .setDuration(260)
+                                .withEndAction(() -> {
+                                    heart.setVisibility(View.GONE);
+                                    heart.setAlpha(0f);
+                                    heart.setScaleX(1f);
+                                    heart.setScaleY(1f);
+                                    heart.animate().setStartDelay(0);
+                                })
+                                .start())
                         .start())
                 .start();
     }

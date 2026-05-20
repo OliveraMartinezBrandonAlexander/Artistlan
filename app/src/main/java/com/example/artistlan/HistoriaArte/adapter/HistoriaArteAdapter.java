@@ -12,6 +12,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.artistlan.HistoriaArte.model.HistoriaArteItem;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 
 import java.util.List;
 
@@ -35,7 +38,14 @@ public class HistoriaArteAdapter extends RecyclerView.Adapter<HistoriaArteAdapte
     @Override
     public void onBindViewHolder(@NonNull HistoriaArteViewHolder holder, int position) {
         HistoriaArteItem item = items.get(position);
+        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
 
+        CardThemeHelper.applyFlatCard(holder.layoutCard, tm);
+        CardThemeHelper.applyChip(holder.tvCategoria, tm);
+        ThemeApplier.applyTextPrimary(holder.tvTitulo, tm);
+        ThemeApplier.applyTextSecondary(holder.tvResumen, tm);
+        ThemeApplier.applyTextPrimary(holder.tvContenido, tm);
+        ThemeApplier.applySecondaryButton(holder.tvVerMas, tm);
         holder.tvCategoria.setText(item.getCategoria());
         holder.tvTitulo.setText(item.getTitulo());
         holder.tvResumen.setText(item.getResumen());

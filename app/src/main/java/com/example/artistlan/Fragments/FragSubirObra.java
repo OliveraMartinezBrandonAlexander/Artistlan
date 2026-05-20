@@ -1,6 +1,5 @@
 package com.example.artistlan.Fragments;
 
-import android.app.AlertDialog;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -13,6 +12,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.view.ViewCompat;
@@ -52,6 +52,7 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.DialogThemeHelper;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -220,9 +221,9 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
         String[] opciones = {"Elegir de galería", "Tomar foto con cámara"};
 
-        new AlertDialog.Builder(requireContext())
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
                 .setTitle("Selecciona una opci\u00F3n")
-                .setItems(opciones, (dialog, which) -> {
+                .setItems(opciones, (d, which) -> {
                     if (which == 0) {
                         Toast.makeText(getContext(), "Se recomienda una imagen en formato 4:3 para mejor visualización. No se deformará tu imagen.", Toast.LENGTH_SHORT).show();
                         seleccionarImagenObraLauncher.launch("image/*");
@@ -231,6 +232,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                     }
                 })
                 .show();
+        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
     }
 
     private void abrirCamaraConPermiso() {
@@ -703,6 +705,8 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         });
 
         dialog.show();
+        DialogThemeHelper.styleDialogWindow(dialog, requireContext());
+        DialogThemeHelper.styleButtonPair(btnPublicar, btnEditar, requireContext());
         if (dialog.getWindow() != null && dialog.getWindow().getDecorView() != null) {
             ThemeEffectsApplier.applyPanelGlass(dialog.getWindow().getDecorView(), tm);
         }

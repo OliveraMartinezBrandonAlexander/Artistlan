@@ -6,6 +6,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.example.artistlan.Conector.ApiErrorParser;
@@ -13,6 +14,9 @@ import com.example.artistlan.Conector.api.SolicitudesApi;
 import com.example.artistlan.Conector.model.SolicitudCompraCrearRequestDTO;
 import com.example.artistlan.Conector.model.SolicitudDTO;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.DialogThemeHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import retrofit2.Call;
@@ -46,17 +50,20 @@ public final class SolicitudCompraUiHelper {
                 | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         inputMensaje.setMinLines(2);
         inputMensaje.setMaxLines(4);
+        ThemeManager tm = new ThemeManager(fragment.requireContext());
+        ThemeApplier.applyInput(inputMensaje, tm);
 
-        new MaterialAlertDialogBuilder(fragment.requireContext())
+        AlertDialog dialog = new MaterialAlertDialogBuilder(fragment.requireContext())
                 .setTitle("Solicitar compra")
                 .setMessage("Vas a enviar una solicitud de compra para \"" + obraItem.getTitulo() + "\".")
                 .setView(inputMensaje)
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Enviar solicitud", (dialog, which) -> {
+                .setPositiveButton("Enviar solicitud", (d, which) -> {
                     String mensaje = inputMensaje.getText() != null ? inputMensaje.getText().toString().trim() : "";
                     enviarSolicitudCompra(fragment, idUsuario, solicitudesApi, obraItem, mensaje.isEmpty() ? null : mensaje, onSuccess);
                 })
                 .show();
+        DialogThemeHelper.styleAlertDialog(dialog, fragment.requireContext());
     }
 
     private static void enviarSolicitudCompra(

@@ -2,11 +2,13 @@ package com.example.artistlan.Fragments;
 
 import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,13 +18,17 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import com.example.artistlan.Activitys.ActFragmentoPrincipal;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.CardThemeHelper;
 
 public class FragFavoritos extends Fragment implements View.OnClickListener {
 
     private Button btnArte, btnArtista;
     private View segmentIndicatorFavoritos;
     private ViewGroup segmentContainerFavoritos;
+    private ThemeManager themeManager;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -34,6 +40,7 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ThemeModuleStyler.styleFragment(this, view);
+        themeManager = new ThemeManager(requireContext());
 
         requireActivity().findViewById(R.id.MenuInferiorFrame).setVisibility(View.GONE);
         new BotonesMenuSuperior(this);
@@ -45,7 +52,9 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
         segmentContainerFavoritos = view.findViewById(R.id.segmentContainerFavoritos);
 
         // Botón regresar
-        view.findViewById(R.id.btnRegresar).setOnClickListener(v -> {
+        ImageButton btnRegresar = view.findViewById(R.id.btnRegresar);
+        CardThemeHelper.applyFilterButton(btnRegresar, themeManager);
+        btnRegresar.setOnClickListener(v -> {
             Intent irActivity = new Intent(getContext(), ActFragmentoPrincipal.class);
             startActivity(irActivity);
         });
@@ -108,6 +117,14 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
         btnArtista.setTextColor(izquierda ? 0xFF1E3A8A : 0xFFFFFFFF);
         int selected = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_primary);
         int unselected = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_secondary);
+        selected = themeManager.color(ThemeKeys.TEXT_PRIMARY);
+        unselected = themeManager.color(ThemeKeys.TEXT_SECONDARY);
+        if (segmentContainerFavoritos.getBackground() != null) {
+            segmentContainerFavoritos.getBackground().setColorFilter(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), PorterDuff.Mode.SRC_ATOP);
+        }
+        if (segmentIndicatorFavoritos.getBackground() != null) {
+            segmentIndicatorFavoritos.getBackground().setColorFilter(themeManager.color(ThemeKeys.ACCENT_PRIMARY), PorterDuff.Mode.SRC_ATOP);
+        }
         btnArte.setTextColor(izquierda ? selected : unselected);
         btnArtista.setTextColor(izquierda ? unselected : selected);
 

@@ -18,6 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -33,6 +34,7 @@ import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
+import com.example.artistlan.utils.LikeStateManager;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -102,6 +104,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         ThemeModuleStyler.styleFragment(this, view);
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+        LikeStateManager.setCurrentUserId(idUsuarioLogueado);
 
         obraApi = RetrofitClient.getClient().create(ObraApi.class);
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
@@ -163,6 +166,8 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         adapter.setEntryAnimationsEnabled(false);
         adapter.setOnLikeClickListener(this::toggleLikeObra);
         adapter.setOnPrimaryActionClickListener(this::agregarObraAlCarrito);
+        adapter.setOnAuthorClickListener(this::abrirPerfilPublico);
+        adapter.setOnCardClickListener(this::abrirPerfilPublico);
         recyclerViewObras.setAdapter(adapter);
         if (btnCargarMasObras != null) {
             btnCargarMasObras.setOnClickListener(v -> {
@@ -229,6 +234,15 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         );
     }
 
+    private void abrirPerfilPublico(TarjetaTextoObraItem obraItem, int position) {
+        if (!isAdded() || obraItem == null || obraItem.getIdAutor() == null || obraItem.getIdAutor() <= 0) {
+            return;
+        }
+        Bundle args = new Bundle();
+        args.putInt("idArtista", obraItem.getIdAutor());
+        NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfilPublico, args);
+    }
+
     private void toggleLikeObra(TarjetaTextoObraItem obraItem, int position) {
         if (idUsuarioLogueado <= 0) {
             return;
@@ -245,6 +259,9 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         if (likesEnVuelo.contains(idObra)) {
             return;
         }
+        if (!LikeStateManager.beginObraRequest(idObra)) {
+            return;
+        }
         ultimoToqueLikePorObra.put(idObra, ahora);
         likesEnVuelo.add(idObra);
 
@@ -252,7 +269,8 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         final int likesAnterior = obraItem.getLikes();
         obraItem.setUserLiked(!favoritoAnterior);
         obraItem.setLikes(Math.max(0, likesAnterior + (favoritoAnterior ? -1 : 1)));
-        adapter.notifyLikeChanged(position);
+        LikeStateManager.setObraState(idObra, obraItem.isUserLiked(), obraItem.getLikes());
+        adapter.updateLikeStateById(idObra, obraItem.isUserLiked(), obraItem.getLikes());
 
         FavoritoDTO dto = new FavoritoDTO();
         dto.idUsuario = idUsuarioLogueado;
@@ -263,10 +281,19 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
                 likesEnVuelo.remove(idObra);
+                LikeStateManager.finishObraRequest(idObra);
                 if (!response.isSuccessful()) {
+                    if (!favoritoAnterior && response.code() == 409) {
+                        obraItem.setUserLiked(true);
+                        obraItem.setLikes(Math.max(0, likesAnterior + 1));
+                        LikeStateManager.setObraState(idObra, true, obraItem.getLikes());
+                        adapter.updateLikeStateById(idObra, true, obraItem.getLikes());
+                        return;
+                    }
                     obraItem.setUserLiked(favoritoAnterior);
                     obraItem.setLikes(likesAnterior);
-                    adapter.notifyLikeChanged(position);
+                    LikeStateManager.setObraState(idObra, favoritoAnterior, likesAnterior);
+                    adapter.updateLikeStateById(idObra, favoritoAnterior, likesAnterior);
                     Toast.makeText(getContext(), "No se pudo actualizar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -274,9 +301,11 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 likesEnVuelo.remove(idObra);
+                LikeStateManager.finishObraRequest(idObra);
                 obraItem.setUserLiked(favoritoAnterior);
                 obraItem.setLikes(likesAnterior);
-                adapter.notifyLikeChanged(position);
+                LikeStateManager.setObraState(idObra, favoritoAnterior, likesAnterior);
+                adapter.updateLikeStateById(idObra, favoritoAnterior, likesAnterior);
                 Toast.makeText(getContext(), "Fallo de red al actualizar favorito", Toast.LENGTH_SHORT).show();
             }
         });
@@ -383,8 +412,15 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                     if (dto.getIdUsuario() != null && dto.getIdUsuario() == idUsuarioLogueado && dto.getIdObra() != null) {
                         ownedObraIds.add(dto.getIdObra());
                     }
+                    int idObra = dto.getIdObra() != null ? dto.getIdObra() : -1;
+                    int likesBackend = dto.getLikes() != null ? dto.getLikes() : 0;
+                    LikeStateManager.LikeState likeState = LikeStateManager.resolveObraState(
+                            idObra,
+                            Boolean.TRUE.equals(dto.getEsFavorito()),
+                            likesBackend
+                    );
                     TarjetaTextoObraItem item = new TarjetaTextoObraItem(
-                            dto.getIdObra(),
+                            idObra,
                             dto.getTitulo(),
                             dto.getDescripcion(),
                             dto.getEstado(),
@@ -394,11 +430,11 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                             dto.getImagen3(),
                             dto.getTecnicas(),
                             dto.getMedidas(),
-                            dto.getLikes() != null ? dto.getLikes() : 0,
+                            likeState.getLikesCount(),
                             dto.getNombreAutor(),
                             dto.getNombreCategoria(),
                             dto.getFotoPerfilAutor(),
-                            Boolean.TRUE.equals(dto.getEsFavorito()),
+                            likeState.isLiked(),
                             false);
                     item.setIdAutor(dto.getIdUsuario());
                     item.setEditable(!Boolean.FALSE.equals(dto.getEditable()));

@@ -3,20 +3,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="0dp"
-    android:layout_marginTop="2dp"
-    android:layout_marginEnd="0dp"
-    android:layout_marginBottom="2dp"
+    android:layout_marginStart="12dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginBottom="8dp"
     app:cardBackgroundColor="@android:color/transparent"
-    app:cardCornerRadius="0dp"
-    app:cardElevation="0dp"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="2dp"
     app:cardUseCompatPadding="false">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layoutServicioCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_card_feed_glass"
+        android:background="@android:color/transparent"
         android:clickable="true"
         android:focusable="true"
         android:paddingStart="6dp"
@@ -52,7 +52,8 @@
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@id/btnMoreOptions"
             app:layout_constraintStart_toEndOf="@id/imgAutor"
-            app:layout_constraintTop_toTopOf="@id/imgAutor" />
+            app:layout_constraintTop_toTopOf="@id/imgAutor"
+            app:layout_constraintBottom_toBottomOf="@id/imgAutor" />
 
         <TextView
             android:id="@+id/categoria"
@@ -106,16 +107,16 @@
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
-            <com.airbnb.lottie.LottieAnimationView
+            <ImageButton
                 android:id="@+id/btnLike"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
                 android:layout_marginStart="2dp"
                 android:background="@android:color/transparent"
-                android:padding="2dp"
-                app:lottie_autoPlay="false"
-                app:lottie_loop="false"
-                app:lottie_rawRes="@raw/laic" />
+                android:contentDescription="Me gusta"
+                android:padding="9dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_like_outline" />
         </LinearLayout>
 
         <androidx.constraintlayout.widget.Barrier
@@ -232,7 +233,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="12dp"
-                android:backgroundTint="@color/artistlan_secondary"
+                android:background="@drawable/bg_btn_bubble_glass_primary"
                 android:text="Contactar"
                 android:textAllCaps="false" />
 
@@ -241,7 +242,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
-                android:backgroundTint="#D9C7EB"
+                android:background="@drawable/bg_btn_bubble_glass_secondary"
                 android:text="Reportar"
                 android:textAllCaps="false"
                 android:visibility="gone" />

@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.artistlan.R;
+import com.example.artistlan.utils.CardThemeHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -191,6 +192,13 @@ public class ActAjustesTema extends AppCompatActivity {
         ));
 
         sections.add(new ThemeSection(
+                ThemeKeys.SECTION_FICHAS,
+                "Bordes, chips, likes y filtros de fichas.",
+                buildCardItems(),
+                false
+        ));
+
+        sections.add(new ThemeSection(
                 ThemeKeys.SECTION_INPUTS,
                 "Inputs, hints y bordes.",
                 buildInputItems(),
@@ -253,6 +261,7 @@ public class ActAjustesTema extends AppCompatActivity {
         list.add(item(ThemeKeys.MENU_ITEM_ACTIVE, "Item activo", "Cápsula del módulo seleccionado"));
         list.add(item(ThemeKeys.MENU_ITEM_ACTIVE_STROKE, "Borde activo", "Borde del item activo"));
         list.add(item(ThemeKeys.MENU_BADGE, "Badge notificaciones", "Punto de la campana"));
+        list.add(item(ThemeKeys.MENU_TITLE, "Título Artistlan", "Texto principal del menú superior"));
         return list;
     }
 
@@ -282,6 +291,17 @@ public class ActAjustesTema extends AppCompatActivity {
         list.add(item(ThemeKeys.BUTTON_SECONDARY_BG, "Botón secundario", "Fondo secundario de botones"));
         list.add(item(ThemeKeys.BUTTON_TEXT_DARK, "Texto botón oscuro", "Texto sobre botón claro"));
         list.add(item(ThemeKeys.BUTTON_TEXT_LIGHT, "Texto botón claro", "Texto sobre botón fuerte"));
+        return list;
+    }
+
+    private List<ThemeItem> buildCardItems() {
+        List<ThemeItem> list = new ArrayList<>();
+        list.add(item(ThemeKeys.CARD_BORDER, "Borde de fichas", "Marco cuadrado de obras, artistas, servicios e historia"));
+        list.add(item(ThemeKeys.CARD_CHIP_BG, "Fondo chips", "Etiquetas dentro de fichas"));
+        list.add(item(ThemeKeys.CARD_CHIP_TEXT, "Texto chips", "Texto de etiquetas dentro de fichas"));
+        list.add(item(ThemeKeys.LIKE_ACTIVE, "Like activo", "Corazón activo y doble tap"));
+        list.add(item(ThemeKeys.FILTER_BUTTON_BG, "Filtro fondo", "Fondo del botón de filtros"));
+        list.add(item(ThemeKeys.FILTER_BUTTON_STROKE, "Filtro borde", "Borde e ícono del botón de filtros"));
         return list;
     }
 
@@ -338,13 +358,14 @@ public class ActAjustesTema extends AppCompatActivity {
         previewDrawer.setBackgroundColor(themeManager.color(ThemeKeys.MENU_DRAWER));
         previewGlow1.setBackgroundColor(themeManager.color(ThemeKeys.GLOW_PRIMARY));
         previewGlow2.setBackgroundColor(themeManager.color(ThemeKeys.GLOW_SECONDARY));
-        previewTitle.setTextColor(themeManager.color(ThemeKeys.TEXT_PRIMARY));
+        previewTitle.setText("Artistlan");
+        previewTitle.setTextColor(themeManager.color(ThemeKeys.MENU_TITLE));
         previewSubtitle.setTextColor(themeManager.color(ThemeKeys.TEXT_SECONDARY));
         previewBody.setTextColor(themeManager.color(ThemeKeys.TEXT_SECONDARY));
+        CardThemeHelper.applyFilterButton(btnBack, themeManager);
+        ThemeApplier.applySecondaryButton(btnReset, themeManager);
+        CardThemeHelper.applyFlatCard(previewCard, themeManager);
 
-        if (previewCard.getBackground() != null) {
-            previewCard.getBackground().setColorFilter(themeManager.color(ThemeKeys.ACCOUNT_GLASS_PANEL), PorterDuff.Mode.SRC_ATOP);
-        }
         if (previewInput.getBackground() != null) {
             previewInput.getBackground().setColorFilter(themeManager.color(ThemeKeys.INPUT_BG), PorterDuff.Mode.SRC_ATOP);
         }

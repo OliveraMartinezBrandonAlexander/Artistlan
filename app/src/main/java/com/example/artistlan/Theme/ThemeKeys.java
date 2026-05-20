@@ -14,6 +14,7 @@ public final class ThemeKeys {
     public static final String SECTION_GLOWS = "Esferas / Glows";
     public static final String SECTION_ICONOS = "Íconos";
     public static final String SECTION_BOTONES = "Botones";
+    public static final String SECTION_FICHAS = "Fichas";
     public static final String SECTION_INPUTS = "Inputs";
     public static final String SECTION_DIALOGOS = "Diálogos";
 
@@ -42,6 +43,7 @@ public final class ThemeKeys {
     public static final String MENU_ITEM_ACTIVE = "menu_item_active";
     public static final String MENU_ITEM_ACTIVE_STROKE = "menu_item_active_stroke";
     public static final String MENU_BADGE = "menu_badge";
+    public static final String MENU_TITLE = "menu_title";
 
     // Acentos
     public static final String ACCENT_PRIMARY = "accent_primary";
@@ -61,6 +63,14 @@ public final class ThemeKeys {
     public static final String BUTTON_SECONDARY_BG = "button_secondary_bg";
     public static final String BUTTON_TEXT_DARK = "button_text_dark";
     public static final String BUTTON_TEXT_LIGHT = "button_text_light";
+
+    // Fichas / tarjetas de contenido
+    public static final String CARD_BORDER = "card_border";
+    public static final String CARD_CHIP_BG = "card_chip_bg";
+    public static final String CARD_CHIP_TEXT = "card_chip_text";
+    public static final String LIKE_ACTIVE = "like_active";
+    public static final String FILTER_BUTTON_BG = "filter_button_bg";
+    public static final String FILTER_BUTTON_STROKE = "filter_button_stroke";
 
     // Inputs
     public static final String INPUT_BG = "input_bg";
@@ -95,6 +105,7 @@ public final class ThemeKeys {
                 SECTION_GLOWS,
                 SECTION_ICONOS,
                 SECTION_BOTONES,
+                SECTION_FICHAS,
                 SECTION_INPUTS,
                 SECTION_DIALOGOS
         );

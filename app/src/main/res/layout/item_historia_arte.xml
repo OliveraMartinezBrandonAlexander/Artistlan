@@ -3,12 +3,15 @@
     android:id="@+id/layoutHistoriaCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="10dp"
-    android:background="@drawable/bg_historia_card"
+    android:layout_marginStart="12dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginBottom="8dp"
+    android:background="@android:color/transparent"
     android:clickable="true"
     android:focusable="true"
     android:orientation="vertical"
-    android:padding="14dp">
+    android:padding="12dp">
 
     <TextView
         android:id="@+id/tvCategoriaHistoriaArte"
@@ -57,11 +60,11 @@
 
     <TextView
         android:id="@+id/tvVerMasHistoriaArte"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
         android:layout_marginTop="10dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
+        android:background="@drawable/bg_btn_bubble_glass_secondary"
+        android:gravity="center"
         android:text="Ver más"
         android:textColor="@color/artistlan_text_primary"
         android:textSize="13sp"

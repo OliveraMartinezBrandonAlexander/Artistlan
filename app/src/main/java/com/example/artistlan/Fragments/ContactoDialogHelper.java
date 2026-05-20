@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
+import com.example.artistlan.utils.DialogThemeHelper;
+
 import java.util.Locale;
 
 public final class ContactoDialogHelper {
@@ -65,7 +67,8 @@ public final class ContactoDialogHelper {
                     abrirContacto(fragment, info));
         }
 
-        builder.show();
+        AlertDialog dialog = builder.show();
+        DialogThemeHelper.styleAlertDialog(dialog, fragment.requireContext());
     }
 
     private static void abrirContacto(Fragment fragment, ContactoInfo info) {

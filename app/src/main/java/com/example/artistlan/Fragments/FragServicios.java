@@ -18,6 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -29,6 +30,8 @@ import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.PageResponseServicioDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
@@ -53,6 +56,7 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
     private static final long SEARCH_DEBOUNCE_MS = 400L;
     private static final int PAGE_SIZE = 10;
     private static final String SORT_DEFAULT = "idServicio,desc";
+    private static final int NEXT_PAGE_THRESHOLD = 5;
     private static final int NESTED_SCROLL_BOTTOM_THRESHOLD_PX = 180;
 
     private NestedScrollView nestedScrollServicios;
@@ -148,13 +152,19 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
         recyclerServicios = view.findViewById(R.id.recyclerServicios);
         btnCargarMasServicios = view.findViewById(R.id.btnCargarMasServicios);
         layoutLoaderMasServicios = view.findViewById(R.id.layoutLoaderMasServicios);
-        recyclerServicios.setLayoutManager(new LinearLayoutManager(getContext()));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+        recyclerServicios.setLayoutManager(layoutManager);
         recyclerServicios.setItemAnimator(null);
         adapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
         adapter.setEntryAnimationsEnabled(false);
         adapter.setCurrentUserId(idUsuarioLogueado);
         adapter.setOnLikeClickListener(this::toggleLikeServicio);
+        adapter.setOnAuthorClickListener(this::abrirPerfilPublico);
+        adapter.setOnCardClickListener(this::abrirPerfilPublico);
         recyclerServicios.setAdapter(adapter);
+        ThemeManager tm = new ThemeManager(requireContext());
+        ThemeApplier.applySecondaryButton(btnCargarMasServicios, tm);
+        ThemeApplier.applySecondaryButton(layoutLoaderMasServicios, tm);
 
         if (btnCargarMasServicios != null) {
             btnCargarMasServicios.setOnClickListener(v -> {
@@ -164,6 +174,24 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
                 cargarSiguientePagina();
             });
         }
+
+        recyclerServicios.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (dy <= 0 || isLoading || isLastPage) {
+                    return;
+                }
+                int totalItems = layoutManager.getItemCount();
+                int ultimoVisible = layoutManager.findLastVisibleItemPosition();
+                if (totalItems > 0 && ultimoVisible >= totalItems - NEXT_PAGE_THRESHOLD) {
+                    logPagination("Trigger recycler scroll -> totalItems=" + totalItems
+                            + ", ultimoVisible=" + ultimoVisible
+                            + ", nextPageToLoad=" + nextPageToLoad);
+                    cargarSiguientePagina();
+                }
+            }
+        });
 
         if (nestedScrollServicios != null) {
             nestedScrollServicios.setOnScrollChangeListener((NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) -> {
@@ -187,6 +215,15 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
             cargaInicialHecha = true;
             reiniciarYCargarPrimeraPagina();
         }
+    }
+
+    private void abrirPerfilPublico(TarjetaTextoServicioItem servicioItem, int position) {
+        if (!isAdded() || servicioItem == null || servicioItem.getIdUsuario() == null || servicioItem.getIdUsuario() <= 0) {
+            return;
+        }
+        Bundle args = new Bundle();
+        args.putInt("idArtista", servicioItem.getIdUsuario());
+        NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfilPublico, args);
     }
 
     private void toggleLikeServicio(TarjetaTextoServicioItem servicioItem, int position) {

@@ -32,6 +32,11 @@ public class SessionManager {
     private static final String KEY_LAST_ACTIVE_AT = "lastActiveAt";
     private static final String KEY_LAST_CORREO = "lastCorreo";
     private static final String KEY_LAST_USUARIO = "lastUsuario";
+    private static final String KEY_LAST_LOGIN_IDENTIFIER = "lastLoginIdentifier";
+    private static final String KEY_LAST_LOGIN_IDENTIFIER_TYPE = "lastLoginIdentifierType";
+
+    public static final String LOGIN_IDENTIFIER_EMAIL = "correo";
+    public static final String LOGIN_IDENTIFIER_USERNAME = "usuario";
 
     private final SharedPreferences prefs;
 
@@ -105,6 +110,51 @@ public class SessionManager {
         return usuario != null ? usuario.trim() : "";
     }
 
+    public void saveLastLoginIdentifier(String identifier, String type) {
+        String cleanIdentifier = identifier != null ? identifier.trim() : "";
+        String cleanType = normalizeIdentifierType(type);
+        if (cleanIdentifier.isEmpty() || cleanType == null) {
+            return;
+        }
+
+        SharedPreferences.Editor editor = prefs.edit()
+                .putString(KEY_LAST_LOGIN_IDENTIFIER, cleanIdentifier)
+                .putString(KEY_LAST_LOGIN_IDENTIFIER_TYPE, cleanType);
+
+        if (LOGIN_IDENTIFIER_EMAIL.equals(cleanType)) {
+            editor.putString(KEY_LAST_CORREO, cleanIdentifier);
+        } else {
+            editor.putString(KEY_LAST_USUARIO, cleanIdentifier);
+        }
+
+        editor.apply();
+    }
+
+    public String getLastLoginIdentifier() {
+        String identifier = prefs.getString(KEY_LAST_LOGIN_IDENTIFIER, "");
+        return identifier != null ? identifier.trim() : "";
+    }
+
+    public String getLastLoginIdentifierType() {
+        String type = normalizeIdentifierType(prefs.getString(KEY_LAST_LOGIN_IDENTIFIER_TYPE, ""));
+        if (type != null) {
+            return type;
+        }
+
+        String identifier = getLastLoginIdentifier();
+        if (!identifier.isEmpty()) {
+            return identifier.contains("@") ? LOGIN_IDENTIFIER_EMAIL : LOGIN_IDENTIFIER_USERNAME;
+        }
+
+        if (!getLastUsuario().isEmpty()) {
+            return LOGIN_IDENTIFIER_USERNAME;
+        }
+        if (!getLastCorreo().isEmpty()) {
+            return LOGIN_IDENTIFIER_EMAIL;
+        }
+        return "";
+    }
+
     public boolean hasReusableSession(long maxIdleMs) {
         String token = getToken();
         if (!isLoggedIn() || token == null) {
@@ -150,6 +200,8 @@ public class SessionManager {
     public void clearSession() {
         String lastCorreo = getLastCorreo();
         String lastUsuario = getLastUsuario();
+        String lastIdentifier = getLastLoginIdentifier();
+        String lastIdentifierType = getLastLoginIdentifierType();
 
         SharedPreferences.Editor editor = prefs.edit().clear();
         if (!lastCorreo.isEmpty()) {
@@ -157,6 +209,10 @@ public class SessionManager {
         }
         if (!lastUsuario.isEmpty()) {
             editor.putString(KEY_LAST_USUARIO, lastUsuario);
+        }
+        if (!lastIdentifier.isEmpty() && !lastIdentifierType.isEmpty()) {
+            editor.putString(KEY_LAST_LOGIN_IDENTIFIER, lastIdentifier);
+            editor.putString(KEY_LAST_LOGIN_IDENTIFIER_TYPE, lastIdentifierType);
         }
         editor.apply();
     }
@@ -210,5 +266,19 @@ public class SessionManager {
             return null;
         }
         return trimmed;
+    }
+
+    private String normalizeIdentifierType(String type) {
+        if (type == null) {
+            return null;
+        }
+        String clean = type.trim().toLowerCase();
+        if (LOGIN_IDENTIFIER_EMAIL.equals(clean)) {
+            return LOGIN_IDENTIFIER_EMAIL;
+        }
+        if (LOGIN_IDENTIFIER_USERNAME.equals(clean)) {
+            return LOGIN_IDENTIFIER_USERNAME;
+        }
+        return null;
     }
 }

@@ -27,6 +27,7 @@ import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.DialogThemeHelper;
 import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.util.ArrayList;
@@ -106,6 +107,7 @@ public class DialogReportarContenido extends DialogFragment {
 
         dialog.setOnShowListener(d -> {
             ThemeManager tm = new ThemeManager(requireContext());
+            DialogThemeHelper.styleAlertDialog(dialog, requireContext());
 
             ThemeApplier.applyTextSecondary(tvMensaje, tm);
             ThemeApplier.applyTextPrimary(tvTituloObjetivo, tm);

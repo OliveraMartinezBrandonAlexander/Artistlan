@@ -34,6 +34,7 @@ import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.DialogThemeHelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -399,6 +400,8 @@ public class FragSubirServicio extends Fragment {
             guardarServicio(idUsuario, servicio);
         });
         dialog.show();
+        DialogThemeHelper.styleDialogWindow(dialog, requireContext());
+        DialogThemeHelper.styleButtonPair(btnPublicar, btnEditar, requireContext());
         if (dialog.getWindow() != null && dialog.getWindow().getDecorView() != null) {
             ThemeApplier.applyCardContainer(dialog.getWindow().getDecorView(), tm);
         }

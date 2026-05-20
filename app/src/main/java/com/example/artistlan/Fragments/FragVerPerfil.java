@@ -3,6 +3,8 @@ package com.example.artistlan.Fragments;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.view.View;
 import android.view.LayoutInflater;
@@ -41,6 +43,7 @@ import com.example.artistlan.Conector.model.TwoFactorResponse;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoArtista.adapter.TarjetaTextoArtistaAdapter;
@@ -49,6 +52,8 @@ import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
+import com.example.artistlan.utils.DialogThemeHelper;
+import com.example.artistlan.utils.LikeStateManager;
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -92,6 +97,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private long ultimoRefreshFavoritosMs = 0L;
     private int selectedTabIndex = 0;
     private int ultimoTabFavoritosCargado = -1;
+    private final Set<String> favoritosEnCurso = new HashSet<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -174,6 +180,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tabFavoritos.addTab(tabFavoritos.newTab().setText("Obras"));
         tabFavoritos.addTab(tabFavoritos.newTab().setText("Servicios"));
         tabFavoritos.addTab(tabFavoritos.newTab().setText("Usuarios"));
+        aplicarTemaTabsFavoritos();
         tabFavoritos.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
@@ -193,6 +200,21 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 solicitarCargaFavoritos(selectedTabIndex, false);
             }
         });
+    }
+
+    private void aplicarTemaTabsFavoritos() {
+        if (tabFavoritos == null || themeManager == null) {
+            return;
+        }
+        tabFavoritos.setTabTextColors(
+                themeManager.color(ThemeKeys.TEXT_SECONDARY),
+                themeManager.color(ThemeKeys.TEXT_PRIMARY)
+        );
+        tabFavoritos.setSelectedTabIndicatorColor(themeManager.color(ThemeKeys.ACCENT_PRIMARY));
+        tabFavoritos.setTabRippleColor(ColorStateList.valueOf(themeManager.color(ThemeKeys.CARD_CHIP_BG)));
+        if (tabFavoritos.getBackground() != null) {
+            tabFavoritos.getBackground().setColorFilter(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), PorterDuff.Mode.SRC_ATOP);
+        }
     }
 
     private void restaurarTabFavoritos() {
@@ -243,6 +265,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private void cargarDatosUsuario() {
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+        LikeStateManager.setCurrentUserId(idUsuarioLogueado);
         rolUsuario = prefs.getString("rol", "USER");
         if (servicioAdapter != null) {
             servicioAdapter.setCurrentUserId(idUsuarioLogueado);
@@ -402,6 +425,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 .create();
 
         dialog.show();
+        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
         if (themeManager != null) {
             ThemeApplier.applyPrimaryButton(dialog.getButton(AlertDialog.BUTTON_POSITIVE), themeManager);
             ThemeApplier.applySecondaryButton(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), themeManager);
@@ -489,10 +513,21 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     }
 
     private void eliminarFavoritoObra(TarjetaTextoObraItem item, int position) {
+        if (item == null || item.getIdObra() <= 0) {
+            return;
+        }
+        String llave = "obra:" + item.getIdObra();
+        if (favoritosEnCurso.contains(llave)) {
+            return;
+        }
+        favoritosEnCurso.add(llave);
         FavoritoDTO dto = new FavoritoDTO();
         dto.idUsuario = idUsuarioLogueado;
         dto.idObra = item.getIdObra();
-        eliminarFavoritoDesdePerfil(dto, position, () -> obraAdapter.removeItemAt(position));
+        eliminarFavoritoDesdePerfil(dto, position, () -> {
+            LikeStateManager.setObraState(item.getIdObra(), false, Math.max(0, item.getLikes() - 1));
+            obraAdapter.removeItemAt(position);
+        }, () -> favoritosEnCurso.remove(llave));
     }
 
     private void solicitarCompraDesdeFavoritos(TarjetaTextoObraItem item, int position) {
@@ -511,18 +546,28 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     private void eliminarFavoritoServicio(TarjetaTextoServicioItem item, int position) {
         if (item.getIdServicio() == null) return;
+        String llave = "servicio:" + item.getIdServicio();
+        if (favoritosEnCurso.contains(llave)) {
+            return;
+        }
+        favoritosEnCurso.add(llave);
         FavoritoDTO dto = new FavoritoDTO();
         dto.idUsuario = idUsuarioLogueado;
         dto.idServicio = item.getIdServicio();
-        eliminarFavoritoDesdePerfil(dto, position, () -> servicioAdapter.removeItemAt(position));
+        eliminarFavoritoDesdePerfil(dto, position, () -> servicioAdapter.removeItemAt(position), () -> favoritosEnCurso.remove(llave));
     }
 
     private void eliminarFavoritoArtista(TarjetaTextoArtistaItem item, int position) {
         if (item.getIdArtista() == null) return;
+        String llave = "artista:" + item.getIdArtista();
+        if (favoritosEnCurso.contains(llave)) {
+            return;
+        }
+        favoritosEnCurso.add(llave);
         FavoritoDTO dto = new FavoritoDTO();
         dto.idUsuario = idUsuarioLogueado;
         dto.idArtista = item.getIdArtista();
-        eliminarFavoritoDesdePerfil(dto, position, () -> artistaAdapter.removeItemAt(position));
+        eliminarFavoritoDesdePerfil(dto, position, () -> artistaAdapter.removeItemAt(position), () -> favoritosEnCurso.remove(llave));
     }
 
     private void abrirPerfilPublicoDesdeFavoritos(TarjetaTextoArtistaItem artistaItem, int position) {
@@ -534,10 +579,13 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfilPublico, args);
     }
 
-    private void eliminarFavoritoDesdePerfil(FavoritoDTO dto, int position, Runnable removeAction) {
+    private void eliminarFavoritoDesdePerfil(FavoritoDTO dto, int position, Runnable removeAction, Runnable finishAction) {
         favoritosApi.eliminarFavorito(dto).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (finishAction != null) {
+                    finishAction.run();
+                }
                 if (!response.isSuccessful()) {
                     Toast.makeText(requireContext(), "No se pudo eliminar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
                     return;
@@ -547,6 +595,9 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                if (finishAction != null) {
+                    finishAction.run();
+                }
                 Toast.makeText(requireContext(), "Error de red al eliminar favorito", Toast.LENGTH_SHORT).show();
             }
         });
@@ -621,8 +672,15 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 public void onResponse(@NonNull Call<ObraDTO> call, @NonNull Response<ObraDTO> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         ObraDTO dto = response.body();
+                        int idObra = dto.getIdObra() != null ? dto.getIdObra() : -1;
+                        int likesBackend = dto.getLikes() != null ? dto.getLikes() : 0;
+                        LikeStateManager.LikeState likeState = LikeStateManager.resolveObraState(
+                                idObra,
+                                true,
+                                likesBackend
+                        );
                         TarjetaTextoObraItem item = new TarjetaTextoObraItem(
-                                dto.getIdObra(),
+                                idObra,
                                 dto.getTitulo(),
                                 dto.getDescripcion(),
                                 dto.getEstado(),
@@ -632,11 +690,11 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                                 dto.getImagen3(),
                                 dto.getTecnicas(),
                                 dto.getMedidas(),
-                                dto.getLikes() != null ? dto.getLikes() : 0,
+                                likeState.getLikesCount(),
                                 dto.getNombreAutor(),
                                 dto.getNombreCategoria(),
                                 dto.getFotoPerfilAutor(),
-                                true,
+                                likeState.isLiked(),
                                 false
                         );
                         item.setEditable(!Boolean.FALSE.equals(dto.getEditable()));

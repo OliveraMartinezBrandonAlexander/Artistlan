@@ -77,6 +77,7 @@ public class ThemePrefsManager {
         d.put(ThemeKeys.MENU_ITEM_ACTIVE, Color.parseColor("#40A97CFF"));
         d.put(ThemeKeys.MENU_ITEM_ACTIVE_STROKE, Color.parseColor("#88A97CFF"));
         d.put(ThemeKeys.MENU_BADGE, Color.parseColor("#FF5CA8"));
+        d.put(ThemeKeys.MENU_TITLE, Color.parseColor("#FFFFFFFF"));
 
         d.put(ThemeKeys.ACCENT_PRIMARY, Color.parseColor("#B28DFF"));
         d.put(ThemeKeys.ACCENT_PRIMARY_LIGHT, Color.parseColor("#D6C2FF"));
@@ -93,6 +94,13 @@ public class ThemePrefsManager {
         d.put(ThemeKeys.BUTTON_SECONDARY_BG, Color.parseColor("#FF85D0"));
         d.put(ThemeKeys.BUTTON_TEXT_DARK, Color.parseColor("#1A1026"));
         d.put(ThemeKeys.BUTTON_TEXT_LIGHT, Color.parseColor("#2A1020"));
+
+        d.put(ThemeKeys.CARD_BORDER, Color.parseColor("#B28DFF"));
+        d.put(ThemeKeys.CARD_CHIP_BG, Color.parseColor("#221A1026"));
+        d.put(ThemeKeys.CARD_CHIP_TEXT, Color.parseColor("#FFFFFFFF"));
+        d.put(ThemeKeys.LIKE_ACTIVE, Color.parseColor("#FF5CA8"));
+        d.put(ThemeKeys.FILTER_BUTTON_BG, Color.parseColor("#331A1026"));
+        d.put(ThemeKeys.FILTER_BUTTON_STROKE, Color.parseColor("#B28DFF"));
 
         d.put(ThemeKeys.INPUT_BG, Color.parseColor("#26FFFFFF"));
         d.put(ThemeKeys.INPUT_STROKE, Color.parseColor("#33FFFFFF"));

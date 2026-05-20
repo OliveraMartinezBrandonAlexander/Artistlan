@@ -1,67 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/nestedScrollServicios"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
-    android:clipToPadding="false"
-    android:fillViewport="true"
-    android:paddingTop="224dp"
     tools:context=".Fragments.FragServicios">
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollServicios"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/artistlan_menu_stroke_soft" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerServicios"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"
-            android:padding="12dp"/>
-
-        <Button
-            android:id="@+id/btnCargarMasServicios"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="6dp"
-            android:text="Cargar m&#225;s servicios"
-            android:visibility="gone" />
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingTop="224dp"
+        android:paddingBottom="72dp">
 
         <LinearLayout
-            android:id="@+id/layoutLoaderMasServicios"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:paddingTop="8dp"
-            android:paddingBottom="16dp"
-            android:visibility="gone">
+            android:orientation="vertical">
 
-            <ProgressBar
-                android:id="@+id/progressMasServicios"
-                style="?android:attr/progressBarStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"/>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/artistlan_menu_stroke_soft" />
 
-            <TextView
-                android:id="@+id/txtCargandoMasServicios"
-                android:layout_width="wrap_content"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerServicios"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Cargando m&#225;s servicios..."
-                android:textSize="13sp"/>
+                android:nestedScrollingEnabled="false"
+                android:padding="0dp" />
+
         </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
+    <Button
+        android:id="@+id/btnCargarMasServicios"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_btn_bubble_glass_secondary"
+        android:text="Cargar m&#225;s servicios"
+        android:textAllCaps="false"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/layoutLoaderMasServicios"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_btn_bubble_glass_secondary"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:id="@+id/progressMasServicios"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"/>
+
+        <TextView
+            android:id="@+id/txtCargandoMasServicios"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cargando m&#225;s servicios..."
+            android:textSize="13sp"/>
     </LinearLayout>
 
-</androidx.core.widget.NestedScrollView>
+</FrameLayout>

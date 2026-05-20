@@ -46,6 +46,7 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.LikeStateManager;
 import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.util.ArrayList;
@@ -109,6 +110,7 @@ public class FragMain extends Fragment {
 
         ThemeModuleStyler.styleFragment(this, root);
         new BotonesMenuSuperior(this);
+        LikeStateManager.setCurrentUserId(ReporteUiPermissions.resolveCurrentUserId(requireContext()));
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
         solicitudesApi = RetrofitClient.getClient().create(SolicitudesApi.class);
 
@@ -239,6 +241,11 @@ public class FragMain extends Fragment {
             @Override
             public void onExpandedChanged(boolean expanded) {
                 ajustarAlturaCarrusel(expanded);
+                if (expanded) {
+                    detenerAutoCarrusel();
+                } else if (carruselItems != null) {
+                    iniciarAutoCarrusel(carruselItems.size());
+                }
             }
 
         });
@@ -421,7 +428,8 @@ public class FragMain extends Fragment {
 
         ObraApi obraApi = RetrofitClient.getClient().create(ObraApi.class);
 
-        obrasFeedCall = obraApi.obtenerTodasLasObras();
+        Integer usuarioId = ReporteUiPermissions.resolveCurrentUserId(requireContext());
+        obrasFeedCall = obraApi.obtenerTodasLasObras(usuarioId != null && usuarioId > 0 ? usuarioId : null);
         obrasFeedCall.enqueue(new Callback<List<ObraDTO>>() {
             @Override
             public void onResponse(
@@ -592,8 +600,10 @@ public class FragMain extends Fragment {
                 continue;
             }
 
+            int idObra = dto.getIdObra() != null ? dto.getIdObra() : -1;
+            LikeStateManager.LikeState likeState = resolveLikeState(dto);
             TarjetaTextoObraItem item = new TarjetaTextoObraItem(
-                    dto.getIdObra(),
+                    idObra,
                     dto.getTitulo(),
                     dto.getDescripcion(),
                     dto.getEstado(),
@@ -603,11 +613,11 @@ public class FragMain extends Fragment {
                     dto.getImagen3(),
                     dto.getTecnicas(),
                     dto.getMedidas(),
-                    dto.getLikes() == null ? 0 : dto.getLikes(),
+                    likeState.getLikesCount(),
                     dto.getNombreAutor(),
                     dto.getNombreCategoria(),
                     dto.getFotoPerfilAutor(),
-                    Boolean.TRUE.equals(dto.getEsFavorito()),
+                    likeState.isLiked(),
                     false
             );
 
@@ -616,6 +626,17 @@ public class FragMain extends Fragment {
         }
 
         return items;
+    }
+
+    @NonNull
+    private LikeStateManager.LikeState resolveLikeState(@NonNull ObraDTO dto) {
+        int idObra = dto.getIdObra() != null ? dto.getIdObra() : -1;
+        int likesBackend = dto.getLikes() != null ? dto.getLikes() : 0;
+        return LikeStateManager.resolveObraState(
+                idObra,
+                Boolean.TRUE.equals(dto.getEsFavorito()),
+                likesBackend
+        );
     }
 
     private List<TarjetaTextoServicioItem> mapServicios(@Nullable List<ServicioDTO> dtos) {
@@ -690,6 +711,10 @@ public class FragMain extends Fragment {
                 if (!isAdded() || viewPager == null || total <= 1) {
                     return;
                 }
+                if (carruselAdapter != null && carruselAdapter.hasExpandedItem()) {
+                    detenerAutoCarrusel();
+                    return;
+                }
 
                 int siguiente = (viewPager.getCurrentItem() + 1) % total;
                 viewPager.setCurrentItem(siguiente, true);
@@ -713,7 +738,8 @@ public class FragMain extends Fragment {
     ) {
         ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
 
-        obrasCarruselCall = api.obtenerTodasLasObras();
+        Integer usuarioId = ReporteUiPermissions.resolveCurrentUserId(requireContext());
+        obrasCarruselCall = api.obtenerTodasLasObras(usuarioId != null && usuarioId > 0 ? usuarioId : null);
         obrasCarruselCall.enqueue(new Callback<List<ObraDTO>>() {
             @Override
             public void onResponse(
@@ -747,8 +773,9 @@ public class FragMain extends Fragment {
                     );
                     mapped.setIdObra(dto.getIdObra());
                     mapped.setIdAutor(dto.getIdUsuario());
-                    mapped.setLikesCount(dto.getLikes() == null ? 0 : dto.getLikes());
-                    mapped.setUserLiked(Boolean.TRUE.equals(dto.getEsFavorito()));
+                    LikeStateManager.LikeState likeState = resolveLikeState(dto);
+                    mapped.setLikesCount(likeState.getLikesCount());
+                    mapped.setUserLiked(likeState.isLiked());
                     mapped.setEstado(dto.getEstado());
                     mapped.setTecnicas(dto.getTecnicas());
                     mapped.setMedidas(dto.getMedidas());
@@ -844,11 +871,16 @@ public class FragMain extends Fragment {
         if (!puedeProcesarLikeObra(idObra)) {
             return;
         }
+        if (!LikeStateManager.beginObraRequest(idObra)) {
+            likesObraEnVuelo.remove(idObra);
+            return;
+        }
 
         final boolean previo = obraItem.isUserLiked();
         final int likesPrevios = obraItem.getLikes();
         obraItem.setUserLiked(!previo);
         obraItem.setLikes(Math.max(0, likesPrevios + (previo ? -1 : 1)));
+        LikeStateManager.setObraState(idObra, obraItem.isUserLiked(), obraItem.getLikes());
         adapter.notifyLikeChangedPartial(position);
         syncCarruselLikeState(idObra, obraItem.isUserLiked(), obraItem.getLikes());
 
@@ -858,28 +890,33 @@ public class FragMain extends Fragment {
         Call<Void> call = previo ? favoritosApi.eliminarFavorito(dto) : favoritosApi.agregarFavorito(dto);
         call.enqueue(new Callback<Void>() {
             @Override public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
-                if (!isAdded()) return;
                 likesObraEnVuelo.remove(idObra);
+                LikeStateManager.finishObraRequest(idObra);
+                if (!isAdded()) return;
                 if (response.isSuccessful()) {
                     return;
                 }
                 if (!previo && response.code() == 409) {
                     obraItem.setUserLiked(true);
+                    LikeStateManager.setObraState(idObra, true, obraItem.getLikes());
                     syncLikeCountObra(obraItem, position, adapter);
                     syncCarruselLikeState(idObra, true, obraItem.getLikes());
                     return;
                 }
                 obraItem.setUserLiked(previo);
                 obraItem.setLikes(likesPrevios);
+                LikeStateManager.setObraState(idObra, previo, likesPrevios);
                 adapter.notifyLikeChanged(position);
                 syncCarruselLikeState(idObra, previo, likesPrevios);
                 Toast.makeText(requireContext(), "No se pudo actualizar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
             }
             @Override public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
-                if (!isAdded()) return;
                 likesObraEnVuelo.remove(idObra);
+                LikeStateManager.finishObraRequest(idObra);
+                if (!isAdded()) return;
                 obraItem.setUserLiked(previo);
                 obraItem.setLikes(likesPrevios);
+                LikeStateManager.setObraState(idObra, previo, likesPrevios);
                 adapter.notifyLikeChanged(position);
                 syncCarruselLikeState(idObra, previo, likesPrevios);
                 Toast.makeText(requireContext(), "Error de red al actualizar favorito", Toast.LENGTH_SHORT).show();
@@ -952,10 +989,15 @@ public class FragMain extends Fragment {
         if (!puedeProcesarLikeObra(idObra)) {
             return;
         }
+        if (!LikeStateManager.beginObraRequest(idObra)) {
+            likesObraEnVuelo.remove(idObra);
+            return;
+        }
         final boolean previo = item.isUserLiked();
         final int likesPrevios = item.getLikesCount();
         item.setUserLiked(!previo);
         item.setLikesCount(Math.max(0, likesPrevios + (previo ? -1 : 1)));
+        LikeStateManager.setObraState(idObra, item.isUserLiked(), item.getLikesCount());
         adapter.notifyLikeChangedPartial(position);
         syncFeedObraLikeState(idObra, item.isUserLiked(), item.getLikesCount());
 
@@ -965,28 +1007,33 @@ public class FragMain extends Fragment {
         Call<Void> call = previo ? favoritosApi.eliminarFavorito(dto) : favoritosApi.agregarFavorito(dto);
         call.enqueue(new Callback<Void>() {
             @Override public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
-                if (!isAdded()) return;
                 likesObraEnVuelo.remove(idObra);
+                LikeStateManager.finishObraRequest(idObra);
+                if (!isAdded()) return;
                 if (response.isSuccessful()) {
                     return;
                 }
                 if (!previo && response.code() == 409) {
                     item.setUserLiked(true);
+                    LikeStateManager.setObraState(idObra, true, item.getLikesCount());
                     syncLikeCountCarrusel(item, position, adapter);
                     syncFeedObraLikeState(idObra, true, item.getLikesCount());
                     return;
                 }
                 item.setUserLiked(previo);
                 item.setLikesCount(likesPrevios);
+                LikeStateManager.setObraState(idObra, previo, likesPrevios);
                 adapter.notifyLikeChanged(position);
                 syncFeedObraLikeState(idObra, previo, likesPrevios);
                 Toast.makeText(requireContext(), "No se pudo actualizar favorito (" + response.code() + ")", Toast.LENGTH_SHORT).show();
             }
             @Override public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
-                if (!isAdded()) return;
                 likesObraEnVuelo.remove(idObra);
+                LikeStateManager.finishObraRequest(idObra);
+                if (!isAdded()) return;
                 item.setUserLiked(previo);
                 item.setLikesCount(likesPrevios);
+                LikeStateManager.setObraState(idObra, previo, likesPrevios);
                 adapter.notifyLikeChanged(position);
                 syncFeedObraLikeState(idObra, previo, likesPrevios);
                 Toast.makeText(requireContext(), "Error de red al actualizar favorito", Toast.LENGTH_SHORT).show();
@@ -1003,6 +1050,7 @@ public class FragMain extends Fragment {
                 }
                 if (response.isSuccessful() && response.body() != null) {
                     item.setLikes(Math.max(0, response.body()));
+                    LikeStateManager.setObraState(item.getIdObra(), item.isUserLiked(), item.getLikes());
                 }
                 adapter.notifyLikeChanged(position);
                 syncCarruselLikeState(item.getIdObra(), item.isUserLiked(), item.getLikes());
@@ -1062,6 +1110,7 @@ public class FragMain extends Fragment {
                 }
                 if (response.isSuccessful() && response.body() != null) {
                     item.setLikesCount(Math.max(0, response.body()));
+                    LikeStateManager.setObraState(idObra, item.isUserLiked(), item.getLikesCount());
                 }
                 adapter.notifyLikeChanged(position);
                 Integer id = item.getIdObra();
@@ -1081,12 +1130,14 @@ public class FragMain extends Fragment {
     }
 
     private void syncCarruselLikeState(int idObra, boolean liked, int likesCount) {
+        LikeStateManager.setObraState(idObra, liked, likesCount);
         if (carruselAdapter != null) {
             carruselAdapter.updateLikeStateById(idObra, liked, likesCount);
         }
     }
 
     private void syncFeedObraLikeState(int idObra, boolean liked, int likesCount) {
+        LikeStateManager.setObraState(idObra, liked, likesCount);
         for (TarjetaTextoObraAdapter obraAdapter : obraFeedAdapters) {
             if (obraAdapter != null) {
                 obraAdapter.updateLikeStateById(idObra, liked, likesCount);

@@ -23,6 +23,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -98,6 +99,9 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private TextView txtTituloPantalla;
     private TextView txtDescripcionPantalla;
     private TextView txtPrecio;
+    private View topBarFrame;
+    private View contentContainer;
+    private ViewTreeObserver.OnPreDrawListener topBarOffsetListener;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -533,6 +537,8 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         super.onViewCreated(view, savedInstanceState);
 
         ScrollView scrollView = view.findViewById(R.id.fragScrollSubirObra);
+        contentContainer = view.findViewById(R.id.subirObraContentContainer);
+        topBarFrame = requireActivity().findViewById(R.id.topBarFrame);
 
         ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
             int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
@@ -544,6 +550,15 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             );
             return insets;
         });
+
+        if (topBarFrame != null && contentContainer != null) {
+            topBarOffsetListener = () -> {
+                actualizarOffsetTopDinamico();
+                return true;
+            };
+            topBarFrame.getViewTreeObserver().addOnPreDrawListener(topBarOffsetListener);
+            actualizarOffsetTopDinamico();
+        }
 
         View menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
@@ -559,6 +574,15 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (topBarFrame != null && topBarOffsetListener != null) {
+            ViewTreeObserver observer = topBarFrame.getViewTreeObserver();
+            if (observer.isAlive()) {
+                observer.removeOnPreDrawListener(topBarOffsetListener);
+            }
+        }
+        topBarOffsetListener = null;
+        topBarFrame = null;
+        contentContainer = null;
         if (getActivity() == null) return;
         View menuInferior = getActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
@@ -567,10 +591,39 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        if (!isAdded()) return;
+        View menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btnRegresar) {
             NavHostFragment.findNavController(this).popBackStack();
         }
+    }
+
+    private void actualizarOffsetTopDinamico() {
+        if (topBarFrame == null || contentContainer == null) {
+            return;
+        }
+        int topBarHeight = topBarFrame.getHeight();
+        int visibleTopBar = Math.max(0, topBarHeight + Math.round(topBarFrame.getTranslationY()));
+        int topPadding = visibleTopBar + dpToPx(14);
+        contentContainer.setPadding(
+                contentContainer.getPaddingLeft(),
+                topPadding,
+                contentContainer.getPaddingRight(),
+                contentContainer.getPaddingBottom()
+        );
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
 

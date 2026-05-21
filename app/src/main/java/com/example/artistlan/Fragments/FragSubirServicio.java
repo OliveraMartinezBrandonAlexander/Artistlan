@@ -8,6 +8,7 @@ import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -60,6 +61,9 @@ public class FragSubirServicio extends Fragment {
     private int idServicioEditar = -1;
     private String categoriaPendiente;
     private ServicioDTO servicioActual;
+    private View topBarFrame;
+    private View contentContainer;
+    private ViewTreeObserver.OnPreDrawListener topBarOffsetListener;
 
     public FragSubirServicio() {
     }
@@ -122,6 +126,8 @@ public class FragSubirServicio extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ScrollView scrollView = view.findViewById(R.id.fragScrollSubirServicio);
+        contentContainer = view.findViewById(R.id.subirServicioContentContainer);
+        topBarFrame = requireActivity().findViewById(R.id.topBarFrame);
         ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
             int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
 
@@ -133,6 +139,15 @@ public class FragSubirServicio extends Fragment {
             );
             return insets;
         });
+
+        if (topBarFrame != null && contentContainer != null) {
+            topBarOffsetListener = () -> {
+                actualizarOffsetTopDinamico();
+                return true;
+            };
+            topBarFrame.getViewTreeObserver().addOnPreDrawListener(topBarOffsetListener);
+            actualizarOffsetTopDinamico();
+        }
         View menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
             menuInferior.setVisibility(View.GONE);
@@ -143,11 +158,45 @@ public class FragSubirServicio extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (topBarFrame != null && topBarOffsetListener != null) {
+            ViewTreeObserver observer = topBarFrame.getViewTreeObserver();
+            if (observer.isAlive()) {
+                observer.removeOnPreDrawListener(topBarOffsetListener);
+            }
+        }
+        topBarOffsetListener = null;
+        topBarFrame = null;
+        contentContainer = null;
         if (getActivity() == null) return;
         View menuInferior = getActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
             menuInferior.setVisibility(View.VISIBLE);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (!isAdded()) return;
+        View menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.GONE);
+        }
+    }
+
+    private void actualizarOffsetTopDinamico() {
+        if (topBarFrame == null || contentContainer == null) {
+            return;
+        }
+        int topBarHeight = topBarFrame.getHeight();
+        int visibleTopBar = Math.max(0, topBarHeight + Math.round(topBarFrame.getTranslationY()));
+        int topPadding = visibleTopBar + dpToPx(14);
+        contentContainer.setPadding(
+                contentContainer.getPaddingLeft(),
+                topPadding,
+                contentContainer.getPaddingRight(),
+                contentContainer.getPaddingBottom()
+        );
     }
 
     private int dpToPx(int dp) { return Math.round(dp * getResources().getDisplayMetrics().density); }

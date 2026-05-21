@@ -4,7 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
-    android:padding="16dp">
+    android:paddingStart="16dp"
+    android:paddingTop="102dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="16dp">
 
     <ImageButton
         android:id="@+id/btnRegresarAdminConvocatorias"
@@ -67,6 +70,7 @@
         android:id="@+id/fabNuevaConvocatoria"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="96dp"
         android:contentDescription="Nueva convocatoria"
         android:src="@android:drawable/ic_input_add"
         app:layout_constraintBottom_toBottomOf="parent"

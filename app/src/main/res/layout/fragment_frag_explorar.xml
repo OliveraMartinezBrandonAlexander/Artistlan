@@ -8,8 +8,8 @@
     android:background="@android:color/transparent"
     tools:context=".Fragments.FragExplorar">
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/fragmentContainerExplorar"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPagerExplorar"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

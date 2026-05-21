@@ -15,14 +15,15 @@
         android:background="@color/artistlan_menu_stroke_soft" />
 
     <LinearLayout
+        android:id="@+id/subirServicioContentContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="vertical"
         android:paddingStart="30dp"
-        android:paddingTop="104dp"
+        android:paddingTop="0dp"
         android:paddingEnd="30dp"
-        android:paddingBottom="96dp">
+        android:paddingBottom="20dp">
 
         <ScrollView
             android:id="@+id/fragScrollSubirServicio"

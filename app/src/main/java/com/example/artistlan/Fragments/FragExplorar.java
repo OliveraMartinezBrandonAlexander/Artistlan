@@ -6,25 +6,21 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.PopupMenu;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.SearchView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -32,6 +28,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeKeys;
@@ -47,10 +45,6 @@ public class FragExplorar extends Fragment {
     private static final String TAG_PERF = "ExplorarPerfDebug";
     private static final String TAG_INIT = "ExplorarInitDebug";
     private static final boolean ENABLE_EXPLORAR_DEBUG_LOGS = false;
-    private static final long MIN_REPLACE_INTERVAL_MS = 450L;
-    private static final long SWIPE_NAV_DEBOUNCE_MS = 320L;
-    private static final int MENU_GROUP_FILTERS = 100;
-    private static final int MENU_ID_CLEAR_FILTERS = 1000;
 
     private SearchView searchView;
     private ImageButton btnFiltros;
@@ -60,17 +54,15 @@ public class FragExplorar extends Fragment {
     private Button btnSegmentObras;
     private Button btnSegmentServicios;
     private Button btnSegmentArtistas;
+    private ViewPager2 viewPager;
+    private ExplorarPagerAdapter pagerAdapter;
+
     private boolean filtrosVisibles = false;
     private boolean panelFiltrosVisible = true;
     private int currentTipoId = View.NO_ID;
-    private int lastLoadedTipoId = View.NO_ID;
-    private long lastReplaceTimestampMs = 0L;
-    private long lastSwipeNavigationMs = 0L;
     private boolean ignorarEventosBusqueda = false;
+    private boolean limpiarBusquedaAlCambiarPagina = false;
     private ThemeManager themeManager;
-    private float swipeStartX = 0f;
-    private float swipeStartY = 0f;
-    private boolean swipeHorizontalDetectado = false;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -90,11 +82,11 @@ public class FragExplorar extends Fragment {
         btnSegmentObras = view.findViewById(R.id.btnSegmentObras);
         btnSegmentServicios = view.findViewById(R.id.btnSegmentServicios);
         btnSegmentArtistas = view.findViewById(R.id.btnSegmentArtistas);
+        viewPager = view.findViewById(R.id.viewPagerExplorar);
 
         configurarBuscador();
         configurarBotonFiltros();
         configurarSelectorTipos();
-        configurarDeslizamientoEntreTipos(view);
 
         return view;
     }
@@ -102,18 +94,12 @@ public class FragExplorar extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        logInit("onViewCreated -> currentTipoId=" + currentTipoId
-                + ", fragmentActual=" + nombreFragment(obtenerFragmentActual()));
-        asegurarTabActualCargado("onViewCreated");
         view.post(this::restaurarUiFiltros);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        logInit("onResume -> currentTipoId=" + currentTipoId
-                + ", fragmentActual=" + nombreFragment(obtenerFragmentActual()));
-        asegurarTabActualCargado("onResume");
         View view = getView();
         if (view != null) {
             view.post(this::restaurarUiFiltros);
@@ -189,29 +175,41 @@ public class FragExplorar extends Fragment {
         if (segmentContainer == null
                 || btnSegmentObras == null
                 || btnSegmentServicios == null
-                || btnSegmentArtistas == null) {
+                || btnSegmentArtistas == null
+                || viewPager == null) {
             return;
+        }
+
+        if (pagerAdapter == null) {
+            pagerAdapter = new ExplorarPagerAdapter(this);
+            viewPager.setAdapter(pagerAdapter);
+            viewPager.setOffscreenPageLimit(3);
+            viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                @Override
+                public void onPageSelected(int position) {
+                    int tipoId = tipoForIndex(position);
+                    currentTipoId = tipoId;
+                    moverIndicadorTipo(tipoId, true);
+
+                    if (limpiarBusquedaAlCambiarPagina) {
+                        limpiarBusquedaAlCambiarPagina = false;
+                        aplicarBusquedaAlFragmentActual("");
+                    } else if (searchView != null) {
+                        aplicarBusquedaAlFragmentActual(searchView.getQuery().toString());
+                    }
+
+                    actualizarVisibilidadBotonFiltros();
+                    logPerf("Cambio tab swipe -> tipoId=" + currentTipoId + ", position=" + position);
+                }
+            });
         }
 
         aplicarTemaSelector();
 
         int tipoInicial = currentTipoId == View.NO_ID ? R.id.btnSegmentObras : currentTipoId;
-        Fragment actual = getChildFragmentManager().findFragmentById(R.id.fragmentContainerExplorar);
-        if (actual == null) {
-            Fragment inicial = crearFragmentPorTipo(tipoInicial);
-            if (inicial != null) {
-                logInit("configurarSelectorTipos -> carga inicial, tipo=" + tipoInicial
-                        + ", fragment=" + inicial.getClass().getSimpleName());
-                cargarFragment(inicial, tipoInicial, "configurarSelectorTipos-inicial");
-            }
-        } else if (coincideFragmentConTipo(actual, tipoInicial)) {
-            lastLoadedTipoId = tipoInicial;
-        }
         currentTipoId = tipoInicial;
+        viewPager.setCurrentItem(indexForTipo(tipoInicial), false);
         actualizarVisibilidadBotonFiltros();
-        logPerf("Tab inicial -> tipoId=" + currentTipoId);
-        logInit("configurarSelectorTipos -> currentTipoId=" + currentTipoId
-                + ", fragmentActual=" + nombreFragment(actual));
 
         btnSegmentObras.setOnClickListener(v -> seleccionarTipo(R.id.btnSegmentObras, true));
         btnSegmentServicios.setOnClickListener(v -> seleccionarTipo(R.id.btnSegmentServicios, true));
@@ -221,28 +219,26 @@ public class FragExplorar extends Fragment {
     }
 
     private void seleccionarTipo(int tipoId, boolean animar) {
-        if (tipoId == View.NO_ID || tipoId == currentTipoId) {
+        if (tipoId == View.NO_ID || viewPager == null) {
+            return;
+        }
+
+        int targetIndex = indexForTipo(tipoId);
+        if (viewPager.getCurrentItem() == targetIndex && currentTipoId == tipoId) {
             moverIndicadorTipo(currentTipoId, animar);
             return;
         }
 
         cerrarTeclado();
         limpiarBusquedaSinNotificar();
+        limpiarBusquedaAlCambiarPagina = true;
 
-        Fragment fragment = crearFragmentPorTipo(tipoId);
-        if (fragment == null) {
-            return;
-        }
-
-        logInit("seleccionarTipo -> tipoId=" + tipoId
-                + ", currentTipoId(before)=" + currentTipoId
-                + ", fragmentNuevo=" + fragment.getClass().getSimpleName());
-        cargarFragment(fragment, tipoId, "seleccionarTipo");
         currentTipoId = tipoId;
         moverIndicadorTipo(tipoId, animar);
         actualizarVisibilidadBotonFiltros();
-        logPerf("Cambio tab -> tipoId=" + currentTipoId
-                + ", fragment=" + fragment.getClass().getSimpleName());
+        viewPager.setCurrentItem(targetIndex, true);
+
+        logInit("seleccionarTipo -> tipoId=" + tipoId + ", index=" + targetIndex);
     }
 
     private void aplicarBusquedaAlFragmentActual(String texto) {
@@ -378,61 +374,6 @@ public class FragExplorar extends Fragment {
         dialog.show();
     }
 
-    private void configurarDeslizamientoEntreTipos(@NonNull View root) {
-        View target = root.findViewById(R.id.fragmentContainerExplorar);
-        View.OnTouchListener listener = (v, event) -> {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    swipeStartX = event.getX();
-                    swipeStartY = event.getY();
-                    swipeHorizontalDetectado = false;
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    float moveDx = event.getX() - swipeStartX;
-                    float moveDy = event.getY() - swipeStartY;
-                    if (Math.abs(moveDx) > dpToPx(28) && Math.abs(moveDx) > Math.abs(moveDy) * 1.35f) {
-                        swipeHorizontalDetectado = true;
-                    }
-                    break;
-                case MotionEvent.ACTION_UP:
-                    float dx = event.getX() - swipeStartX;
-                    float dy = event.getY() - swipeStartY;
-                    long now = SystemClock.elapsedRealtime();
-                    if (Math.abs(dx) > dpToPx(72)
-                            && Math.abs(dx) > Math.abs(dy) * 1.35f
-                            && now - lastSwipeNavigationMs >= SWIPE_NAV_DEBOUNCE_MS) {
-                        lastSwipeNavigationMs = now;
-                        seleccionarTipoPorDeslizamiento(dx < 0 ? 1 : -1);
-                        swipeHorizontalDetectado = false;
-                        return true;
-                    }
-                    swipeHorizontalDetectado = false;
-                    break;
-                case MotionEvent.ACTION_CANCEL:
-                    swipeHorizontalDetectado = false;
-                    break;
-                default:
-                    break;
-            }
-            return swipeHorizontalDetectado;
-        };
-        root.setOnTouchListener(listener);
-        if (target != null) {
-            target.setOnTouchListener(listener);
-        }
-    }
-
-    private void seleccionarTipoPorDeslizamiento(int direction) {
-        int nextIndex = Math.max(0, Math.min(2, indexForTipo(currentTipoId) + direction));
-        seleccionarTipo(tipoForIndex(nextIndex), true);
-    }
-
-    private int tipoForIndex(int index) {
-        if (index == 1) return R.id.btnSegmentServicios;
-        if (index == 2) return R.id.btnSegmentArtistas;
-        return R.id.btnSegmentObras;
-    }
-
     private GradientDrawable createFilterDialogBackground() {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setShape(GradientDrawable.RECTANGLE);
@@ -503,23 +444,6 @@ public class FragExplorar extends Fragment {
         }
     }
 
-    private void cargarFragment(@NonNull Fragment fragment, int tipoId, @NonNull String motivo) {
-        lastLoadedTipoId = tipoId;
-        lastReplaceTimestampMs = SystemClock.elapsedRealtime();
-        logInit("cargarFragment(" + motivo + ") -> tipoId=" + tipoId
-                + ", fragment=" + fragment.getClass().getSimpleName()
-                + ", currentTipoId=" + currentTipoId);
-        getChildFragmentManager()
-                .beginTransaction()
-                .setReorderingAllowed(true)
-                .replace(R.id.fragmentContainerExplorar, fragment)
-                .runOnCommit(() -> {
-                    configurarDeslizamientoEnContenidoActual();
-                    restaurarUiFiltros();
-                })
-                .commit();
-    }
-
     private void limpiarBusquedaSinNotificar() {
         if (searchView == null) {
             return;
@@ -549,103 +473,39 @@ public class FragExplorar extends Fragment {
         if (currentTipoId != View.NO_ID && segmentContainer != null) {
             segmentContainer.post(() -> moverIndicadorTipo(currentTipoId, false));
         }
-        configurarDeslizamientoEnContenidoActual();
-    }
-
-    private void configurarDeslizamientoEnContenidoActual() {
-        Fragment fragmentActual = obtenerFragmentActual();
-        View fragmentView = fragmentActual != null ? fragmentActual.getView() : null;
-        if (fragmentView == null) {
-            return;
-        }
-        configurarDeslizamientoEntreTipos(fragmentView);
     }
 
     @Nullable
     private Fragment obtenerFragmentActual() {
-        return getChildFragmentManager().findFragmentById(R.id.fragmentContainerExplorar);
-    }
-
-    @Nullable
-    private Fragment crearFragmentPorTipo(int tipoId) {
-        if (tipoId == R.id.btnSegmentObras) {
-            return new FragArte();
-        }
-        if (tipoId == R.id.btnSegmentServicios) {
-            return new FragServicios();
-        }
-        if (tipoId == R.id.btnSegmentArtistas) {
-            return new FragArtistas();
-        }
-        return null;
-    }
-
-    private void asegurarTabActualCargado(@NonNull String motivo) {
-        if (!isAdded() || segmentContainer == null) {
-            return;
-        }
-        int tipoSeleccionado = currentTipoId == View.NO_ID ? R.id.btnSegmentObras : currentTipoId;
-        if (currentTipoId == View.NO_ID) {
-            currentTipoId = tipoSeleccionado;
+        if (viewPager == null) {
+            return null;
         }
 
-        Fragment actual = obtenerFragmentActual();
-        boolean coincide = coincideFragmentConTipo(actual, tipoSeleccionado);
-        boolean necesitaCarga = actual == null || !coincide || actual.getView() == null;
-        boolean replaceRecienteMismoTipo = tipoSeleccionado == lastLoadedTipoId
-                && (SystemClock.elapsedRealtime() - lastReplaceTimestampMs) < MIN_REPLACE_INTERVAL_MS;
-
-        logInit("asegurarTabActualCargado(" + motivo + ") -> tipo=" + tipoSeleccionado
-                + ", currentTipoId=" + currentTipoId
-                + ", fragmentActual=" + nombreFragment(actual)
-                + ", coincide=" + coincide
-                + ", viewNull=" + (actual == null || actual.getView() == null)
-                + ", necesitaCarga=" + necesitaCarga
-                + ", replaceRecienteMismoTipo=" + replaceRecienteMismoTipo);
-
-        if (!necesitaCarga) {
-            currentTipoId = tipoSeleccionado;
-            actualizarVisibilidadBotonFiltros();
-            if (segmentContainer != null) {
-                segmentContainer.post(() -> moverIndicadorTipo(currentTipoId, false));
+        int currentIndex = viewPager.getCurrentItem();
+        if (pagerAdapter != null) {
+            Fragment fragment = pagerAdapter.getFragmentForPosition(currentIndex);
+            if (fragment != null) {
+                return fragment;
             }
-            return;
         }
 
-        if (replaceRecienteMismoTipo) {
-            logInit("asegurarTabActualCargado(" + motivo + ") -> omitido replace reciente");
-            return;
+        List<Fragment> fragments = getChildFragmentManager().getFragments();
+        for (Fragment fragment : fragments) {
+            if (fragment == null) {
+                continue;
+            }
+            if (currentIndex == 0 && fragment instanceof FragArte) {
+                return fragment;
+            }
+            if (currentIndex == 1 && fragment instanceof FragServicios) {
+                return fragment;
+            }
+            if (currentIndex == 2 && fragment instanceof FragArtistas) {
+                return fragment;
+            }
         }
 
-        Fragment nuevo = crearFragmentPorTipo(tipoSeleccionado);
-        if (nuevo == null) {
-            return;
-        }
-
-        cargarFragment(nuevo, tipoSeleccionado, "asegurarTabActualCargado:" + motivo);
-        currentTipoId = tipoSeleccionado;
-        if (segmentContainer != null) {
-            segmentContainer.post(() -> moverIndicadorTipo(currentTipoId, false));
-        }
-        actualizarVisibilidadBotonFiltros();
-        logInit("asegurarTabActualCargado(" + motivo + ") -> recargado "
-                + nuevo.getClass().getSimpleName());
-    }
-
-    private boolean coincideFragmentConTipo(@Nullable Fragment fragment, int tipoId) {
-        if (fragment == null) {
-            return false;
-        }
-        if (tipoId == R.id.btnSegmentObras) {
-            return fragment instanceof FragArte;
-        }
-        if (tipoId == R.id.btnSegmentServicios) {
-            return fragment instanceof FragServicios;
-        }
-        if (tipoId == R.id.btnSegmentArtistas) {
-            return fragment instanceof FragArtistas;
-        }
-        return false;
+        return null;
     }
 
     private void aplicarTemaSelector() {
@@ -707,6 +567,12 @@ public class FragExplorar extends Fragment {
         return 0;
     }
 
+    private int tipoForIndex(int index) {
+        if (index == 1) return R.id.btnSegmentServicios;
+        if (index == 2) return R.id.btnSegmentArtistas;
+        return R.id.btnSegmentObras;
+    }
+
     private int dpToPx(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }
@@ -724,11 +590,6 @@ public class FragExplorar extends Fragment {
         if (btnSegmentArtistas != null) {
             btnSegmentArtistas.setTextColor(currentTipoId == R.id.btnSegmentArtistas ? selected : unselected);
         }
-    }
-
-    @NonNull
-    private String nombreFragment(@Nullable Fragment fragment) {
-        return fragment == null ? "null" : fragment.getClass().getSimpleName();
     }
 
     private boolean fragmentActualSoportaFiltros() {
@@ -756,6 +617,39 @@ public class FragExplorar extends Fragment {
                 && context.getApplicationInfo() != null
                 && (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
             Log.d(TAG_INIT, message);
+        }
+    }
+
+    private static class ExplorarPagerAdapter extends FragmentStateAdapter {
+        private final SparseArray<Fragment> fragmentsByPosition = new SparseArray<>();
+
+        ExplorarPagerAdapter(@NonNull Fragment fragment) {
+            super(fragment);
+        }
+
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
+            Fragment fragment;
+            if (position == 1) {
+                fragment = new FragServicios();
+            } else if (position == 2) {
+                fragment = new FragArtistas();
+            } else {
+                fragment = new FragArte();
+            }
+            fragmentsByPosition.put(position, fragment);
+            return fragment;
+        }
+
+        @Override
+        public int getItemCount() {
+            return 3;
+        }
+
+        @Nullable
+        Fragment getFragmentForPosition(int position) {
+            return fragmentsByPosition.get(position);
         }
     }
 }

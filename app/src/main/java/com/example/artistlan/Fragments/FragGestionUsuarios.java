@@ -137,6 +137,14 @@ public class FragGestionUsuarios extends Fragment {
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.GONE);
+        }
+    }
+
     private void reiniciarYCargarPrimeraPagina() {
         if (pendingSearchRunnable != null) {
             searchHandler.removeCallbacks(pendingSearchRunnable);

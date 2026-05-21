@@ -106,6 +106,14 @@ public class FragGestionConvocatorias extends Fragment {
         if (menuInferior != null) menuInferior.setVisibility(View.VISIBLE);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (menuInferior != null) {
+            menuInferior.setVisibility(View.GONE);
+        }
+    }
+
     private void cargarConvocatorias() {
         mostrarLoading(true);
         convocatoriaApi.getConvocatorias().enqueue(new Callback<List<ConvocatoriaDTO>>() {

@@ -259,9 +259,9 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             holder.precio.setText("");
         } else {
             holder.precio.setVisibility(View.VISIBLE);
-            holder.precio.setText(obra.getPrecio() != null
+            holder.precio.setText(obra.getPrecio() != null && obra.getPrecio() > 0
                     ? "Precio: $ " + String.format(Locale.getDefault(), "%,.2f", obra.getPrecio())
-                    : "Precio: N/A");
+                    : "Sin precio");
         }
     }
 
@@ -720,6 +720,9 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     }
 
     private boolean debeOcultarPrecio(TarjetaTextoObraItem obra) {
+        if (modoTarjeta == ModoTarjetaObra.EXPLORAR) {
+            return false;
+        }
         if (obra == null || obra.getEstado() == null) {
             return false;
         }

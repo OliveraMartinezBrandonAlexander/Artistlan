@@ -174,6 +174,16 @@
                 android:textColor="@color/artistlan_text_primary"
                 android:textSize="12sp" />
 
+            <Button
+                android:id="@+id/btnSolicitarCompraCarrusel"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_btn_bubble_glass_primary"
+                android:text="Solicitar compra"
+                android:textAllCaps="false"
+                android:visibility="gone" />
+
         </LinearLayout>
 
     </LinearLayout>

@@ -7,6 +7,7 @@ import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -23,6 +24,8 @@ import com.example.artistlan.Conector.api.ServicioApi;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
@@ -42,6 +45,7 @@ public class FragMisServicios extends Fragment {
 
     private static final long LIKE_THROTTLE_MS = 500L;
     private RecyclerView recyclerMisServicios;
+    private TextView tvEmptyMisServicios;
     private TarjetaTextoServicioAdapter adapter;
     private FavoritosApi favoritosApi;
     private int idUsuarioLogueado = -1;
@@ -64,7 +68,10 @@ public class FragMisServicios extends Fragment {
         ThemeModuleStyler.styleFragment(this, view);
 
         recyclerMisServicios = view.findViewById(R.id.recyclerMisServicios);
+        tvEmptyMisServicios = view.findViewById(R.id.tvEmptyMisServicios);
         recyclerMisServicios.setLayoutManager(new LinearLayoutManager(requireContext()));
+        ThemeApplier.applyTextPrimary(view.findViewById(R.id.tvTituloMisServicios), new ThemeManager(requireContext()));
+        ThemeApplier.applyTextSecondary(tvEmptyMisServicios, new ThemeManager(requireContext()));
         adapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
         adapter.setCurrentUserId(idUsuarioLogueado);
         adapter.setOnLikeClickListener(this::toggleLikeServicio);
@@ -292,6 +299,7 @@ public class FragMisServicios extends Fragment {
                 }
                 if (response.code() == 204) {
                     adapter.actualizarLista(new ArrayList<>());
+                    actualizarEstadoVacio(true);
                     return;
                 }
                 if (!response.isSuccessful() || response.body() == null) {
@@ -301,11 +309,13 @@ public class FragMisServicios extends Fragment {
                 List<ServicioDTO> dtos = response.body();
                 if (dtos.isEmpty()) {
                     adapter.actualizarLista(new ArrayList<>());
+                    actualizarEstadoVacio(true);
                     return;
                 }
                 cargarFavoritosServiciosDeUsuario(serviciosFavoritos -> {
                     List<TarjetaTextoServicioItem> items = convertirDTOaItem(dtos, serviciosFavoritos);
                     adapter.actualizarLista(items);
+                    actualizarEstadoVacio(items.isEmpty());
                     refreshLikeCounts(items);
                 });
             }
@@ -342,5 +352,13 @@ public class FragMisServicios extends Fragment {
                 callback.onResult(new HashSet<>());
                 }
         });
+    }
+
+    private void actualizarEstadoVacio(boolean mostrar) {
+        if (tvEmptyMisServicios == null || recyclerMisServicios == null) {
+            return;
+        }
+        tvEmptyMisServicios.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        recyclerMisServicios.setVisibility(mostrar ? View.GONE : View.VISIBLE);
     }
 }

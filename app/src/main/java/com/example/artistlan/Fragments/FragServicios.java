@@ -160,7 +160,6 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
         adapter.setCurrentUserId(idUsuarioLogueado);
         adapter.setOnLikeClickListener(this::toggleLikeServicio);
         adapter.setOnAuthorClickListener(this::abrirPerfilPublico);
-        adapter.setOnCardClickListener(this::abrirPerfilPublico);
         recyclerServicios.setAdapter(adapter);
         ThemeManager tm = new ThemeManager(requireContext());
         ThemeApplier.applySecondaryButton(btnCargarMasServicios, tm);

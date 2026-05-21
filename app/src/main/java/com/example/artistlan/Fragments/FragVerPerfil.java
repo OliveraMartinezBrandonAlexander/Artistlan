@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -73,6 +75,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private ImageButton btnEditarPefil;
     private CardView cardPerfilInfo;
     private View expandedSectionPerfil;
+    private NestedScrollView scrollPerfil;
     private RecyclerView recyclerFavoritos;
     private TabLayout tabFavoritos;
     private Button btnDesactivar2FA;
@@ -97,6 +100,9 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private long ultimoRefreshFavoritosMs = 0L;
     private int selectedTabIndex = 0;
     private int ultimoTabFavoritosCargado = -1;
+    private float swipeStartX = 0f;
+    private float swipeStartY = 0f;
+    private boolean swipeHorizontalDetectado = false;
     private final Set<String> favoritosEnCurso = new HashSet<>();
 
     @Override
@@ -125,6 +131,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         cardPerfilInfo = view.findViewById(R.id.cardPerfilInfo);
         expandedSectionPerfil = view.findViewById(R.id.expanded_section_perfil);
         cardPerfilInfo.setOnClickListener(v -> toggleFicha());
+        scrollPerfil = view.findViewById(R.id.scrollPerfil);
 
         btnEditarPefil = view.findViewById(R.id.btnEditarPefil);
         btnEditarPefil.setOnClickListener(this);
@@ -158,6 +165,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         artistaAdapter.setOnVisitarClickListener(this::abrirPerfilPublicoDesdeFavoritos);
 
         setupTabs();
+        configurarSwipeFavoritos();
         cargarDatosUsuario();
         selectedTabIndex = obtenerTabFavoritosPersistido();
         restaurarTabFavoritos();
@@ -200,6 +208,67 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 solicitarCargaFavoritos(selectedTabIndex, false);
             }
         });
+    }
+
+    private void configurarSwipeFavoritos() {
+        View.OnTouchListener swipeListener = (v, event) -> manejarSwipeFavoritos(event);
+        if (scrollPerfil != null) {
+            scrollPerfil.setOnTouchListener(swipeListener);
+        }
+        if (recyclerFavoritos != null) {
+            recyclerFavoritos.setOnTouchListener(swipeListener);
+        }
+    }
+
+    private boolean manejarSwipeFavoritos(@NonNull MotionEvent event) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                swipeStartX = event.getX();
+                swipeStartY = event.getY();
+                swipeHorizontalDetectado = false;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                float moveDx = event.getX() - swipeStartX;
+                float moveDy = event.getY() - swipeStartY;
+                if (Math.abs(moveDx) > dpToPx(28) && Math.abs(moveDx) > Math.abs(moveDy) * 1.35f) {
+                    swipeHorizontalDetectado = true;
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                float dx = event.getX() - swipeStartX;
+                float dy = event.getY() - swipeStartY;
+                if (Math.abs(dx) > dpToPx(72) && Math.abs(dx) > Math.abs(dy) * 1.35f) {
+                    seleccionarTabFavoritosPorSwipe(dx < 0 ? 1 : -1);
+                    swipeHorizontalDetectado = false;
+                    return true;
+                }
+                swipeHorizontalDetectado = false;
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                swipeHorizontalDetectado = false;
+                break;
+            default:
+                break;
+        }
+        return swipeHorizontalDetectado;
+    }
+
+    private void seleccionarTabFavoritosPorSwipe(int direccion) {
+        if (tabFavoritos == null || tabFavoritos.getTabCount() == 0) {
+            return;
+        }
+        int actual = tabFavoritos.getSelectedTabPosition();
+        if (actual < 0) {
+            actual = selectedTabIndex;
+        }
+        int destino = clampTabIndex(actual + direccion);
+        if (destino == actual) {
+            return;
+        }
+        TabLayout.Tab tab = tabFavoritos.getTabAt(destino);
+        if (tab != null) {
+            tab.select();
+        }
     }
 
     private void aplicarTemaTabsFavoritos() {

@@ -19,32 +19,53 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:paddingTop="102dp"
             app:layout_scrollFlags="scroll|enterAlways">
 
-
-
             <FrameLayout
+                android:id="@+id/segmentContainerPortafolio"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="46dp"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="8dp"
-                android:background="@drawable/bg_centro_tabs_container"
+                android:background="@drawable/bg_segment_container"
                 android:padding="4dp">
 
-                <com.google.android.material.tabs.TabLayout
-                    android:id="@+id/tabLayoutPortafolio"
+                <View
+                    android:id="@+id/segmentIndicatorPortafolio"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_segment_indicator" />
+
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-                    app:tabBackground="@drawable/bg_centro_tab_item"
-                    app:tabIndicatorColor="@android:color/transparent"
-                    app:tabIndicatorHeight="0dp"
-                    app:tabGravity="fill"
-                    app:tabMode="fixed"
-                    app:tabRippleColor="@color/artistlan_menu_accent_soft"
-                    app:tabSelectedTextColor="@color/artistlan_menu_text_primary"
-                    app:tabTextColor="@color/artistlan_menu_text_secondary" />
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnSegmentMisObras"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:gravity="center"
+                        android:text="Mis Obras"
+                        android:textAllCaps="false"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnSegmentMisServicios"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:gravity="center"
+                        android:text="Mis Servicios"
+                        android:textAllCaps="false"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
             </FrameLayout>
 
         </LinearLayout>
@@ -64,7 +85,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="108dp"
         app:fab_addButtonColorNormal="@color/GRIS"
         app:fab_addButtonColorPressed="@color/GRIS"
         app:fab_labelStyle="@style/CustomFabLabelStyle">

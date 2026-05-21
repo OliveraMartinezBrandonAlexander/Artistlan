@@ -18,6 +18,7 @@ public class ObraCarruselItem {
     private String medidas;
     private Double precio;
     private String tipoArte;
+    private boolean puedeSolicitarCompra;
 
     // 1) Dummy (sin URLs)
     public ObraCarruselItem(int imagen, String titulo, String descripcion, String autor, String likes) {
@@ -80,4 +81,6 @@ public class ObraCarruselItem {
     public void setPrecio(Double precio) { this.precio = precio; }
     public String getTipoArte() { return tipoArte; }
     public void setTipoArte(String tipoArte) { this.tipoArte = tipoArte; }
+    public boolean isPuedeSolicitarCompra() { return puedeSolicitarCompra; }
+    public void setPuedeSolicitarCompra(boolean puedeSolicitarCompra) { this.puedeSolicitarCompra = puedeSolicitarCompra; }
 }

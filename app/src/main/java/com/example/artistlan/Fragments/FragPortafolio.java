@@ -1,9 +1,11 @@
 package com.example.artistlan.Fragments;
 
 import android.os.Bundle;
+import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -13,19 +15,22 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
-// Importaciones de la nueva biblioteca
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
 
 public class FragPortafolio extends Fragment {
 
-    private TabLayout tabLayout;
     private ViewPager2 viewPager;
+    private View segmentContainer;
+    private View segmentIndicator;
+    private Button btnSegmentMisObras;
+    private Button btnSegmentMisServicios;
     private FloatingActionsMenu fabMenu;
     private FloatingActionButton fabSubirObra, fabSubirServicio;
+    private ThemeManager themeManager;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -37,20 +42,22 @@ public class FragPortafolio extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ThemeModuleStyler.styleFragment(this, view);
+        themeManager = new ThemeManager(requireContext());
 
         new com.example.artistlan.BotonesMenuSuperior(this);
 
-        tabLayout = view.findViewById(R.id.tabLayoutPortafolio);
         viewPager = view.findViewById(R.id.viewPagerPortafolio);
+        segmentContainer = view.findViewById(R.id.segmentContainerPortafolio);
+        segmentIndicator = view.findViewById(R.id.segmentIndicatorPortafolio);
+        btnSegmentMisObras = view.findViewById(R.id.btnSegmentMisObras);
+        btnSegmentMisServicios = view.findViewById(R.id.btnSegmentMisServicios);
         fabMenu = view.findViewById(R.id.fabMenuSubir);
         fabSubirObra = view.findViewById(R.id.fabSubirObraMenu);
         fabSubirServicio = view.findViewById(R.id.fabSubirServicioMenu);
 
         viewPager.setAdapter(new PortafolioPagerAdapter(this));
-
-        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
-            tab.setText(position == 0 ? "MIS OBRAS" : "MIS SERVICIOS");
-        }).attach();
+        aplicarTemaSelector();
+        configurarSelector();
 
         fabSubirObra.setOnClickListener(v -> {
             Navigation.findNavController(view).navigate(R.id.fragSubirObra);
@@ -61,6 +68,84 @@ public class FragPortafolio extends Fragment {
             Navigation.findNavController(view).navigate(R.id.fragSubirServicio);
             fabMenu.collapse();
         });
+    }
+
+    private void configurarSelector() {
+        btnSegmentMisObras.setOnClickListener(v -> seleccionarSeccion(0, true));
+        btnSegmentMisServicios.setOnClickListener(v -> seleccionarSeccion(1, true));
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                seleccionarSeccion(position, false);
+            }
+        });
+        segmentContainer.post(() -> seleccionarSeccion(viewPager.getCurrentItem(), false));
+    }
+
+    private void seleccionarSeccion(int position, boolean desdeClick) {
+        int clampedPosition = Math.max(0, Math.min(1, position));
+        if (desdeClick && viewPager.getCurrentItem() != clampedPosition) {
+            viewPager.setCurrentItem(clampedPosition, true);
+        }
+        moverIndicador(clampedPosition, true);
+        aplicarEstadoBotones(clampedPosition);
+    }
+
+    private void aplicarTemaSelector() {
+        if (themeManager == null) {
+            return;
+        }
+        if (segmentContainer != null && segmentContainer.getBackground() != null) {
+            segmentContainer.getBackground().setColorFilter(
+                    themeManager.color(ThemeKeys.ACCOUNT_GLASS_PANEL),
+                    PorterDuff.Mode.SRC_ATOP
+            );
+        }
+        if (segmentIndicator != null && segmentIndicator.getBackground() != null) {
+            segmentIndicator.getBackground().setColorFilter(
+                    themeManager.color(ThemeKeys.ACCENT_PRIMARY),
+                    PorterDuff.Mode.SRC_ATOP
+            );
+        }
+        aplicarEstadoBotones(viewPager != null ? viewPager.getCurrentItem() : 0);
+    }
+
+    private void aplicarEstadoBotones(int position) {
+        if (themeManager == null) {
+            return;
+        }
+        int selected = themeManager.color(ThemeKeys.TEXT_PRIMARY);
+        int unselected = themeManager.color(ThemeKeys.TEXT_SECONDARY);
+        if (btnSegmentMisObras != null) {
+            btnSegmentMisObras.setTextColor(position == 0 ? selected : unselected);
+        }
+        if (btnSegmentMisServicios != null) {
+            btnSegmentMisServicios.setTextColor(position == 1 ? selected : unselected);
+        }
+    }
+
+    private void moverIndicador(int position, boolean animar) {
+        if (segmentContainer == null || segmentIndicator == null) {
+            return;
+        }
+        int width = segmentContainer.getWidth();
+        if (width <= 0) {
+            return;
+        }
+        int innerWidth = width - segmentContainer.getPaddingLeft() - segmentContainer.getPaddingRight();
+        int segmentWidth = innerWidth / 2;
+        float targetX = segmentContainer.getPaddingLeft() + (segmentWidth * position);
+        ViewGroup.LayoutParams params = segmentIndicator.getLayoutParams();
+        if (params.width != segmentWidth) {
+            params.width = segmentWidth;
+            segmentIndicator.setLayoutParams(params);
+        }
+        segmentIndicator.animate().cancel();
+        if (animar) {
+            segmentIndicator.animate().x(targetX).setDuration(220).start();
+        } else {
+            segmentIndicator.setX(targetX);
+        }
     }
 
     private static class PortafolioPagerAdapter extends FragmentStateAdapter {

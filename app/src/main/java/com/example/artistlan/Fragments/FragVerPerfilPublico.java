@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.widget.NestedScrollView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
@@ -75,9 +76,13 @@ public class FragVerPerfilPublico extends Fragment {
     private TextView btnTabServicios;
     private Button btnReportarUsuario;
     private RecyclerView recyclerPublico;
+    private NestedScrollView scrollPerfilPublico;
 
     private boolean expandido = false;
     private boolean mostrandoObras = true;
+    private float swipeStartX = 0f;
+    private float swipeStartY = 0f;
+    private boolean swipeHorizontalDetectado = false;
     private int idUsuarioLogueado = -1;
     private int idArtista = -1;
     private String rolUsuarioLogueado = "";
@@ -140,6 +145,7 @@ public class FragVerPerfilPublico extends Fragment {
         btnTabServicios = root.findViewById(R.id.btnTabServicios);
         btnReportarUsuario = root.findViewById(R.id.btnReportarUsuarioPublico);
         recyclerPublico = root.findViewById(R.id.recyclerPublico);
+        scrollPerfilPublico = root.findViewById(R.id.scrollPerfilPublico);
         tvVacio = root.findViewById(R.id.tvPublicoVacio);
     }
 
@@ -477,6 +483,9 @@ public class FragVerPerfilPublico extends Fragment {
     private void setupExpandCollapse() {
         cardPerfil.setOnClickListener(v -> toggleExpand());
         root.setOnTouchListener((v, event) -> {
+            if (manejarSwipeSecciones(event)) {
+                return true;
+            }
             if (event.getAction() == MotionEvent.ACTION_DOWN && expandido) {
                 Rect rect = new Rect();
                 cardPerfil.getGlobalVisibleRect(rect);
@@ -487,6 +496,13 @@ public class FragVerPerfilPublico extends Fragment {
             }
             return false;
         });
+        View.OnTouchListener swipeListener = (v, event) -> manejarSwipeSecciones(event);
+        if (scrollPerfilPublico != null) {
+            scrollPerfilPublico.setOnTouchListener(swipeListener);
+        }
+        if (recyclerPublico != null) {
+            recyclerPublico.setOnTouchListener(swipeListener);
+        }
     }
 
     private void toggleExpand() {
@@ -529,6 +545,47 @@ public class FragVerPerfilPublico extends Fragment {
                 mostrarServicios();
             }
         });
+    }
+
+    private boolean manejarSwipeSecciones(@NonNull MotionEvent event) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                swipeStartX = event.getX();
+                swipeStartY = event.getY();
+                swipeHorizontalDetectado = false;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                float moveDx = event.getX() - swipeStartX;
+                float moveDy = event.getY() - swipeStartY;
+                if (Math.abs(moveDx) > dpToPx(28) && Math.abs(moveDx) > Math.abs(moveDy) * 1.35f) {
+                    swipeHorizontalDetectado = true;
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                float dx = event.getX() - swipeStartX;
+                float dy = event.getY() - swipeStartY;
+                if (Math.abs(dx) > dpToPx(72) && Math.abs(dx) > Math.abs(dy) * 1.35f) {
+                    if (dx < 0 && mostrandoObras) {
+                        mostrarServicios();
+                    } else if (dx > 0 && !mostrandoObras) {
+                        mostrarObras();
+                    }
+                    swipeHorizontalDetectado = false;
+                    return true;
+                }
+                swipeHorizontalDetectado = false;
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                swipeHorizontalDetectado = false;
+                break;
+            default:
+                break;
+        }
+        return swipeHorizontalDetectado;
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     private void aplicarTemaTabsPublicos() {

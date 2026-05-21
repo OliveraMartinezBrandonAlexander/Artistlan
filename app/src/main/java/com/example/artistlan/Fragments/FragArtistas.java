@@ -155,7 +155,6 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
         adapter.setCurrentUserId(idUsuarioLogueado);
         adapter.setOnLikeClickListener(this::toggleLikeArtista);
         adapter.setOnVisitarClickListener(this::abrirPerfilPublico);
-        adapter.setOnCardClickListener(this::abrirPerfilPublico);
         recyclerViewArtistas.setAdapter(adapter);
 
         if (btnCargarMasArtistas != null) {

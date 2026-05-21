@@ -180,6 +180,15 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         boolean esPerfilPropio = artista.getIdArtista() != null
                 && currentUserId != null
                 && artista.getIdArtista().equals(currentUserId);
+        View.OnClickListener visitarPerfilListener = v -> {
+            int adapterPosition = holder.getAdapterPosition();
+            if (onVisitarClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                onVisitarClickListener.onVisitarClick(listaArtistas.get(adapterPosition), adapterPosition);
+            } else {
+                Toast.makeText(context, "Perfil no disponible", Toast.LENGTH_SHORT).show();
+            }
+        };
+        holder.imgPerfil.setOnClickListener(visitarPerfilListener);
         holder.btnVisitar.setVisibility(esPerfilPropio ? View.GONE : View.VISIBLE);
         holder.btnVisitar.setEnabled(!esPerfilPropio);
 
@@ -187,12 +196,7 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             if (esPerfilPropio) {
                 return;
             }
-            int adapterPosition = holder.getAdapterPosition();
-            if (onVisitarClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
-                onVisitarClickListener.onVisitarClick(listaArtistas.get(adapterPosition), adapterPosition);
-            } else {
-                Toast.makeText(context, "Perfil no disponible", Toast.LENGTH_SHORT).show();
-            }
+            visitarPerfilListener.onClick(v);
         });
     }
 

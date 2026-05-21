@@ -3,23 +3,47 @@
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:paddingStart="12dp"
+    android:paddingTop="104dp"
+    android:paddingEnd="12dp"
+    android:paddingBottom="112dp">
 
     <TextView
         android:id="@+id/tvTituloMiArte"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center"
         android:text="Mis obras"
         android:textSize="22sp"
         android:textStyle="bold"
         android:padding="4dp"/>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerMiArte"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingTop="10dp"/>
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerMiArte"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="10dp"
+            android:paddingBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/tvEmptyMiArte"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="Todavía no has publicado obras. Comparte tu primera creación con la comunidad."
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+    </FrameLayout>
 
 </LinearLayout>

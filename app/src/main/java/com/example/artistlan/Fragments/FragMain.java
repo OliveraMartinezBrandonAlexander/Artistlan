@@ -65,6 +65,7 @@ public class FragMain extends Fragment {
     private static final long LIKE_THROTTLE_MS = 500L;
     private static final int CARRUSEL_HEIGHT_COLLAPSED_DP = 410;
     private static final int CARRUSEL_HEIGHT_EXPANDED_DP = 610;
+    private static final int CARRUSEL_MAX_OBRAS = 15;
 
     private NestedScrollView scrollContenido;
     private ViewPager2 viewPager;
@@ -227,6 +228,7 @@ public class FragMain extends Fragment {
         carruselItems.add(new ObraCarruselItem(R.drawable.pin3, "Obra 3", "Descripción 3", "Wonder Woman", ""));
 
         carruselAdapter = new CarruselAdapter(carruselItems, requireContext());
+        carruselAdapter.setCurrentUserId(resolveCurrentUserIdForActions());
         carruselAdapter.setOnCarruselActionListener(new CarruselAdapter.OnCarruselActionListener() {
             @Override
             public void onLike(ObraCarruselItem item, int position) {
@@ -236,6 +238,11 @@ public class FragMain extends Fragment {
             @Override
             public void onAuthor(ObraCarruselItem item, int position) {
                 abrirPerfilPublico(item.getIdAutor());
+            }
+
+            @Override
+            public void onSolicitarCompra(ObraCarruselItem item, int position) {
+                solicitarCompraCarrusel(item);
             }
 
             @Override
@@ -408,6 +415,7 @@ public class FragMain extends Fragment {
                 false
         );
         mapped.setIdAutor(item.getIdAutor());
+        mapped.setPuedeSolicitarCompra(item.isPuedeSolicitarCompra());
         return mapped;
     }
 
@@ -526,11 +534,13 @@ public class FragMain extends Fragment {
             }
 
             if (!bloqueObras.isEmpty()) {
-                bloques.add(new TarjetaTextoObraAdapter(
+                TarjetaTextoObraAdapter obraAdapter = new TarjetaTextoObraAdapter(
                         bloqueObras,
                         requireContext(),
                         ModoTarjetaObra.EXPLORAR
-                ));
+                );
+                obraAdapter.setOwnedObraIds(resolveOwnedObraIds(bloqueObras), false);
+                bloques.add(obraAdapter);
             }
 
             if (idxServicio < servicios.size()) {
@@ -562,7 +572,7 @@ public class FragMain extends Fragment {
                 obraFeedAdapters.add(obraAdapter);
                 obraAdapter.setOnAuthorClickListener((obraItem, position) -> abrirPerfilPublico(obraItem.getIdAutor()));
                 obraAdapter.setOnLikeClickListener((obraItem, position) -> toggleLikeObraEnFeed(obraItem, position, obraAdapter));
-                obraAdapter.setOnPrimaryActionClickListener((obraItem, position) -> abrirDetalleObra(obraItem.getIdObra()));
+                obraAdapter.setOnPrimaryActionClickListener((obraItem, position) -> solicitarCompraHome(obraItem, obraAdapter));
             }
             if (adapter instanceof TarjetaTextoServicioAdapter) {
                 TarjetaTextoServicioAdapter servicioAdapter = (TarjetaTextoServicioAdapter) adapter;
@@ -622,10 +632,31 @@ public class FragMain extends Fragment {
             );
 
             item.setIdAutor(dto.getIdUsuario());
+            item.setEditable(!Boolean.FALSE.equals(dto.getEditable()));
+            item.setEliminable(!Boolean.FALSE.equals(dto.getEliminable()));
+            item.setPuedeSolicitarCompra(Boolean.TRUE.equals(dto.getPuedeSolicitarCompra()));
             items.add(item);
         }
 
         return items;
+    }
+
+    @NonNull
+    private Set<Integer> resolveOwnedObraIds(@NonNull List<TarjetaTextoObraItem> obras) {
+        Set<Integer> owned = new HashSet<>();
+        Integer currentUserId = ReporteUiPermissions.resolveCurrentUserId(requireContext());
+        if (currentUserId == null || currentUserId <= 0) {
+            return owned;
+        }
+        for (TarjetaTextoObraItem item : obras) {
+            if (item != null
+                    && item.getIdObra() > 0
+                    && item.getIdAutor() != null
+                    && item.getIdAutor().equals(currentUserId)) {
+                owned.add(item.getIdObra());
+            }
+        }
+        return owned;
     }
 
     @NonNull
@@ -754,16 +785,16 @@ public class FragMain extends Fragment {
                 }
 
                 List<ObraDTO> copia = new ArrayList<>(response.body());
-                Collections.shuffle(copia);
+                copia.sort((a, b) -> Integer.compare(resolveLikeState(b).getLikesCount(), resolveLikeState(a).getLikesCount()));
 
-                int reemplazos = Math.min(3, Math.min(copia.size(), obras.size()));
+                int totalCarrusel = Math.min(CARRUSEL_MAX_OBRAS, copia.size());
+                obras.clear();
 
-                for (int i = 0; i < reemplazos; i++) {
+                for (int i = 0; i < totalCarrusel; i++) {
                     ObraDTO dto = copia.get(i);
-                    ObraCarruselItem itemActual = obras.get(i);
 
                     ObraCarruselItem mapped = new ObraCarruselItem(
-                            itemActual.getImagen(),
+                            imagenPlaceholderCarrusel(i),
                             dto.getImagen1(),
                             dto.getTitulo(),
                             dto.getDescripcion(),
@@ -781,10 +812,15 @@ public class FragMain extends Fragment {
                     mapped.setMedidas(dto.getMedidas());
                     mapped.setPrecio(dto.getPrecio());
                     mapped.setTipoArte(dto.getNombreCategoria());
-                    obras.set(i, mapped);
+                    mapped.setPuedeSolicitarCompra(Boolean.TRUE.equals(dto.getPuedeSolicitarCompra()));
+                    obras.add(mapped);
                 }
 
                 adapter.notifyDataSetChanged();
+                if (viewPager != null && !obras.isEmpty() && viewPager.getCurrentItem() >= obras.size()) {
+                    viewPager.setCurrentItem(0, false);
+                }
+                iniciarAutoCarrusel(obras.size());
             }
 
             @Override
@@ -827,6 +863,19 @@ public class FragMain extends Fragment {
         }
         // No existe un fragment de detalle exclusivo de obra en el grafo; se reutiliza perfil público del autor.
         Toast.makeText(requireContext(), "Detalle completo no disponible en Home aún", Toast.LENGTH_SHORT).show();
+    }
+
+    private void solicitarCompraHome(@Nullable TarjetaTextoObraItem obraItem, @NonNull TarjetaTextoObraAdapter adapter) {
+        if (obraItem == null || solicitudesApi == null || !isAdded()) {
+            return;
+        }
+        SolicitudCompraUiHelper.mostrarDialogoSolicitudCompra(
+                this,
+                resolveCurrentUserIdForActions(),
+                solicitudesApi,
+                obraItem,
+                () -> adapter.notifyDataSetChanged()
+        );
     }
 
     private boolean puedeProcesarLikeObra(int idObra) {
@@ -1127,6 +1176,17 @@ public class FragMain extends Fragment {
                 adapter.notifyLikeChanged(position);
             }
         });
+    }
+
+    private int imagenPlaceholderCarrusel(int position) {
+        int index = Math.floorMod(position, 3);
+        if (index == 1) {
+            return R.drawable.pin2;
+        }
+        if (index == 2) {
+            return R.drawable.pin3;
+        }
+        return R.drawable.pin1;
     }
 
     private void syncCarruselLikeState(int idObra, boolean liked, int likesCount) {

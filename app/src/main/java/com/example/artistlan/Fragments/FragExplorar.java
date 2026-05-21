@@ -48,6 +48,7 @@ public class FragExplorar extends Fragment {
     private static final String TAG_INIT = "ExplorarInitDebug";
     private static final boolean ENABLE_EXPLORAR_DEBUG_LOGS = false;
     private static final long MIN_REPLACE_INTERVAL_MS = 450L;
+    private static final long SWIPE_NAV_DEBOUNCE_MS = 320L;
     private static final int MENU_GROUP_FILTERS = 100;
     private static final int MENU_ID_CLEAR_FILTERS = 1000;
 
@@ -64,10 +65,12 @@ public class FragExplorar extends Fragment {
     private int currentTipoId = View.NO_ID;
     private int lastLoadedTipoId = View.NO_ID;
     private long lastReplaceTimestampMs = 0L;
+    private long lastSwipeNavigationMs = 0L;
     private boolean ignorarEventosBusqueda = false;
     private ThemeManager themeManager;
     private float swipeStartX = 0f;
     private float swipeStartY = 0f;
+    private boolean swipeHorizontalDetectado = false;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -102,6 +105,7 @@ public class FragExplorar extends Fragment {
         logInit("onViewCreated -> currentTipoId=" + currentTipoId
                 + ", fragmentActual=" + nombreFragment(obtenerFragmentActual()));
         asegurarTabActualCargado("onViewCreated");
+        view.post(this::restaurarUiFiltros);
     }
 
     @Override
@@ -110,6 +114,10 @@ public class FragExplorar extends Fragment {
         logInit("onResume -> currentTipoId=" + currentTipoId
                 + ", fragmentActual=" + nombreFragment(obtenerFragmentActual()));
         asegurarTabActualCargado("onResume");
+        View view = getView();
+        if (view != null) {
+            view.post(this::restaurarUiFiltros);
+        }
     }
 
     private void configurarBuscador() {
@@ -168,8 +176,12 @@ public class FragExplorar extends Fragment {
     private void configurarBotonFiltros() {
         if (btnFiltros == null) return;
 
+        btnFiltros.animate().cancel();
         btnFiltros.setVisibility(View.GONE);
         btnFiltros.setAlpha(0f);
+        btnFiltros.setTranslationX(0f);
+        btnFiltros.setScaleX(1f);
+        btnFiltros.setScaleY(1f);
         btnFiltros.setOnClickListener(v -> mostrarMenuFiltros());
     }
 
@@ -246,7 +258,14 @@ public class FragExplorar extends Fragment {
     }
 
     private void mostrarBotonFiltros(boolean mostrar) {
-        if (btnFiltros == null || filtrosVisibles == mostrar) {
+        if (btnFiltros == null) {
+            return;
+        }
+
+        btnFiltros.animate().cancel();
+
+        if (filtrosVisibles == mostrar) {
+            aplicarEstadoFinalBotonFiltros(mostrar);
             return;
         }
 
@@ -366,18 +385,36 @@ public class FragExplorar extends Fragment {
                 case MotionEvent.ACTION_DOWN:
                     swipeStartX = event.getX();
                     swipeStartY = event.getY();
+                    swipeHorizontalDetectado = false;
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    float moveDx = event.getX() - swipeStartX;
+                    float moveDy = event.getY() - swipeStartY;
+                    if (Math.abs(moveDx) > dpToPx(28) && Math.abs(moveDx) > Math.abs(moveDy) * 1.35f) {
+                        swipeHorizontalDetectado = true;
+                    }
                     break;
                 case MotionEvent.ACTION_UP:
                     float dx = event.getX() - swipeStartX;
                     float dy = event.getY() - swipeStartY;
-                    if (Math.abs(dx) > dpToPx(72) && Math.abs(dx) > Math.abs(dy) * 1.35f) {
+                    long now = SystemClock.elapsedRealtime();
+                    if (Math.abs(dx) > dpToPx(72)
+                            && Math.abs(dx) > Math.abs(dy) * 1.35f
+                            && now - lastSwipeNavigationMs >= SWIPE_NAV_DEBOUNCE_MS) {
+                        lastSwipeNavigationMs = now;
                         seleccionarTipoPorDeslizamiento(dx < 0 ? 1 : -1);
+                        swipeHorizontalDetectado = false;
+                        return true;
                     }
+                    swipeHorizontalDetectado = false;
+                    break;
+                case MotionEvent.ACTION_CANCEL:
+                    swipeHorizontalDetectado = false;
                     break;
                 default:
                     break;
             }
-            return false;
+            return swipeHorizontalDetectado;
         };
         root.setOnTouchListener(listener);
         if (target != null) {
@@ -443,6 +480,17 @@ public class FragExplorar extends Fragment {
                 .start();
     }
 
+    private void aplicarEstadoFinalBotonFiltros(boolean mostrar) {
+        if (btnFiltros == null) {
+            return;
+        }
+        btnFiltros.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        btnFiltros.setAlpha(mostrar ? 1f : 0f);
+        btnFiltros.setTranslationX(0f);
+        btnFiltros.setScaleX(1f);
+        btnFiltros.setScaleY(1f);
+    }
+
     private void cerrarTeclado() {
         if (!isAdded()) return;
 
@@ -465,6 +513,10 @@ public class FragExplorar extends Fragment {
                 .beginTransaction()
                 .setReorderingAllowed(true)
                 .replace(R.id.fragmentContainerExplorar, fragment)
+                .runOnCommit(() -> {
+                    configurarDeslizamientoEnContenidoActual();
+                    restaurarUiFiltros();
+                })
                 .commit();
     }
 
@@ -480,6 +532,33 @@ public class FragExplorar extends Fragment {
 
     private void actualizarVisibilidadBotonFiltros() {
         mostrarBotonFiltros(fragmentActualSoportaFiltros());
+    }
+
+    private void restaurarUiFiltros() {
+        if (!isAdded()) {
+            return;
+        }
+        if (themeManager == null) {
+            themeManager = new ThemeManager(requireContext());
+        }
+        aplicarTemaSelector();
+        if (btnFiltros != null) {
+            btnFiltros.setOnClickListener(v -> mostrarMenuFiltros());
+        }
+        actualizarVisibilidadBotonFiltros();
+        if (currentTipoId != View.NO_ID && segmentContainer != null) {
+            segmentContainer.post(() -> moverIndicadorTipo(currentTipoId, false));
+        }
+        configurarDeslizamientoEnContenidoActual();
+    }
+
+    private void configurarDeslizamientoEnContenidoActual() {
+        Fragment fragmentActual = obtenerFragmentActual();
+        View fragmentView = fragmentActual != null ? fragmentActual.getView() : null;
+        if (fragmentView == null) {
+            return;
+        }
+        configurarDeslizamientoEntreTipos(fragmentView);
     }
 
     @Nullable

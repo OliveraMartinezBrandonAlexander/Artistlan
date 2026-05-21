@@ -167,7 +167,6 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         adapter.setOnLikeClickListener(this::toggleLikeObra);
         adapter.setOnPrimaryActionClickListener(this::agregarObraAlCarrito);
         adapter.setOnAuthorClickListener(this::abrirPerfilPublico);
-        adapter.setOnCardClickListener(this::abrirPerfilPublico);
         recyclerViewObras.setAdapter(adapter);
         if (btnCargarMasObras != null) {
             btnCargarMasObras.setOnClickListener(v -> {

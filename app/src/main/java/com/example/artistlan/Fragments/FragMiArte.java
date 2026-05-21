@@ -7,6 +7,7 @@ import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -23,6 +24,8 @@ import com.example.artistlan.Conector.api.ObraApi;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
 import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
@@ -43,6 +46,7 @@ public class FragMiArte extends Fragment {
 
     private static final long LIKE_THROTTLE_MS = 500L;
     private RecyclerView recyclerMisObras;
+    private TextView tvEmptyMiArte;
     private TarjetaTextoObraAdapter adapter;
     private FavoritosApi favoritosApi;
     private int idUsuarioLogueado = -1;
@@ -66,7 +70,10 @@ public class FragMiArte extends Fragment {
         ThemeModuleStyler.styleFragment(this, view);
 
         recyclerMisObras = view.findViewById(R.id.recyclerMiArte);
+        tvEmptyMiArte = view.findViewById(R.id.tvEmptyMiArte);
         recyclerMisObras.setLayoutManager(new LinearLayoutManager(requireContext()));
+        ThemeApplier.applyTextPrimary(view.findViewById(R.id.tvTituloMiArte), new ThemeManager(requireContext()));
+        ThemeApplier.applyTextSecondary(tvEmptyMiArte, new ThemeManager(requireContext()));
         adapter = new TarjetaTextoObraAdapter(new ArrayList<>(), requireContext(), ModoTarjetaObra.MIS_OBRAS);
         adapter.setOnLikeClickListener(this::toggleLikeObra);
         adapter.setOnEditClickListener(this::editarObra);
@@ -349,6 +356,7 @@ public class FragMiArte extends Fragment {
                 if (dtos == null || dtos.isEmpty()) {
                     adapter.actualizarLista(new ArrayList<>());
                     adapter.setOwnedObraIds(new HashSet<>());
+                    actualizarEstadoVacio(true);
                     return;
                 }
                 cargarFavoritosObrasDeUsuario(obrasFavoritas -> {
@@ -356,6 +364,7 @@ public class FragMiArte extends Fragment {
                     Set<Integer> ownedObraIds = extraerOwnedObraIds(dtos);
                     adapter.actualizarLista(items);
                     adapter.setOwnedObraIds(ownedObraIds);
+                    actualizarEstadoVacio(items.isEmpty());
                     refreshLikeCounts(items);
                 });
             }
@@ -367,6 +376,14 @@ public class FragMiArte extends Fragment {
                 }
             }
         });
+    }
+
+    private void actualizarEstadoVacio(boolean mostrar) {
+        if (tvEmptyMiArte == null || recyclerMisObras == null) {
+            return;
+        }
+        tvEmptyMiArte.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        recyclerMisObras.setVisibility(mostrar ? View.GONE : View.VISIBLE);
     }
     private interface FavoritosObrasCallback {
         void onResult(Set<Integer> obrasFavoritas);

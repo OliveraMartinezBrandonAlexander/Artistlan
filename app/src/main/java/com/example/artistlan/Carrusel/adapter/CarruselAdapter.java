@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -40,6 +41,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
     public interface OnCarruselActionListener {
         void onLike(ObraCarruselItem item, int position);
         void onAuthor(ObraCarruselItem item, int position);
+        void onSolicitarCompra(ObraCarruselItem item, int position);
         void onExpandedChanged(boolean expanded);
     }
 
@@ -47,6 +49,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
     private final Context context;
     private Long expandedItemKey;
     private OnCarruselActionListener onCarruselActionListener;
+    private Integer currentUserId;
 
     public CarruselAdapter(List<ObraCarruselItem> lista, Context context) {
         this.lista = lista;
@@ -54,6 +57,11 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
     }
     public void setOnCarruselActionListener(OnCarruselActionListener listener) {
         this.onCarruselActionListener = listener;
+    }
+
+    public void setCurrentUserId(Integer currentUserId) {
+        this.currentUserId = currentUserId;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -122,6 +130,16 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
             LikeUiHelper.animatePress(v);
             triggerLike(holder, false);
         });
+        holder.btnSolicitarCompraCarrusel.setOnClickListener(v -> {
+            LikeUiHelper.animatePress(v);
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (onCarruselActionListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                ObraCarruselItem selected = lista.get(adapterPosition);
+                if (puedeSolicitarCompra(selected)) {
+                    onCarruselActionListener.onSolicitarCompra(selected, adapterPosition);
+                }
+            }
+        });
     }
 
     @Override
@@ -173,6 +191,9 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         holder.layoutInfoExpandida.setVisibility(expanded ? View.VISIBLE : View.GONE);
         holder.tvDescripcion.setMaxLines(expanded ? 2 : 1);
         holder.tvInfoCompleta.setText(resolveInfoText(item, tm));
+        holder.btnSolicitarCompraCarrusel.setVisibility(
+                expanded && puedeSolicitarCompra(item) ? View.VISIBLE : View.GONE
+        );
         holder.layoutCarruselCard.animate().cancel();
         holder.layoutCarruselCard.animate()
                 .scaleX(1f)
@@ -319,6 +340,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         ThemeApplier.applyTextPrimary(holder.tvLikesCarrusel, tm);
         ThemeApplier.applyTextPrimary(holder.tvInfoCompleta, tm);
         ThemeApplier.applyTextSecondary(holder.tvDescripcion, tm);
+        ThemeApplier.applyPrimaryButton(holder.btnSolicitarCompraCarrusel, tm);
         if (holder.imgObra.getBackground() != null) {
             holder.imgObra.getBackground().setColorFilter(tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL), PorterDuff.Mode.SRC_ATOP);
         }
@@ -345,6 +367,40 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
             return "N/A";
         }
         return "$ " + String.format(Locale.getDefault(), "%,.2f", precio);
+    }
+
+    private boolean puedeSolicitarCompra(@NonNull ObraCarruselItem item) {
+        if (item.getIdObra() == null || item.getIdObra() <= 0) {
+            return false;
+        }
+        if (currentUserId != null
+                && currentUserId > 0
+                && item.getIdAutor() != null
+                && item.getIdAutor().equals(currentUserId)) {
+            return false;
+        }
+
+        String estado = item.getEstado() == null
+                ? ""
+                : java.text.Normalizer.normalize(item.getEstado(), java.text.Normalizer.Form.NFD)
+                        .replaceAll("\\p{M}+", "")
+                        .toLowerCase(Locale.ROOT)
+                        .trim();
+        boolean estadoPermitido = estado.isEmpty()
+                || (!estado.contains("exhib")
+                && !estado.contains("reservad")
+                && !estado.contains("vendid"));
+        if (!estadoPermitido) {
+            return false;
+        }
+
+        if (item.isPuedeSolicitarCompra()) {
+            return true;
+        }
+
+        return item.getPrecio() != null
+                && item.getPrecio() > 0
+                && (estado.isEmpty() || estado.contains("venta"));
     }
 
     private void configureImageGestures(@NonNull CarruselViewHolder holder) {
@@ -455,6 +511,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         View layoutCarruselCard, layoutInfoExpandida;
         View viewCarouselShine;
         ImageButton btnLikeCarrusel;
+        Button btnSolicitarCompraCarrusel;
 
         public CarruselViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -470,6 +527,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
             layoutInfoExpandida = itemView.findViewById(R.id.layoutInfoExpandidaCarrusel);
             viewCarouselShine = itemView.findViewById(R.id.viewCarouselShine);
             btnLikeCarrusel = itemView.findViewById(R.id.btnLikeCarrusel);
+            btnSolicitarCompraCarrusel = itemView.findViewById(R.id.btnSolicitarCompraCarrusel);
         }
     }
 }

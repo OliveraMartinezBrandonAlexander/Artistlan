@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -17,14 +18,15 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.SearchView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
@@ -35,8 +37,8 @@ import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.utils.CardThemeHelper;
-import com.example.artistlan.utils.DialogThemeHelper;
 
 import java.util.List;
 
@@ -56,6 +58,7 @@ public class FragExplorar extends Fragment {
     private Button btnSegmentArtistas;
     private ViewPager2 viewPager;
     private ExplorarPagerAdapter pagerAdapter;
+    private PopupWindow filtrosPopup;
 
     private boolean filtrosVisibles = false;
     private boolean panelFiltrosVisible = true;
@@ -104,6 +107,15 @@ public class FragExplorar extends Fragment {
         if (view != null) {
             view.post(this::restaurarUiFiltros);
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (filtrosPopup != null) {
+            filtrosPopup.dismiss();
+            filtrosPopup = null;
+        }
+        super.onDestroyView();
     }
 
     private void configurarBuscador() {
@@ -163,8 +175,8 @@ public class FragExplorar extends Fragment {
         if (btnFiltros == null) return;
 
         btnFiltros.animate().cancel();
-        btnFiltros.setVisibility(View.GONE);
-        btnFiltros.setAlpha(0f);
+        btnFiltros.setVisibility(View.VISIBLE);
+        btnFiltros.setAlpha(1f);
         btnFiltros.setTranslationX(0f);
         btnFiltros.setScaleX(1f);
         btnFiltros.setScaleY(1f);
@@ -258,6 +270,7 @@ public class FragExplorar extends Fragment {
             return;
         }
 
+        mostrar = true;
         btnFiltros.animate().cancel();
 
         if (filtrosVisibles == mostrar) {
@@ -301,20 +314,39 @@ public class FragExplorar extends Fragment {
     }
 
     private void mostrarMenuFiltros() {
-        Fragment fragmentActual = obtenerFragmentActual();
-
-        if (!(fragmentActual instanceof FilterableExplorarFragment)) {
+        FilterableExplorarFragment filterableFragment = obtenerFilterableActual();
+        if (filterableFragment == null || btnFiltros == null) {
             return;
         }
 
-        FilterableExplorarFragment filterableFragment = (FilterableExplorarFragment) fragmentActual;
         List<String> filtros = filterableFragment.getFilterOptions();
 
         if (filtros == null || filtros.isEmpty()) {
             return;
         }
 
+        if (filtrosPopup != null && filtrosPopup.isShowing()) {
+            filtrosPopup.dismiss();
+            return;
+        }
+
         String filtroActivo = filterableFragment.getActiveFilter();
+        LinearLayout container = new LinearLayout(requireContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(dpToPx(16), dpToPx(14), dpToPx(16), dpToPx(12));
+        container.setBackground(createFilterDialogBackground());
+        container.setClickable(true);
+
+        TextView title = new TextView(requireContext());
+        title.setText("Filtrar");
+        title.setTextSize(16);
+        title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
+        ThemeApplier.applyTextPrimary(title, themeManager);
+        container.addView(title, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
         RadioGroup radioGroup = new RadioGroup(requireContext());
         radioGroup.setOrientation(RadioGroup.VERTICAL);
         radioGroup.setPadding(dpToPx(10), dpToPx(8), dpToPx(10), dpToPx(8));
@@ -334,10 +366,6 @@ public class FragExplorar extends Fragment {
             ));
         }
 
-        LinearLayout container = new LinearLayout(requireContext());
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(4));
-        container.setBackground(createFilterDialogBackground());
         ScrollView scrollView = new ScrollView(requireContext());
         scrollView.setFillViewport(false);
         scrollView.addView(radioGroup, new ScrollView.LayoutParams(
@@ -346,32 +374,41 @@ public class FragExplorar extends Fragment {
         ));
         container.addView(scrollView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                Math.min(dpToPx(420), getResources().getDisplayMetrics().heightPixels - dpToPx(220))
+                Math.min(dpToPx(300), getResources().getDisplayMetrics().heightPixels - dpToPx(260))
         ));
 
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setTitle("Filtrar")
-                .setView(container)
-                .setNegativeButton("Cerrar", null)
-                .setNeutralButton("Borrar filtros", (d, which) -> filterableFragment.clearFilter())
-                .create();
-
-        dialog.setOnShowListener(d -> {
-            DialogThemeHelper.styleAlertDialog(dialog, requireContext());
-            Button clearButton = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
-            if (clearButton != null) {
-                clearButton.setEnabled(!TextUtils.isEmpty(filtroActivo));
-            }
-        });
+        Button clearButton = new Button(requireContext());
+        clearButton.setText("Quitar filtro");
+        clearButton.setAllCaps(false);
+        clearButton.setEnabled(!TextUtils.isEmpty(filtroActivo));
+        ThemeApplier.applySecondaryButton(clearButton, themeManager);
+        container.addView(clearButton, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dpToPx(44)
+        ));
 
         radioGroup.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId >= 0 && checkedId < filtros.size()) {
                 filterableFragment.applyFilter(filtros.get(checkedId));
-                dialog.dismiss();
+                if (filtrosPopup != null) {
+                    filtrosPopup.dismiss();
+                }
             }
         });
 
-        dialog.show();
+        clearButton.setOnClickListener(v -> {
+            filterableFragment.clearFilter();
+            if (filtrosPopup != null) {
+                filtrosPopup.dismiss();
+            }
+        });
+
+        int width = Math.min(dpToPx(280), getResources().getDisplayMetrics().widthPixels - dpToPx(72));
+        filtrosPopup = new PopupWindow(container, width, ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        filtrosPopup.setOutsideTouchable(true);
+        filtrosPopup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        filtrosPopup.setElevation(dpToPx(12));
+        filtrosPopup.showAsDropDown(btnFiltros, btnFiltros.getWidth() - width, dpToPx(8));
     }
 
     private GradientDrawable createFilterDialogBackground() {
@@ -425,8 +462,8 @@ public class FragExplorar extends Fragment {
         if (btnFiltros == null) {
             return;
         }
-        btnFiltros.setVisibility(mostrar ? View.VISIBLE : View.GONE);
-        btnFiltros.setAlpha(mostrar ? 1f : 0f);
+        btnFiltros.setVisibility(View.VISIBLE);
+        btnFiltros.setAlpha(1f);
         btnFiltros.setTranslationX(0f);
         btnFiltros.setScaleX(1f);
         btnFiltros.setScaleY(1f);
@@ -593,7 +630,19 @@ public class FragExplorar extends Fragment {
     }
 
     private boolean fragmentActualSoportaFiltros() {
-        return obtenerFragmentActual() instanceof FilterableExplorarFragment;
+        return obtenerFilterableActual() != null
+                || currentTipoId == R.id.btnSegmentObras
+                || currentTipoId == R.id.btnSegmentServicios
+                || currentTipoId == R.id.btnSegmentArtistas;
+    }
+
+    @Nullable
+    private FilterableExplorarFragment obtenerFilterableActual() {
+        Fragment fragmentActual = obtenerFragmentActual();
+        if (fragmentActual instanceof FilterableExplorarFragment) {
+            return (FilterableExplorarFragment) fragmentActual;
+        }
+        return null;
     }
 
     private void logPerf(String message) {

@@ -13,6 +13,7 @@ import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.artistlan.Fragments.FragMain;
 import com.example.artistlan.R;
@@ -67,14 +68,26 @@ public class ScrollMenuVisibilityHelper {
             @Override
             public void onFragmentViewCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @NonNull View v, @Nullable android.os.Bundle savedInstanceState) {
                 registerTopCompanionIfPresent(v);
-                attachToScrollable(f, v);
+                if (f.isResumed()) {
+                    attachToScrollable(f, v);
+                }
+            }
+
+            @Override
+            public void onFragmentResumed(@NonNull FragmentManager fm, @NonNull Fragment f) {
+                View fragmentView = f.getView();
+                if (fragmentView == null || findScrollable(fragmentView) == null) {
+                    return;
+                }
+                registerTopCompanionIfPresent(fragmentView);
+                attachToScrollable(f, fragmentView);
             }
 
             @Override
             public void onFragmentViewDestroyed(@NonNull FragmentManager fm, @NonNull Fragment f) {
                 View fragmentView = f.getView();
                 if (fragmentView != null && topCompanionView != null
-                        && fragmentView.findViewById(R.id.explorarHeader) == topCompanionView) {
+                        && findTopCompanion(fragmentView) == topCompanionView) {
                     topCompanionView.animate().cancel();
                     topCompanionView = null;
                 }
@@ -223,7 +236,7 @@ public class ScrollMenuVisibilityHelper {
     }
 
     private void registerTopCompanionIfPresent(@NonNull View root) {
-        View companion = root.findViewById(R.id.explorarHeader);
+        View companion = findTopCompanion(root);
         if (companion == null) return;
 
         topCompanionView = companion;
@@ -235,6 +248,11 @@ public class ScrollMenuVisibilityHelper {
                     ? -Math.max(topCompanionView.getHeight(), 1)
                     : 0f);
         });
+    }
+
+    @Nullable
+    private View findTopCompanion(@NonNull View root) {
+        return root.findViewById(R.id.explorarHeader);
     }
 
     private void ensureThresholds() {
@@ -374,6 +392,9 @@ public class ScrollMenuVisibilityHelper {
     @Nullable
     private View findScrollable(@NonNull View root) {
         if (root instanceof RecyclerView || root instanceof NestedScrollView || root instanceof ScrollView || root instanceof AbsListView) {
+            if (root instanceof RecyclerView && root.getParent() instanceof ViewPager2) {
+                return null;
+            }
             return root;
         }
         if (!(root instanceof ViewGroup)) return null;

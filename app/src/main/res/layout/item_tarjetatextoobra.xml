@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -7,289 +7,315 @@
     android:layout_marginTop="8dp"
     android:layout_marginEnd="12dp"
     android:layout_marginBottom="8dp"
-    app:cardBackgroundColor="@android:color/transparent"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="2dp"
-    app:cardUseCompatPadding="false">
+    android:orientation="vertical">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/layoutObraCard"
+    <LinearLayout
+        android:id="@+id/publicationHeader"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:clickable="true"
-        android:focusable="true"
-        android:paddingStart="6dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="6dp"
-        android:paddingBottom="12dp">
-
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/imgAutor"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:scaleType="centerCrop"
-            android:src="@drawable/fotoperfilprueba"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-            app:strokeColor="@color/artistlan_text_secondary"
-            app:strokeWidth="1dp" />
+        android:layout_height="42dp"
+        android:layout_marginBottom="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="6dp">
 
         <TextView
-            android:id="@+id/autor"
+            android:id="@+id/tvPublicationTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Autor"
-            android:textColor="@color/artistlan_text_primary"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/estadoResumen"
-            app:layout_constraintStart_toEndOf="@id/imgAutor"
-            app:layout_constraintTop_toTopOf="@id/imgAutor"
-            app:layout_constraintBottom_toBottomOf="@id/imgAutor" />
-
-        <TextView
-            android:id="@+id/categoria"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:background="@drawable/bg_chip_glass"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:paddingStart="9dp"
-            android:paddingTop="4dp"
-            android:paddingEnd="9dp"
-            android:paddingBottom="4dp"
-            android:text="Categoría"
-            android:textColor="@color/artistlan_text_primary"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            app:layout_constrainedWidth="true"
-            app:layout_constraintEnd_toStartOf="@id/btnMoreOptions"
-            app:layout_constraintTop_toBottomOf="@id/estadoResumen" />
-
-        <TextView
-            android:id="@+id/estadoResumen"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/bg_chip_glass"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:paddingStart="7dp"
-            android:paddingTop="4dp"
-            android:paddingEnd="7dp"
-            android:paddingBottom="4dp"
-            android:text="Estado"
-            android:textColor="@color/artistlan_text_primary"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            app:layout_constrainedWidth="true"
-            app:layout_constraintEnd_toStartOf="@id/btnMoreOptions"
-            app:layout_constraintTop_toTopOf="@id/imgAutor" />
+            android:text="Sin título"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
         <ImageButton
             android:id="@+id/btnMoreOptions"
             android:layout_width="34dp"
             android:layout_height="34dp"
-            android:background="@android:color/transparent"
             android:contentDescription="Opciones"
             android:padding="6dp"
             android:src="@drawable/ic_edit"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/imgAutor" />
+            android:visibility="gone" />
+    </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/likeContainer"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:layout_marginTop="6dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/imgObra">
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="2dp"
+        app:cardUseCompatPadding="false">
 
-            <TextView
-                android:id="@+id/likes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textColor="@color/artistlan_text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layoutObraCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingStart="6dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="6dp"
+            android:paddingBottom="12dp">
 
-            <ImageButton
-                android:id="@+id/btnLike"
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/imgAutor"
                 android:layout_width="46dp"
                 android:layout_height="46dp"
-                android:layout_marginStart="2dp"
-                android:background="@android:color/transparent"
-                android:contentDescription="Me gusta"
-                android:padding="9dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_like_outline" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/precio"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="10dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="Precio"
-            android:textColor="@color/artistlan_text_primary"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@id/likeContainer"
-            app:layout_constraintEnd_toStartOf="@id/likeContainer"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/likeContainer" />
-
-        <androidx.constraintlayout.widget.Barrier
-            android:id="@+id/headerBottomBarrier"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:barrierDirection="bottom"
-            app:constraint_referenced_ids="imgAutor,autor,categoria,estadoResumen,btnMoreOptions" />
-
-        <ImageView
-            android:id="@+id/imgObra"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginTop="8dp"
-            android:adjustViewBounds="false"
-            android:background="@android:color/transparent"
-            android:scaleType="centerCrop"
-            app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/titulo" />
-
-        <ImageView
-            android:id="@+id/imgDoubleTapHeart"
-            android:layout_width="112dp"
-            android:layout_height="112dp"
-            android:alpha="0"
-            android:elevation="8dp"
-            android:src="@drawable/ic_like_filled"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="@id/imgObra"
-            app:layout_constraintEnd_toEndOf="@id/imgObra"
-            app:layout_constraintStart_toStartOf="@id/imgObra"
-            app:layout_constraintTop_toTopOf="@id/imgObra" />
-
-        <TextView
-            android:id="@+id/titulo"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="2"
-            android:text="Título de la obra"
-            android:textAlignment="center"
-            android:textColor="@color/artistlan_text_primary"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/headerBottomBarrier" />
-
-        <LinearLayout
-            android:id="@+id/expanded_section"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="vertical"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/likeContainer">
+                android:clickable="true"
+                android:focusable="true"
+                android:scaleType="centerCrop"
+                android:src="@drawable/fotoperfilprueba"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                app:strokeColor="@color/artistlan_text_secondary"
+                app:strokeWidth="1dp" />
 
             <TextView
-                android:id="@+id/descripcion"
-                android:layout_width="match_parent"
+                android:id="@+id/autor"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:lineSpacingExtra="3dp"
-                android:text="Descripción completa"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="8dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Autor"
                 android:textColor="@color/artistlan_text_primary"
-                android:textSize="14sp" />
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@id/imgAutor"
+                app:layout_constraintEnd_toStartOf="@id/estadoResumen"
+                app:layout_constraintStart_toEndOf="@id/imgAutor"
+                app:layout_constraintTop_toTopOf="@id/imgAutor" />
 
             <TextView
-                android:id="@+id/estado"
-                android:layout_width="match_parent"
+                android:id="@+id/categoria"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="3dp"
+                android:background="@drawable/bg_chip_glass"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:paddingStart="9dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="9dp"
+                android:paddingBottom="4dp"
+                android:text="Categoría"
+                android:textColor="@color/artistlan_text_primary"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:layout_constrainedWidth="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/estadoResumen" />
+
+            <TextView
+                android:id="@+id/estadoResumen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_chip_glass"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:paddingStart="7dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="7dp"
+                android:paddingBottom="4dp"
                 android:text="Estado"
-                android:textColor="@color/artistlan_text_secondary"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/tecnica"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Técnica"
-                android:textColor="@color/artistlan_text_secondary"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/medidas"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Medidas"
-                android:textColor="@color/artistlan_text_secondary"
-                android:textSize="14sp" />
+                android:textColor="@color/artistlan_text_primary"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:layout_constrainedWidth="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/imgAutor" />
 
             <LinearLayout
-                android:id="@+id/actionsContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="vertical"
-                android:visibility="gone">
+                android:id="@+id/likeContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/imgObra">
 
-                <Button
-                    android:id="@+id/btnAccionPrincipal"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_btn_bubble_glass_primary"
-                    android:text="Acción principal"
-                    android:textAllCaps="false" />
+                <TextView
+                    android:id="@+id/likes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/btnAccionSecundaria"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_btn_bubble_glass_secondary"
-                    android:text="Acción secundaria"
-                    android:textAllCaps="false"
-                    android:visibility="gone" />
+                <ImageButton
+                    android:id="@+id/btnLike"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:layout_marginStart="2dp"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Me gusta"
+                    android:padding="9dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_like_outline" />
             </LinearLayout>
 
-            <Button
-                android:id="@+id/btnReportarObra"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
+            <TextView
+                android:id="@+id/precio"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="10dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Precio"
+                android:textColor="@color/artistlan_text_primary"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@id/likeContainer"
+                app:layout_constraintEnd_toStartOf="@id/likeContainer"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@id/likeContainer" />
+
+            <androidx.constraintlayout.widget.Barrier
+                android:id="@+id/headerBottomBarrier"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:barrierDirection="bottom"
+                app:constraint_referenced_ids="imgAutor,autor,categoria,estadoResumen" />
+
+            <ImageView
+                android:id="@+id/imgObra"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:adjustViewBounds="false"
+                android:background="@android:color/transparent"
+                android:scaleType="centerCrop"
+                app:layout_constraintDimensionRatio="1:1"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/titulo" />
+
+            <ImageView
+                android:id="@+id/imgDoubleTapHeart"
+                android:layout_width="112dp"
+                android:layout_height="112dp"
+                android:alpha="0"
+                android:elevation="8dp"
+                android:src="@drawable/ic_like_filled"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="@id/imgObra"
+                app:layout_constraintEnd_toEndOf="@id/imgObra"
+                app:layout_constraintStart_toStartOf="@id/imgObra"
+                app:layout_constraintTop_toTopOf="@id/imgObra" />
+
+            <TextView
+                android:id="@+id/titulo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:background="@drawable/bg_btn_bubble_glass_secondary"
-                android:text="Reportar"
-                android:textAllCaps="false"
-                android:visibility="gone" />
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="2"
+                android:text="Título de la obra"
+                android:textAlignment="center"
+                android:textColor="@color/artistlan_text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/headerBottomBarrier" />
 
-        </LinearLayout>
+            <LinearLayout
+                android:id="@+id/expanded_section"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/likeContainer">
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+                <TextView
+                    android:id="@+id/descripcion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingExtra="3dp"
+                    android:text="Descripción completa"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="14sp" />
 
-</androidx.cardview.widget.CardView>
+                <TextView
+                    android:id="@+id/estado"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Estado"
+                    android:textColor="@color/artistlan_text_secondary"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tecnica"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Técnica"
+                    android:textColor="@color/artistlan_text_secondary"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/medidas"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Medidas"
+                    android:textColor="@color/artistlan_text_secondary"
+                    android:textSize="14sp" />
+
+                <LinearLayout
+                    android:id="@+id/actionsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <Button
+                        android:id="@+id/btnAccionPrincipal"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_btn_bubble_glass_primary"
+                        android:text="Acción principal"
+                        android:textAllCaps="false" />
+
+                    <Button
+                        android:id="@+id/btnAccionSecundaria"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_btn_bubble_glass_secondary"
+                        android:text="Acción secundaria"
+                        android:textAllCaps="false"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnReportarObra"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_btn_bubble_glass_secondary"
+                    android:text="Reportar"
+                    android:textAllCaps="false"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout>

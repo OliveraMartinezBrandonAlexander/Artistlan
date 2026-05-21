@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -44,6 +46,8 @@ import retrofit2.Response;
 public class FragMisServicios extends Fragment {
 
     private static final long LIKE_THROTTLE_MS = 500L;
+    private static final String TAG_CRUD = "ServicioCrudDebug";
+    private static final String TAG_REFRESH = "RefreshMiArteDebug";
     private RecyclerView recyclerMisServicios;
     private TextView tvEmptyMisServicios;
     private TarjetaTextoServicioAdapter adapter;
@@ -51,7 +55,9 @@ public class FragMisServicios extends Fragment {
     private int idUsuarioLogueado = -1;
     private final Map<Integer, Long> lastLikeClickByServicio = new HashMap<>();
     private final Set<Integer> likesEnVuelo = new HashSet<>();
-    private boolean debeRecargarEnResume = false;
+    private boolean debeRecargarEnResume = true;
+    private int requestToken = 0;
+    private static final Map<Integer, List<TarjetaTextoServicioItem>> serviciosCachePorUsuario = new HashMap<>();
 
     public static final String ARG_MODO_EDICION = "modo_edicion";
     public static final String ARG_SERVICIO_ID = "servicio_id";
@@ -70,9 +76,12 @@ public class FragMisServicios extends Fragment {
         recyclerMisServicios = view.findViewById(R.id.recyclerMisServicios);
         tvEmptyMisServicios = view.findViewById(R.id.tvEmptyMisServicios);
         recyclerMisServicios.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerMisServicios.setItemAnimator(null);
         ThemeApplier.applyTextPrimary(view.findViewById(R.id.tvTituloMisServicios), new ThemeManager(requireContext()));
         ThemeApplier.applyTextSecondary(tvEmptyMisServicios, new ThemeManager(requireContext()));
         adapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
+        adapter.setEntryAnimationsEnabled(false);
+        adapter.setPortfolioHeaderEnabled(true);
         adapter.setCurrentUserId(idUsuarioLogueado);
         adapter.setOnLikeClickListener(this::toggleLikeServicio);
         adapter.setOnEditClickListener(this::editarServicio);
@@ -80,7 +89,41 @@ public class FragMisServicios extends Fragment {
         recyclerMisServicios.setAdapter(adapter);
 
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
-        cargarServiciosDelUsuario();
+        getParentFragmentManager().setFragmentResultListener(
+                FragPortafolio.RESULT_KEY_PORTAFOLIO_REFRESH,
+                getViewLifecycleOwner(),
+                (requestKey, result) -> {
+                    String target = result.getString(FragPortafolio.RESULT_EXTRA_TARGET, "");
+                    boolean guardado = result.getBoolean(FragPortafolio.RESULT_EXTRA_GUARDADO, true);
+                    String modo = result.getString(FragPortafolio.RESULT_EXTRA_MODO, "");
+                    if (!FragPortafolio.TARGET_SERVICIOS.equals(target)) {
+                        Log.d(TAG_REFRESH, "Resultado ignorado por servicios target=" + target
+                                + " guardado=" + guardado
+                                + " modo=" + modo
+                                + " obrasNoSeTocan=true");
+                        return;
+                    }
+                    Log.d(TAG_REFRESH, "Resultado recibido servicios guardado=" + guardado
+                            + " modo=" + modo
+                            + " sizeAntes=" + (adapter != null ? adapter.getItemCount() : -1));
+                    if (!guardado) {
+                        debeRecargarEnResume = false;
+                        boolean cacheRestaurada = restaurarServiciosCacheSiExiste();
+                        Log.d(TAG_REFRESH, "Regreso servicios sin guardar cacheRestaurada=" + cacheRestaurada
+                                + " sizeDespues=" + (adapter != null ? adapter.getItemCount() : -1));
+                        return;
+                    }
+                    debeRecargarEnResume = true;
+                    if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)) {
+                        debeRecargarEnResume = false;
+                        cargarServiciosDelUsuario();
+                    }
+                }
+        );
+        if (debeRecargarEnResume) {
+            debeRecargarEnResume = false;
+            cargarServiciosDelUsuario();
+        }
     }
 
     @Override
@@ -207,7 +250,10 @@ public class FragMisServicios extends Fragment {
             return;
         }
 
-        debeRecargarEnResume = true;
+        Log.d(TAG_CRUD, "Editar servicio click usuarioId=" + idUsuarioLogueado
+                + " idServicio=" + servicioItem.getIdServicio()
+                + " position=" + position
+                + " titulo=" + servicioItem.getTitulo());
         Bundle args = new Bundle();
         args.putBoolean(ARG_MODO_EDICION, true);
         args.putInt(ARG_SERVICIO_ID, servicioItem.getIdServicio());
@@ -233,6 +279,11 @@ public class FragMisServicios extends Fragment {
             Toast.makeText(requireContext(), "Error de usuario.", Toast.LENGTH_SHORT).show();
             return;
         }
+        Log.d(TAG_CRUD, "Borrar servicio request DELETE portafolioPersonal/{usuarioId}/{idServicio}"
+                + " usuarioId=" + idUsuarioLogueado
+                + " idServicio=" + idServicio
+                + " position=" + position
+                + " sizeAntes=" + (adapter != null ? adapter.getItemCount() : -1));
 
         ServicioApi api = RetrofitClient.getClient().create(ServicioApi.class);
         api.eliminarServicioUsuario(idUsuarioLogueado, idServicio).enqueue(new Callback<Void>() {
@@ -243,9 +294,16 @@ public class FragMisServicios extends Fragment {
                 }
 
                 int code = response.code();
-                if (code == 204) {
-                    adapter.removeItemAt(position);
-                    Toast.makeText(requireContext(), "Servicio eliminado correctamente", Toast.LENGTH_SHORT).show();
+                Log.d(TAG_CRUD, "Borrar servicio response code=" + code
+                        + " successful=" + response.isSuccessful()
+                        + " idServicio=" + idServicio);
+                if (response.isSuccessful()) {
+                    eliminarServicioDeCache(idServicio);
+                    if (adapter != null && position >= 0 && position < adapter.getItemCount()) {
+                        adapter.removeItemAt(position);
+                        actualizarEstadoVacio(adapter.getItemCount() == 0);
+                    }
+                    cargarServiciosDelUsuario(true, idServicio);
                     return;
                 }
                 if (code == 403) {
@@ -264,6 +322,7 @@ public class FragMisServicios extends Fragment {
                     return;
                 }
                 String backendMessage = ApiErrorParser.extractMessage(response);
+                Log.w(TAG_CRUD, "Borrar servicio error code=" + code + " idServicio=" + idServicio + " error=" + backendMessage);
                 Toast.makeText(requireContext(),
                         backendMessage != null ? backendMessage : "No se pudo eliminar el servicio (" + code + ")",
                         Toast.LENGTH_LONG).show();
@@ -271,6 +330,7 @@ public class FragMisServicios extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                Log.e(TAG_CRUD, "Borrar servicio failure idServicio=" + idServicio, t);
                 if (isAdded()) {
                     Toast.makeText(requireContext(), "Error de conexión al eliminar el servicio", Toast.LENGTH_LONG).show();
                 }
@@ -279,6 +339,15 @@ public class FragMisServicios extends Fragment {
     }
 
     private void cargarServiciosDelUsuario() {
+        cargarServiciosDelUsuario(false);
+    }
+
+    private void cargarServiciosDelUsuario(boolean permitirVaciarLista) {
+        cargarServiciosDelUsuario(permitirVaciarLista, null);
+    }
+
+    private void cargarServiciosDelUsuario(boolean permitirVaciarLista, @Nullable Integer idEliminadoEsperado) {
+        final int tokenLocal = ++requestToken;
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
         if (adapter != null) {
@@ -286,20 +355,51 @@ public class FragMisServicios extends Fragment {
         }
 
         if (idUsuarioLogueado == -1) {
+            debeRecargarEnResume = true;
             return;
         }
 
+        int sizeAntes = adapter != null ? adapter.getItemCount() : -1;
+        Log.d(TAG_REFRESH, "Cargar servicios start token=" + tokenLocal
+                + " usuarioId=" + idUsuarioLogueado
+                + " permitirVaciar=" + permitirVaciarLista
+                + " esperadoEliminado=" + idEliminadoEsperado
+                + " sizeAntes=" + sizeAntes
+                + " obrasNoSeTocan=true");
+        restaurarServiciosCacheSiExiste();
+
         ServicioApi api = RetrofitClient.getClient().create(ServicioApi.class);
+        Log.d(TAG_REFRESH, "GET portafolioPersonal/{usuarioId} usuarioId=" + idUsuarioLogueado);
         Call<List<ServicioDTO>> call = api.obtenerServiciosDeUsuario(idUsuarioLogueado);
         call.enqueue(new Callback<List<ServicioDTO>>() {
             @Override
             public void onResponse(@NonNull Call<List<ServicioDTO>> call, @NonNull Response<List<ServicioDTO>> response) {
-                if (!isAdded()) {
+                if (!isAdded() || tokenLocal != requestToken) {
+                    if (tokenLocal != requestToken) {
+                        Log.d(TAG_REFRESH, "Ignorada respuesta vieja servicios token=" + tokenLocal
+                                + " actual=" + requestToken
+                                + " sizeActual=" + (adapter != null ? adapter.getItemCount() : -1));
+                    }
                     return;
                 }
+                Log.d(TAG_REFRESH, "Cargar servicios response code=" + response.code()
+                        + " successful=" + response.isSuccessful()
+                        + " bodySize=" + (response.body() != null ? response.body().size() : -1));
                 if (response.code() == 204) {
+                    if (!permitirVaciarLista && restaurarServiciosCacheSiExiste()) {
+                        Log.w(TAG_REFRESH, "Respuesta servicios 204 protegida con cache usuarioId=" + idUsuarioLogueado);
+                        debeRecargarEnResume = false;
+                        return;
+                    }
                     adapter.actualizarLista(new ArrayList<>());
+                    serviciosCachePorUsuario.remove(idUsuarioLogueado);
                     actualizarEstadoVacio(true);
+                    if (idEliminadoEsperado != null) {
+                        Log.d(TAG_CRUD, "Verificacion borrado servicio id=" + idEliminadoEsperado
+                                + " siguePresente=false sizeDespues=0 code=204");
+                        Toast.makeText(requireContext(), "Servicio eliminado correctamente", Toast.LENGTH_SHORT).show();
+                    }
+                    debeRecargarEnResume = false;
                     return;
                 }
                 if (!response.isSuccessful() || response.body() == null) {
@@ -308,25 +408,93 @@ public class FragMisServicios extends Fragment {
 
                 List<ServicioDTO> dtos = response.body();
                 if (dtos.isEmpty()) {
+                    if (!permitirVaciarLista && restaurarServiciosCacheSiExiste()) {
+                        Log.w(TAG_REFRESH, "Respuesta servicios vacia protegida con cache usuarioId=" + idUsuarioLogueado);
+                        debeRecargarEnResume = false;
+                        return;
+                    }
                     adapter.actualizarLista(new ArrayList<>());
+                    serviciosCachePorUsuario.remove(idUsuarioLogueado);
                     actualizarEstadoVacio(true);
+                    if (idEliminadoEsperado != null) {
+                        Log.d(TAG_CRUD, "Verificacion borrado servicio id=" + idEliminadoEsperado
+                                + " siguePresente=false sizeDespues=0");
+                        Toast.makeText(requireContext(), "Servicio eliminado correctamente", Toast.LENGTH_SHORT).show();
+                    }
+                    debeRecargarEnResume = false;
                     return;
                 }
                 cargarFavoritosServiciosDeUsuario(serviciosFavoritos -> {
+                    if (!isAdded() || tokenLocal != requestToken) {
+                        return;
+                    }
                     List<TarjetaTextoServicioItem> items = convertirDTOaItem(dtos, serviciosFavoritos);
-                    adapter.actualizarLista(items);
-                    actualizarEstadoVacio(items.isEmpty());
+                    guardarServiciosCache(items);
+                    aplicarServiciosEnUi(items);
+                    if (idEliminadoEsperado != null) {
+                        boolean siguePresente = contieneServicio(items, idEliminadoEsperado);
+                        Log.d(TAG_CRUD, "Verificacion borrado servicio id=" + idEliminadoEsperado
+                                + " siguePresente=" + siguePresente
+                                + " sizeDespues=" + items.size());
+                        Toast.makeText(requireContext(),
+                                siguePresente
+                                        ? "El servidor confirmó, pero el servicio sigue apareciendo al recargar"
+                                        : "Servicio eliminado correctamente",
+                                siguePresente ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
+                    }
+                    debeRecargarEnResume = false;
                     refreshLikeCounts(items);
                 });
             }
 
             @Override
             public void onFailure(@NonNull Call<List<ServicioDTO>> call, @NonNull Throwable t) {
-                if (isAdded()) {
+                if (isAdded() && tokenLocal == requestToken) {
+                    debeRecargarEnResume = true;
+                    Log.e(TAG_REFRESH, "Cargar servicios failure token=" + tokenLocal + " usuarioId=" + idUsuarioLogueado, t);
                     Toast.makeText(requireContext(), "Error de red/API: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
         });
+    }
+
+    private boolean restaurarServiciosCacheSiExiste() {
+        List<TarjetaTextoServicioItem> cachedItems = serviciosCachePorUsuario.get(idUsuarioLogueado);
+        if (cachedItems == null || cachedItems.isEmpty()) {
+            return false;
+        }
+        Log.d(TAG_REFRESH, "Restaurando cache servicios usuarioId=" + idUsuarioLogueado + " size=" + cachedItems.size());
+        aplicarServiciosEnUi(cachedItems);
+        return true;
+    }
+
+    private void guardarServiciosCache(List<TarjetaTextoServicioItem> items) {
+        serviciosCachePorUsuario.put(idUsuarioLogueado, new ArrayList<>(items));
+    }
+
+    private void aplicarServiciosEnUi(List<TarjetaTextoServicioItem> items) {
+        adapter.actualizarLista(items != null ? new ArrayList<>(items) : new ArrayList<>());
+        actualizarEstadoVacio(items == null || items.isEmpty());
+        Log.d(TAG_REFRESH, "Aplicar servicios UI size=" + (items != null ? items.size() : 0)
+                + " emptyVisible=" + (items == null || items.isEmpty())
+                + " obrasNoSeTocan=true");
+    }
+
+    private boolean contieneServicio(List<TarjetaTextoServicioItem> items, int idServicio) {
+        if (items == null) return false;
+        for (TarjetaTextoServicioItem item : items) {
+            if (item != null && item.getIdServicio() != null && item.getIdServicio() == idServicio) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void eliminarServicioDeCache(int idServicio) {
+        List<TarjetaTextoServicioItem> cachedItems = serviciosCachePorUsuario.get(idUsuarioLogueado);
+        if (cachedItems != null) {
+            cachedItems.removeIf(item -> item != null && item.getIdServicio() != null && item.getIdServicio() == idServicio);
+        }
     }
 
     private interface FavoritosServiciosCallback {

@@ -2,12 +2,16 @@ package com.example.artistlan.Fragments;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -15,6 +19,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
@@ -53,6 +58,7 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.DialogThemeHelper;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -66,6 +72,9 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FragSubirObra extends Fragment implements View.OnClickListener {
+
+    private static final String TAG_CRUD = "ObraCrudDebug";
+    private static final String TAG_BACK_STACK = "MiArteBackStackDebug";
 
     public static final String ARG_MODO_EDICION = "modo_edicion";
     public static final String ARG_OBRA_ID = "obra_id";
@@ -102,6 +111,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private View topBarFrame;
     private View contentContainer;
     private ViewTreeObserver.OnPreDrawListener topBarOffsetListener;
+    private boolean resultadoRegresoNotificado = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -112,6 +122,8 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             modoEdicion = args.getBoolean(ARG_MODO_EDICION, false);
             idObraEditar = args.getInt(ARG_OBRA_ID, -1);
         }
+        Log.d(TAG_CRUD, "Entrada FragSubirObra modo=" + (modoEdicion ? "editar" : "crear")
+                + " idObra=" + idObraEditar);
 
         firebaseRepo = new FirebaseImageRepository(requireContext());
 
@@ -188,6 +200,8 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         imgPreviewObra = view.findViewById(R.id.imgPreviewObra);
         btnSubirImg = view.findViewById(R.id.btnSubirImg);
         btnSubirObra = view.findViewById(R.id.btnSubirObra);
+        btnRegresar = view.findViewById(R.id.btnRegresar);
+        aplicarTemaFormulario(view);
 
         btnSubirImg.setOnClickListener(v -> mostrarOpcionesImagen());
 
@@ -311,10 +325,26 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                         getContext(),
                         android.R.layout.simple_spinner_item,
                         nombres
-                );
+                ) {
+                    @NonNull
+                    @Override
+                    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                        View item = super.getView(position, convertView, parent);
+                        tematizarSpinnerText(item, false, false);
+                        return item;
+                    }
+
+                    @Override
+                    public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                        View item = super.getDropDownView(position, convertView, parent);
+                        tematizarSpinnerText(item, true, position == spinnerCategoria.getSelectedItemPosition());
+                        return item;
+                    }
+                };
 
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinnerCategoria.setAdapter(adapter);
+                aplicarTemaSpinner(spinnerCategoria);
                 seleccionarCategoriaPendiente();
             }
 
@@ -336,9 +366,150 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         btnSubirObra.setText("GUARDAR CAMBIOS");
     }
 
+    private void aplicarTemaFormulario(@NonNull View root) {
+        ThemeManager tm = new ThemeManager(requireContext());
+        aplicarBotonPrincipal(btnSubirObra, tm);
+        aplicarBotonSecundario(btnSubirImg, tm);
+        CardThemeHelper.applyFilterButton(btnRegresar, tm);
+
+        ThemeApplier.applyTextPrimary(txtTituloPantalla, tm);
+        ThemeApplier.applyTextSecondary(txtDescripcionPantalla, tm);
+        aplicarTextosFormulario(root, tm);
+        aplicarInputsFormulario(tm);
+        aplicarOpcionesFiltro(rgOpciones, tm);
+        aplicarOpcionesFiltro(rgTipoMedida, tm);
+        aplicarCheckBoxFiltro(cbAutoriaObra, tm);
+        aplicarTemaSpinner(spinnerCategoria);
+    }
+
+    private void aplicarTextosFormulario(@NonNull View view, @NonNull ThemeManager tm) {
+        if (view instanceof Button || view instanceof EditText) {
+            return;
+        }
+        if (view instanceof TextView) {
+            TextView textView = (TextView) view;
+            int color = textView == txtDescripcionPantalla
+                    ? tm.color(ThemeKeys.TEXT_SECONDARY)
+                    : tm.color(ThemeKeys.TEXT_PRIMARY);
+            textView.setTextColor(color);
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                aplicarTextosFormulario(group.getChildAt(i), tm);
+            }
+        }
+    }
+
+    private void aplicarInputsFormulario(@NonNull ThemeManager tm) {
+        ThemeApplier.applyInput(etTituloObra, tm);
+        ThemeApplier.applyInput(etDescripcion, tm);
+        ThemeApplier.applyInput(etPrecio, tm);
+        ThemeApplier.applyInput(etMedidaAncho, tm);
+        ThemeApplier.applyInput(etMedidaAlto, tm);
+        ThemeApplier.applyInput(etMedidaProfundidad, tm);
+        ThemeApplier.applyInput(etTecnicas, tm);
+    }
+
+    private void aplicarOpcionesFiltro(@Nullable RadioGroup group, @NonNull ThemeManager tm) {
+        if (group == null) return;
+        group.setBackground(null);
+        ColorStateList tint = new ColorStateList(
+                new int[][]{new int[]{android.R.attr.state_checked}, new int[]{}},
+                new int[]{tm.color(ThemeKeys.ACCENT_PRIMARY), tm.color(ThemeKeys.FILTER_BUTTON_STROKE)}
+        );
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View child = group.getChildAt(i);
+            if (child instanceof RadioButton) {
+                RadioButton rb = (RadioButton) child;
+                rb.setTextColor(tm.color(ThemeKeys.TEXT_SECONDARY));
+                rb.setButtonTintList(tint);
+            }
+        }
+    }
+
+    private void aplicarCheckBoxFiltro(@Nullable CheckBox checkBox, @NonNull ThemeManager tm) {
+        if (checkBox == null) return;
+        checkBox.setTextColor(tm.color(ThemeKeys.TEXT_SECONDARY));
+        checkBox.setButtonTintList(new ColorStateList(
+                new int[][]{new int[]{android.R.attr.state_checked}, new int[]{}},
+                new int[]{tm.color(ThemeKeys.ACCENT_PRIMARY), tm.color(ThemeKeys.FILTER_BUTTON_STROKE)}
+        ));
+        checkBox.setBackground(null);
+    }
+
+    private void tematizarSpinnerText(@Nullable View item, boolean dropdown, boolean selected) {
+        if (item instanceof TextView && isAdded()) {
+            ThemeManager tm = new ThemeManager(requireContext());
+            TextView textView = (TextView) item;
+            textView.setTextColor(tm.color(selected ? ThemeKeys.ACCENT_PRIMARY : ThemeKeys.TEXT_PRIMARY));
+            textView.setHintTextColor(tm.color(ThemeKeys.INPUT_HINT));
+            textView.setPadding(dpToPx(12), dpToPx(8), dpToPx(12), dpToPx(8));
+            if (dropdown) {
+                textView.setBackground(null);
+                textView.setTypeface(Typeface.create("sans-serif-medium", selected ? Typeface.BOLD : Typeface.NORMAL));
+            } else {
+                textView.setBackground(null);
+                textView.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+            }
+        }
+    }
+
+    private void aplicarTemaSpinner(@Nullable Spinner spinner) {
+        if (spinner == null || !isAdded()) return;
+        ThemeManager tm = new ThemeManager(requireContext());
+        spinner.setPopupBackgroundDrawable(crearFondoPanelDesplegable(tm));
+        if (spinner.getBackground() instanceof GradientDrawable) {
+            GradientDrawable bg = (GradientDrawable) spinner.getBackground().mutate();
+            bg.setColor(tm.color(ThemeKeys.INPUT_BG));
+            bg.setStroke(dpToPx(1), tm.color(ThemeKeys.INPUT_STROKE));
+        } else if (spinner.getBackground() != null) {
+            spinner.getBackground().mutate().setTint(tm.color(ThemeKeys.INPUT_BG));
+        }
+    }
+
+    @NonNull
+    private GradientDrawable crearFondoPanelDesplegable(@NonNull ThemeManager tm) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setCornerRadius(dpToPx(18));
+        drawable.setColor(ColorUtils.setAlphaComponent(tm.color(ThemeKeys.FILTER_BUTTON_BG), 238));
+        drawable.setStroke(dpToPx(1), tm.color(ThemeKeys.FILTER_BUTTON_STROKE));
+        return drawable;
+    }
+
+    private void aplicarBotonPrincipal(@Nullable Button button, @NonNull ThemeManager tm) {
+        aplicarFormaBotonMain(button, R.drawable.bg_btn_bubble_glass_primary);
+        ThemeApplier.applyPrimaryButton(button, tm);
+    }
+
+    private void aplicarBotonSecundario(@Nullable Button button, @NonNull ThemeManager tm) {
+        aplicarFormaBotonMain(button, R.drawable.bg_btn_bubble_glass_secondary);
+        ThemeApplier.applySecondaryButton(button, tm);
+    }
+
+    private void aplicarFormaBotonMain(@Nullable Button button, int backgroundRes) {
+        if (button == null) return;
+        button.setBackgroundResource(backgroundRes);
+        button.setAllCaps(false);
+        button.setTextSize(17);
+        button.setTypeface(Typeface.create("sans-serif-black", Typeface.BOLD));
+        button.setMinHeight(dpToPx(62));
+        button.setPadding(dpToPx(18), 0, dpToPx(18), 0);
+        ViewGroup.LayoutParams params = button.getLayoutParams();
+        if (params != null) {
+            params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            params.height = dpToPx(62);
+            button.setLayoutParams(params);
+        }
+    }
+
     private void cargarObraParaEditar() {
         int idUsuario = obtenerIdUsuarioLogueado();
+        Log.d(TAG_CRUD, "Cargar obra edicion start GET obras/{id}?usuarioId="
+                + idUsuario + " idObra=" + idObraEditar);
         if (idUsuario <= 0 || idObraEditar <= 0) {
+            Log.w(TAG_CRUD, "Cargar obra edicion abort idUsuario=" + idUsuario + " idObra=" + idObraEditar);
             Toast.makeText(getContext(), "No se pudo cargar la obra.", Toast.LENGTH_LONG).show();
             return;
         }
@@ -350,8 +521,13 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                 if (!isAdded()) {
                     return;
                 }
+                Log.d(TAG_CRUD, "Cargar obra edicion response obras/{id} code=" + response.code()
+                        + " successful=" + response.isSuccessful()
+                        + " bodyId=" + (response.body() != null ? response.body().getIdObra() : null)
+                        + " idObra=" + idObraEditar
+                        + " usuarioId=" + idUsuario);
                 if (!response.isSuccessful() || response.body() == null) {
-                    Toast.makeText(getContext(), "No se pudo cargar la obra.", Toast.LENGTH_LONG).show();
+                    cargarObraParaEditarDesdePortafolio(idUsuario, response.code());
                     return;
                 }
 
@@ -361,6 +537,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
             @Override
             public void onFailure(@NonNull Call<ObraDTO> call, @NonNull Throwable t) {
+                Log.e(TAG_CRUD, "Cargar obra edicion failure obras/{id} idObra=" + idObraEditar + " usuarioId=" + idUsuario, t);
                 if (isAdded()) {
                     Toast.makeText(getContext(), "Error de red al cargar la obra.", Toast.LENGTH_LONG).show();
                 }
@@ -588,6 +765,12 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         if (menuInferior != null) {
             menuInferior.setVisibility(View.VISIBLE);
         }
+        if (!resultadoRegresoNotificado && isRemoving()) {
+            Log.d(TAG_BACK_STACK, "Salida FragSubirObra por back sistema sin guardar modo="
+                    + (modoEdicion ? "editar" : "crear")
+                    + " idObra=" + idObraEditar);
+            notificarRegresoPortafolio(false);
+        }
     }
 
     @Override
@@ -603,6 +786,10 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btnRegresar) {
+            Log.d(TAG_BACK_STACK, "Boton regresar FragSubirObra sin guardar modo="
+                    + (modoEdicion ? "editar" : "crear")
+                    + " idObra=" + idObraEditar);
+            notificarRegresoPortafolio(false);
             NavHostFragment.findNavController(this).popBackStack();
         }
     }
@@ -881,7 +1068,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
         SharedPreferences prefs = requireActivity()
                 .getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
-        int idUsuario = prefs.getInt("id", -1);
+        int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
 
         if (idUsuario == -1) {
             Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
@@ -1115,13 +1302,18 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
     private void insertarObraEnBD(int idUsuario, ObraDTO obra) {
         ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
+        Log.d(TAG_CRUD, "Crear obra POST obrasDeUsuario/{usuarioId} usuarioId=" + idUsuario);
         Call<ObraDTO> call = api.subirObra(idUsuario, obra);
 
         call.enqueue(new Callback<ObraDTO>() {
             @Override
             public void onResponse(@NonNull Call<ObraDTO> call, @NonNull Response<ObraDTO> response) {
+                Log.d(TAG_CRUD, "Crear obra response code=" + response.code()
+                        + " successful=" + response.isSuccessful()
+                        + " bodyId=" + (response.body() != null ? response.body().getIdObra() : null));
                 if (response.isSuccessful() && response.body() != null) {
                     Toast.makeText(getContext(), "Obra subida con ?xito", Toast.LENGTH_LONG).show();
+                    notificarRefreshPortafolio();
                     NavHostFragment.findNavController(FragSubirObra.this).popBackStack();
                 } else {
                     String backendMessage = ApiErrorParser.extractMessage(response);
@@ -1133,6 +1325,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
             @Override
             public void onFailure(@NonNull Call<ObraDTO> call, @NonNull Throwable t) {
+                Log.e(TAG_CRUD, "Crear obra failure usuarioId=" + idUsuario, t);
                 Toast.makeText(getContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 t.printStackTrace();
             }
@@ -1141,19 +1334,28 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
     private void actualizarObraEnBD(int idUsuario, ObraDTO obra) {
         if (idObraEditar <= 0) {
+            Log.w(TAG_CRUD, "Actualizar obra abort idObra=" + idObraEditar + " usuarioId=" + idUsuario);
             Toast.makeText(getContext(), "No se pudo actualizar la obra.", Toast.LENGTH_LONG).show();
             return;
         }
 
         ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
+        Log.d(TAG_CRUD, "Actualizar obra PUT obrasDeUsuario/{usuarioId}/{obraId}"
+                + " usuarioId=" + idUsuario
+                + " idObra=" + idObraEditar);
         api.actualizarObraDeUsuario(idUsuario, idObraEditar, obra).enqueue(new Callback<ObraDTO>() {
             @Override
             public void onResponse(@NonNull Call<ObraDTO> call, @NonNull Response<ObraDTO> response) {
                 if (!isAdded()) {
                     return;
                 }
+                Log.d(TAG_CRUD, "Actualizar obra response code=" + response.code()
+                        + " successful=" + response.isSuccessful()
+                        + " bodyId=" + (response.body() != null ? response.body().getIdObra() : null)
+                        + " idObra=" + idObraEditar);
                 if (response.isSuccessful()) {
                     Toast.makeText(getContext(), "Obra actualizada con ?xito", Toast.LENGTH_LONG).show();
+                    notificarRefreshPortafolio();
                     NavHostFragment.findNavController(FragSubirObra.this).popBackStack();
                 } else {
                     String backendMessage = ApiErrorParser.extractMessage(response);
@@ -1165,11 +1367,93 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
             @Override
             public void onFailure(@NonNull Call<ObraDTO> call, @NonNull Throwable t) {
+                Log.e(TAG_CRUD, "Actualizar obra failure idObra=" + idObraEditar + " usuarioId=" + idUsuario, t);
                 if (isAdded()) {
                     Toast.makeText(getContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
         });
+    }
+
+    private void cargarObraParaEditarDesdePortafolio(int idUsuario, int codigoDetalle) {
+        Log.w(TAG_CRUD, "Fallback cargar obra edicion GET obrasDeUsuario/{idUsuario}"
+                + " usuarioId=" + idUsuario
+                + " idObra=" + idObraEditar
+                + " detalleCode=" + codigoDetalle);
+        ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
+        api.obtenerObrasDeUsuario(idUsuario, idUsuario).enqueue(new Callback<List<ObraDTO>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ObraDTO>> call, @NonNull Response<List<ObraDTO>> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                Log.d(TAG_CRUD, "Fallback obra edicion response code=" + response.code()
+                        + " successful=" + response.isSuccessful()
+                        + " bodySize=" + (response.body() != null ? response.body().size() : -1)
+                        + " idObra=" + idObraEditar);
+                if (!response.isSuccessful() || response.body() == null) {
+                    Toast.makeText(getContext(), "No se pudo cargar la obra.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                for (ObraDTO obra : response.body()) {
+                    if (obra != null && obra.getIdObra() != null && obra.getIdObra() == idObraEditar) {
+                        obraActual = obra;
+                        precargarObra(obraActual);
+                        return;
+                    }
+                }
+                Log.w(TAG_CRUD, "Fallback obra edicion no encontro idObra=" + idObraEditar
+                        + " usuarioId=" + idUsuario
+                        + " size=" + response.body().size());
+                Toast.makeText(getContext(), "No se encontro la obra para editar.", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ObraDTO>> call, @NonNull Throwable t) {
+                Log.e(TAG_CRUD, "Fallback obra edicion failure idObra=" + idObraEditar + " usuarioId=" + idUsuario, t);
+                if (isAdded()) {
+                    Toast.makeText(getContext(), "Error de red al cargar la obra.", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    private void notificarRefreshPortafolio() {
+        notificarRegresoPortafolio(true);
+    }
+
+    private void notificarRegresoPortafolio(boolean guardado) {
+        if (resultadoRegresoNotificado && !guardado) {
+            return;
+        }
+        resultadoRegresoNotificado = true;
+        String modo = modoEdicion ? "editar_obra" : "crear_obra";
+        Log.d(guardado ? TAG_CRUD : TAG_BACK_STACK, "Notificar regreso portafolio target=obras"
+                + " guardado=" + guardado
+                + " modo=" + modo
+                + " idObra=" + idObraEditar);
+        Bundle result = new Bundle();
+        result.putString(FragPortafolio.RESULT_EXTRA_TARGET, FragPortafolio.TARGET_OBRAS);
+        result.putBoolean(FragPortafolio.RESULT_EXTRA_GUARDADO, guardado);
+        result.putString(FragPortafolio.RESULT_EXTRA_MODO, modo);
+        getParentFragmentManager().setFragmentResult(FragPortafolio.RESULT_KEY_PORTAFOLIO_REFRESH, result);
+
+        androidx.navigation.NavController navController = NavHostFragment.findNavController(this);
+        androidx.navigation.NavBackStackEntry previousEntry = navController.getPreviousBackStackEntry();
+        if (previousEntry != null) {
+            previousEntry.getSavedStateHandle().set(
+                    FragPortafolio.RESULT_EXTRA_TARGET,
+                    FragPortafolio.TARGET_OBRAS
+            );
+            previousEntry.getSavedStateHandle().set(
+                    FragPortafolio.RESULT_EXTRA_GUARDADO,
+                    guardado
+            );
+            previousEntry.getSavedStateHandle().set(
+                    FragPortafolio.RESULT_EXTRA_MODO,
+                    modo
+            );
+        }
     }
 }
 

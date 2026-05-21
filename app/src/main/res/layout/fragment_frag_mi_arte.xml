@@ -1,49 +1,52 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
-    android:orientation="vertical"
+    android:clipToPadding="false"
+    android:fillViewport="true"
     android:paddingStart="12dp"
-    android:paddingTop="104dp"
+    android:paddingTop="8dp"
     android:paddingEnd="12dp"
-    android:paddingBottom="112dp">
+    android:paddingBottom="16dp">
 
-    <TextView
-        android:id="@+id/tvTituloMiArte"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:gravity="center"
-        android:text="Mis obras"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:padding="4dp"/>
-
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvTituloMiArte"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:padding="4dp"
+            android:text="Mis obras"
+            android:textSize="22sp"
+            android:textStyle="bold" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerMiArte"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:clipToPadding="false"
+            android:nestedScrollingEnabled="false"
             android:paddingTop="10dp"
-            android:paddingBottom="16dp"/>
+            android:paddingBottom="16dp" />
 
         <TextView
             android:id="@+id/tvEmptyMiArte"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
             android:gravity="center"
             android:paddingStart="20dp"
+            android:paddingTop="96dp"
             android:paddingEnd="20dp"
+            android:paddingBottom="96dp"
             android:text="Todavía no has publicado obras. Comparte tu primera creación con la comunidad."
             android:textSize="15sp"
             android:visibility="gone" />
 
-    </FrameLayout>
+    </LinearLayout>
 
-</LinearLayout>
+</androidx.core.widget.NestedScrollView>

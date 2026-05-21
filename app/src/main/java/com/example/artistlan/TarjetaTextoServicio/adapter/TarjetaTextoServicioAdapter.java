@@ -3,6 +3,8 @@ package com.example.artistlan.TarjetaTextoServicio.adapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -11,11 +13,12 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.PopupMenu;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -57,6 +60,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     private int lastAnimatedPosition = -1;
     private Integer currentUserId;
     private boolean entryAnimationsEnabled = true;
+    private boolean portfolioHeaderEnabled = false;
 
     public TarjetaTextoServicioAdapter(List<TarjetaTextoServicioItem> listaServicios, Context context) {
         this.listaServicios = listaServicios;
@@ -70,6 +74,10 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     public void setOnAuthorClickListener(OnAuthorClickListener onAuthorClickListener) { this.onAuthorClickListener = onAuthorClickListener; }
     public void setOnCardClickListener(OnCardClickListener onCardClickListener) { this.onCardClickListener = onCardClickListener; }
     public void setEntryAnimationsEnabled(boolean enabled) { this.entryAnimationsEnabled = enabled; }
+    public void setPortfolioHeaderEnabled(boolean enabled) {
+        this.portfolioHeaderEnabled = enabled;
+        notifyDataSetChanged();
+    }
     public void setCurrentUserId(Integer currentUserId) {
         this.currentUserId = currentUserId;
         notifyDataSetChanged();
@@ -87,6 +95,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         TarjetaTextoServicioItem servicio = listaServicios.get(position);
+        resetItemVisualState(holder.itemView);
         if (entryAnimationsEnabled) {
             animateFeedEntry(holder, position);
         }
@@ -98,9 +107,12 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         ThemeApplier.applyTextSecondary(holder.tecnicas, tm);
         ThemeApplier.applyTextPrimary(holder.precioRango, tm);
         ThemeApplier.applyTextSecondary(holder.categoria, tm);
+        ThemeApplier.applyTextPrimary(holder.tvPublicationTitle, tm);
         ThemeApplier.applyPrimaryButton(holder.btnContactar, tm);
         ThemeApplier.applySecondaryButton(holder.btnReportarServicio, tm);
         CardThemeHelper.applyFlatCard(holder.layoutServicioCard, tm);
+        CardThemeHelper.applyFilterSurface(holder.publicationHeader, tm);
+        CardThemeHelper.applyFilterButton(holder.btnMoreOptions, tm);
         CardThemeHelper.applyChip(holder.categoria, tm);
         CardThemeHelper.applyChip(holder.precioRango, tm);
         CardThemeHelper.applyChip(holder.tvBadgeServicio, tm);
@@ -113,6 +125,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         holder.tecnicas.setText("Técnicas: " + safe(servicio.getTecnicas(), "No especificadas"));
         holder.precioRango.setText(formatearPrecioRango(servicio.getPrecioMin(), servicio.getPrecioMax()));
         holder.categoria.setText("Categoría: " + safe(servicio.getCategoria(), "Sin categoría"));
+        configurarEncabezadoPublicacion(holder, servicio);
         bindLikeUi(holder, servicio, true);
         holder.btnLike.setOnClickListener(v -> {
             if (onLikeClickListener == null) {
@@ -311,34 +324,95 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
 
     private void configurarMenuOpciones(ViewHolder holder) {
-        boolean mostrarMenu = onEditClickListener != null || onDeleteClickListener != null;
+        boolean mostrarMenu = portfolioHeaderEnabled && (onEditClickListener != null || onDeleteClickListener != null);
         holder.btnMoreOptions.setVisibility(mostrarMenu ? View.VISIBLE : View.GONE);
         if (!mostrarMenu) { holder.btnMoreOptions.setOnClickListener(null); return; }
         holder.btnMoreOptions.setOnClickListener(v -> {
             int adapterPosition = holder.getAdapterPosition();
             if (adapterPosition == RecyclerView.NO_POSITION) return;
-            PopupMenu popupMenu = new PopupMenu(context, holder.btnMoreOptions);
-            if (onEditClickListener != null) popupMenu.getMenu().add(0, 1, 0, "Modificar");
-            if (onDeleteClickListener != null) popupMenu.getMenu().add(0, 2, 1, "Eliminar");
-            popupMenu.setOnMenuItemClickListener(item -> {
+            mostrarPopupOpciones(holder.btnMoreOptions, onEditClickListener != null, onDeleteClickListener != null, opcion -> {
                 int currentPosition = holder.getAdapterPosition();
                 if (currentPosition == RecyclerView.NO_POSITION) {
-                    return false;
+                    return;
                 }
 
                 TarjetaTextoServicioItem servicio = listaServicios.get(currentPosition);
-                if (item.getItemId() == 1 && onEditClickListener != null) {
+                if (opcion == 1 && onEditClickListener != null) {
                     onEditClickListener.onEditClick(servicio, currentPosition);
-                    return true;
+                    return;
                 }
-                if (item.getItemId() == 2 && onDeleteClickListener != null) {
+                if (opcion == 2 && onDeleteClickListener != null) {
                     onDeleteClickListener.onDeleteClick(servicio, currentPosition);
-                    return true;
                 }
-                return false;
             });
-            popupMenu.show();
         });
+    }
+
+    private void configurarEncabezadoPublicacion(@NonNull ViewHolder holder, @NonNull TarjetaTextoServicioItem servicio) {
+        holder.publicationHeader.setVisibility(portfolioHeaderEnabled ? View.VISIBLE : View.GONE);
+        holder.tvPublicationTitle.setText("Editar: " + safe(servicio.getTitulo(), "Sin título"));
+    }
+
+    private interface OpcionMenuCallback {
+        void onSeleccion(int opcion);
+    }
+
+    private void mostrarPopupOpciones(@NonNull View anchor, boolean puedeEditar, boolean puedeEliminar, @NonNull OpcionMenuCallback callback) {
+        ThemeManager tm = new ThemeManager(anchor.getContext());
+        LinearLayout container = new LinearLayout(anchor.getContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(dpToPx(anchor, 8), dpToPx(anchor, 8), dpToPx(anchor, 8), dpToPx(anchor, 8));
+        CardThemeHelper.applyFilterSurface(container, tm);
+
+        PopupWindow popupWindow = new PopupWindow(container, dpToPx(anchor, 148), ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setElevation(dpToPx(anchor, 10));
+
+        if (puedeEditar) {
+            container.addView(crearBotonMenu(anchor, tm, "Editar", () -> {
+                popupWindow.dismiss();
+                callback.onSeleccion(1);
+            }));
+        }
+        if (puedeEliminar) {
+            Button borrar = crearBotonMenu(anchor, tm, "Borrar", () -> {
+                popupWindow.dismiss();
+                callback.onSeleccion(2);
+            });
+            if (container.getChildCount() > 0) {
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        dpToPx(anchor, 38)
+                );
+                params.topMargin = dpToPx(anchor, 6);
+                borrar.setLayoutParams(params);
+            }
+            container.addView(borrar);
+        }
+
+        popupWindow.showAsDropDown(anchor, -dpToPx(anchor, 112), dpToPx(anchor, 6));
+    }
+
+    private Button crearBotonMenu(@NonNull View anchor, @NonNull ThemeManager tm, @NonNull String texto, @NonNull Runnable action) {
+        Button button = new Button(anchor.getContext());
+        button.setText(texto);
+        button.setTextSize(13);
+        button.setAllCaps(false);
+        button.setMinHeight(0);
+        button.setMinimumHeight(0);
+        button.setPadding(dpToPx(anchor, 10), 0, dpToPx(anchor, 10), 0);
+        button.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dpToPx(anchor, 38)
+        ));
+        CardThemeHelper.applyFilterActionButton(button, tm);
+        button.setOnClickListener(v -> action.run());
+        return button;
+    }
+
+    private int dpToPx(@NonNull View view, int dp) {
+        return Math.round(dp * view.getResources().getDisplayMetrics().density);
     }
 
     private void animateLikeButton(ImageButton btnLike, boolean targetLiked) {
@@ -425,6 +499,22 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         lastAnimatedPosition = position;
     }
 
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+        resetItemVisualState(holder.itemView);
+    }
+
+    private void resetItemVisualState(@NonNull View view) {
+        view.animate().cancel();
+        view.clearAnimation();
+        view.setAlpha(1f);
+        view.setTranslationX(0f);
+        view.setTranslationY(0f);
+        view.setScaleX(1f);
+        view.setScaleY(1f);
+    }
+
     private void animatePress(@NonNull View view) {
         view.animate().cancel();
         view.animate().scaleX(0.96f).scaleY(0.96f).setDuration(80).withEndAction(
@@ -456,11 +546,11 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView titulo, descripcion, contacto, tipoContacto, tecnicas, autor, categoria, precioRango, likes, tvBadgeServicio;
+        TextView titulo, descripcion, contacto, tipoContacto, tecnicas, autor, categoria, precioRango, likes, tvBadgeServicio, tvPublicationTitle;
         ImageView imgAutor;
         ImageButton btnLike;
         ImageButton btnMoreOptions;
-        View expandedSection, layoutServicioCard;
+        View expandedSection, layoutServicioCard, publicationHeader;
         Button btnContactar, btnReportarServicio;
 
         public ViewHolder(@NonNull View itemView) {
@@ -475,12 +565,14 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             categoria = itemView.findViewById(R.id.categoria);
             precioRango = itemView.findViewById(R.id.precioRango);
             tvBadgeServicio = itemView.findViewById(R.id.tvBadgeServicio);
+            tvPublicationTitle = itemView.findViewById(R.id.tvPublicationTitle);
             imgAutor = itemView.findViewById(R.id.imgAutor);
             likes = itemView.findViewById(R.id.likes);
             btnLike = itemView.findViewById(R.id.btnLike);
             btnMoreOptions = itemView.findViewById(R.id.btnMoreOptions);
             expandedSection = itemView.findViewById(R.id.expanded_section);
             layoutServicioCard = itemView.findViewById(R.id.layoutServicioCard);
+            publicationHeader = itemView.findViewById(R.id.publicationHeader);
             btnContactar = itemView.findViewById(R.id.btnContactar);
             btnReportarServicio = itemView.findViewById(R.id.btnReportarServicio);
         }

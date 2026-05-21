@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -13,11 +15,12 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.PopupMenu;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -190,6 +193,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         TarjetaTextoObraItem obra = listaObras.get(position);
 
+        resetItemVisualState(holder.itemView);
         if (entryAnimationsEnabled) {
             animateFeedEntry(holder, position);
         }
@@ -232,10 +236,13 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         ThemeApplier.applyTextSecondary(holder.tecnica, tm);
         ThemeApplier.applyTextSecondary(holder.medidas, tm);
         ThemeApplier.applyTextPrimary(holder.precio, tm);
+        ThemeApplier.applyTextPrimary(holder.tvPublicationTitle, tm);
         ThemeApplier.applyPrimaryButton(holder.btnAccionPrincipal, tm);
         ThemeApplier.applySecondaryButton(holder.btnAccionSecundaria, tm);
         ThemeApplier.applySecondaryButton(holder.btnReportarObra, tm);
         CardThemeHelper.applyFlatCard(holder.layoutObraCard, tm);
+        CardThemeHelper.applyFilterSurface(holder.publicationHeader, tm);
+        CardThemeHelper.applyFilterButton(holder.btnMoreOptions, tm);
         CardThemeHelper.applyChip(holder.categoria, tm);
         CardThemeHelper.applyStatusChip(holder.estadoResumen, null);
     }
@@ -252,6 +259,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.medidas.setText(formatearMedidas(obra.getMedidas()));
         holder.categoria.setText(safeText(obra.getNombreCategoria(), "Sin categoría"));
         holder.likes.setText(String.valueOf(obra.getLikes()));
+        configurarEncabezadoPublicacion(holder, obra);
         resetDoubleTapHeart(holder);
 
         if (debeOcultarPrecio(obra)) {
@@ -574,40 +582,93 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
                 return;
             }
 
-            PopupMenu popupMenu = new PopupMenu(context, holder.btnMoreOptions);
-
-            if (puedeEditar) {
-                popupMenu.getMenu().add(0, 1, 0, "Modificar");
-            }
-
-            if (puedeEliminar) {
-                popupMenu.getMenu().add(0, 2, 1, "Eliminar");
-            }
-
-            popupMenu.setOnMenuItemClickListener(item -> {
+            mostrarPopupOpciones(holder.btnMoreOptions, puedeEditar, puedeEliminar, opcion -> {
                 int currentPosition = holder.getBindingAdapterPosition();
 
                 if (currentPosition == RecyclerView.NO_POSITION) {
-                    return false;
+                    return;
                 }
 
                 TarjetaTextoObraItem obraSeleccionada = listaObras.get(currentPosition);
 
-                if (item.getItemId() == 1 && onEditClickListener != null) {
+                if (opcion == 1 && onEditClickListener != null) {
                     onEditClickListener.onEditClick(obraSeleccionada, currentPosition);
-                    return true;
+                    return;
                 }
 
-                if (item.getItemId() == 2 && onDeleteClickListener != null) {
+                if (opcion == 2 && onDeleteClickListener != null) {
                     onDeleteClickListener.onDeleteClick(obraSeleccionada, currentPosition);
-                    return true;
                 }
-
-                return false;
             });
-
-            popupMenu.show();
         });
+    }
+
+    private void configurarEncabezadoPublicacion(@NonNull ViewHolder holder, @NonNull TarjetaTextoObraItem obra) {
+        boolean mostrarEncabezado = modoTarjeta == ModoTarjetaObra.MIS_OBRAS;
+        holder.publicationHeader.setVisibility(mostrarEncabezado ? View.VISIBLE : View.GONE);
+        holder.tvPublicationTitle.setText("Editar: " + safeText(obra.getTitulo(), "Sin título"));
+    }
+
+    private interface OpcionMenuCallback {
+        void onSeleccion(int opcion);
+    }
+
+    private void mostrarPopupOpciones(@NonNull View anchor, boolean puedeEditar, boolean puedeEliminar, @NonNull OpcionMenuCallback callback) {
+        ThemeManager tm = new ThemeManager(anchor.getContext());
+        LinearLayout container = new LinearLayout(anchor.getContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(dpToPx(anchor, 8), dpToPx(anchor, 8), dpToPx(anchor, 8), dpToPx(anchor, 8));
+        CardThemeHelper.applyFilterSurface(container, tm);
+
+        PopupWindow popupWindow = new PopupWindow(container, dpToPx(anchor, 148), ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setElevation(dpToPx(anchor, 10));
+
+        if (puedeEditar) {
+            container.addView(crearBotonMenu(anchor, tm, "Editar", () -> {
+                popupWindow.dismiss();
+                callback.onSeleccion(1);
+            }));
+        }
+        if (puedeEliminar) {
+            Button borrar = crearBotonMenu(anchor, tm, "Borrar", () -> {
+                popupWindow.dismiss();
+                callback.onSeleccion(2);
+            });
+            if (container.getChildCount() > 0) {
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        dpToPx(anchor, 38)
+                );
+                params.topMargin = dpToPx(anchor, 6);
+                borrar.setLayoutParams(params);
+            }
+            container.addView(borrar);
+        }
+
+        popupWindow.showAsDropDown(anchor, -dpToPx(anchor, 112), dpToPx(anchor, 6));
+    }
+
+    private Button crearBotonMenu(@NonNull View anchor, @NonNull ThemeManager tm, @NonNull String texto, @NonNull Runnable action) {
+        Button button = new Button(anchor.getContext());
+        button.setText(texto);
+        button.setTextSize(13);
+        button.setAllCaps(false);
+        button.setMinHeight(0);
+        button.setMinimumHeight(0);
+        button.setPadding(dpToPx(anchor, 10), 0, dpToPx(anchor, 10), 0);
+        button.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dpToPx(anchor, 38)
+        ));
+        CardThemeHelper.applyFilterActionButton(button, tm);
+        button.setOnClickListener(v -> action.run());
+        return button;
+    }
+
+    private int dpToPx(@NonNull View view, int dp) {
+        return Math.round(dp * view.getResources().getDisplayMetrics().density);
     }
 
     private boolean debeMostrarBotonPrincipal(TarjetaTextoObraItem obra) {
@@ -858,6 +919,22 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         lastAnimatedPosition = position;
     }
 
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+        resetItemVisualState(holder.itemView);
+    }
+
+    private void resetItemVisualState(@NonNull View view) {
+        view.animate().cancel();
+        view.clearAnimation();
+        view.setAlpha(1f);
+        view.setTranslationX(0f);
+        view.setTranslationY(0f);
+        view.setScaleX(1f);
+        view.setScaleY(1f);
+    }
+
     private void animatePress(@NonNull View view) {
         LikeUiHelper.animatePress(view);
     }
@@ -1012,6 +1089,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         TextView categoria;
         TextView likes;
         TextView autor;
+        TextView tvPublicationTitle;
 
         ImageView imgAutor;
         ImageView imgObra;
@@ -1023,6 +1101,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         View expandedSection;
         View actionsContainer;
         View layoutObraCard;
+        View publicationHeader;
 
         Button btnAccionPrincipal;
         Button btnAccionSecundaria;
@@ -1045,6 +1124,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             autor = itemView.findViewById(R.id.autor);
             categoria = itemView.findViewById(R.id.categoria);
             likes = itemView.findViewById(R.id.likes);
+            tvPublicationTitle = itemView.findViewById(R.id.tvPublicationTitle);
 
             btnLike = itemView.findViewById(R.id.btnLike);
             btnMoreOptions = itemView.findViewById(R.id.btnMoreOptions);
@@ -1052,6 +1132,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             expandedSection = itemView.findViewById(R.id.expanded_section);
             actionsContainer = itemView.findViewById(R.id.actionsContainer);
             layoutObraCard = itemView.findViewById(R.id.layoutObraCard);
+            publicationHeader = itemView.findViewById(R.id.publicationHeader);
 
             btnAccionPrincipal = itemView.findViewById(R.id.btnAccionPrincipal);
             btnAccionSecundaria = itemView.findViewById(R.id.btnAccionSecundaria);

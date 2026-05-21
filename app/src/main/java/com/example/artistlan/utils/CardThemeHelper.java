@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.GradientDrawable;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -70,6 +71,32 @@ public final class CardThemeHelper {
                 dp(button, 16)
         ));
         button.setColorFilter(tm.color(ThemeKeys.FILTER_BUTTON_STROKE), PorterDuff.Mode.SRC_IN);
+    }
+
+    public static void applyFilterSurface(@Nullable View view, @NonNull ThemeManager tm) {
+        if (view == null) {
+            return;
+        }
+        view.setBackground(roundedDrawable(
+                tm.color(ThemeKeys.FILTER_BUTTON_BG),
+                tm.color(ThemeKeys.FILTER_BUTTON_STROKE),
+                2,
+                dp(view, 16)
+        ));
+    }
+
+    public static void applyFilterActionButton(@Nullable Button button, @NonNull ThemeManager tm) {
+        if (button == null) {
+            return;
+        }
+        button.setAllCaps(false);
+        button.setTextColor(tm.color(ThemeKeys.FILTER_BUTTON_STROKE));
+        button.setBackground(roundedDrawable(
+                tm.color(ThemeKeys.FILTER_BUTTON_BG),
+                tm.color(ThemeKeys.FILTER_BUTTON_STROKE),
+                2,
+                dp(button, 14)
+        ));
     }
 
     public static void applyAvatarStroke(@Nullable ShapeableImageView imageView, @NonNull ThemeManager tm) {

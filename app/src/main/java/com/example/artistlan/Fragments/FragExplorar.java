@@ -58,6 +58,7 @@ public class FragExplorar extends Fragment {
     private Button btnSegmentArtistas;
     private ViewPager2 viewPager;
     private ExplorarPagerAdapter pagerAdapter;
+    private ViewPager2.OnPageChangeCallback pageChangeCallback;
     private PopupWindow filtrosPopup;
 
     private boolean filtrosVisibles = false;
@@ -97,7 +98,10 @@ public class FragExplorar extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        view.post(this::restaurarUiFiltros);
+        view.post(() -> {
+            restaurarUiFiltros();
+            ensureDataLoadedForCurrentTab();
+        });
     }
 
     @Override
@@ -105,12 +109,34 @@ public class FragExplorar extends Fragment {
         super.onResume();
         View view = getView();
         if (view != null) {
-            view.post(this::restaurarUiFiltros);
+            view.post(() -> {
+                themeManager = new ThemeManager(requireContext());
+                restaurarUiFiltros();
+                refrescarTemaTabsCargados();
+                ensureDataLoadedForCurrentTab();
+            });
         }
     }
 
     @Override
     public void onDestroyView() {
+        if (viewPager != null) {
+            if (pageChangeCallback != null) {
+                viewPager.unregisterOnPageChangeCallback(pageChangeCallback);
+            }
+            viewPager.setAdapter(null);
+        }
+        pageChangeCallback = null;
+        pagerAdapter = null;
+        viewPager = null;
+        searchView = null;
+        btnFiltros = null;
+        panelFiltros = null;
+        segmentIndicator = null;
+        segmentContainer = null;
+        btnSegmentObras = null;
+        btnSegmentServicios = null;
+        btnSegmentArtistas = null;
         if (filtrosPopup != null) {
             filtrosPopup.dismiss();
             filtrosPopup = null;
@@ -124,6 +150,7 @@ public class FragExplorar extends Fragment {
         searchView.setIconifiedByDefault(false);
         searchView.clearFocus();
         searchView.setQueryHint("Buscar en Artistlan");
+        aplicarTemaBuscador();
 
         int searchIconId = getResources().getIdentifier("android:id/search_mag_icon", null, null);
         ImageView searchIcon = searchView.findViewById(searchIconId);
@@ -192,35 +219,36 @@ public class FragExplorar extends Fragment {
             return;
         }
 
-        if (pagerAdapter == null) {
-            pagerAdapter = new ExplorarPagerAdapter(this);
-            viewPager.setAdapter(pagerAdapter);
-            viewPager.setOffscreenPageLimit(3);
-            viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-                @Override
-                public void onPageSelected(int position) {
-                    int tipoId = tipoForIndex(position);
-                    currentTipoId = tipoId;
-                    moverIndicadorTipo(tipoId, true);
+        pagerAdapter = new ExplorarPagerAdapter(this);
+        viewPager.setAdapter(pagerAdapter);
+        viewPager.setOffscreenPageLimit(1);
+        pageChangeCallback = new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                int tipoId = tipoForIndex(position);
+                currentTipoId = tipoId;
+                moverIndicadorTipo(tipoId, true);
 
-                    if (limpiarBusquedaAlCambiarPagina) {
-                        limpiarBusquedaAlCambiarPagina = false;
-                        aplicarBusquedaAlFragmentActual("");
-                    } else if (searchView != null) {
-                        aplicarBusquedaAlFragmentActual(searchView.getQuery().toString());
-                    }
-
-                    actualizarVisibilidadBotonFiltros();
-                    logPerf("Cambio tab swipe -> tipoId=" + currentTipoId + ", position=" + position);
+                if (limpiarBusquedaAlCambiarPagina) {
+                    limpiarBusquedaAlCambiarPagina = false;
+                    aplicarBusquedaAlFragmentActual("");
+                } else if (searchView != null) {
+                    aplicarBusquedaAlFragmentActual(searchView.getQuery().toString());
                 }
-            });
-        }
+
+                ensureDataLoadedForCurrentTab();
+                actualizarVisibilidadBotonFiltros();
+                logPerf("Cambio tab swipe -> tipoId=" + currentTipoId + ", position=" + position);
+            }
+        };
+        viewPager.registerOnPageChangeCallback(pageChangeCallback);
 
         aplicarTemaSelector();
 
         int tipoInicial = currentTipoId == View.NO_ID ? R.id.btnSegmentObras : currentTipoId;
         currentTipoId = tipoInicial;
         viewPager.setCurrentItem(indexForTipo(tipoInicial), false);
+        ensureDataLoadedForCurrentTab();
         actualizarVisibilidadBotonFiltros();
 
         btnSegmentObras.setOnClickListener(v -> seleccionarTipo(R.id.btnSegmentObras, true));
@@ -262,6 +290,17 @@ public class FragExplorar extends Fragment {
             ((FragServicios) fragmentActual).filtrarBusqueda(texto);
         } else if (fragmentActual instanceof FragArtistas) {
             ((FragArtistas) fragmentActual).filtrarBusqueda(texto);
+        }
+    }
+
+    private void ensureDataLoadedForCurrentTab() {
+        Fragment fragmentActual = obtenerFragmentActual();
+        if (fragmentActual instanceof FragArte) {
+            ((FragArte) fragmentActual).ensureDataLoadedForCurrentState();
+        } else if (fragmentActual instanceof FragServicios) {
+            ((FragServicios) fragmentActual).ensureDataLoadedForCurrentState();
+        } else if (fragmentActual instanceof FragArtistas) {
+            ((FragArtistas) fragmentActual).ensureDataLoadedForCurrentState();
         }
     }
 
@@ -503,12 +542,29 @@ public class FragExplorar extends Fragment {
             themeManager = new ThemeManager(requireContext());
         }
         aplicarTemaSelector();
+        aplicarTemaBuscador();
         if (btnFiltros != null) {
             btnFiltros.setOnClickListener(v -> mostrarMenuFiltros());
         }
         actualizarVisibilidadBotonFiltros();
         if (currentTipoId != View.NO_ID && segmentContainer != null) {
             segmentContainer.post(() -> moverIndicadorTipo(currentTipoId, false));
+        }
+    }
+
+    private void refrescarTemaTabsCargados() {
+        if (!isAdded()) {
+            return;
+        }
+        List<Fragment> fragments = getChildFragmentManager().getFragments();
+        for (Fragment fragment : fragments) {
+            if (fragment instanceof FragArte) {
+                ((FragArte) fragment).refreshThemeOnly();
+            } else if (fragment instanceof FragServicios) {
+                ((FragServicios) fragment).refreshThemeOnly();
+            } else if (fragment instanceof FragArtistas) {
+                ((FragArtistas) fragment).refreshThemeOnly();
+            }
         }
     }
 
@@ -554,6 +610,28 @@ public class FragExplorar extends Fragment {
         tintBackground(segmentIndicator, themeManager.color(ThemeKeys.ACCENT_PRIMARY));
         CardThemeHelper.applyFilterButton(btnFiltros, themeManager);
         aplicarColoresBotonesTipo();
+    }
+
+    private void aplicarTemaBuscador() {
+        if (searchView == null || themeManager == null) {
+            return;
+        }
+        int colorTexto = themeManager.color(ThemeKeys.TEXT_PRIMARY);
+        int colorHintBase = themeManager.color(ThemeKeys.INPUT_HINT);
+        int colorHint = ColorUtils.setAlphaComponent(colorHintBase, Math.max(Color.alpha(colorHintBase), 170));
+
+        int searchTextId = getResources().getIdentifier("android:id/search_src_text", null, null);
+        TextView searchText = searchView.findViewById(searchTextId);
+        if (searchText != null) {
+            searchText.setTextColor(colorTexto);
+            searchText.setHintTextColor(colorHint);
+        }
+
+        int searchPlateId = getResources().getIdentifier("android:id/search_plate", null, null);
+        View searchPlate = searchView.findViewById(searchPlateId);
+        if (searchPlate != null && searchPlate.getBackground() != null) {
+            searchPlate.getBackground().mutate().setColorFilter(themeManager.color(ThemeKeys.INPUT_BG), PorterDuff.Mode.SRC_ATOP);
+        }
     }
 
     private void limpiarFondoBotonSegmento(@Nullable Button button) {

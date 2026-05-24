@@ -125,6 +125,11 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         holder.tecnicas.setText("Técnicas: " + safe(servicio.getTecnicas(), "No especificadas"));
         holder.precioRango.setText(formatearPrecioRango(servicio.getPrecioMin(), servicio.getPrecioMax()));
         holder.categoria.setText("Categoría: " + safe(servicio.getCategoria(), "Sin categoría"));
+        boolean esServicioPropio = servicio.getIdUsuario() != null
+                && getCurrentUserId() != null
+                && servicio.getIdUsuario().equals(getCurrentUserId());
+        holder.tvBadgeServicio.setVisibility(esServicioPropio ? View.VISIBLE : View.GONE);
+        holder.tvBadgeServicio.setText("Mi servicio");
         configurarEncabezadoPublicacion(holder, servicio);
         bindLikeUi(holder, servicio, true);
         holder.btnLike.setOnClickListener(v -> {
@@ -149,14 +154,20 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             }
         });
 
-        Glide.with(holder.itemView.getContext())
-                .load((servicio.getFotoPerfilAutor() != null && servicio.getFotoPerfilAutor().startsWith("http")) ? servicio.getFotoPerfilAutor() : R.drawable.fotoperfilprueba)
-                .placeholder(R.drawable.fotoperfilprueba)
-                .error(R.drawable.fotoperfilprueba)
-                .thumbnail(0.25f)
-                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .circleCrop()
-                .into(holder.imgAutor);
+        String fotoAutor = servicio.getFotoPerfilAutor();
+        if (!isRemoteUrlValida(fotoAutor)) {
+            Glide.with(holder.itemView.getContext()).clear(holder.imgAutor);
+            holder.imgAutor.setImageResource(R.drawable.fotoperfilprueba);
+        } else {
+            Glide.with(holder.itemView.getContext())
+                    .load(fotoAutor.trim())
+                    .placeholder(R.drawable.fotoperfilprueba)
+                    .error(R.drawable.fotoperfilprueba)
+                    .thumbnail(0.25f)
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                    .circleCrop()
+                    .into(holder.imgAutor);
+        }
 
         holder.imgAutor.setOnClickListener(v -> {
             animatePress(v);
@@ -170,9 +181,6 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         animarVista(holder.expandedSection, expandido);
         configurarMenuOpciones(holder);
 
-        boolean esServicioPropio = servicio.getIdUsuario() != null
-                && getCurrentUserId() != null
-                && servicio.getIdUsuario().equals(getCurrentUserId());
         holder.btnContactar.setVisibility(esServicioPropio ? View.GONE : View.VISIBLE);
         holder.btnContactar.setEnabled(!esServicioPropio && !TextUtils.isEmpty(servicio.getContacto()));
         holder.btnContactar.setOnClickListener(v -> {
@@ -268,6 +276,14 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     @Override public int getItemCount() { return listaServicios != null ? listaServicios.size() : 0; }
 
     private String safe(String v, String def) { return (v == null || v.trim().isEmpty()) ? def : v; }
+
+    private boolean isRemoteUrlValida(String valor) {
+        if (valor == null) {
+            return false;
+        }
+        String trimmed = valor.trim();
+        return !trimmed.isEmpty() && (trimmed.startsWith("http://") || trimmed.startsWith("https://"));
+    }
 
     private void configurarBotonReportar(ViewHolder holder, TarjetaTextoServicioItem servicio) {
         boolean mostrarReportar = puedeReportarseServicio(servicio);

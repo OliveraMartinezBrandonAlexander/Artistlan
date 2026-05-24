@@ -237,7 +237,7 @@ public class FragMain extends Fragment {
 
             @Override
             public void onAuthor(ObraCarruselItem item, int position) {
-                abrirPerfilPublico(item.getIdAutor());
+                abrirPerfilSegunUsuario(item.getIdAutor());
             }
 
             @Override
@@ -570,14 +570,14 @@ public class FragMain extends Fragment {
             if (adapter instanceof TarjetaTextoObraAdapter) {
                 TarjetaTextoObraAdapter obraAdapter = (TarjetaTextoObraAdapter) adapter;
                 obraFeedAdapters.add(obraAdapter);
-                obraAdapter.setOnAuthorClickListener((obraItem, position) -> abrirPerfilPublico(obraItem.getIdAutor()));
+                obraAdapter.setOnAuthorClickListener((obraItem, position) -> abrirPerfilSegunUsuario(obraItem.getIdAutor()));
                 obraAdapter.setOnLikeClickListener((obraItem, position) -> toggleLikeObraEnFeed(obraItem, position, obraAdapter));
                 obraAdapter.setOnPrimaryActionClickListener((obraItem, position) -> solicitarCompraHome(obraItem, obraAdapter));
             }
             if (adapter instanceof TarjetaTextoServicioAdapter) {
                 TarjetaTextoServicioAdapter servicioAdapter = (TarjetaTextoServicioAdapter) adapter;
                 servicioFeedAdapters.add(servicioAdapter);
-                servicioAdapter.setOnAuthorClickListener((servicioItem, position) -> abrirPerfilPublico(servicioItem.getIdUsuario()));
+                servicioAdapter.setOnAuthorClickListener((servicioItem, position) -> abrirPerfilSegunUsuario(servicioItem.getIdUsuario()));
                 servicioAdapter.setOnLikeClickListener((servicioItem, position) -> toggleLikeServicioEnFeed(servicioItem, position, servicioAdapter));
             }
         }
@@ -846,9 +846,14 @@ public class FragMain extends Fragment {
             tvConvocatoriasMainEstado.setVisibility(View.GONE);
         }
     }
-    private void abrirPerfilPublico(Integer idArtista) {
+    private void abrirPerfilSegunUsuario(Integer idArtista) {
         if (!isAdded() || idArtista == null || idArtista <= 0) {
             Toast.makeText(requireContext(), "Perfil no disponible", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        int idUsuarioActual = resolveCurrentUserIdForActions();
+        if (idUsuarioActual > 0 && idUsuarioActual == idArtista) {
+            NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfil);
             return;
         }
         Bundle args = new Bundle();

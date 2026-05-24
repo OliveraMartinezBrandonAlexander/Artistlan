@@ -113,7 +113,7 @@
                 android:adjustViewBounds="false"
                 android:background="@drawable/bg_card_feed_glass"
                 android:padding="6dp"
-                android:scaleType="fitCenter"
+                android:scaleType="centerCrop"
                 app:shapeAppearanceOverlay="@style/ArtistlanCarouselImageShape" />
 
             <ImageView
@@ -135,7 +135,7 @@
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="2"
-            android:text="Título"
+            android:text="T&#237;tulo"
             android:textAlignment="center"
             android:textColor="@color/artistlan_text_primary"
             android:textSize="17sp"
@@ -152,7 +152,7 @@
             android:paddingStart="4dp"
             android:paddingTop="1dp"
             android:paddingEnd="4dp"
-            android:text="Descripción de la obra"
+            android:text="Descripci&#243;n de la obra"
             android:textColor="@color/artistlan_text_secondary"
             android:textSize="13sp" />
 

@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/nestedScrollObras"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
-    android:clipToPadding="false"
-    android:fillViewport="true"
-    android:paddingTop="224dp"
     tools:context=".Fragments.FragArte">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollObras"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingTop="224dp"
+        android:paddingBottom="92dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,8 +31,23 @@
             android:id="@+id/recyclerObras"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clipToPadding="false"
             android:nestedScrollingEnabled="false"
             android:padding="0dp"/>
+
+        <TextView
+            android:id="@+id/tvEmptyObras"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingStart="24dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="8dp"
+            android:text="A&#250;n no hay obras disponibles."
+            android:textColor="@color/artistlan_text_secondary"
+            android:textSize="14sp"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/btnCargarMasObras"
@@ -62,6 +83,16 @@
                 android:textSize="13sp"/>
         </LinearLayout>
 
-    </LinearLayout>
+        </LinearLayout>
 
-</androidx.core.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
+
+    <ProgressBar
+        android:id="@+id/progressEstadoObras"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+</FrameLayout>

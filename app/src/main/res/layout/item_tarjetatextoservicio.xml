@@ -160,7 +160,7 @@
                 android:paddingTop="5dp"
                 android:paddingEnd="6dp"
                 android:paddingBottom="5dp"
-                android:text="SERVICIO"
+                android:text="Mi servicio"
                 android:textColor="@color/artistlan_text_primary"
                 android:textSize="11sp"
                 android:textStyle="bold"

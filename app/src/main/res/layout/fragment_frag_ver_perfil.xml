@@ -294,6 +294,7 @@
                 </androidx.cardview.widget.CardView>
 
                 <TextView
+                    android:id="@+id/tvTituloFavoritosPerfil"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
@@ -303,6 +304,7 @@
                     android:textSize="18sp"/>
 
                 <FrameLayout
+                    android:id="@+id/contenedorTabsFavoritosPerfil"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"

@@ -56,8 +56,8 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
     private static final String[] DEFAULT_DESCRIPCIONES = new String[] {
             "Hola, estoy usando Artistlan",
             "En busca del arte",
-            "Creando algo nuevo cada día",
-            "Compartiendo mi pasión por el arte",
+            "Creando algo nuevo cada d\u00EDa",
+            "Compartiendo mi pasi\u00F3n por el arte",
             "Arte en proceso, gracias por visitar"
     };
 
@@ -115,8 +115,11 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         CardThemeHelper.applyFlatCard(holder.layoutArtistaCard, tm);
         CardThemeHelper.applyChip(holder.categoria, tm);
 
-        holder.nombre.setText(artista.getNombre());
-        holder.categoria.setText("Categoría: " + safeText(artista.getCategoria(), "Sin categoria"));
+        boolean esPerfilPropio = artista.getIdArtista() != null
+                && currentUserId != null
+                && artista.getIdArtista().equals(currentUserId);
+        holder.nombre.setText(esPerfilPropio ? "Yo" : artista.getNombre());
+        holder.categoria.setText("Categor\u00EDa: " + safeText(artista.getCategoria(), "Sin categor\u00EDa"));
         holder.descripcion.setText((artista.getDescripcion() == null || artista.getDescripcion().trim().isEmpty()) ? descripcionDefaultPara(artista, position) : artista.getDescripcion());
         LikeUiHelper.bind(
                 holder.btnLike,
@@ -138,22 +141,13 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             }
         });
 
-        Glide.with(context)
-                .load((artista.getFotoPerfil() != null && !artista.getFotoPerfil().isEmpty())
-                        ? artista.getFotoPerfil()
-                        : R.drawable.fotoperfilprueba)
-                .placeholder(R.drawable.fotoperfilprueba)
-                .error(R.drawable.fotoperfilprueba)
-                .thumbnail(0.25f)
-                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .circleCrop()
-                .into(holder.imgPerfil);
+        cargarFotoPerfil(holder.imgPerfil, artista.getFotoPerfil());
 
         List<String> obras = artista.getMiniObras();
         int miniSizePx = (int) (76 * holder.itemView.getResources().getDisplayMetrics().density);
-        if (obras.size() > 0) cargarMiniObra(holder.imgMini1, obras.get(0), miniSizePx); else holder.imgMini1.setImageResource(R.drawable.imagencargaobras);
-        if (obras.size() > 1) cargarMiniObra(holder.imgMini2, obras.get(1), miniSizePx); else holder.imgMini2.setImageResource(R.drawable.imagencargaobras);
-        if (obras.size() > 2) cargarMiniObra(holder.imgMini3, obras.get(2), miniSizePx); else holder.imgMini3.setImageResource(R.drawable.imagencargaobras);
+        if (obras.size() > 0) cargarMiniObra(holder.imgMini1, obras.get(0), miniSizePx); else setMiniPlaceholder(holder.imgMini1);
+        if (obras.size() > 1) cargarMiniObra(holder.imgMini2, obras.get(1), miniSizePx); else setMiniPlaceholder(holder.imgMini2);
+        if (obras.size() > 2) cargarMiniObra(holder.imgMini3, obras.get(2), miniSizePx); else setMiniPlaceholder(holder.imgMini3);
 
         boolean expandido = (tarjetaExpandida == position);
         animarVista(holder.expandedSection, expandido);
@@ -177,9 +171,6 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
             notifyItemChanged(currentPosition);
         });
 
-        boolean esPerfilPropio = artista.getIdArtista() != null
-                && currentUserId != null
-                && artista.getIdArtista().equals(currentUserId);
         View.OnClickListener visitarPerfilListener = v -> {
             int adapterPosition = holder.getAdapterPosition();
             if (onVisitarClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
@@ -317,9 +308,29 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         if (position >= 0 && position < listaArtistas.size()) notifyItemChanged(position);
     }
 
-    private void cargarMiniObra(@NonNull ImageView target, String url, int miniSizePx) {
+    private void cargarFotoPerfil(@NonNull ImageView target, String url) {
+        if (!isUrlValida(url)) {
+            Glide.with(context).clear(target);
+            target.setImageResource(R.drawable.fotoperfilprueba);
+            return;
+        }
         Glide.with(context)
-                .load(url)
+                .load(url.trim())
+                .placeholder(R.drawable.fotoperfilprueba)
+                .error(R.drawable.fotoperfilprueba)
+                .thumbnail(0.25f)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .circleCrop()
+                .into(target);
+    }
+
+    private void cargarMiniObra(@NonNull ImageView target, String url, int miniSizePx) {
+        if (!isUrlValida(url)) {
+            setMiniPlaceholder(target);
+            return;
+        }
+        Glide.with(context)
+                .load(url.trim())
                 .placeholder(R.drawable.imagencargaobras)
                 .error(R.drawable.imagencargaobras)
                 .thumbnail(0.25f)
@@ -327,5 +338,14 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .centerCrop()
                 .into(target);
+    }
+
+    private void setMiniPlaceholder(@NonNull ImageView target) {
+        Glide.with(context).clear(target);
+        target.setImageResource(R.drawable.imagencargaobras);
+    }
+
+    private boolean isUrlValida(String url) {
+        return url != null && !url.trim().isEmpty();
     }
 }

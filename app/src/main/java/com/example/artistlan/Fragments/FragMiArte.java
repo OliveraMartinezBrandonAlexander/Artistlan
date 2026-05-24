@@ -4,10 +4,15 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,16 +28,23 @@ import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.FavoritosApi;
 import com.example.artistlan.Conector.api.ObraApi;
+import com.example.artistlan.Conector.api.UsuarioApi;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.ObraDTO;
+import com.example.artistlan.Conector.model.ValidarPasswordRequestDTO;
+import com.example.artistlan.Conector.model.ValidarPasswordResponseDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
 import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
+import com.example.artistlan.utils.DialogThemeHelper;
+import com.example.artistlan.utils.LottieFeedbackDialog;
 import com.example.artistlan.utils.LikeStateManager;
+import com.example.artistlan.Conector.SessionManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,14 +63,21 @@ public class FragMiArte extends Fragment {
     private static final String TAG_REFRESH = "RefreshMiArteDebug";
     private RecyclerView recyclerMisObras;
     private TextView tvEmptyMiArte;
+    private ProgressBar progressMiArte;
     private TarjetaTextoObraAdapter adapter;
     private FavoritosApi favoritosApi;
     private int idUsuarioLogueado = -1;
     private final Map<Integer, Long> lastLikeClickByObra = new HashMap<>();
     private final Set<Integer> likesEnVuelo = new HashSet<>();
     private final Set<Integer> obrasEnEliminacion = new HashSet<>();
+    private LottieFeedbackDialog feedbackDialog;
+    private SessionManager sessionManager;
+    private UsuarioApi usuarioApi;
     private boolean debeRecargarEnResume = true;
+    private boolean isLoading = false;
+    private boolean validacionPasswordEnCurso = false;
     private int requestToken = 0;
+    private int ultimoColorTemaAplicado = Integer.MIN_VALUE;
     private static final Map<Integer, List<TarjetaTextoObraItem>> obrasCachePorUsuario = new HashMap<>();
     private static final Map<Integer, Set<Integer>> ownedObrasCachePorUsuario = new HashMap<>();
 
@@ -78,6 +97,7 @@ public class FragMiArte extends Fragment {
 
         recyclerMisObras = view.findViewById(R.id.recyclerMiArte);
         tvEmptyMiArte = view.findViewById(R.id.tvEmptyMiArte);
+        progressMiArte = view.findViewById(R.id.progressMiArte);
         recyclerMisObras.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerMisObras.setItemAnimator(null);
         ThemeApplier.applyTextPrimary(view.findViewById(R.id.tvTituloMiArte), new ThemeManager(requireContext()));
@@ -88,7 +108,11 @@ public class FragMiArte extends Fragment {
         adapter.setOnEditClickListener(this::editarObra);
         adapter.setOnDeleteClickListener(this::confirmarEliminacionObra);
         recyclerMisObras.setAdapter(adapter);
+        actualizarEstadoVacio(false);
+        feedbackDialog = new LottieFeedbackDialog(requireContext());
         favoritosApi = RetrofitClient.getClient().create(FavoritosApi.class);
+        usuarioApi = RetrofitClient.getClient().create(UsuarioApi.class);
+        sessionManager = new SessionManager(requireContext());
         getParentFragmentManager().setFragmentResultListener(
                 FragPortafolio.RESULT_KEY_PORTAFOLIO_REFRESH,
                 getViewLifecycleOwner(),
@@ -113,32 +137,96 @@ public class FragMiArte extends Fragment {
                                 + " sizeDespues=" + (adapter != null ? adapter.getItemCount() : -1));
                         return;
                     }
+                    FragPortafolio.marcarRefreshPendiente(FragPortafolio.TARGET_OBRAS);
                     debeRecargarEnResume = true;
                     if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)) {
                         debeRecargarEnResume = false;
-                        cargarObrasDelUsuario();
+                        ensureDataLoadedForCurrentState();
                     }
                 }
         );
-        if (debeRecargarEnResume) {
-            debeRecargarEnResume = false;
-            cargarObrasDelUsuario();
+        boolean refreshPendiente = FragPortafolio.hasRefreshPendiente(FragPortafolio.TARGET_OBRAS);
+        if (debeRecargarEnResume || refreshPendiente) {
+            ensureDataLoadedForCurrentState();
         }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (debeRecargarEnResume && isAdded()) {
+        refreshThemeOnly();
+        boolean refreshPendiente = FragPortafolio.hasRefreshPendiente(FragPortafolio.TARGET_OBRAS);
+        if ((debeRecargarEnResume || refreshPendiente) && isAdded()) {
+            ensureDataLoadedForCurrentState();
+        }
+    }
+
+    public void refreshThemeOnly() {
+        if (!isAdded()) {
+            return;
+        }
+        ThemeManager tm = new ThemeManager(requireContext());
+        int colorActual = tm.color(ThemeKeys.ACCENT_PRIMARY);
+        if (colorActual == ultimoColorTemaAplicado) {
+            return;
+        }
+        ultimoColorTemaAplicado = colorActual;
+        View view = getView();
+        if (view != null) {
+            ThemeModuleStyler.styleFragment(this, view);
+        }
+        ThemeApplier.applyTextPrimary(view != null ? view.findViewById(R.id.tvTituloMiArte) : null, tm);
+        ThemeApplier.applyTextSecondary(tvEmptyMiArte, tm);
+        if (adapter != null && adapter.getItemCount() > 0) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    public void ensureDataLoadedForCurrentState() {
+        if (!isAdded() || recyclerMisObras == null || adapter == null) {
+            return;
+        }
+        if (recyclerMisObras.getAdapter() != adapter) {
+            recyclerMisObras.setAdapter(adapter);
+        }
+        actualizarEstadoVacio(false);
+        boolean refreshPendiente = FragPortafolio.hasRefreshPendiente(FragPortafolio.TARGET_OBRAS);
+        if (refreshPendiente) {
+            debeRecargarEnResume = false;
+            if (!isLoading) {
+                FragPortafolio.limpiarRefreshPendiente(FragPortafolio.TARGET_OBRAS);
+                cargarObrasDelUsuario();
+            }
+            return;
+        }
+        if (adapter.getItemCount() > 0) {
+            return;
+        }
+        sincronizarUsuarioActual();
+        if (restaurarObrasCacheSiExiste()) {
+            return;
+        }
+        if (!isLoading) {
             debeRecargarEnResume = false;
             cargarObrasDelUsuario();
         }
     }
 
+    @Override
+    public void onDestroyView() {
+        if (feedbackDialog != null) {
+            feedbackDialog.release();
+            feedbackDialog = null;
+        }
+        super.onDestroyView();
+    }
+
     private List<TarjetaTextoObraItem> convertirDTOaItem(List<ObraDTO> dtoList, Set<Integer> obrasFavoritas) {
         List<TarjetaTextoObraItem> items = new ArrayList<>();
+        List<ObraDTO> ordenadas = dtoList != null ? new ArrayList<>(dtoList) : new ArrayList<>();
+        ordenadas.sort((a, b) -> Integer.compare(safeObraId(b), safeObraId(a)));
 
-        for (ObraDTO dto : dtoList) {
+        for (ObraDTO dto : ordenadas) {
             int idObra = dto.getIdObra() != null ? dto.getIdObra() : -1;
             boolean esFavoritoReal = obrasFavoritas.contains(idObra) || Boolean.TRUE.equals(dto.getEsFavorito());
             int likesBackend = dto.getLikes() != null ? dto.getLikes() : 0;
@@ -296,15 +384,137 @@ public class FragMiArte extends Fragment {
             return;
         }
 
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Eliminar obra")
-                .setMessage("Esta acci\u00F3n eliminar\u00E1 la obra de forma permanente.\n\n"
-                        + "Si hay solicitudes activas relacionadas, pueden cancelarse y "
-                        + "se notificara a compradores afectados.\n\n"
-                        + "Deseas continuar?")
+        LinearLayout contenedor = new LinearLayout(requireContext());
+        contenedor.setOrientation(LinearLayout.VERTICAL);
+        int padding = dpToPx(24);
+        contenedor.setPadding(padding, dpToPx(8), padding, 0);
+
+        TextView mensaje = new TextView(requireContext());
+        mensaje.setText("Ingresa tu contraseña para continuar.");
+        contenedor.addView(mensaje);
+
+        EditText etContrasena = new EditText(requireContext());
+        etContrasena.setHint("Contraseña");
+        etContrasena.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        etContrasena.setSingleLine(true);
+        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        inputParams.topMargin = dpToPx(12);
+        contenedor.addView(etContrasena, inputParams);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle("Confirmar contraseña")
+                .setView(contenedor)
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Eliminar", (dialog, which) -> eliminarObra(obraItem, position))
-                .show();
+                .setPositiveButton("Confirmar", null)
+                .create();
+        dialog.setOnDismissListener(d -> etContrasena.setText(""));
+        dialog.show();
+        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+
+        Button btnConfirmar = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        Button btnCancelar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+        btnConfirmar.setOnClickListener(v -> {
+            if (validacionPasswordEnCurso) {
+                return;
+            }
+            String contrasena = etContrasena.getText() != null ? etContrasena.getText().toString().trim() : "";
+            if (contrasena.isEmpty()) {
+                etContrasena.setError("Ingresa tu contraseña");
+                etContrasena.requestFocus();
+                return;
+            }
+            validacionPasswordEnCurso = true;
+            setEstadoDialogoValidacionPassword(etContrasena, btnConfirmar, btnCancelar, false);
+            validarPasswordActual(contrasena, new PasswordValidationCallback() {
+                @Override
+                public void onValid() {
+                    validacionPasswordEnCurso = false;
+                    if (!isAdded()) {
+                        return;
+                    }
+                    dialog.dismiss();
+                    eliminarObra(obraItem, position);
+                }
+
+                @Override
+                public void onInvalid(String mensajeError) {
+                    validacionPasswordEnCurso = false;
+                    if (!isAdded()) {
+                        return;
+                    }
+                    etContrasena.setText("");
+                    etContrasena.requestFocus();
+                    setEstadoDialogoValidacionPassword(etContrasena, btnConfirmar, btnCancelar, true);
+                    Toast.makeText(requireContext(), mensajeError, Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onError(String mensajeError) {
+                    validacionPasswordEnCurso = false;
+                    if (!isAdded()) {
+                        return;
+                    }
+                    setEstadoDialogoValidacionPassword(etContrasena, btnConfirmar, btnCancelar, true);
+                    Toast.makeText(requireContext(), mensajeError, Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+    }
+
+    private void validarPasswordActual(String contrasena, PasswordValidationCallback callback) {
+        if (usuarioApi == null || sessionManager == null) {
+            callback.onError("No se pudo validar la contraseña");
+            return;
+        }
+        String token = sessionManager.getToken();
+        if (token == null || token.trim().isEmpty()) {
+            callback.onError("No se pudo validar la contraseña");
+            return;
+        }
+
+        usuarioApi.validarPassword(
+                "Bearer " + token.trim(),
+                new ValidarPasswordRequestDTO(contrasena)
+        ).enqueue(new Callback<ValidarPasswordResponseDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<ValidarPasswordResponseDTO> call, @NonNull Response<ValidarPasswordResponseDTO> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null && response.body().isValida()) {
+                    callback.onValid();
+                    return;
+                }
+                if (response.code() == 403) {
+                    callback.onInvalid("Contraseña incorrecta");
+                    return;
+                }
+                callback.onError("No se pudo validar la contraseña");
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ValidarPasswordResponseDTO> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                callback.onError("Inténtalo de nuevo");
+            }
+        });
+    }
+
+    private void setEstadoDialogoValidacionPassword(EditText etContrasena, Button btnConfirmar, Button btnCancelar, boolean habilitado) {
+        if (etContrasena != null) {
+            etContrasena.setEnabled(habilitado);
+        }
+        if (btnConfirmar != null) {
+            btnConfirmar.setEnabled(habilitado);
+        }
+        if (btnCancelar != null) {
+            btnCancelar.setEnabled(habilitado);
+        }
     }
 
     private void eliminarObra(TarjetaTextoObraItem obraItem, int position) {
@@ -318,10 +528,11 @@ public class FragMiArte extends Fragment {
         }
         int idObra = obraItem.getIdObra();
         if (obrasEnEliminacion.contains(idObra)) {
-            Toast.makeText(requireContext(), "Ya se esta procesando la eliminacion de esta obra", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Ya se está procesando la eliminación de esta obra", Toast.LENGTH_SHORT).show();
             return;
         }
         obrasEnEliminacion.add(idObra);
+        mostrarFeedbackCarga("Eliminando obra...");
         Log.d(TAG_CRUD, "Borrar obra request DELETE obrasDeUsuario/{usuarioId}/{obraId}"
                 + " usuarioId=" + idUsuarioLogueado
                 + " idObra=" + idObra
@@ -347,18 +558,22 @@ public class FragMiArte extends Fragment {
                         adapter.removeItemAt(position);
                         actualizarEstadoVacio(adapter.getItemCount() == 0);
                     }
+                    mostrarFeedbackExito("Obra eliminada", null);
                     cargarObrasDelUsuario(true, idObra);
                     return;
                 }
                 if (code == 403) {
+                    mostrarFeedbackError("No se pudo eliminar la obra");
                     Toast.makeText(requireContext(), "No puedes eliminar esta obra", Toast.LENGTH_LONG).show();
                     return;
                 }
                 if (code == 404) {
+                    mostrarFeedbackError("No se pudo eliminar la obra");
                     Toast.makeText(requireContext(), "La obra ya no existe", Toast.LENGTH_LONG).show();
                     return;
                 }
                 if (code == 409) {
+                    mostrarFeedbackError("No se pudo eliminar la obra");
                     String backendMessage = ApiErrorParser.extractMessage(response);
                     Toast.makeText(requireContext(),
                             backendMessage != null ? backendMessage : "No se puede eliminar esta obra",
@@ -372,6 +587,7 @@ public class FragMiArte extends Fragment {
                 if (mensaje == null || mensaje.trim().isEmpty() || "Error interno del servidor".equalsIgnoreCase(mensaje.trim())) {
                     mensaje = "No se pudo eliminar la obra por un error temporal del servidor";
                 }
+                mostrarFeedbackError("No se pudo eliminar la obra");
                 Toast.makeText(requireContext(), mensaje + " (" + code + ")", Toast.LENGTH_LONG).show();
                 cargarObrasDelUsuario();
             }
@@ -381,6 +597,7 @@ public class FragMiArte extends Fragment {
                 obrasEnEliminacion.remove(idObra);
                 Log.e(TAG_CRUD, "Borrar obra failure idObra=" + idObra, t);
                 if (isAdded()) {
+                    mostrarFeedbackError("No se pudo eliminar la obra");
                     Toast.makeText(requireContext(), "Error de conexi\u00F3n al eliminar la obra", Toast.LENGTH_LONG).show();
                     cargarObrasDelUsuario();
                 }
@@ -414,8 +631,12 @@ public class FragMiArte extends Fragment {
         if (idUsuarioLogueado == -1) {
             Toast.makeText(requireContext(), "Error: usuario no logueado.", Toast.LENGTH_SHORT).show();
             debeRecargarEnResume = true;
+            isLoading = false;
+            actualizarEstadoVacio(true);
             return;
         }
+        isLoading = true;
+        actualizarEstadoVacio(true);
 
         restaurarObrasCacheSiExiste();
 
@@ -425,7 +646,12 @@ public class FragMiArte extends Fragment {
         call.enqueue(new Callback<List<ObraDTO>>() {
             @Override
             public void onResponse(@NonNull Call<List<ObraDTO>> call, @NonNull Response<List<ObraDTO>> response) {
-                if (!isAdded()) return;
+                if (!isAdded()) {
+                    if (tokenLocal == requestToken) {
+                        isLoading = false;
+                    }
+                    return;
+                }
                 if (tokenLocal != requestToken) {
                     Log.d(TAG_REFRESH, "Ignorada respuesta vieja obras token=" + tokenLocal
                             + " actual=" + requestToken
@@ -437,12 +663,15 @@ public class FragMiArte extends Fragment {
                         + " bodySize=" + (response.body() != null ? response.body().size() : -1));
 
                 if (!response.isSuccessful()) {
+                    isLoading = false;
+                    actualizarEstadoVacio(true);
                     Toast.makeText(requireContext(), "Error al cargar obras.", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 List<ObraDTO> dtos = response.body();
                 if (dtos == null || dtos.isEmpty()) {
+                    isLoading = false;
                     if (!permitirVaciarLista && restaurarObrasCacheSiExiste()) {
                         Log.w(TAG_REFRESH, "Respuesta obras vacia protegida con cache usuarioId=" + idUsuarioLogueado);
                         debeRecargarEnResume = false;
@@ -456,7 +685,6 @@ public class FragMiArte extends Fragment {
                     if (idEliminadoEsperado != null) {
                         Log.d(TAG_CRUD, "Verificacion borrado obra id=" + idEliminadoEsperado
                                 + " siguePresente=false sizeDespues=0");
-                        Toast.makeText(requireContext(), "Obra eliminada correctamente", Toast.LENGTH_SHORT).show();
                     }
                     debeRecargarEnResume = false;
                     return;
@@ -465,20 +693,17 @@ public class FragMiArte extends Fragment {
                     if (!isAdded() || tokenLocal != requestToken) {
                         return;
                     }
+                    isLoading = false;
                     List<TarjetaTextoObraItem> items = convertirDTOaItem(dtos, obrasFavoritas);
                     Set<Integer> ownedObraIds = extraerOwnedObraIds(dtos);
                     guardarObrasCache(items, ownedObraIds);
                     aplicarObrasEnUi(items, ownedObraIds);
+                    FragPortafolio.limpiarRefreshPendiente(FragPortafolio.TARGET_OBRAS);
                     if (idEliminadoEsperado != null) {
                         boolean siguePresente = contieneObra(items, idEliminadoEsperado);
                         Log.d(TAG_CRUD, "Verificacion borrado obra id=" + idEliminadoEsperado
                                 + " siguePresente=" + siguePresente
                                 + " sizeDespues=" + items.size());
-                        Toast.makeText(requireContext(),
-                                siguePresente
-                                        ? "El servidor confirmó, pero la obra sigue apareciendo al recargar"
-                                        : "Obra eliminada correctamente",
-                                siguePresente ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
                     }
                     debeRecargarEnResume = false;
                     refreshLikeCounts(items);
@@ -487,13 +712,35 @@ public class FragMiArte extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<List<ObraDTO>> call, @NonNull Throwable t) {
-                if (isAdded() && tokenLocal == requestToken) {
+                if (!isAdded()) {
+                    if (tokenLocal == requestToken) {
+                        isLoading = false;
+                    }
+                    return;
+                }
+                if (tokenLocal == requestToken) {
+                    isLoading = false;
                     debeRecargarEnResume = true;
+                    actualizarEstadoVacio(true);
                     Log.e(TAG_REFRESH, "Cargar obras failure token=" + tokenLocal + " usuarioId=" + idUsuarioLogueado, t);
                     Toast.makeText(requireContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
         });
+    }
+
+    private void sincronizarUsuarioActual() {
+        if (!isAdded()) {
+            return;
+        }
+        SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
+        LikeStateManager.setCurrentUserId(idUsuarioLogueado);
+    }
+
+    public static synchronized void invalidarCacheUsuario(int idUsuario) {
+        obrasCachePorUsuario.remove(idUsuario);
+        ownedObrasCachePorUsuario.remove(idUsuario);
     }
 
     private boolean restaurarObrasCacheSiExiste() {
@@ -508,16 +755,18 @@ public class FragMiArte extends Fragment {
     }
 
     private void guardarObrasCache(List<TarjetaTextoObraItem> items, Set<Integer> ownedObraIds) {
-        obrasCachePorUsuario.put(idUsuarioLogueado, new ArrayList<>(items));
-        ownedObrasCachePorUsuario.put(idUsuarioLogueado, new HashSet<>(ownedObraIds));
+        List<TarjetaTextoObraItem> ordenadas = ordenarObrasMasRecientesPrimero(items);
+        obrasCachePorUsuario.put(idUsuarioLogueado, ordenadas);
+        ownedObrasCachePorUsuario.put(idUsuarioLogueado, ownedObraIds != null ? new HashSet<>(ownedObraIds) : new HashSet<>());
     }
 
     private void aplicarObrasEnUi(List<TarjetaTextoObraItem> items, Set<Integer> ownedObraIds) {
-        adapter.actualizarLista(items != null ? new ArrayList<>(items) : new ArrayList<>());
+        List<TarjetaTextoObraItem> ordenadas = ordenarObrasMasRecientesPrimero(items);
+        adapter.actualizarLista(ordenadas);
         adapter.setOwnedObraIds(ownedObraIds != null ? new HashSet<>(ownedObraIds) : new HashSet<>());
-        actualizarEstadoVacio(items == null || items.isEmpty());
-        Log.d(TAG_REFRESH, "Aplicar obras UI size=" + (items != null ? items.size() : 0)
-                + " emptyVisible=" + (items == null || items.isEmpty())
+        actualizarEstadoVacio(ordenadas.isEmpty());
+        Log.d(TAG_REFRESH, "Aplicar obras UI size=" + ordenadas.size()
+                + " emptyVisible=" + ordenadas.isEmpty()
                 + " serviciosNoSeTocan=true");
     }
 
@@ -542,13 +791,66 @@ public class FragMiArte extends Fragment {
         }
     }
 
+    private List<TarjetaTextoObraItem> ordenarObrasMasRecientesPrimero(@Nullable List<TarjetaTextoObraItem> source) {
+        List<TarjetaTextoObraItem> ordenadas = source != null ? new ArrayList<>(source) : new ArrayList<>();
+        ordenadas.sort((a, b) -> Integer.compare(
+                a != null ? Math.max(0, a.getIdObra()) : 0,
+                b != null ? Math.max(0, b.getIdObra()) : 0
+        ));
+        java.util.Collections.reverse(ordenadas);
+        return ordenadas;
+    }
+
+    private int safeObraId(@Nullable ObraDTO dto) {
+        return dto != null && dto.getIdObra() != null ? dto.getIdObra() : -1;
+    }
+
     private void actualizarEstadoVacio(boolean mostrar) {
         if (tvEmptyMiArte == null || recyclerMisObras == null) {
             return;
         }
-        tvEmptyMiArte.setVisibility(mostrar ? View.VISIBLE : View.GONE);
-        recyclerMisObras.setVisibility(mostrar ? View.GONE : View.VISIBLE);
+        boolean tieneDatos = adapter != null && adapter.getItemCount() > 0;
+        boolean mostrarLoaderCentral = isLoading && !tieneDatos;
+        boolean mostrarEmpty = !mostrarLoaderCentral && !tieneDatos && mostrar;
+
+        if (progressMiArte != null) {
+            progressMiArte.setVisibility(mostrarLoaderCentral ? View.VISIBLE : View.GONE);
+        }
+        recyclerMisObras.setVisibility(tieneDatos ? View.VISIBLE : View.GONE);
+        tvEmptyMiArte.setVisibility(mostrarEmpty ? View.VISIBLE : View.GONE);
     }
+
+    private void mostrarFeedbackCarga(String mensaje) {
+        if (feedbackDialog != null) {
+            feedbackDialog.showLoading(mensaje);
+        }
+    }
+
+    private void mostrarFeedbackExito(String mensaje, @Nullable Runnable onDismiss) {
+        if (feedbackDialog != null) {
+            feedbackDialog.showSuccess(mensaje, onDismiss);
+        } else if (onDismiss != null) {
+            onDismiss.run();
+        }
+    }
+
+    private void mostrarFeedbackError(String mensaje) {
+        if (feedbackDialog != null) {
+            feedbackDialog.showError(mensaje);
+        }
+    }
+
+    private int dpToPx(int dp) {
+        float density = requireContext().getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
+    private interface PasswordValidationCallback {
+        void onValid();
+        void onInvalid(String mensajeError);
+        void onError(String mensajeError);
+    }
+
     private interface FavoritosObrasCallback {
         void onResult(Set<Integer> obrasFavoritas);
     }

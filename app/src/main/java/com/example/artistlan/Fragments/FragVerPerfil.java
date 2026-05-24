@@ -6,11 +6,13 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -43,6 +45,8 @@ import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.Conector.model.TwoFactorResponse;
 import com.example.artistlan.Conector.model.UsuariosDTO;
+import com.example.artistlan.Conector.model.ValidarPasswordRequestDTO;
+import com.example.artistlan.Conector.model.ValidarPasswordResponseDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
@@ -74,10 +78,13 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private ImageView imgFotoPerfil;
     private ImageButton btnEditarPefil;
     private CardView cardPerfilInfo;
+    private LinearLayout panelInfo;
     private View expandedSectionPerfil;
     private NestedScrollView scrollPerfil;
     private RecyclerView recyclerFavoritos;
     private TabLayout tabFavoritos;
+    private View contenedorTabsFavoritos;
+    private TextView tvTituloFavoritos;
     private Button btnDesactivar2FA;
     private SessionManager sessionManager;
     private Auth2FAApi auth2FAApi;
@@ -100,9 +107,11 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private long ultimoRefreshFavoritosMs = 0L;
     private int selectedTabIndex = 0;
     private int ultimoTabFavoritosCargado = -1;
+    private int ultimoColorTemaAplicado = Integer.MIN_VALUE;
     private float swipeStartX = 0f;
     private float swipeStartY = 0f;
     private boolean swipeHorizontalDetectado = false;
+    private boolean validacionPassword2faEnCurso = false;
     private final Set<String> favoritosEnCurso = new HashSet<>();
 
     @Override
@@ -129,6 +138,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         root.setOnClickListener(v -> colapsarFicha());
 
         cardPerfilInfo = view.findViewById(R.id.cardPerfilInfo);
+        panelInfo = view.findViewById(R.id.panelInfo);
         expandedSectionPerfil = view.findViewById(R.id.expanded_section_perfil);
         cardPerfilInfo.setOnClickListener(v -> toggleFicha());
         scrollPerfil = view.findViewById(R.id.scrollPerfil);
@@ -149,6 +159,8 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         recyclerFavoritos = view.findViewById(R.id.recyclerFavoritosPerfil);
         tvFavoritosVacio = view.findViewById(R.id.tvFavoritosVacio);
         tabFavoritos = view.findViewById(R.id.tabFavoritosPerfil);
+        contenedorTabsFavoritos = view.findViewById(R.id.contenedorTabsFavoritosPerfil);
+        tvTituloFavoritos = view.findViewById(R.id.tvTituloFavoritosPerfil);
         crearBotonDesactivar2FASiHaceFalta(view);
 
         recyclerFavoritos.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -175,11 +187,74 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     @Override
     public void onResume() {
         super.onResume();
+        refreshThemeOnly();
         cargarDatosUsuario();
         long ahora = android.os.SystemClock.elapsedRealtime();
         if (ahora - ultimoRefreshPerfilMs >= PERFIL_REFRESH_MIN_INTERVAL_MS) {
             refrescarDatosPerfilDesdeApi();
             solicitarCargaFavoritos(selectedTabIndex, false);
+        }
+    }
+
+    private void refreshThemeOnly() {
+        if (!isAdded()) {
+            return;
+        }
+        themeManager = new ThemeManager(requireContext());
+        int colorActual = themeManager.color(ThemeKeys.ACCENT_PRIMARY);
+        if (colorActual == ultimoColorTemaAplicado) {
+            return;
+        }
+        ultimoColorTemaAplicado = colorActual;
+        aplicarTemaVisualPerfil();
+        RecyclerView.Adapter<?> currentAdapter = recyclerFavoritos != null ? recyclerFavoritos.getAdapter() : null;
+        if (currentAdapter != null && currentAdapter.getItemCount() > 0) {
+            currentAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private void aplicarTemaVisualPerfil() {
+        if (themeManager == null) {
+            return;
+        }
+        View view = getView();
+        if (view != null && view.getBackground() != null) {
+            view.getBackground().setColorFilter(themeManager.color(ThemeKeys.BG_MID), PorterDuff.Mode.SRC_ATOP);
+        }
+        if (cardPerfilInfo != null) {
+            ThemeApplier.applyCard(cardPerfilInfo, themeManager, ThemeKeys.ACCOUNT_GLASS_PANEL);
+        }
+        if (panelInfo != null && panelInfo.getBackground() != null) {
+            panelInfo.getBackground().mutate().setColorFilter(themeManager.color(ThemeKeys.INPUT_BG), PorterDuff.Mode.SRC_ATOP);
+        }
+        if (contenedorTabsFavoritos != null && contenedorTabsFavoritos.getBackground() != null) {
+            contenedorTabsFavoritos.getBackground().mutate().setColorFilter(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), PorterDuff.Mode.SRC_ATOP);
+        }
+        if (btnEditarPefil != null) {
+            ThemeApplier.applyIcon(btnEditarPefil, themeManager, ThemeKeys.ICON_ACTIVE);
+        }
+        if (btnDesactivar2FA != null) {
+            ThemeApplier.applySecondaryButton(btnDesactivar2FA, themeManager);
+        }
+        aplicarTemaTabsFavoritos();
+        aplicarColorTextoRecursivo(cardPerfilInfo, themeManager.color(ThemeKeys.TEXT_PRIMARY));
+        ThemeApplier.applyTextPrimary(tvNombre, themeManager);
+        ThemeApplier.applyTextPrimary(tvTituloFavoritos, themeManager);
+        ThemeApplier.applyTextSecondary(tvFavoritosVacio, themeManager);
+    }
+
+    private void aplicarColorTextoRecursivo(@Nullable View view, int textColor) {
+        if (view == null) {
+            return;
+        }
+        if (view instanceof TextView) {
+            ((TextView) view).setTextColor(textColor);
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                aplicarColorTextoRecursivo(group.getChildAt(i), textColor);
+            }
         }
     }
 
@@ -486,18 +561,138 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
             return;
         }
 
+        LinearLayout contenedor = new LinearLayout(requireContext());
+        contenedor.setOrientation(LinearLayout.VERTICAL);
+        int padding = dpToPx(24);
+        contenedor.setPadding(padding, dpToPx(8), padding, 0);
+
+        TextView mensaje = new TextView(requireContext());
+        mensaje.setText("Ingresa tu contraseña para continuar.");
+        contenedor.addView(mensaje);
+
+        EditText etContrasena = new EditText(requireContext());
+        etContrasena.setHint("Contraseña");
+        etContrasena.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        etContrasena.setSingleLine(true);
+        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        inputParams.topMargin = dpToPx(12);
+        contenedor.addView(etContrasena, inputParams);
+
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setTitle("Desactivar 2FA")
-                .setMessage("Se desactivara la verificacion en dos pasos de tu cuenta. Deseas continuar?")
-                .setPositiveButton("Desactivar", (d, which) -> desactivar2FA())
+                .setTitle("Confirmar contraseña")
+                .setView(contenedor)
+                .setPositiveButton("Confirmar", null)
                 .setNegativeButton("Cancelar", (d, which) -> d.dismiss())
                 .create();
-
+        dialog.setOnDismissListener(d -> etContrasena.setText(""));
         dialog.show();
         DialogThemeHelper.styleAlertDialog(dialog, requireContext());
-        if (themeManager != null) {
-            ThemeApplier.applyPrimaryButton(dialog.getButton(AlertDialog.BUTTON_POSITIVE), themeManager);
-            ThemeApplier.applySecondaryButton(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), themeManager);
+        Button btnConfirmar = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        Button btnCancelar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+        btnConfirmar.setOnClickListener(v -> {
+            if (validacionPassword2faEnCurso) {
+                return;
+            }
+            String contrasena = etContrasena.getText() != null ? etContrasena.getText().toString().trim() : "";
+            if (contrasena.isEmpty()) {
+                etContrasena.setError("Ingresa tu contraseña");
+                etContrasena.requestFocus();
+                return;
+            }
+            validacionPassword2faEnCurso = true;
+            setEstadoDialogoValidacionPassword(etContrasena, btnConfirmar, btnCancelar, false);
+            validarPasswordActual(contrasena, new PasswordValidationCallback() {
+                @Override
+                public void onValid() {
+                    validacionPassword2faEnCurso = false;
+                    if (!isAdded()) {
+                        return;
+                    }
+                    dialog.dismiss();
+                    desactivar2FA();
+                }
+
+                @Override
+                public void onInvalid(String mensajeError) {
+                    validacionPassword2faEnCurso = false;
+                    if (!isAdded()) {
+                        return;
+                    }
+                    etContrasena.setText("");
+                    etContrasena.requestFocus();
+                    setEstadoDialogoValidacionPassword(etContrasena, btnConfirmar, btnCancelar, true);
+                    Toast.makeText(requireContext(), mensajeError, Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onError(String mensajeError) {
+                    validacionPassword2faEnCurso = false;
+                    if (!isAdded()) {
+                        return;
+                    }
+                    setEstadoDialogoValidacionPassword(etContrasena, btnConfirmar, btnCancelar, true);
+                    Toast.makeText(requireContext(), mensajeError, Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+    }
+
+    private void validarPasswordActual(String contrasena, PasswordValidationCallback callback) {
+        if (usuarioApi == null || sessionManager == null) {
+            callback.onError("No se pudo validar la contraseña");
+            return;
+        }
+        String token = sessionManager.getToken();
+        if (token == null || token.trim().isEmpty()) {
+            callback.onError("No se pudo validar la contraseña");
+            return;
+        }
+
+        usuarioApi.validarPassword(
+                "Bearer " + token.trim(),
+                new ValidarPasswordRequestDTO(contrasena)
+        ).enqueue(new Callback<ValidarPasswordResponseDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<ValidarPasswordResponseDTO> call, @NonNull Response<ValidarPasswordResponseDTO> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null && response.body().isValida()) {
+                    callback.onValid();
+                    return;
+                }
+                if (response.code() == 403) {
+                    callback.onInvalid("Contraseña incorrecta");
+                    return;
+                }
+                callback.onError("No se pudo validar la contraseña");
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ValidarPasswordResponseDTO> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                callback.onError("Inténtalo de nuevo");
+            }
+        });
+    }
+
+    private void setEstadoDialogoValidacionPassword(EditText etContrasena, Button btnConfirmar, Button btnCancelar, boolean habilitado) {
+        if (etContrasena != null) {
+            etContrasena.setEnabled(habilitado);
+        }
+        if (btnConfirmar != null) {
+            btnConfirmar.setEnabled(habilitado);
+        }
+        if (btnCancelar != null) {
+            btnCancelar.setEnabled(habilitado);
+        }
+        if (btnDesactivar2FA != null) {
+            btnDesactivar2FA.setEnabled(habilitado);
         }
     }
 
@@ -579,6 +774,12 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private int dpToPx(int dp) {
         float density = requireContext().getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
+    }
+
+    private interface PasswordValidationCallback {
+        void onValid();
+        void onInvalid(String mensajeError);
+        void onError(String mensajeError);
     }
 
     private void eliminarFavoritoObra(TarjetaTextoObraItem item, int position) {

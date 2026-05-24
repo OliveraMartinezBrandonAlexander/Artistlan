@@ -25,6 +25,7 @@ import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
+import java.util.List;
 
 public class FragPortafolio extends Fragment {
     public static final String RESULT_KEY_PORTAFOLIO_REFRESH = "result_key_portafolio_refresh";
@@ -35,6 +36,8 @@ public class FragPortafolio extends Fragment {
     public static final String TARGET_SERVICIOS = "servicios";
     private static final String TAG_BACK_STACK = "MiArteBackStackDebug";
     private static int selectedTabCache = 0;
+    private static boolean refreshPendienteObras = false;
+    private static boolean refreshPendienteServicios = false;
 
 
     private ViewPager2 viewPager;
@@ -79,12 +82,14 @@ public class FragPortafolio extends Fragment {
         viewPager.setAdapter(new PortafolioPagerAdapter(this));
         viewPager.setOffscreenPageLimit(2);
         viewPager.setClipToPadding(false);
+        portafolioHeader.bringToFront();
         viewPager.setCurrentItem(selectedTabCache, false);
         Log.d(TAG_BACK_STACK, "FragPortafolio onViewCreated selectedTabRestaurado=" + selectedTabCache);
         aplicarTemaSelector();
         configurarSelector();
         configurarInsetsOverlay();
         observarRefreshDesdeSubidas();
+        view.post(this::ensureDataLoadedForCurrentTab);
 
         fabSubirObra.setOnClickListener(v -> {
             Navigation.findNavController(view).navigate(R.id.fragSubirObra);
@@ -111,6 +116,17 @@ public class FragPortafolio extends Fragment {
         topBarFrame = null;
         bottomBarFrame = null;
         super.onDestroyView();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (!isAdded()) {
+            return;
+        }
+        themeManager = new ThemeManager(requireContext());
+        aplicarTemaSelector();
+        refrescarTemaTabsCargados();
     }
 
     private void configurarInsetsOverlay() {
@@ -151,7 +167,12 @@ public class FragPortafolio extends Fragment {
             return 0;
         }
         int height = topBarFrame.getHeight();
-        return Math.max(0, height + Math.round(topBarFrame.getTranslationY()));
+        if (height <= 0) {
+            return 0;
+        }
+        int translationY = Math.round(topBarFrame.getTranslationY());
+        boolean oculto = translationY <= -Math.round(height * 0.5f);
+        return oculto ? 0 : height;
     }
 
     private int calcularVisibleBottomBar() {
@@ -159,7 +180,12 @@ public class FragPortafolio extends Fragment {
             return 0;
         }
         int height = bottomBarFrame.getHeight();
-        return Math.max(0, height - Math.round(bottomBarFrame.getTranslationY()));
+        if (height <= 0) {
+            return 0;
+        }
+        int translationY = Math.round(bottomBarFrame.getTranslationY());
+        boolean oculto = translationY >= Math.round(height * 0.5f);
+        return oculto ? 0 : height;
     }
 
     private int calcularSafeTopInset() {
@@ -201,6 +227,7 @@ public class FragPortafolio extends Fragment {
             return;
         }
         if (guardado) {
+            marcarRefreshPendiente(target);
             selectedTabCache = TARGET_SERVICIOS.equals(target) ? 1 : 0;
             if (viewPager != null && viewPager.getCurrentItem() != selectedTabCache) {
                 viewPager.setCurrentItem(selectedTabCache, false);
@@ -217,6 +244,44 @@ public class FragPortafolio extends Fragment {
         getChildFragmentManager().setFragmentResult(RESULT_KEY_PORTAFOLIO_REFRESH, result);
     }
 
+    public static synchronized void marcarRefreshPendiente(@NonNull String target) {
+        if (TARGET_OBRAS.equals(target)) {
+            refreshPendienteObras = true;
+            return;
+        }
+        if (TARGET_SERVICIOS.equals(target)) {
+            refreshPendienteServicios = true;
+        }
+    }
+
+    public static synchronized boolean hasRefreshPendiente(@NonNull String target) {
+        if (TARGET_OBRAS.equals(target)) {
+            return refreshPendienteObras;
+        }
+        if (TARGET_SERVICIOS.equals(target)) {
+            return refreshPendienteServicios;
+        }
+        return false;
+    }
+
+    public static synchronized void limpiarRefreshPendiente(@NonNull String target) {
+        if (TARGET_OBRAS.equals(target)) {
+            refreshPendienteObras = false;
+            return;
+        }
+        if (TARGET_SERVICIOS.equals(target)) {
+            refreshPendienteServicios = false;
+        }
+    }
+
+    public static synchronized boolean consumirRefreshPendiente(@NonNull String target) {
+        boolean value = hasRefreshPendiente(target);
+        if (value) {
+            limpiarRefreshPendiente(target);
+        }
+        return value;
+    }
+
     private void configurarSelector() {
         btnSegmentMisObras.setOnClickListener(v -> seleccionarSeccion(0, true));
         btnSegmentMisServicios.setOnClickListener(v -> seleccionarSeccion(1, true));
@@ -224,6 +289,7 @@ public class FragPortafolio extends Fragment {
             @Override
             public void onPageSelected(int position) {
                 seleccionarSeccion(position, false);
+                ensureDataLoadedForCurrentTab();
             }
         });
         segmentContainer.post(() -> seleccionarSeccion(viewPager.getCurrentItem(), false));
@@ -325,6 +391,38 @@ public class FragPortafolio extends Fragment {
             segmentIndicator.animate().x(targetX).setDuration(220).start();
         } else {
             segmentIndicator.setX(targetX);
+        }
+    }
+
+    private void ensureDataLoadedForCurrentTab() {
+        if (!isAdded() || viewPager == null) {
+            return;
+        }
+        int currentIndex = viewPager.getCurrentItem();
+        List<Fragment> fragments = getChildFragmentManager().getFragments();
+        for (Fragment fragment : fragments) {
+            if (fragment == null) {
+                continue;
+            }
+            if (currentIndex == 0 && fragment instanceof FragMiArte) {
+                ((FragMiArte) fragment).ensureDataLoadedForCurrentState();
+                return;
+            }
+            if (currentIndex == 1 && fragment instanceof FragMisServicios) {
+                ((FragMisServicios) fragment).ensureDataLoadedForCurrentState();
+                return;
+            }
+        }
+    }
+
+    private void refrescarTemaTabsCargados() {
+        List<Fragment> fragments = getChildFragmentManager().getFragments();
+        for (Fragment fragment : fragments) {
+            if (fragment instanceof FragMiArte) {
+                ((FragMiArte) fragment).refreshThemeOnly();
+            } else if (fragment instanceof FragMisServicios) {
+                ((FragMisServicios) fragment).refreshThemeOnly();
+            }
         }
     }
 

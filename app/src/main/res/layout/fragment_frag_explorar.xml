@@ -92,7 +92,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:background="@android:color/transparent"
-                        android:text="Obras"
+                        android:text="Arte"
                         android:textAllCaps="false"
                         android:textStyle="bold" />
 

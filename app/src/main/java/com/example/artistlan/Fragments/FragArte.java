@@ -12,6 +12,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -31,6 +33,9 @@ import com.example.artistlan.Conector.model.ObraDTO;
 import com.example.artistlan.Conector.model.PageResponseObraDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoObra.adapter.TarjetaTextoObraAdapter;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoObra.model.ModoTarjetaObra;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
@@ -65,6 +70,8 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     private RecyclerView recyclerViewObras;
     private Button btnCargarMasObras;
     private LinearLayout loaderMasObras;
+    private ProgressBar progressEstadoObras;
+    private TextView tvEmptyObras;
     private TarjetaTextoObraAdapter adapter;
     private String categoriaFiltroActual = "";
     private String textoBusquedaActual = "";
@@ -74,6 +81,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     private int idUsuarioLogueado = -1;
     private int nextPageToLoad = 0;
     private boolean isLoading = false;
+    private int loadingPage = -1;
     private boolean isLastPage = false;
     private boolean cargaInicialHecha = false;
     private int requestToken = 0;
@@ -83,6 +91,8 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     private final Set<Integer> ownedObraIds = new HashSet<>();
     private final Map<Integer, Long> ultimoToqueLikePorObra = new HashMap<>();
     private final Set<Integer> likesEnVuelo = new HashSet<>();
+    private boolean shouldAnimateNextDataResult = false;
+    private int ultimoColorTemaAplicado = Integer.MIN_VALUE;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -114,11 +124,38 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        refreshThemeOnly();
+        ensureDataLoadedForCurrentState();
+    }
+
+    public void refreshThemeOnly() {
+        if (!isAdded()) {
+            return;
+        }
+        ThemeManager tm = new ThemeManager(requireContext());
+        int colorActual = tm.color(ThemeKeys.ACCENT_PRIMARY);
+        if (colorActual == ultimoColorTemaAplicado) {
+            return;
+        }
+        ultimoColorTemaAplicado = colorActual;
+        View view = getView();
+        if (view != null) {
+            ThemeModuleStyler.styleFragment(this, view);
+        }
+        ThemeApplier.applyTextSecondary(tvEmptyObras, tm);
+        if (adapter != null && adapter.getItemCount() > 0) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
     public List<String> getFilterOptions() {
         return Arrays.asList(
-                "Pintura", "Dibujo", "Escultura", "Fotografía", "Digital",
-                "Acuarela", "Óleo", "Acrílico", "Grabado", "Cerámica",
-                "Arte textil", "Collage", "Ilustración", "Mural",
+                "Pintura", "Dibujo", "Escultura", "Fotograf\u00EDa", "Digital",
+                "Acuarela", "\u00D3leo", "Acr\u00EDlico", "Grabado", "Cer\u00E1mica",
+                "Arte textil", "Collage", "Ilustraci\u00F3n", "Mural",
                 "Arte abstracto", "Retrato", "Paisaje", "Arte conceptual"
         );
     }
@@ -137,10 +174,8 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
 
         if (normalizarTextoFiltro(filter).equals(normalizarTextoFiltro(categoriaFiltroActual))) {
             categoriaFiltroActual = "";
-            Toast.makeText(getContext(), "Filtro desactivado", Toast.LENGTH_SHORT).show();
         } else {
             categoriaFiltroActual = filter;
-            Toast.makeText(getContext(), "Filtrando: " + filter, Toast.LENGTH_SHORT).show();
         }
 
         reiniciarYCargarPrimeraPagina();
@@ -149,7 +184,6 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     @Override
     public void clearFilter() {
         categoriaFiltroActual = "";
-        Toast.makeText(getContext(), "Filtros borrados", Toast.LENGTH_SHORT).show();
         reiniciarYCargarPrimeraPagina();
     }
 
@@ -158,6 +192,8 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
         recyclerViewObras = view.findViewById(R.id.recyclerObras);
         btnCargarMasObras = view.findViewById(R.id.btnCargarMasObras);
         loaderMasObras = view.findViewById(R.id.layoutLoaderMasObras);
+        progressEstadoObras = view.findViewById(R.id.progressEstadoObras);
+        tvEmptyObras = view.findViewById(R.id.tvEmptyObras);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
         recyclerViewObras.setLayoutManager(layoutManager);
         recyclerViewObras.setItemAnimator(null);
@@ -219,6 +255,38 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
 
         if (!cargaInicialHecha) {
             cargaInicialHecha = true;
+            if (isResumed()) {
+                reiniciarYCargarPrimeraPagina();
+            }
+        } else {
+            ensureDataLoadedForCurrentState();
+        }
+    }
+
+    public void ensureDataLoadedForCurrentState() {
+        if (!isAdded() || recyclerViewObras == null || adapter == null) {
+            return;
+        }
+        if (recyclerViewObras.getAdapter() != adapter) {
+            recyclerViewObras.setAdapter(adapter);
+        }
+        if (adapter.getItemCount() > 0) {
+            if (!isLoading) {
+                shouldAnimateNextDataResult = false;
+            }
+            actualizarEstadoVacio();
+            return;
+        }
+        if (!obrasAcumuladas.isEmpty()) {
+            adapter.actualizarLista(new ArrayList<>(obrasAcumuladas));
+            adapter.setOwnedObraIds(new HashSet<>(ownedObraIds), false);
+            mostrarBotonCargarMas(!isLastPage, false);
+            mostrarLoaderMasObras(false);
+            shouldAnimateNextDataResult = false;
+            actualizarEstadoVacio();
+            return;
+        }
+        if (!isLoading) {
             reiniciarYCargarPrimeraPagina();
         }
     }
@@ -235,6 +303,10 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
 
     private void abrirPerfilPublico(TarjetaTextoObraItem obraItem, int position) {
         if (!isAdded() || obraItem == null || obraItem.getIdAutor() == null || obraItem.getIdAutor() <= 0) {
+            return;
+        }
+        if (obraItem.getIdAutor() == idUsuarioLogueado) {
+            NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfil);
             return;
         }
         Bundle args = new Bundle();
@@ -331,8 +403,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
 
         obrasAcumuladas.clear();
         ownedObraIds.clear();
-        adapter.actualizarLista(new ArrayList<>());
-        adapter.setOwnedObraIds(new HashSet<>(), false);
+        shouldAnimateNextDataResult = true;
         mostrarBotonCargarMas(false, false);
         mostrarLoaderMasObras(false);
 
@@ -358,7 +429,9 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
             return;
         }
 
+        loadingPage = pageObjetivo;
         isLoading = true;
+        actualizarEstadoVacio();
         mostrarLoaderMasObras(pageObjetivo > 0);
         if (pageObjetivo > 0) {
             mostrarBotonCargarMas(false, false);
@@ -392,9 +465,14 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                 }
 
                 isLoading = false;
+                loadingPage = -1;
                 mostrarLoaderMasObras(false);
                 if (!response.isSuccessful() || response.body() == null) {
+                    if (pageObjetivo == 0) {
+                        shouldAnimateNextDataResult = false;
+                    }
                     Toast.makeText(getContext(), "Error: " + response.code(), Toast.LENGTH_LONG).show();
+                    actualizarEstadoVacio();
                     return;
                 }
 
@@ -454,6 +532,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                 nextPageToLoad = pageObjetivo + 1;
                 isLastPage = pageResponse.isLast();
                 mostrarBotonCargarMas(!isLastPage, false);
+                actualizarEstadoVacio();
                 logPagination("Response pagina -> page=" + pageObjetivo
                         + ", size=" + PAGE_SIZE
                         + ", recibidas=" + recibidas
@@ -471,7 +550,11 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                     return;
                 }
                 isLoading = false;
+                loadingPage = -1;
                 mostrarLoaderMasObras(false);
+                if (pageObjetivo == 0) {
+                    shouldAnimateNextDataResult = false;
+                }
                 if (pageObjetivo > 0) {
                     mostrarBotonCargarMas(!isLastPage, true);
                 } else {
@@ -481,8 +564,43 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                         + ", size=" + PAGE_SIZE
                         + ", error=" + t.getMessage());
                 Toast.makeText(getContext(), "Fallo: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                actualizarEstadoVacio();
             }
         });
+    }
+
+    private void actualizarEstadoVacio() {
+        if (tvEmptyObras == null || recyclerViewObras == null || progressEstadoObras == null || adapter == null) {
+            return;
+        }
+        boolean hayDatos = adapter.getItemCount() > 0;
+        boolean loadingPrimeraPagina = isLoading && loadingPage == 0;
+        boolean mostrarLoaderEstado = loadingPrimeraPagina;
+        boolean mostrarVacio = !isLoading && !hayDatos;
+        boolean mostrarLista = hayDatos;
+
+        if (mostrarVacio) {
+            boolean hayCriterios = (textoBusquedaActual != null && !textoBusquedaActual.trim().isEmpty())
+                    || (categoriaFiltroActual != null && !categoriaFiltroActual.trim().isEmpty());
+            tvEmptyObras.setText(hayCriterios
+                    ? "No se encontraron obras con esos criterios."
+                    : "A\u00FAn no hay obras disponibles.");
+            shouldAnimateNextDataResult = false;
+        }
+
+        progressEstadoObras.setVisibility(mostrarLoaderEstado ? View.VISIBLE : View.GONE);
+        tvEmptyObras.setVisibility(mostrarVacio ? View.VISIBLE : View.GONE);
+        recyclerViewObras.setVisibility(mostrarLista ? View.VISIBLE : View.GONE);
+
+        if (mostrarLista && !isLoading && shouldAnimateNextDataResult) {
+            shouldAnimateNextDataResult = false;
+            recyclerViewObras.animate().cancel();
+            recyclerViewObras.setAlpha(0f);
+            recyclerViewObras.animate()
+                    .alpha(1f)
+                    .setDuration(160L)
+                    .start();
+        }
     }
 
     private void mostrarLoaderMasObras(boolean mostrar) {

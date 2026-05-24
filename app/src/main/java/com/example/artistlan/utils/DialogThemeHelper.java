@@ -3,6 +3,7 @@ package com.example.artistlan.utils;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.GradientDrawable;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.ColorUtils;
 
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
@@ -32,9 +34,9 @@ public final class DialogThemeHelper {
         if (window != null) {
             tintTextTree(window.getDecorView(), tm);
         }
-        ThemeApplier.applyPrimaryButton(dialog.getButton(AlertDialog.BUTTON_POSITIVE), tm);
-        ThemeApplier.applySecondaryButton(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), tm);
-        ThemeApplier.applySecondaryButton(dialog.getButton(AlertDialog.BUTTON_NEUTRAL), tm);
+        styleDialogButton(dialog.getButton(AlertDialog.BUTTON_POSITIVE), tm, true);
+        styleDialogButton(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), tm, false);
+        styleDialogButton(dialog.getButton(AlertDialog.BUTTON_NEUTRAL), tm, false);
     }
 
     public static void styleDialogWindow(@Nullable Dialog dialog, @NonNull Context context) {
@@ -80,5 +82,37 @@ public final class DialogThemeHelper {
 
     private static int dpToPx(@NonNull Context context, int dp) {
         return Math.round(dp * context.getResources().getDisplayMetrics().density);
+    }
+
+    private static void styleDialogButton(@Nullable Button button, @NonNull ThemeManager tm, boolean primary) {
+        if (button == null) {
+            return;
+        }
+        int backgroundColor;
+        int preferredTextColor;
+        if (primary) {
+            ThemeApplier.applyPrimaryButton(button, tm);
+            backgroundColor = tm.color(ThemeKeys.BUTTON_PRIMARY_BG);
+            preferredTextColor = tm.color(ThemeKeys.BUTTON_TEXT_DARK);
+        } else {
+            ThemeApplier.applySecondaryButton(button, tm);
+            backgroundColor = tm.color(ThemeKeys.BUTTON_SECONDARY_BG);
+            preferredTextColor = tm.color(ThemeKeys.BUTTON_TEXT_LIGHT);
+        }
+        if (button.getBackground() != null) {
+            button.getBackground().setColorFilter(backgroundColor, PorterDuff.Mode.SRC_ATOP);
+        } else {
+            backgroundColor = tm.color(ThemeKeys.DIALOG_BG);
+        }
+        button.setTextColor(resolveReadableTextColor(backgroundColor, preferredTextColor));
+    }
+
+    private static int resolveReadableTextColor(int backgroundColor, int preferredTextColor) {
+        if (ColorUtils.calculateContrast(preferredTextColor, backgroundColor) >= 4.5d) {
+            return preferredTextColor;
+        }
+        double contrastWhite = ColorUtils.calculateContrast(Color.WHITE, backgroundColor);
+        double contrastBlack = ColorUtils.calculateContrast(Color.BLACK, backgroundColor);
+        return contrastWhite >= contrastBlack ? Color.WHITE : Color.BLACK;
     }
 }

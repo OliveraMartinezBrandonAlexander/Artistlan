@@ -16,6 +16,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.artistlan.Fragments.FragMain;
+import com.example.artistlan.Fragments.FragSubirObra;
+import com.example.artistlan.Fragments.FragSubirServicio;
 import com.example.artistlan.R;
 
 /** Helper reutilizable para ocultar/mostrar menús según dirección del scroll. */
@@ -114,6 +116,12 @@ public class ScrollMenuVisibilityHelper {
         resetScrollAccumulators();
         hideThresholdPx = -1;
         showThresholdPx = -1;
+        if (!debeAplicarAutoHide(fragment)) {
+            attachedFragment = fragment;
+            homeFragmentAttached = false;
+            mostrarMenusSinAnimacion();
+            return;
+        }
         View scrollable = findScrollable(root);
         if (scrollable == null) {
             attachedFragment = null;
@@ -135,6 +143,26 @@ public class ScrollMenuVisibilityHelper {
             attachedListView = (AbsListView) scrollable;
             attachedListView.setOnScrollListener(listScrollListener);
         }
+    }
+
+    private boolean debeAplicarAutoHide(@NonNull Fragment fragment) {
+        return !(fragment instanceof FragSubirObra || fragment instanceof FragSubirServicio);
+    }
+
+    private void mostrarMenusSinAnimacion() {
+        topMenu.animate().cancel();
+        bottomMenu.animate().cancel();
+        if (topCompanionView != null) {
+            topCompanionView.animate().cancel();
+            topCompanionView.setTranslationY(0f);
+            topCompanionView.setClickable(true);
+        }
+        topMenu.setTranslationY(0f);
+        bottomMenu.setTranslationY(0f);
+        topMenu.setClickable(true);
+        bottomMenu.setClickable(true);
+        pendingAnimationEnds = 0;
+        menuState = MenuState.SHOWN;
     }
 
     private void detachCurrentScrollable() {

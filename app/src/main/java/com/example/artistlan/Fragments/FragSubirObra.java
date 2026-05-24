@@ -28,7 +28,6 @@ import androidx.navigation.fragment.NavHostFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -60,6 +59,7 @@ import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.DialogThemeHelper;
+import com.example.artistlan.utils.LottieFeedbackDialog;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -110,8 +110,9 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private TextView txtPrecio;
     private View topBarFrame;
     private View contentContainer;
-    private ViewTreeObserver.OnPreDrawListener topBarOffsetListener;
     private boolean resultadoRegresoNotificado = false;
+    private boolean envioEnCurso = false;
+    private LottieFeedbackDialog feedbackDialog;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -364,6 +365,10 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         btnSubirImg.setVisibility(View.GONE);
         btnSubirImg.setEnabled(false);
         btnSubirObra.setText("GUARDAR CAMBIOS");
+        if (cbAutoriaObra != null) {
+            cbAutoriaObra.setChecked(true);
+            cbAutoriaObra.setError(null);
+        }
     }
 
     private void aplicarTemaFormulario(@NonNull View root) {
@@ -729,12 +734,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         });
 
         if (topBarFrame != null && contentContainer != null) {
-            topBarOffsetListener = () -> {
-                actualizarOffsetTopDinamico();
-                return true;
-            };
-            topBarFrame.getViewTreeObserver().addOnPreDrawListener(topBarOffsetListener);
-            actualizarOffsetTopDinamico();
+            contentContainer.post(this::actualizarOffsetTopDinamico);
         }
 
         View menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
@@ -746,18 +746,17 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         btnRegresar.setOnClickListener(this);
 
         new BotonesMenuSuperior(this);
+        feedbackDialog = new LottieFeedbackDialog(requireContext());
     }
 
     @Override
     public void onDestroyView() {
-        super.onDestroyView();
-        if (topBarFrame != null && topBarOffsetListener != null) {
-            ViewTreeObserver observer = topBarFrame.getViewTreeObserver();
-            if (observer.isAlive()) {
-                observer.removeOnPreDrawListener(topBarOffsetListener);
-            }
+        if (feedbackDialog != null) {
+            feedbackDialog.release();
+            feedbackDialog = null;
         }
-        topBarOffsetListener = null;
+        envioEnCurso = false;
+        super.onDestroyView();
         topBarFrame = null;
         contentContainer = null;
         if (getActivity() == null) return;
@@ -799,8 +798,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             return;
         }
         int topBarHeight = topBarFrame.getHeight();
-        int visibleTopBar = Math.max(0, topBarHeight + Math.round(topBarFrame.getTranslationY()));
-        int topPadding = visibleTopBar + dpToPx(14);
+        int topPadding = Math.max(topBarHeight, dpToPx(56)) + dpToPx(14);
         contentContainer.setPadding(
                 contentContainer.getPaddingLeft(),
                 topPadding,
@@ -822,11 +820,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             return;
         }
 
-        if (!modoEdicion && (cbAutoriaObra == null || !cbAutoriaObra.isChecked())) {
-            if (cbAutoriaObra != null) {
-                cbAutoriaObra.setError("Debes confirmar la autoria de la obra.");
-                cbAutoriaObra.requestFocus();
-            }
+        if (!validarConfirmacionAutoriaObligatoria()) {
             return;
         }
 
@@ -849,7 +843,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
         CategoriaDTO categoria = obtenerCategoriaSeleccionada();
         if (categoria == null) {
-            marcarErrorCategoria("Selecciona una categoria.");
+            marcarErrorCategoria("Selecciona una categoría.");
             return;
         }
 
@@ -874,7 +868,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                     return;
                 }
             } catch (NumberFormatException e) {
-                etPrecio.setError("Precio invalido.");
+                etPrecio.setError("Precio inválido.");
                 etPrecio.requestFocus();
                 return;
             }
@@ -936,6 +930,9 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         btnEditar.setOnClickListener(v -> dialog.dismiss());
 
         btnPublicar.setOnClickListener(v -> {
+            if (envioEnCurso) {
+                return;
+            }
             btnPublicar.setEnabled(false);
             btnPublicar.setText(modoEdicion ? "Guardando..." : "Publicando...");
 
@@ -1148,33 +1145,47 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         });
     }
 
-    private void guardarObra() {
+        private void guardarObra() {
+        if (!validarConfirmacionAutoriaObligatoria()) {
+            return;
+        }
         int idUsuario = obtenerIdUsuarioLogueado();
         if (idUsuario == -1) {
             Toast.makeText(getContext(), "Error: No se encontró ID de usuario.", Toast.LENGTH_LONG).show();
             return;
         }
+        if (envioEnCurso) {
+            return;
+        }
+        envioEnCurso = true;
+        actualizarAccionesEnvio(false);
 
         if (!modoEdicion && uriImagenObra != null) {
-            Toast.makeText(getContext(), "Cargando...", Toast.LENGTH_SHORT).show();
+            mostrarFeedbackCarga("Publicando obra...");
             firebaseRepo.subirImagenSolo(idUsuario, uriImagenObra, new FirebaseImageRepository.ImagenListener() {
                 @Override
                 public void onSuccess(String imageUrl) {
-                    persistirObra(idUsuario, imageUrl);
+                    if (!persistirObra(idUsuario, imageUrl)) {
+                        cerrarFeedbackYRestaurarEnvio();
+                    }
                 }
 
                 @Override
                 public void onError(String mensajeError) {
+                    mostrarFeedbackError("No se pudo publicar la obra");
                     Toast.makeText(getContext(), "Error al subir imagen: " + mensajeError, Toast.LENGTH_LONG).show();
                 }
             });
             return;
         }
 
-        persistirObra(idUsuario, imagenActualUrl);
+        mostrarFeedbackCarga(modoEdicion ? "Actualizando obra..." : "Publicando obra...");
+        if (!persistirObra(idUsuario, imagenActualUrl)) {
+            cerrarFeedbackYRestaurarEnvio();
+        }
     }
 
-    private void persistirObra(int idUsuario, String imageUrl) {
+    private boolean persistirObra(int idUsuario, String imageUrl) {
         String titulo = etTituloObra.getText().toString().trim();
         String descripcion = etDescripcion.getText().toString().trim();
         String precioStr = etPrecio.getText().toString().trim();
@@ -1185,11 +1196,11 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         CategoriaDTO categoria = obtenerCategoriaSeleccionada();
         if (categoria == null || categoria.getIdCategoria() <= 0) {
             Toast.makeText(getContext(), "Selecciona una categor\u00EDa v\u00E1lida.", Toast.LENGTH_LONG).show();
-            return;
+            return false;
         }
         if (titulo.isEmpty() || descripcion.isEmpty() || medidas.isEmpty() || radioId == -1 || tecnica.isEmpty()) {
             Toast.makeText(getContext(), "Completa todos los campos obligatorios", Toast.LENGTH_LONG).show();
-            return;
+            return false;
         }
 
         RadioButton rb = rgOpciones.findViewById(radioId);
@@ -1202,18 +1213,18 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         if (!modoEdicion || puedeAsignarPrecioEnEdicion) {
             if (esVenta && precioStr.isEmpty()) {
                 Toast.makeText(getContext(), "Debes ingresar un precio para obras en venta.", Toast.LENGTH_LONG).show();
-                return;
+                return false;
             }
             if (!precioStr.isEmpty()) {
                 try {
                     precioDouble = Double.parseDouble(precioStr);
                     if (precioDouble < 0) {
                         Toast.makeText(getContext(), "El precio no puede ser negativo.", Toast.LENGTH_LONG).show();
-                        return;
+                        return false;
                     }
                 } catch (NumberFormatException e) {
                     Toast.makeText(getContext(), "Formato de precio inv\u00E1lido.", Toast.LENGTH_LONG).show();
-                    return;
+                    return false;
                 }
             }
         }
@@ -1253,6 +1264,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         } else {
             insertarObraEnBD(idUsuario, obra);
         }
+        return true;
     }
 
     private void actualizarBloquePrecioSegunEstado(int checkedId) {
@@ -1300,6 +1312,50 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         etPrecio.setAlpha(bloqueado ? 0.65f : 1f);
     }
 
+    private void actualizarAccionesEnvio(boolean habilitado) {
+        if (btnSubirObra != null) {
+            btnSubirObra.setEnabled(habilitado);
+        }
+        if (btnSubirImg != null) {
+            btnSubirImg.setEnabled(habilitado && !modoEdicion);
+        }
+        if (btnRegresar != null) {
+            btnRegresar.setEnabled(habilitado);
+        }
+    }
+
+    private void mostrarFeedbackCarga(String mensaje) {
+        if (feedbackDialog != null) {
+            feedbackDialog.showLoading(mensaje);
+        }
+    }
+
+    private void mostrarFeedbackExito(String mensaje, Runnable onDismiss) {
+        envioEnCurso = false;
+        actualizarAccionesEnvio(true);
+        if (feedbackDialog != null) {
+            feedbackDialog.showSuccess(mensaje, onDismiss);
+        } else if (onDismiss != null) {
+            onDismiss.run();
+        }
+    }
+
+    private void mostrarFeedbackError(String mensaje) {
+        envioEnCurso = false;
+        actualizarAccionesEnvio(true);
+        if (feedbackDialog != null) {
+            feedbackDialog.showError(mensaje);
+        }
+    }
+
+    private void cerrarFeedbackYRestaurarEnvio() {
+        envioEnCurso = false;
+        actualizarAccionesEnvio(true);
+        if (feedbackDialog != null) {
+            feedbackDialog.dismiss();
+        }
+    }
+
     private void insertarObraEnBD(int idUsuario, ObraDTO obra) {
         ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
         Log.d(TAG_CRUD, "Crear obra POST obrasDeUsuario/{usuarioId} usuarioId=" + idUsuario);
@@ -1312,11 +1368,14 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                         + " successful=" + response.isSuccessful()
                         + " bodyId=" + (response.body() != null ? response.body().getIdObra() : null));
                 if (response.isSuccessful() && response.body() != null) {
-                    Toast.makeText(getContext(), "Obra subida con ?xito", Toast.LENGTH_LONG).show();
+                    FragMiArte.invalidarCacheUsuario(idUsuario);
                     notificarRefreshPortafolio();
-                    NavHostFragment.findNavController(FragSubirObra.this).popBackStack();
+                    mostrarFeedbackExito("Obra publicada", () ->
+                            NavHostFragment.findNavController(FragSubirObra.this).popBackStack()
+                    );
                 } else {
                     String backendMessage = ApiErrorParser.extractMessage(response);
+                    mostrarFeedbackError("No se pudo publicar la obra");
                     Toast.makeText(getContext(),
                             backendMessage != null ? backendMessage : "Error al insertar obra. C\u00F3digo " + response.code(),
                             Toast.LENGTH_LONG).show();
@@ -1326,6 +1385,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             @Override
             public void onFailure(@NonNull Call<ObraDTO> call, @NonNull Throwable t) {
                 Log.e(TAG_CRUD, "Crear obra failure usuarioId=" + idUsuario, t);
+                mostrarFeedbackError("No se pudo publicar la obra");
                 Toast.makeText(getContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 t.printStackTrace();
             }
@@ -1335,6 +1395,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
     private void actualizarObraEnBD(int idUsuario, ObraDTO obra) {
         if (idObraEditar <= 0) {
             Log.w(TAG_CRUD, "Actualizar obra abort idObra=" + idObraEditar + " usuarioId=" + idUsuario);
+            mostrarFeedbackError("No se pudo actualizar la obra");
             Toast.makeText(getContext(), "No se pudo actualizar la obra.", Toast.LENGTH_LONG).show();
             return;
         }
@@ -1354,11 +1415,14 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                         + " bodyId=" + (response.body() != null ? response.body().getIdObra() : null)
                         + " idObra=" + idObraEditar);
                 if (response.isSuccessful()) {
-                    Toast.makeText(getContext(), "Obra actualizada con ?xito", Toast.LENGTH_LONG).show();
+                    FragMiArte.invalidarCacheUsuario(idUsuario);
                     notificarRefreshPortafolio();
-                    NavHostFragment.findNavController(FragSubirObra.this).popBackStack();
+                    mostrarFeedbackExito("Obra actualizada", () ->
+                            NavHostFragment.findNavController(FragSubirObra.this).popBackStack()
+                    );
                 } else {
                     String backendMessage = ApiErrorParser.extractMessage(response);
+                    mostrarFeedbackError("No se pudo actualizar la obra");
                     Toast.makeText(getContext(),
                             backendMessage != null ? backendMessage : "Error al actualizar obra. C\u00F3digo " + response.code(),
                             Toast.LENGTH_LONG).show();
@@ -1369,6 +1433,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             public void onFailure(@NonNull Call<ObraDTO> call, @NonNull Throwable t) {
                 Log.e(TAG_CRUD, "Actualizar obra failure idObra=" + idObraEditar + " usuarioId=" + idUsuario, t);
                 if (isAdded()) {
+                    mostrarFeedbackError("No se pudo actualizar la obra");
                     Toast.makeText(getContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
@@ -1405,7 +1470,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
                 Log.w(TAG_CRUD, "Fallback obra edicion no encontro idObra=" + idObraEditar
                         + " usuarioId=" + idUsuario
                         + " size=" + response.body().size());
-                Toast.makeText(getContext(), "No se encontro la obra para editar.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "No se encontró la obra para editar.", Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -1418,7 +1483,21 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         });
     }
 
+    private boolean validarConfirmacionAutoriaObligatoria() {
+        if (cbAutoriaObra != null && cbAutoriaObra.isChecked()) {
+            cbAutoriaObra.setError(null);
+            return true;
+        }
+        if (cbAutoriaObra != null) {
+            cbAutoriaObra.setError("Debes confirmar la autoría de la obra.");
+            cbAutoriaObra.requestFocus();
+        }
+        Toast.makeText(getContext(), "Confirma la autoría de la obra para continuar.", Toast.LENGTH_SHORT).show();
+        return false;
+    }
+
     private void notificarRefreshPortafolio() {
+        FragPortafolio.marcarRefreshPendiente(FragPortafolio.TARGET_OBRAS);
         notificarRegresoPortafolio(true);
     }
 
@@ -1456,6 +1535,8 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
         }
     }
 }
+
+
 
 
 

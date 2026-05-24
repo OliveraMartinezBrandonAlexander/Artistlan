@@ -13,8 +13,8 @@
 
     <item
         android:id="@+id/fragPortafolio"
-        android:icon="@drawable/ic_nav_subir_artistlan"
-        android:title="Subir" />
+        android:icon="@drawable/ic_nav_portafolio_artistlan"
+        android:title="Portafolio" />
 
     <item
         android:id="@+id/fragVerPerfil"

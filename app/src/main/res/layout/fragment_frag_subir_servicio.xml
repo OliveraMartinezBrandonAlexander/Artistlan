@@ -7,8 +7,6 @@
     android:orientation="vertical"
     tools:context=".Fragments.FragSubirServicio">
 
-
-
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
@@ -29,15 +27,14 @@
             android:id="@+id/fragScrollSubirServicio"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fillViewport="true"
-            android:clipToPadding="false">
+            android:clipToPadding="false"
+            android:fillViewport="true">
 
             <LinearLayout
                 android:id="@+id/lsLayCardServicio"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_form_glass_panel"
-
                 android:orientation="vertical"
                 android:padding="15dp">
 
@@ -45,11 +42,11 @@
                     android:id="@+id/btnRegresarServicio"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
-                    android:src="@drawable/regresarimg"
-                    android:background="@drawable/bg_back_bubble"
-                    android:scaleType="centerInside"
                     android:adjustViewBounds="true"
-                    android:padding="4dp" />
+                    android:background="@drawable/bg_back_bubble"
+                    android:padding="4dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/regresarimg" />
 
                 <TextView
                     android:id="@+id/lsTxtTitulo"
@@ -80,27 +77,10 @@
                     android:textSize="16sp" />
 
                 <TextView
-                    android:id="@+id/lsTxtCategoria"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="sans-serif-black"
-                    android:text="Categoría"
-                    android:textSize="14sp" />
-
-                <Spinner
-                    android:id="@+id/spinnerCategoriaServicio"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginBottom="12dp"
-                    android:background="@drawable/bg_input_artistlan"
-                    android:padding="10dp" />
-
-                <TextView
                     android:id="@+id/lsTxtTituloServicio"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
                     android:fontFamily="sans-serif-black"
                     android:text="Título del servicio"
                     android:textSize="14sp" />
@@ -119,6 +99,23 @@
                     android:paddingEnd="20dp"
                     android:paddingBottom="10dp"
                     android:textColor="#202020" />
+
+                <TextView
+                    android:id="@+id/lsTxtCategoria"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Categoría"
+                    android:textSize="14sp" />
+
+                <Spinner
+                    android:id="@+id/spinnerCategoriaServicio"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/bg_input_artistlan"
+                    android:padding="10dp" />
 
                 <TextView
                     android:id="@+id/lsTxtDescripcion"
@@ -253,18 +250,15 @@
                     android:layout_gravity="center_horizontal"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
+                    android:background="@drawable/bg_btn_bubble_glass_primary"
                     android:padding="10dp"
                     android:text="PUBLICAR"
-                    android:background="@drawable/bg_btn_bubble_glass_primary"
                     android:textAllCaps="false"
                     android:textColor="@color/artistlan_text_primary"
                     android:textStyle="bold" />
-
-
 
             </LinearLayout>
         </ScrollView>
     </LinearLayout>
 
 </LinearLayout>
-

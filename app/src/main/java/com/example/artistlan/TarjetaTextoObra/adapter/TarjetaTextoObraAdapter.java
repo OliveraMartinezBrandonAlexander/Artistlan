@@ -21,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -245,6 +246,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         CardThemeHelper.applyFilterButton(holder.btnMoreOptions, tm);
         CardThemeHelper.applyChip(holder.categoria, tm);
         CardThemeHelper.applyStatusChip(holder.estadoResumen, null);
+        CardThemeHelper.applyChip(holder.tvBadgeObra, tm);
     }
 
     private void llenarDatosBasicos(@NonNull ViewHolder holder, @NonNull TarjetaTextoObraItem obra) {
@@ -259,6 +261,11 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.medidas.setText(formatearMedidas(obra.getMedidas()));
         holder.categoria.setText(safeText(obra.getNombreCategoria(), "Sin categoría"));
         holder.likes.setText(String.valueOf(obra.getLikes()));
+
+        boolean esObraPropia = esContenidoPropio(obra);
+        holder.tvBadgeObra.setVisibility(esObraPropia ? View.VISIBLE : View.GONE);
+        holder.tvBadgeObra.setText("Mi arte");
+
         configurarEncabezadoPublicacion(holder, obra);
         resetDoubleTapHeart(holder);
 
@@ -267,9 +274,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             holder.precio.setText("");
         } else {
             holder.precio.setVisibility(View.VISIBLE);
-            holder.precio.setText(obra.getPrecio() != null && obra.getPrecio() > 0
-                    ? "Precio: $ " + String.format(Locale.getDefault(), "%,.2f", obra.getPrecio())
-                    : "Sin precio");
+            holder.precio.setText("Precio: $ " + String.format(Locale.getDefault(), "%,.2f", obra.getPrecio()));
         }
     }
 
@@ -309,17 +314,19 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
     private void cargarImagenAutor(@NonNull ViewHolder holder, @NonNull TarjetaTextoObraItem obra) {
         String fotoPerfil = obra.getFotoPerfilAutor();
-
-        Glide.with(holder.itemView.getContext())
-                .load((fotoPerfil != null && !fotoPerfil.trim().isEmpty())
-                        ? fotoPerfil
-                        : R.drawable.fotoperfilprueba)
-                .placeholder(R.drawable.fotoperfilprueba)
-                .error(R.drawable.fotoperfilprueba)
-                .thumbnail(0.25f)
-                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .circleCrop()
-                .into(holder.imgAutor);
+        if (!isUrlValida(fotoPerfil)) {
+            Glide.with(holder.itemView.getContext()).clear(holder.imgAutor);
+            holder.imgAutor.setImageResource(R.drawable.fotoperfilprueba);
+        } else {
+            Glide.with(holder.itemView.getContext())
+                    .load(fotoPerfil.trim())
+                    .placeholder(R.drawable.fotoperfilprueba)
+                    .error(R.drawable.fotoperfilprueba)
+                    .thumbnail(0.25f)
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                    .circleCrop()
+                    .into(holder.imgAutor);
+        }
 
         holder.imgAutor.setOnClickListener(v -> {
             animatePress(v);
@@ -338,9 +345,9 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     private void cargarImagenObra(@NonNull ViewHolder holder, @NonNull TarjetaTextoObraItem obra) {
         String imagenObra = obra.getImagen1();
 
-        if (imagenObra != null && !imagenObra.trim().isEmpty()) {
+        if (isUrlValida(imagenObra)) {
             Glide.with(holder.itemView.getContext())
-                    .load(imagenObra)
+                    .load(imagenObra.trim())
                     .placeholder(R.drawable.imagencargaobras)
                     .error(R.drawable.imagencargaobras)
                     .thumbnail(0.25f)
@@ -348,8 +355,13 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
                     .centerCrop()
                     .into(holder.imgObra);
         } else {
+            Glide.with(holder.itemView.getContext()).clear(holder.imgObra);
             holder.imgObra.setImageResource(R.drawable.imagencargaobras);
         }
+    }
+
+    private boolean isUrlValida(String valor) {
+        return valor != null && !valor.trim().isEmpty();
     }
 
     private void configurarExpansion(@NonNull ViewHolder holder) {
@@ -781,15 +793,30 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     }
 
     private boolean debeOcultarPrecio(TarjetaTextoObraItem obra) {
-        if (modoTarjeta == ModoTarjetaObra.EXPLORAR) {
-            return false;
-        }
-        if (obra == null || obra.getEstado() == null) {
-            return false;
+        if (obra == null) {
+            return true;
         }
 
-        String estado = obra.getEstado().trim().toLowerCase(Locale.ROOT);
+        if (obra.getPrecio() == null || obra.getPrecio() <= 0) {
+            return true;
+        }
+
+        String estado = normalizarEstado(obra.getEstado());
         return estado.contains("exhib");
+    }
+
+    private boolean esContenidoPropio(@Nullable TarjetaTextoObraItem obra) {
+        if (obra == null) {
+            return false;
+        }
+        Integer idActual = currentUserId != null ? currentUserId : resolveCurrentUserId();
+        if (idActual != null
+                && idActual > 0
+                && obra.getIdAutor() != null
+                && obra.getIdAutor().equals(idActual)) {
+            return true;
+        }
+        return ownedObraIds.contains(obra.getIdObra());
     }
 
     private boolean puedeModificarObra(TarjetaTextoObraItem obra) {
@@ -1089,6 +1116,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         TextView categoria;
         TextView likes;
         TextView autor;
+        TextView tvBadgeObra;
         TextView tvPublicationTitle;
 
         ImageView imgAutor;
@@ -1122,6 +1150,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             medidas = itemView.findViewById(R.id.medidas);
             precio = itemView.findViewById(R.id.precio);
             autor = itemView.findViewById(R.id.autor);
+            tvBadgeObra = itemView.findViewById(R.id.tvBadgeObra);
             categoria = itemView.findViewById(R.id.categoria);
             likes = itemView.findViewById(R.id.likes);
             tvPublicationTitle = itemView.findViewById(R.id.tvPublicationTitle);

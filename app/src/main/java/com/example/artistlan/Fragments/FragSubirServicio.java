@@ -5,13 +5,14 @@ import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -42,6 +43,7 @@ import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.DialogThemeHelper;
+import com.example.artistlan.utils.LottieFeedbackDialog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,8 +74,9 @@ public class FragSubirServicio extends Fragment {
     private ServicioDTO servicioActual;
     private View topBarFrame;
     private View contentContainer;
-    private ViewTreeObserver.OnPreDrawListener topBarOffsetListener;
     private boolean resultadoRegresoNotificado = false;
+    private boolean envioEnCurso = false;
+    private LottieFeedbackDialog feedbackDialog;
 
     public FragSubirServicio() {
     }
@@ -148,6 +151,7 @@ public class FragSubirServicio extends Fragment {
         };
         tipoContactoAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTipoContacto.setAdapter(tipoContactoAdapter);
+        configurarInputTypeContacto();
 
         aplicarTemaFormulario(view);
         cargarCategoriasDesdeBD();
@@ -188,30 +192,24 @@ public class FragSubirServicio extends Fragment {
         });
 
         if (topBarFrame != null && contentContainer != null) {
-            topBarOffsetListener = () -> {
-                actualizarOffsetTopDinamico();
-                return true;
-            };
-            topBarFrame.getViewTreeObserver().addOnPreDrawListener(topBarOffsetListener);
-            actualizarOffsetTopDinamico();
+            contentContainer.post(this::actualizarOffsetTopDinamico);
         }
         View menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
             menuInferior.setVisibility(View.GONE);
         }
+        feedbackDialog = new LottieFeedbackDialog(requireContext());
 
     }
 
     @Override
     public void onDestroyView() {
-        super.onDestroyView();
-        if (topBarFrame != null && topBarOffsetListener != null) {
-            ViewTreeObserver observer = topBarFrame.getViewTreeObserver();
-            if (observer.isAlive()) {
-                observer.removeOnPreDrawListener(topBarOffsetListener);
-            }
+        if (feedbackDialog != null) {
+            feedbackDialog.release();
+            feedbackDialog = null;
         }
-        topBarOffsetListener = null;
+        envioEnCurso = false;
+        super.onDestroyView();
         topBarFrame = null;
         contentContainer = null;
         if (getActivity() == null) return;
@@ -242,8 +240,7 @@ public class FragSubirServicio extends Fragment {
             return;
         }
         int topBarHeight = topBarFrame.getHeight();
-        int visibleTopBar = Math.max(0, topBarHeight + Math.round(topBarFrame.getTranslationY()));
-        int topPadding = visibleTopBar + dpToPx(14);
+        int topPadding = Math.max(topBarHeight, dpToPx(56)) + dpToPx(14);
         contentContainer.setPadding(
                 contentContainer.getPaddingLeft(),
                 topPadding,
@@ -359,6 +356,45 @@ public class FragSubirServicio extends Fragment {
         ThemeApplier.applyPrimaryButton(button, tm);
     }
 
+    private void configurarInputTypeContacto() {
+        if (spinnerTipoContacto == null) {
+            return;
+        }
+        spinnerTipoContacto.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                actualizarInputTypeContacto();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                actualizarInputTypeContacto();
+            }
+        });
+        actualizarInputTypeContacto();
+    }
+
+    private void actualizarInputTypeContacto() {
+        if (etContactoServicio == null || spinnerTipoContacto == null) {
+            return;
+        }
+        String tipo = String.valueOf(spinnerTipoContacto.getSelectedItem());
+        int nuevoInputType;
+        if ("WHATSAPP".equalsIgnoreCase(tipo) || "TELEFONO".equalsIgnoreCase(tipo)) {
+            nuevoInputType = InputType.TYPE_CLASS_PHONE;
+        } else if ("EMAIL".equalsIgnoreCase(tipo) || "GMAIL".equalsIgnoreCase(tipo)) {
+            nuevoInputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
+        } else {
+            nuevoInputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL;
+        }
+        if (etContactoServicio.getInputType() == nuevoInputType) {
+            return;
+        }
+        int cursor = Math.max(0, etContactoServicio.getSelectionStart());
+        etContactoServicio.setInputType(nuevoInputType);
+        etContactoServicio.setSelection(Math.min(cursor, etContactoServicio.getText().length()));
+    }
+
     private void cargarCategoriasDesdeBD() {
         CategoriaApi api = RetrofitClient.getClient().create(CategoriaApi.class);
         api.obtenerCategorias().enqueue(new Callback<List<CategoriaDTO>>() {
@@ -455,7 +491,7 @@ public class FragSubirServicio extends Fragment {
                 Log.w(TAG_CRUD, "Fallback servicio edicion no encontro idServicio=" + idServicioEditar
                         + " usuarioId=" + idUsuario
                         + " size=" + response.body().size());
-                Toast.makeText(getContext(), "No se encontro el servicio para editar.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "No se encontró el servicio para editar.", Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -479,6 +515,7 @@ public class FragSubirServicio extends Fragment {
         categoriaPendiente = s.getCategoria();
         seleccionarCategoriaPendiente();
         setSpinnerValue(spinnerTipoContacto, s.getTipoContacto());
+        actualizarInputTypeContacto();
     }
 
     private void setSpinnerValue(Spinner spinner, String value) {
@@ -635,6 +672,11 @@ public class FragSubirServicio extends Fragment {
 
         btnEditar.setOnClickListener(v -> dialog.dismiss());
         btnPublicar.setOnClickListener(v -> {
+            if (envioEnCurso) {
+                return;
+            }
+            envioEnCurso = true;
+            actualizarAccionesEnvio(false);
             dialog.dismiss();
 
             ServicioDTO servicio = new ServicioDTO();
@@ -664,10 +706,13 @@ public class FragSubirServicio extends Fragment {
         if (dialog.getWindow() != null && dialog.getWindow().getDecorView() != null) {
             ThemeApplier.applyCardContainer(dialog.getWindow().getDecorView(), tm);
         }
-    }
-    private void guardarServicio(int idUsuario, ServicioDTO servicio) {
-        if (modoEdicion) actualizarServicioEnBD(idUsuario, servicio);
-        else guardarServicioEnBD(idUsuario, servicio);
+    }    private void guardarServicio(int idUsuario, ServicioDTO servicio) {
+        mostrarFeedbackCarga(modoEdicion ? "Actualizando servicio..." : "Publicando servicio...");
+        if (modoEdicion) {
+            actualizarServicioEnBD(idUsuario, servicio);
+        } else {
+            guardarServicioEnBD(idUsuario, servicio);
+        }
     }
 
     private void guardarServicioEnBD(int idUsuario, ServicioDTO servicio) {
@@ -679,18 +724,23 @@ public class FragSubirServicio extends Fragment {
                         + " successful=" + response.isSuccessful()
                         + " bodyId=" + (response.body() != null ? response.body().getIdServicio() : null));
                 if (response.isSuccessful()) {
-                    Toast.makeText(getContext(), "Servicio subido con ?xito", Toast.LENGTH_LONG).show();
+                    FragMisServicios.invalidarCacheUsuario(idUsuario);
                     notificarRefreshPortafolio();
-                    NavHostFragment.findNavController(FragSubirServicio.this).popBackStack();
+                    mostrarFeedbackExito("Servicio publicado", () ->
+                            NavHostFragment.findNavController(FragSubirServicio.this).popBackStack()
+                    );
                     return;
                 }
                 String backendMessage = ApiErrorParser.extractMessage(response);
+                mostrarFeedbackError("No se pudo publicar el servicio");
                 Toast.makeText(getContext(),
                         backendMessage != null ? backendMessage : "Error al insertar servicio " + response.code(),
                         Toast.LENGTH_LONG).show();
             }
+
             @Override public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) {
                 Log.e(TAG_CRUD, "Crear servicio failure usuarioId=" + idUsuario, t);
+                mostrarFeedbackError("No se pudo publicar el servicio");
                 Toast.makeText(getContext(), "Error de red", Toast.LENGTH_LONG).show();
             }
         });
@@ -699,6 +749,7 @@ public class FragSubirServicio extends Fragment {
     private void actualizarServicioEnBD(int idUsuario, ServicioDTO servicio) {
         if (idServicioEditar <= 0) {
             Log.w(TAG_CRUD, "Actualizar servicio abort idServicio=" + idServicioEditar + " usuarioId=" + idUsuario);
+            mostrarFeedbackError("No se pudo actualizar el servicio");
             Toast.makeText(getContext(), "No se pudo actualizar el servicio.", Toast.LENGTH_LONG).show();
             return;
         }
@@ -714,24 +765,63 @@ public class FragSubirServicio extends Fragment {
                         + " bodyId=" + (response.body() != null ? response.body().getIdServicio() : null)
                         + " idServicio=" + idServicioEditar);
                 if (response.isSuccessful()) {
-                    Toast.makeText(getContext(), "Servicio actualizado con ?xito", Toast.LENGTH_LONG).show();
+                    FragMisServicios.invalidarCacheUsuario(idUsuario);
                     notificarRefreshPortafolio();
-                    NavHostFragment.findNavController(FragSubirServicio.this).popBackStack();
+                    mostrarFeedbackExito("Servicio actualizado", () ->
+                            NavHostFragment.findNavController(FragSubirServicio.this).popBackStack()
+                    );
                     return;
                 }
                 String backendMessage = ApiErrorParser.extractMessage(response);
+                mostrarFeedbackError("No se pudo actualizar el servicio");
                 Toast.makeText(getContext(),
                         backendMessage != null ? backendMessage : "Error al actualizar servicio " + response.code(),
                         Toast.LENGTH_LONG).show();
             }
+
             @Override public void onFailure(@NonNull Call<ServicioDTO> call, @NonNull Throwable t) {
                 Log.e(TAG_CRUD, "Actualizar servicio failure idServicio=" + idServicioEditar + " usuarioId=" + idUsuario, t);
+                mostrarFeedbackError("No se pudo actualizar el servicio");
                 Toast.makeText(getContext(), "Error de red", Toast.LENGTH_LONG).show();
             }
         });
     }
 
+    private void actualizarAccionesEnvio(boolean habilitado) {
+        if (btnPublicarServicio != null) {
+            btnPublicarServicio.setEnabled(habilitado);
+        }
+        if (btnRegresarServicio != null) {
+            btnRegresarServicio.setEnabled(habilitado);
+        }
+    }
+
+    private void mostrarFeedbackCarga(String mensaje) {
+        if (feedbackDialog != null) {
+            feedbackDialog.showLoading(mensaje);
+        }
+    }
+
+    private void mostrarFeedbackExito(String mensaje, Runnable onDismiss) {
+        envioEnCurso = false;
+        actualizarAccionesEnvio(true);
+        if (feedbackDialog != null) {
+            feedbackDialog.showSuccess(mensaje, onDismiss);
+        } else if (onDismiss != null) {
+            onDismiss.run();
+        }
+    }
+
+    private void mostrarFeedbackError(String mensaje) {
+        envioEnCurso = false;
+        actualizarAccionesEnvio(true);
+        if (feedbackDialog != null) {
+            feedbackDialog.showError(mensaje);
+        }
+    }
+
     private void notificarRefreshPortafolio() {
+        FragPortafolio.marcarRefreshPendiente(FragPortafolio.TARGET_SERVICIOS);
         notificarRegresoPortafolio(true);
     }
 
@@ -769,6 +859,8 @@ public class FragSubirServicio extends Fragment {
         }
     }
 }
+
+
 
 
 

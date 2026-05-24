@@ -77,6 +77,7 @@ public class FragCentroMensajes extends Fragment {
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
+                notificarDrawerTabActivo(position);
                 if (position == 1) {
                     FragSolicitudesMensajes solicitudes = getSolicitudesFragmentActual();
                     if (solicitudes != null) {
@@ -110,6 +111,7 @@ public class FragCentroMensajes extends Fragment {
         if (getActivity() instanceof com.example.artistlan.Activitys.ActFragmentoPrincipal) {
             ((com.example.artistlan.Activitys.ActFragmentoPrincipal) getActivity()).refrescarBadgeMensajes();
         }
+        notificarDrawerTabActivo(getTabActivoActual());
         refrescarResumenContadores();
     }
 
@@ -140,6 +142,7 @@ public class FragCentroMensajes extends Fragment {
             return;
         }
         int safeIndex = Math.max(0, Math.min(1, tabIndex));
+        notificarDrawerTabActivo(safeIndex);
         viewPager.setCurrentItem(safeIndex, false);
     }
 
@@ -316,6 +319,20 @@ public class FragCentroMensajes extends Fragment {
         }
 
         requireActivity().finish();
+    }
+
+    private int getTabActivoActual() {
+        if (viewPager == null) {
+            return 0;
+        }
+        int current = viewPager.getCurrentItem();
+        return Math.max(0, Math.min(1, current));
+    }
+
+    private void notificarDrawerTabActivo(int tabActivo) {
+        if (getActivity() instanceof ActFragmentoPrincipal) {
+            ((ActFragmentoPrincipal) getActivity()).onCentroMensajesTabChanged(tabActivo);
+        }
     }
 
     private static class CentroMensajesPagerAdapter extends FragmentStateAdapter {

@@ -9,6 +9,8 @@ import com.example.artistlan.Conector.model.PageResponseArtistaDTO;
 import com.example.artistlan.Conector.model.PageResponseUsuariosDTO;
 import com.example.artistlan.Conector.model.RespuestaModeracionDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
+import com.example.artistlan.Conector.model.ValidarPasswordRequestDTO;
+import com.example.artistlan.Conector.model.ValidarPasswordResponseDTO;
 import com.example.artistlan.Conector.model.CambiarRolRequestDTO;
 import com.example.artistlan.Conector.model.FavoritoDTO;
 import com.example.artistlan.Conector.model.PerfilPublicoArtistaDTO;
@@ -17,6 +19,7 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
@@ -76,6 +79,12 @@ public interface UsuarioApi {
     Call<RespuestaModeracionDTO> desactivarCuenta(
             @Path("idUsuario") Integer idUsuario,
             @Body DesactivarCuentaRequestDTO request
+    );
+
+    @POST("usuarios/validar-password")
+    Call<ValidarPasswordResponseDTO> validarPassword(
+            @Header("Authorization") String authorization,
+            @Body ValidarPasswordRequestDTO request
     );
 
     @GET("usuarios/favoritos/{usuarioId}")

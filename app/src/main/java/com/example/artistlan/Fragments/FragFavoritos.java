@@ -28,7 +28,10 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
     private Button btnArte, btnArtista;
     private View segmentIndicatorFavoritos;
     private ViewGroup segmentContainerFavoritos;
+    private ImageButton btnRegresar;
     private ThemeManager themeManager;
+    private boolean tabArteSeleccionado = true;
+    private int ultimoColorTemaAplicado = Integer.MIN_VALUE;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -52,7 +55,7 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
         segmentContainerFavoritos = view.findViewById(R.id.segmentContainerFavoritos);
 
         // Botón regresar
-        ImageButton btnRegresar = view.findViewById(R.id.btnRegresar);
+        btnRegresar = view.findViewById(R.id.btnRegresar);
         CardThemeHelper.applyFilterButton(btnRegresar, themeManager);
         btnRegresar.setOnClickListener(v -> {
             Intent irActivity = new Intent(getContext(), ActFragmentoPrincipal.class);
@@ -79,6 +82,12 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        refreshThemeOnly();
+    }
+
+    @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btnArte) {
             moverIndicador(btnArte, true);
@@ -97,6 +106,7 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
 
     /** Animación del indicador */
     private void moverIndicador(Button destino, boolean izquierda) {
+        tabArteSeleccionado = izquierda;
         int contWidth = segmentContainerFavoritos.getWidth();
         int mitad = contWidth / 2;
 
@@ -132,5 +142,32 @@ public class FragFavoritos extends Fragment implements View.OnClickListener {
         activo.animate().scaleX(1.02f).scaleY(1.02f).setDuration(120)
                 .withEndAction(() -> activo.animate().scaleX(1f).scaleY(1f).setDuration(120).start())
                 .start();
+    }
+
+    private void refreshThemeOnly() {
+        if (!isAdded()) {
+            return;
+        }
+        themeManager = new ThemeManager(requireContext());
+        int colorActual = themeManager.color(ThemeKeys.ACCENT_PRIMARY);
+        if (colorActual == ultimoColorTemaAplicado) {
+            return;
+        }
+        ultimoColorTemaAplicado = colorActual;
+        if (segmentContainerFavoritos != null && segmentContainerFavoritos.getBackground() != null) {
+            segmentContainerFavoritos.getBackground().setColorFilter(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), PorterDuff.Mode.SRC_ATOP);
+        }
+        if (segmentIndicatorFavoritos != null && segmentIndicatorFavoritos.getBackground() != null) {
+            segmentIndicatorFavoritos.getBackground().setColorFilter(themeManager.color(ThemeKeys.ACCENT_PRIMARY), PorterDuff.Mode.SRC_ATOP);
+        }
+        int selected = themeManager.color(ThemeKeys.TEXT_PRIMARY);
+        int unselected = themeManager.color(ThemeKeys.TEXT_SECONDARY);
+        if (btnArte != null) {
+            btnArte.setTextColor(tabArteSeleccionado ? selected : unselected);
+        }
+        if (btnArtista != null) {
+            btnArtista.setTextColor(tabArteSeleccionado ? unselected : selected);
+        }
+        CardThemeHelper.applyFilterButton(btnRegresar, themeManager);
     }
 }

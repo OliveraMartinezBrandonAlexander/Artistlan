@@ -26,7 +26,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
 
-    private static final String BASE_URL = "http://192.168.1.73:8080/api/";
+    private static final String BASE_URL = "http://192.168.100.21:8080/api/";
     // "http://10.0.2.2:8080/api/"
     private static final long UI_NOTICE_THROTTLE_MS = 2000L;
     private static final String TAG_MODERACION_DEBUG = "ModeracionErrorDebug";
@@ -131,7 +131,10 @@ public class RetrofitClient {
     }
 
     private static boolean debeOmitirToast403Global(String path) {
-        return path != null && path.startsWith("/api/moderacion/");
+        return path != null && (
+                path.startsWith("/api/moderacion/")
+                        || path.endsWith("/api/usuarios/validar-password")
+        );
     }
 
     private static void handleUnauthorized() {

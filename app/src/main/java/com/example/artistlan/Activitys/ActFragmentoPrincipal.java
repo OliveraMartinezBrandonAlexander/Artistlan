@@ -36,6 +36,7 @@ import androidx.navigation.NavDestination;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
+import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -129,6 +130,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private AlertDialog twoFactorLoadingDialog;
     private ScrollMenuVisibilityHelper scrollMenuVisibilityHelper;
     private boolean bottomMenuHiddenByKeyboard = false;
+    private int centroMensajesTabActivo = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -382,7 +384,10 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         if (navHostFragment == null) return;
 
         navController = navHostFragment.getNavController();
-        navController.addOnDestinationChangedListener((controller, destination, arguments) -> actualizarBotonesTopBar(destination));
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            actualizarBotonesTopBar(destination);
+            updateDrawerSelectionForCurrentDestination(destination, arguments);
+        });
 
         BottomNavigationView bottomBar = findViewById(R.id.bottomBar);
         if (bottomBar != null) {
@@ -405,9 +410,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 abrirCarrito();
             });
         }
-        if (navigationView != null) {
-            NavigationUI.setupWithNavController(navigationView, navController);
-        }
+        updateDrawerSelectionForCurrentDestination(navController.getCurrentDestination(), null);
     }
 
 
@@ -532,6 +535,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 }
 
                 if (itemId == R.id.navAdminModuloInformativo) {
+                    restaurarDrawerSelectionActual();
                     drawerLayout.closeDrawer(GravityCompat.START);
                     return true;
                 }
@@ -542,6 +546,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 }
 
                 if (itemId == R.id.navConfiguracion) {
+                    restaurarDrawerSelectionActual();
                     startActivity(new Intent(ActFragmentoPrincipal.this, ActAjustesTema.class));
                     drawerLayout.closeDrawer(GravityCompat.START);
                     return true;
@@ -568,6 +573,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 }
 
                 if (itemId == R.id.navCerrarSesion) {
+                    restaurarDrawerSelectionActual();
                     cerrarSesion();
                     drawerLayout.closeDrawer(GravityCompat.START);
                     return true;
@@ -583,6 +589,79 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
                 return false;
             });
+        }
+    }
+
+    private void restaurarDrawerSelectionActual() {
+        updateDrawerSelectionForCurrentDestination(
+                navController != null ? navController.getCurrentDestination() : null,
+                navController != null ? navController.getCurrentBackStackEntry() != null
+                        ? navController.getCurrentBackStackEntry().getArguments()
+                        : null
+                        : null
+        );
+    }
+
+    private void updateDrawerSelectionForCurrentDestination(@Nullable NavDestination destination, @Nullable Bundle arguments) {
+        if (navigationView == null) {
+            return;
+        }
+        clearDrawerSelection();
+        int drawerItemId = resolveDrawerItemForDestination(destination, arguments);
+        if (drawerItemId == View.NO_ID) {
+            return;
+        }
+        android.view.MenuItem item = navigationView.getMenu().findItem(drawerItemId);
+        if (item != null) {
+            item.setChecked(true);
+        }
+    }
+
+    private int resolveDrawerItemForDestination(@Nullable NavDestination destination, @Nullable Bundle arguments) {
+        if (destination == null) {
+            return View.NO_ID;
+        }
+        int destinationId = destination.getId();
+        if (destinationId == R.id.fragCentroMensajes) {
+            int tabActivo = (centroMensajesTabActivo == 0 || centroMensajesTabActivo == 1)
+                    ? centroMensajesTabActivo
+                    : (arguments != null ? arguments.getInt(FragCentroMensajes.ARG_TAB_INICIAL, 0) : 0);
+            return tabActivo == 1 ? R.id.navNotificaciones : R.id.navMensajes;
+        }
+        if (destinationId == R.id.fragAdminGestionUsuarios) {
+            return R.id.navAdminGestionarUsuarios;
+        }
+        if (destinationId == R.id.fragAdminConvocatorias) {
+            return R.id.navAdminEditarConvocatorias;
+        }
+        if (destinationId == R.id.fragModeracionReportes) {
+            return R.id.navModeracionReportes;
+        }
+        android.view.MenuItem sameIdItem = navigationView.getMenu().findItem(destinationId);
+        return sameIdItem != null ? destinationId : View.NO_ID;
+    }
+
+    private void clearDrawerSelection() {
+        if (navigationView == null) {
+            return;
+        }
+        clearMenuSelection(navigationView.getMenu());
+    }
+
+    private void clearMenuSelection(@Nullable android.view.Menu menu) {
+        if (menu == null) {
+            return;
+        }
+        for (int i = 0; i < menu.size(); i++) {
+            android.view.MenuItem item = menu.getItem(i);
+            if (item == null) {
+                continue;
+            }
+            item.setChecked(false);
+            android.view.SubMenu subMenu = item.getSubMenu();
+            if (subMenu != null) {
+                clearMenuSelection(subMenu);
+            }
         }
     }
 
@@ -603,6 +682,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
     public void abrirCentroMensajes(int tabInicial, int solicitudesModo) {
         if (navController == null) return;
+        centroMensajesTabActivo = Math.max(0, Math.min(1, tabInicial));
         long ahora = SystemClock.elapsedRealtime();
         if (ahora - ultimaNavegacionCentroMensajes < CENTRO_MENSAJES_NAV_DEBOUNCE_MS) {
             logDebug(TAG_NAV_CRASH_DEBUG, "abrirCentroMensajes ignorado por debounce");
@@ -634,6 +714,15 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         }
 
         navegarSinDuplicar(R.id.fragCentroMensajes, args);
+    }
+
+    public void onCentroMensajesTabChanged(int tabActivo) {
+        int safeTab = Math.max(0, Math.min(1, tabActivo));
+        centroMensajesTabActivo = safeTab;
+        NavDestination current = navController != null ? navController.getCurrentDestination() : null;
+        if (current != null && current.getId() == R.id.fragCentroMensajes) {
+            updateDrawerSelectionForCurrentDestination(current, null);
+        }
     }
 
     public void abrirTransacciones(int tabInicial) {
@@ -906,7 +995,9 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
 
-        String nombre = prefs.getString("nombreCompleto", "Perfil de usuario");
+        String usuario = valueOrEmpty(prefs.getString("usuario", ""));
+        String username = valueOrEmpty(prefs.getString("username", ""));
+        String nombreUsuario = valueOrEmpty(prefs.getString("nombreUsuario", ""));
         String correo = prefs.getString("correo", "correo no disponible");
         String rol = prefs.getString("rol", "");
         String categoria = prefs.getString("categoria", "");
@@ -925,7 +1016,15 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         String fotoPerfil = prefs.getString("fotoPerfil", null);
 
-        txtNombreDrawer.setText(nombre.isEmpty() ? "Perfil de usuario" : nombre);
+        String usuarioDrawer = !usuario.isEmpty()
+                ? usuario
+                : (!username.isEmpty()
+                ? username
+                : (!nombreUsuario.isEmpty()
+                ? nombreUsuario
+                : (!correo.isEmpty() ? correo : "Usuario")));
+
+        txtNombreDrawer.setText(usuarioDrawer);
         txtCorreoDrawer.setText(correo.isEmpty() ? "correo no disponible" : correo);
         txtRolDrawer.setText("Modo: " + valorModo);
 
@@ -1231,6 +1330,10 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         }
         ultimaAccionNavegacion = ahora;
         return true;
+    }
+
+    private String valueOrEmpty(String value) {
+        return value != null ? value.trim() : "";
     }
 
     private void cargarImagenPerfilOptimizada(ImageView imageView, String fotoPerfil) {

@@ -26,7 +26,7 @@
             android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Sin título"
+            android:text="Sin t&#237;tulo"
             android:textSize="12sp"
             android:textStyle="bold" />
 
@@ -103,7 +103,7 @@
                 android:paddingTop="4dp"
                 android:paddingEnd="9dp"
                 android:paddingBottom="4dp"
-                android:text="Categoría"
+                android:text="Categor&#237;a"
                 android:textColor="@color/artistlan_text_primary"
                 android:textSize="11sp"
                 android:textStyle="bold"
@@ -185,6 +185,24 @@
                 app:barrierDirection="bottom"
                 app:constraint_referenced_ids="imgAutor,autor,categoria,estadoResumen" />
 
+            <TextView
+                android:id="@+id/tvBadgeObra"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_chip_glass"
+                android:paddingStart="6dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="6dp"
+                android:paddingBottom="4dp"
+                android:text="Mi arte"
+                android:textColor="@color/artistlan_text_primary"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/headerBottomBarrier" />
+
             <ImageView
                 android:id="@+id/imgObra"
                 android:layout_width="0dp"
@@ -215,18 +233,18 @@
                 android:id="@+id/titulo"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="8dp"
                 android:ellipsize="end"
                 android:gravity="center"
                 android:maxLines="2"
-                android:text="Título de la obra"
+                android:text="T&#237;tulo de la obra"
                 android:textAlignment="center"
                 android:textColor="@color/artistlan_text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/headerBottomBarrier" />
+                app:layout_constraintTop_toBottomOf="@id/tvBadgeObra" />
 
             <LinearLayout
                 android:id="@+id/expanded_section"
@@ -244,7 +262,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:lineSpacingExtra="3dp"
-                    android:text="Descripción completa"
+                    android:text="Descripci&#243;n completa"
                     android:textColor="@color/artistlan_text_primary"
                     android:textSize="14sp" />
 
@@ -262,7 +280,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Técnica"
+                    android:text="T&#233;cnica"
                     android:textColor="@color/artistlan_text_secondary"
                     android:textSize="14sp" />
 
@@ -288,7 +306,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/bg_btn_bubble_glass_primary"
-                        android:text="Acción principal"
+                        android:text="Acci&#243;n principal"
                         android:textAllCaps="false" />
 
                     <Button
@@ -297,7 +315,7 @@
                         android:layout_height="48dp"
                         android:layout_marginTop="8dp"
                         android:background="@drawable/bg_btn_bubble_glass_secondary"
-                        android:text="Acción secundaria"
+                        android:text="Acci&#243;n secundaria"
                         android:textAllCaps="false"
                         android:visibility="gone" />
                 </LinearLayout>
@@ -306,7 +324,7 @@
                     android:id="@+id/btnReportarObra"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="8dp"
                     android:background="@drawable/bg_btn_bubble_glass_secondary"
                     android:text="Reportar"
                     android:textAllCaps="false"

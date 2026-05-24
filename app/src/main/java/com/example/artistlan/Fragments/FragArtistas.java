@@ -12,6 +12,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -32,6 +34,9 @@ import com.example.artistlan.Conector.model.PageResponseArtistaDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.TarjetaTextoArtista.adapter.TarjetaTextoArtistaAdapter;
 import com.example.artistlan.TarjetaTextoArtista.model.TarjetaTextoArtistaItem;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 
 import java.util.ArrayList;
@@ -60,6 +65,8 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     private RecyclerView recyclerViewArtistas;
     private Button btnCargarMasArtistas;
     private LinearLayout layoutLoaderMasArtistas;
+    private ProgressBar progressEstadoArtistas;
+    private TextView tvEmptyArtistas;
     private TarjetaTextoArtistaAdapter adapter;
     private UsuarioApi usuarioApi;
     private FavoritosApi favoritosApi;
@@ -76,6 +83,8 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     private final List<TarjetaTextoArtistaItem> artistasAcumulados = new ArrayList<>();
     private final Map<Integer, Long> ultimoToqueLikePorArtista = new HashMap<>();
     private final Set<Integer> likesEnVuelo = new HashSet<>();
+    private boolean pendingRecyclerFadeIn = false;
+    private int ultimoColorTemaAplicado = Integer.MIN_VALUE;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -106,15 +115,41 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        refreshThemeOnly();
+        ensureDataLoadedForCurrentState();
+    }
+
+    public void refreshThemeOnly() {
+        if (!isAdded()) {
+            return;
+        }
+        ThemeManager tm = new ThemeManager(requireContext());
+        int colorActual = tm.color(ThemeKeys.ACCENT_PRIMARY);
+        if (colorActual == ultimoColorTemaAplicado) {
+            return;
+        }
+        ultimoColorTemaAplicado = colorActual;
+        View view = getView();
+        if (view != null) {
+            ThemeModuleStyler.styleFragment(this, view);
+        }
+        ThemeApplier.applyTextSecondary(tvEmptyArtistas, tm);
+        if (adapter != null && adapter.getItemCount() > 0) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
     public List<String> getFilterOptions() {
         return Arrays.asList(
-                "Pintor", "Escultor", "Fotógrafo", "Ilustrador", "Diseñador gráfico",
-                "Diseñador industrial", "Diseñador de moda", "Caricaturista", "Animador", "Ceramista",
-                "Grabador", "Artista digital", "Artista plástico", "Maquetador",
+                "Pintor", "Escultor", "Fot\u00F3grafo", "Ilustrador", "Dise\u00F1ador gr\u00E1fico",
+                "Dise\u00F1ador industrial", "Dise\u00F1ador de moda", "Caricaturista", "Animador", "Ceramista",
+                "Grabador", "Artista digital", "Artista pl\u00E1stico", "Maquetador",
                 "Decorador", "Restaurador de arte", "Graffitero", "Modelador 3D"
         );
     }
-
     @Override
     public String getActiveFilter() {
         return profesionFiltroActual;
@@ -129,10 +164,8 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
 
         if (filter.equalsIgnoreCase(profesionFiltroActual)) {
             profesionFiltroActual = "";
-            Toast.makeText(getContext(), "Filtro desactivado", Toast.LENGTH_SHORT).show();
         } else {
             profesionFiltroActual = filter;
-            Toast.makeText(getContext(), "Filtrando: " + filter, Toast.LENGTH_SHORT).show();
         }
         reiniciarYCargarPrimeraPagina();
     }
@@ -148,6 +181,8 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
         recyclerViewArtistas = view.findViewById(R.id.recyclerArtistas);
         btnCargarMasArtistas = view.findViewById(R.id.btnCargarMasArtistas);
         layoutLoaderMasArtistas = view.findViewById(R.id.layoutLoaderMasArtistas);
+        progressEstadoArtistas = view.findViewById(R.id.progressEstadoArtistas);
+        tvEmptyArtistas = view.findViewById(R.id.tvEmptyArtistas);
 
         recyclerViewArtistas.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerViewArtistas.setItemAnimator(null);
@@ -186,12 +221,43 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
 
         if (!cargaInicialHecha) {
             cargaInicialHecha = true;
+            if (isResumed()) {
+                reiniciarYCargarPrimeraPagina();
+            }
+        } else {
+            ensureDataLoadedForCurrentState();
+        }
+    }
+
+    public void ensureDataLoadedForCurrentState() {
+        if (!isAdded() || recyclerViewArtistas == null || adapter == null) {
+            return;
+        }
+        if (recyclerViewArtistas.getAdapter() != adapter) {
+            recyclerViewArtistas.setAdapter(adapter);
+        }
+        if (adapter.getItemCount() > 0) {
+            actualizarEstadoVacio();
+            return;
+        }
+        if (!artistasAcumulados.isEmpty()) {
+            adapter.actualizarLista(new ArrayList<>(artistasAcumulados));
+            mostrarBotonCargarMas(!isLastPage, false);
+            mostrarLoaderMasArtistas(false);
+            actualizarEstadoVacio();
+            return;
+        }
+        if (!isLoading) {
             reiniciarYCargarPrimeraPagina();
         }
     }
 
     private void abrirPerfilPublico(TarjetaTextoArtistaItem artistaItem, int position) {
         if (!isAdded() || artistaItem.getIdArtista() == null) {
+            return;
+        }
+        if (artistaItem.getIdArtista() == idUsuarioLogueado) {
+            NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfil);
             return;
         }
         Bundle args = new Bundle();
@@ -271,6 +337,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
         adapter.actualizarLista(new ArrayList<>());
         mostrarBotonCargarMas(false, false);
         mostrarLoaderMasArtistas(false);
+        actualizarEstadoVacio();
 
         logPagination("Reset paginacion -> page=0, size=" + PAGE_SIZE
                 + ", q=" + textoBusquedaActual
@@ -292,6 +359,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
         }
 
         isLoading = true;
+        actualizarEstadoVacio();
         mostrarLoaderMasArtistas(pageObjetivo > 0);
         if (pageObjetivo > 0) {
             mostrarBotonCargarMas(false, false);
@@ -323,6 +391,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
                     Toast.makeText(getContext(),
                             "Error al obtener artistas: " + response.code(),
                             Toast.LENGTH_LONG).show();
+                    actualizarEstadoVacio();
                     return;
                 }
 
@@ -343,6 +412,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
                 nextPageToLoad = pageObjetivo + 1;
                 isLastPage = pageResponse.isLast();
                 mostrarBotonCargarMas(!isLastPage, false);
+                actualizarEstadoVacio();
 
                 logPagination("Response pagina -> page=" + pageObjetivo
                         + ", size=" + PAGE_SIZE
@@ -366,8 +436,9 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
                     mostrarBotonCargarMas(false, false);
                 }
                 Toast.makeText(getContext(),
-                        "Error de conexión al cargar artistas",
+                        "Error de conexi\u00F3n al cargar artistas",
                         Toast.LENGTH_LONG).show();
+                actualizarEstadoVacio();
             }
         });
     }
@@ -385,7 +456,7 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
         }
         btnCargarMasArtistas.setVisibility(mostrar ? View.VISIBLE : View.GONE);
         if (mostrar) {
-            btnCargarMasArtistas.setText(reintento ? "Reintentar cargar más artistas" : "Cargar más artistas");
+            btnCargarMasArtistas.setText(reintento ? "Reintentar cargar m\u00E1s artistas" : "Cargar m\u00E1s artistas");
         }
     }
 
@@ -411,6 +482,43 @@ public class FragArtistas extends Fragment implements FilterableExplorarFragment
             ));
         }
         return lista;
+    }
+
+    private void actualizarEstadoVacio() {
+        if (tvEmptyArtistas == null || recyclerViewArtistas == null || progressEstadoArtistas == null || adapter == null) {
+            return;
+        }
+        boolean hayDatos = adapter.getItemCount() > 0;
+        boolean mostrarLoaderEstado = isLoading && !hayDatos;
+        boolean mostrarVacio = !isLoading && !hayDatos;
+        boolean mostrarLista = hayDatos;
+
+        if (mostrarLoaderEstado) {
+            pendingRecyclerFadeIn = true;
+        }
+
+        if (mostrarVacio) {
+            boolean hayCriterios = (textoBusquedaActual != null && !textoBusquedaActual.trim().isEmpty())
+                    || (profesionFiltroActual != null && !profesionFiltroActual.trim().isEmpty());
+            tvEmptyArtistas.setText(hayCriterios
+                    ? "No se encontraron artistas con esos criterios."
+                    : "A\u00FAn no hay artistas disponibles.");
+            pendingRecyclerFadeIn = false;
+        }
+
+        progressEstadoArtistas.setVisibility(mostrarLoaderEstado ? View.VISIBLE : View.GONE);
+        tvEmptyArtistas.setVisibility(mostrarVacio ? View.VISIBLE : View.GONE);
+        recyclerViewArtistas.setVisibility(mostrarLista ? View.VISIBLE : View.GONE);
+
+        if (mostrarLista && pendingRecyclerFadeIn) {
+            pendingRecyclerFadeIn = false;
+            recyclerViewArtistas.animate().cancel();
+            recyclerViewArtistas.setAlpha(0f);
+            recyclerViewArtistas.animate()
+                    .alpha(1f)
+                    .setDuration(160L)
+                    .start();
+        }
     }
 
     @Override

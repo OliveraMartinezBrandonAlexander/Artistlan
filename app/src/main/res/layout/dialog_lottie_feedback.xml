@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="320dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="24dp"
+    android:background="@drawable/bg_dialog_solid_panel">
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/feedbackLottie"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/feedbackTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-black"
+        android:text="Procesando"
+        android:textColor="@android:color/white"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/feedbackMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="Espera un momento..."
+        android:textColor="#E8EDF7"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/feedbackOk"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/bg_btn_bubble_glass_secondary"
+        android:text="Aceptar"
+        android:textAllCaps="false"
+        android:textColor="@color/artistlan_text_primary"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
+</LinearLayout>

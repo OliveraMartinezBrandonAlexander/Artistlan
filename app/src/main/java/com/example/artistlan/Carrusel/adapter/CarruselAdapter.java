@@ -79,27 +79,29 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         aplicarTema(holder, tm);
 
         // Imagen de la obra
-        if (item.getImagenUrl() != null && !item.getImagenUrl().isEmpty()) {
+        if (isUrlValida(item.getImagenUrl())) {
             Glide.with(context)
-                    .load(item.getImagenUrl())
+                    .load(item.getImagenUrl().trim())
                     .placeholder(item.getImagen())
                     .error(item.getImagen())
-                    .apply(RequestOptions.fitCenterTransform())
+                    .apply(RequestOptions.centerCropTransform())
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(holder.imgObra);
         } else {
+            Glide.with(context).clear(holder.imgObra);
             holder.imgObra.setImageResource(item.getImagen());
         }
 
         // Foto de perfil del autor
-        if (item.getAutorFotoUrl() != null && !item.getAutorFotoUrl().isEmpty()) {
+        if (isUrlValida(item.getAutorFotoUrl())) {
             Glide.with(context)
-                    .load(item.getAutorFotoUrl())
+                    .load(item.getAutorFotoUrl().trim())
                     .placeholder(R.drawable.fotoperfilprueba)
                     .error(R.drawable.fotoperfilprueba)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(holder.imgAutor);
         } else {
+            Glide.with(context).clear(holder.imgAutor);
             holder.imgAutor.setImageResource(R.drawable.fotoperfilprueba);
         }
 
@@ -273,23 +275,16 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
 
     @NonNull
     private CharSequence resolveInfoText(@NonNull ObraCarruselItem item, @NonNull ThemeManager tm) {
-        String descripcion = item.getDescripcion() == null || item.getDescripcion().trim().isEmpty()
-                ? "Sin descripcion disponible"
-                : item.getDescripcion().trim();
-        String autor = item.getAutor() == null || item.getAutor().trim().isEmpty()
-                ? "Autor no disponible"
-                : item.getAutor().trim();
         int labelColor = tm.color(ThemeKeys.ACCENT_PRIMARY_LIGHT);
         int valueColor = tm.color(ThemeKeys.TEXT_PRIMARY);
         SpannableStringBuilder builder = new SpannableStringBuilder();
-        appendField(builder, "Descripción: ", descripcion, labelColor, valueColor);
         appendField(builder, "Estado: ", safeText(item.getEstado(), "N/A"), labelColor, valueColor);
         appendField(builder, "Técnica: ", safeText(item.getTecnicas(), "N/A"), labelColor, valueColor);
         appendField(builder, "Medidas: ", formatearMedidas(item.getMedidas()), labelColor, valueColor);
-        appendField(builder, "Precio: ", formatearPrecio(item.getPrecio()), labelColor, valueColor);
-        appendField(builder, "Tipo de arte: ", safeText(item.getTipoArte(), "N/A"), labelColor, valueColor);
-        appendField(builder, "Autor: ", autor, labelColor, valueColor);
-        appendField(builder, "Likes: ", String.valueOf(item.getLikesCount()), labelColor, valueColor);
+        if (debeMostrarPrecio(item)) {
+            appendField(builder, "Precio: ", formatearPrecio(item.getPrecio()), labelColor, valueColor);
+        }
+        appendField(builder, "Categoría: ", safeText(item.getTipoArte(), "N/A"), labelColor, valueColor);
         return builder;
     }
 
@@ -354,6 +349,10 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         return value != null && !value.trim().isEmpty() ? value.trim() : fallback;
     }
 
+    private boolean isUrlValida(String valor) {
+        return valor != null && !valor.trim().isEmpty();
+    }
+
     private String formatearMedidas(String medidas) {
         if (medidas == null || medidas.trim().isEmpty()) {
             return "N/A";
@@ -363,10 +362,20 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
     }
 
     private String formatearPrecio(Double precio) {
-        if (precio == null || precio <= 0) {
-            return "N/A";
-        }
         return "$ " + String.format(Locale.getDefault(), "%,.2f", precio);
+    }
+
+    private boolean debeMostrarPrecio(@NonNull ObraCarruselItem item) {
+        if (item.getPrecio() == null || item.getPrecio() <= 0) {
+            return false;
+        }
+        String estado = item.getEstado() == null
+                ? ""
+                : java.text.Normalizer.normalize(item.getEstado(), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT)
+                .trim();
+        return !estado.contains("exhib");
     }
 
     private boolean puedeSolicitarCompra(@NonNull ObraCarruselItem item) {
@@ -531,3 +540,4 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         }
     }
 }
+

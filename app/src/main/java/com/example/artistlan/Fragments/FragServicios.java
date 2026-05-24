@@ -10,8 +10,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -31,6 +32,7 @@ import com.example.artistlan.Conector.model.PageResponseServicioDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
@@ -61,8 +63,9 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
 
     private NestedScrollView nestedScrollServicios;
     private RecyclerView recyclerServicios;
-    private Button btnCargarMasServicios;
     private LinearLayout layoutLoaderMasServicios;
+    private ProgressBar progressEstadoServicios;
+    private TextView tvEmptyServicios;
     private TarjetaTextoServicioAdapter adapter;
     private ServicioApi servicioApi;
     private String tipoServicioFiltroActual = "";
@@ -79,6 +82,8 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
     private final List<TarjetaTextoServicioItem> serviciosAcumulados = new ArrayList<>();
     private final Map<Integer, Long> ultimoToqueLikePorServicio = new HashMap<>();
     private final Set<Integer> likesEnVuelo = new HashSet<>();
+    private boolean pendingRecyclerFadeIn = false;
+    private int ultimoColorTemaAplicado = Integer.MIN_VALUE;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -108,11 +113,39 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        refreshThemeOnly();
+        ensureDataLoadedForCurrentState();
+    }
+
+    public void refreshThemeOnly() {
+        if (!isAdded()) {
+            return;
+        }
+        ThemeManager tm = new ThemeManager(requireContext());
+        int colorActual = tm.color(ThemeKeys.ACCENT_PRIMARY);
+        if (colorActual == ultimoColorTemaAplicado) {
+            return;
+        }
+        ultimoColorTemaAplicado = colorActual;
+        View view = getView();
+        if (view != null) {
+            ThemeModuleStyler.styleFragment(this, view);
+        }
+        ThemeApplier.applyTextSecondary(tvEmptyServicios, tm);
+        ThemeApplier.applySecondaryButton(layoutLoaderMasServicios, tm);
+        if (adapter != null && adapter.getItemCount() > 0) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
     public List<String> getFilterOptions() {
         return Arrays.asList(
-                "Pintor", "Escultor", "Fotógrafo", "Ilustrador", "Diseñador gráfico",
-                "Diseñador industrial", "Diseñador de moda", "Caricaturista", "Animador", "Artesano",
-                "Ceramista", "Grabador", "Artista digital", "Artista plástico",
+                "Pintor", "Escultor", "Fot\u00F3grafo", "Ilustrador", "Dise\u00F1ador gr\u00E1fico",
+                "Dise\u00F1ador industrial", "Dise\u00F1ador de moda", "Caricaturista", "Animador", "Artesano",
+                "Ceramista", "Grabador", "Artista digital", "Artista pl\u00E1stico",
                 "Maquetador", "Decorador", "Restaurador de arte", "Graffitero", "Modelador 3D"
         );
     }
@@ -131,10 +164,8 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
 
         if (tipoServicioFiltroActual.equalsIgnoreCase(filter)) {
             tipoServicioFiltroActual = "";
-            Toast.makeText(getContext(), "Filtro desactivado", Toast.LENGTH_SHORT).show();
         } else {
             tipoServicioFiltroActual = filter;
-            Toast.makeText(getContext(), "Filtrando: " + filter, Toast.LENGTH_SHORT).show();
         }
 
         reiniciarYCargarPrimeraPagina();
@@ -143,15 +174,15 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
     @Override
     public void clearFilter() {
         tipoServicioFiltroActual = "";
-        Toast.makeText(getContext(), "Filtros borrados", Toast.LENGTH_SHORT).show();
         reiniciarYCargarPrimeraPagina();
     }
 
     private void configurarServicios(View view) {
         nestedScrollServicios = view.findViewById(R.id.nestedScrollServicios);
         recyclerServicios = view.findViewById(R.id.recyclerServicios);
-        btnCargarMasServicios = view.findViewById(R.id.btnCargarMasServicios);
         layoutLoaderMasServicios = view.findViewById(R.id.layoutLoaderMasServicios);
+        progressEstadoServicios = view.findViewById(R.id.progressEstadoServicios);
+        tvEmptyServicios = view.findViewById(R.id.tvEmptyServicios);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
         recyclerServicios.setLayoutManager(layoutManager);
         recyclerServicios.setItemAnimator(null);
@@ -162,17 +193,7 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
         adapter.setOnAuthorClickListener(this::abrirPerfilPublico);
         recyclerServicios.setAdapter(adapter);
         ThemeManager tm = new ThemeManager(requireContext());
-        ThemeApplier.applySecondaryButton(btnCargarMasServicios, tm);
         ThemeApplier.applySecondaryButton(layoutLoaderMasServicios, tm);
-
-        if (btnCargarMasServicios != null) {
-            btnCargarMasServicios.setOnClickListener(v -> {
-                if (isLoading || isLastPage) {
-                    return;
-                }
-                cargarSiguientePagina();
-            });
-        }
 
         recyclerServicios.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -212,12 +233,43 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
 
         if (!cargaInicialHecha) {
             cargaInicialHecha = true;
+            if (isResumed()) {
+                reiniciarYCargarPrimeraPagina();
+            }
+        } else {
+            ensureDataLoadedForCurrentState();
+        }
+    }
+
+    public void ensureDataLoadedForCurrentState() {
+        if (!isAdded() || recyclerServicios == null || adapter == null) {
+            return;
+        }
+        if (recyclerServicios.getAdapter() != adapter) {
+            recyclerServicios.setAdapter(adapter);
+        }
+        if (adapter.getItemCount() > 0) {
+            actualizarEstadoVacio();
+            return;
+        }
+        if (!serviciosAcumulados.isEmpty()) {
+            adapter.actualizarLista(new ArrayList<>(serviciosAcumulados));
+            mostrarBotonCargarMas(!isLastPage, false);
+            mostrarLoaderMasServicios(false);
+            actualizarEstadoVacio();
+            return;
+        }
+        if (!isLoading) {
             reiniciarYCargarPrimeraPagina();
         }
     }
 
     private void abrirPerfilPublico(TarjetaTextoServicioItem servicioItem, int position) {
         if (!isAdded() || servicioItem == null || servicioItem.getIdUsuario() == null || servicioItem.getIdUsuario() <= 0) {
+            return;
+        }
+        if (servicioItem.getIdUsuario() == idUsuarioLogueado) {
+            NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfil);
             return;
         }
         Bundle args = new Bundle();
@@ -294,6 +346,7 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
         adapter.actualizarLista(new ArrayList<>());
         mostrarBotonCargarMas(false, false);
         mostrarLoaderMasServicios(false);
+        actualizarEstadoVacio();
 
         logPagination("Reset paginacion -> page=0, size=" + PAGE_SIZE
                 + ", q=" + textoBusquedaActual
@@ -315,6 +368,7 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
         }
 
         isLoading = true;
+        actualizarEstadoVacio();
         mostrarLoaderMasServicios(pageObjetivo > 0);
         if (pageObjetivo > 0) {
             mostrarBotonCargarMas(false, false);
@@ -344,6 +398,7 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
                 mostrarLoaderMasServicios(false);
                 if (!response.isSuccessful() || response.body() == null) {
                     Toast.makeText(requireContext(), "Error al obtener servicios: " + response.code(), Toast.LENGTH_SHORT).show();
+                    actualizarEstadoVacio();
                     return;
                 }
 
@@ -365,6 +420,7 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
                 nextPageToLoad = pageObjetivo + 1;
                 isLastPage = pageResponse.isLast();
                 mostrarBotonCargarMas(!isLastPage, false);
+                actualizarEstadoVacio();
 
                 logPagination("Response pagina -> page=" + pageObjetivo
                         + ", size=" + PAGE_SIZE
@@ -388,8 +444,46 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
                     mostrarBotonCargarMas(false, false);
                 }
                 Toast.makeText(requireContext(), "Error de red al cargar servicios.", Toast.LENGTH_LONG).show();
+                actualizarEstadoVacio();
             }
         });
+    }
+
+    private void actualizarEstadoVacio() {
+        if (tvEmptyServicios == null || recyclerServicios == null || progressEstadoServicios == null || adapter == null) {
+            return;
+        }
+        boolean hayDatos = adapter.getItemCount() > 0;
+        boolean mostrarLoaderEstado = isLoading && !hayDatos;
+        boolean mostrarVacio = !isLoading && !hayDatos;
+        boolean mostrarLista = hayDatos;
+
+        if (mostrarLoaderEstado) {
+            pendingRecyclerFadeIn = true;
+        }
+
+        if (mostrarVacio) {
+            boolean hayCriterios = (textoBusquedaActual != null && !textoBusquedaActual.trim().isEmpty())
+                    || (tipoServicioFiltroActual != null && !tipoServicioFiltroActual.trim().isEmpty());
+            tvEmptyServicios.setText(hayCriterios
+                    ? "No se encontraron servicios con esos criterios."
+                    : "A\u00FAn no hay servicios disponibles.");
+            pendingRecyclerFadeIn = false;
+        }
+
+        progressEstadoServicios.setVisibility(mostrarLoaderEstado ? View.VISIBLE : View.GONE);
+        tvEmptyServicios.setVisibility(mostrarVacio ? View.VISIBLE : View.GONE);
+        recyclerServicios.setVisibility(mostrarLista ? View.VISIBLE : View.GONE);
+
+        if (mostrarLista && pendingRecyclerFadeIn) {
+            pendingRecyclerFadeIn = false;
+            recyclerServicios.animate().cancel();
+            recyclerServicios.setAlpha(0f);
+            recyclerServicios.animate()
+                    .alpha(1f)
+                    .setDuration(160L)
+                    .start();
+        }
     }
 
     private void mostrarLoaderMasServicios(boolean mostrar) {
@@ -400,13 +494,8 @@ public class FragServicios extends Fragment implements FilterableExplorarFragmen
     }
 
     private void mostrarBotonCargarMas(boolean mostrar, boolean reintento) {
-        if (btnCargarMasServicios == null) {
-            return;
-        }
-        btnCargarMasServicios.setVisibility(mostrar ? View.VISIBLE : View.GONE);
-        if (mostrar) {
-            btnCargarMasServicios.setText(reintento ? "Reintentar cargar m\u00E1s servicios" : "Cargar m\u00E1s servicios");
-        }
+        // FragServicios usa solo paginación automática por scroll.
+        // No se muestra botón manual de "cargar más".
     }
 
     private List<TarjetaTextoServicioItem> convertir(List<ServicioDTO> dtoList) {

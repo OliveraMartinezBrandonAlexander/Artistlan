@@ -48,6 +48,8 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.DialogThemeHelper;
+import com.example.artistlan.utils.LottieFeedbackDialog;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -86,6 +88,8 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     private View rootMain, topDivider, cardDivider, cardContainer;
     private TextView txtTitulo, txtDesc, txtIndicacion, tvCorreo, tvUsuario, tvFotoPerfil,
             tvNombre, tvDescripcion, tvCategoria, tvRedes, tvTelefono, tvFecha, tvUbicacion;
+    private LottieFeedbackDialog feedbackDialog;
+    private boolean actualizacionEnCurso = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,6 +136,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         btnEliminarCuenta = findViewById(R.id.btnEliminarCuenta);
 
         applyThemeOnlyColors();
+        feedbackDialog = new LottieFeedbackDialog(this);
 
         btnEliminarCuenta.setOnClickListener(this);
         btnActualizarDatos.setOnClickListener(this);
@@ -269,9 +274,9 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     private void mostrarOpcionesFotoPerfil() {
         String[] opciones = {"Elegir de galería", "Tomar foto con cámara"};
 
-        new androidx.appcompat.app.AlertDialog.Builder(this)
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Selecciona una opción")
-                .setItems(opciones, (dialog, which) -> {
+                .setItems(opciones, (dialogInterface, which) -> {
                     if (which == 0) {
                         Toast.makeText(this, "Selecciona una imagen cuadrada para que tu foto se vea correctamente.", Toast.LENGTH_SHORT).show();
                         seleccionarImagenperfilLauncher.launch("image/*");
@@ -280,6 +285,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                     }
                 })
                 .show();
+        DialogThemeHelper.styleAlertDialog(dialog, this);
     }
 
     private void abrirCamaraPerfilConPermiso() {
@@ -463,18 +469,20 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         });
 
         dialog.show();
+        DialogThemeHelper.styleAlertDialog(dialog, this);
     }
 
     private void mostrarDialogoDesactivarCuenta() {
-        new androidx.appcompat.app.AlertDialog.Builder(this)
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Desactivar cuenta")
                 .setMessage("Tu cuenta se desactivará y ya no podrá iniciar sesión ni operar normalmente. Tu historial de compras, ventas, reportes y transacciones se conservará. Esta acción no borra físicamente tu información. ¿Deseas confirmar la desactivación de tu cuenta?")
-                .setPositiveButton("Sí, desactivar", (dialog, which) -> {
-                    dialog.dismiss();
+                .setPositiveButton("Sí, desactivar", (dialogInterface, which) -> {
+                    dialogInterface.dismiss();
                     desactivarCuentaConApi();
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
+        DialogThemeHelper.styleAlertDialog(dialog, this);
     }
 
     private void desactivarCuentaConApi() {
@@ -648,6 +656,9 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     }
 
     private void actualizarUsuario() {
+        if (actualizacionEnCurso) {
+            return;
+        }
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
         int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
         if (idUsuario == -1) {
@@ -675,12 +686,12 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             return;
         }
         if (!Patterns.EMAIL_ADDRESS.matcher(correo).matches()) {
-            etCorreo.setError("Ingresa un correo vÃ¡lido.");
+            etCorreo.setError("Ingresa un correo válido.");
             etCorreo.requestFocus();
             return;
         }
         if (nombre.isEmpty()) {
-            etNombre.setError("El nombre no puede estar vacÃ­o.");
+            etNombre.setError("El nombre no puede estar vacío.");
             etNombre.requestFocus();
             Toast.makeText(this, "El nombre no puede estar vacío.", Toast.LENGTH_SHORT).show();
             return;
@@ -702,6 +713,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             return;
         }
 
+        iniciarFeedbackActualizacionPerfil();
         if (imageUri != null) {
             subirFotoPerfil(idUsuario, prefs, () -> enviarActualizacionUsuario(idUsuario, prefs));
         } else {
@@ -722,6 +734,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
             @Override
             public void onError(String mensaje) {
+                finalizarFeedbackErrorPerfil("No se pudo actualizar el perfil");
                 Toast.makeText(ActActualizarDatos.this, mensaje, Toast.LENGTH_LONG).show();
             }
         });
@@ -771,18 +784,51 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                             posicionSeleccionada,
                             ocupacionActual
                     );
-                    Toast.makeText(ActActualizarDatos.this, "Datos actualizados correctamente", Toast.LENGTH_SHORT).show();
-                    finish();
+                    finalizarFeedbackExitoPerfil();
                 } else {
+                    finalizarFeedbackErrorPerfil("No se pudo actualizar el perfil");
                     manejarErrorActualizacion(response);
                 }
             }
 
             @Override
             public void onFailure(Call<UsuariosDTO> call, Throwable t) {
+                finalizarFeedbackErrorPerfil("No se pudo actualizar el perfil");
                 Toast.makeText(ActActualizarDatos.this, "Fallo de conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void iniciarFeedbackActualizacionPerfil() {
+        actualizacionEnCurso = true;
+        if (btnActualizarDatos != null) {
+            btnActualizarDatos.setEnabled(false);
+        }
+        if (feedbackDialog != null) {
+            feedbackDialog.showLoading("Actualizando perfil...");
+        }
+    }
+
+    private void finalizarFeedbackExitoPerfil() {
+        actualizacionEnCurso = false;
+        if (btnActualizarDatos != null) {
+            btnActualizarDatos.setEnabled(true);
+        }
+        if (feedbackDialog != null) {
+            feedbackDialog.showSuccess("Perfil actualizado", this::finish);
+        } else {
+            finish();
+        }
+    }
+
+    private void finalizarFeedbackErrorPerfil(String mensaje) {
+        actualizacionEnCurso = false;
+        if (btnActualizarDatos != null) {
+            btnActualizarDatos.setEnabled(true);
+        }
+        if (feedbackDialog != null) {
+            feedbackDialog.showError(mensaje);
+        }
     }
 
     private void persistirUsuarioActualizado(
@@ -857,16 +903,16 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         String backendMessage = ApiErrorParser.extractMessage(response);
         String mensaje = backendMessage != null
                 ? backendMessage
-                : "Error al actualizar (CÃ³digo: " + response.code() + ")";
+                : "Error al actualizar (Código: " + response.code() + ")";
 
         if (response.code() == 409) {
             String mensajeNormalizado = backendMessage == null ? "" : backendMessage.toLowerCase(Locale.ROOT);
             if (mensajeNormalizado.contains("correo")) {
-                mensaje = "El correo ya estÃ¡ en uso.";
+                mensaje = "El correo ya está en uso.";
                 etCorreo.setError(mensaje);
                 etCorreo.requestFocus();
             } else if (mensajeNormalizado.contains("usuario")) {
-                mensaje = "El nombre de usuario ya estÃ¡ en uso.";
+                mensaje = "El nombre de usuario ya está en uso.";
                 etUsuario.setError(mensaje);
                 etUsuario.requestFocus();
             }
@@ -917,6 +963,16 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         themeManager = new ThemeManager(this);
         applyThemeOnlyColors();
     }
+
+    @Override
+    protected void onDestroy() {
+        if (feedbackDialog != null) {
+            feedbackDialog.release();
+            feedbackDialog = null;
+        }
+        super.onDestroy();
+    }
 }
+
 
 

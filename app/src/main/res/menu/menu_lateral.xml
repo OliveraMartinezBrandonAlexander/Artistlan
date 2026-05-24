@@ -52,11 +52,6 @@
                     android:title="Portafolio personal" />
 
                 <item
-                    android:id="@+id/fragMiArte"
-                    android:icon="@drawable/ic_nav_arte_artistlan"
-                    android:title="Mis obras" />
-
-                <item
                     android:id="@+id/fragTransacciones"
                     android:icon="@drawable/ic_nav_transacciones_artistlan"
                     android:title="@string/menu_mis_transacciones" />

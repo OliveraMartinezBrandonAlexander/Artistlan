@@ -67,7 +67,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
     private View resultOverlay, resultDialog;
     private View resultOk;
     private TextView resultTitle, resultMessage;
-    private TextView txtBrand, txtTitulo, txtInstruccion, txtCorreoLbl, txtUsuarioLbl, txtPassLbl;
+    private TextView txtBrand, txtTitulo, txtInstruccion, txtCorreoLbl, txtUsuarioLbl, txtPassLbl, txtForgotPassword;
     private LottieAnimationView resultLottie, sideLottie;
 
     private ThemeManager themeManager;
@@ -118,6 +118,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         txtCorreoLbl = findViewById(R.id.IsTxtCorreoLbl);
         txtUsuarioLbl = findViewById(R.id.IsTxtUsuarioLbl);
         txtPassLbl = findViewById(R.id.IsTxtPassLbl);
+        txtForgotPassword = findViewById(R.id.IsTxtForgotPassword);
 
         sideLottie = findViewById(R.id.IsLottieSide);
 
@@ -125,10 +126,12 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
 
         btnIniciarSesion.setOnClickListener(this);
         btnRegresar.setOnClickListener(this);
+        txtForgotPassword.setOnClickListener(this);
         resultOk.setOnClickListener(v -> hideResultDialog());
 
         setupPressAnimation(btnIniciarSesion);
         setupPressAnimation(btnRegresar);
+        setupPressAnimation(txtForgotPassword);
         setupPressAnimation(resultOk);
 
         api = RetrofitClient.getClient().create(UsuarioApi.class);
@@ -164,6 +167,9 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         ThemeApplier.applyTextPrimary(txtPassLbl, themeManager);
         ThemeApplier.applyTextPrimary(resultTitle, themeManager);
         ThemeApplier.applyTextSecondary(resultMessage, themeManager);
+        if (txtForgotPassword != null) {
+            txtForgotPassword.setTextColor(themeManager.color(ThemeKeys.ICON_ACTIVE));
+        }
 
         ThemeApplier.applyInput(etCorreo, themeManager);
         ThemeApplier.applyInput(etUsuario, themeManager);
@@ -487,6 +493,8 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
             iniciarSesion();
         } else if (v.getId() == R.id.IsBtnRegresar) {
             finish();
+        } else if (v.getId() == R.id.IsTxtForgotPassword) {
+            startActivity(new Intent(this, ActRecuperarContrasena.class));
         }
     }
 

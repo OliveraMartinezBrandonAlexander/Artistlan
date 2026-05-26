@@ -53,7 +53,9 @@ public class RetrofitClient {
                 Request.Builder requestBuilder = original.newBuilder();
 
                 String token = getCurrentToken();
-                if (token != null && original.header("Authorization") == null) {
+                if (token != null
+                        && original.header("Authorization") == null
+                        && !isPublicPasswordResetPath(original)) {
                     requestBuilder.header("Authorization", "Bearer " + token);
                 }
 
@@ -101,7 +103,8 @@ public class RetrofitClient {
         String path = request.url() != null ? request.url().encodedPath() : "";
         boolean isPublicAuthRequest = path.endsWith("/api/usuarios/login")
                 || path.endsWith("/api/auth/2fa/verify-login")
-                || path.endsWith("/api/auth/2fa/resend");
+                || path.endsWith("/api/auth/2fa/resend")
+                || isPublicPasswordResetPath(request);
 
         String authHeader = request.header("Authorization");
         boolean hasBearer = authHeader != null && authHeader.startsWith("Bearer ");
@@ -112,7 +115,7 @@ public class RetrofitClient {
             handleUnauthorized();
             return;
         }
-        if (response.code() == 403 && (hasBearer || hasActiveSession)) {
+        if (response.code() == 403 && !isPublicAuthRequest && (hasBearer || hasActiveSession)) {
             if (debeOmitirToast403Global(path)) {
                 if (ENABLE_MODERACION_DEBUG_LOGS && isDebugBuild()) {
                     Log.d(TAG_MODERACION_DEBUG, "403 omitido en handler global -> endpoint=" + path
@@ -135,6 +138,16 @@ public class RetrofitClient {
                 path.startsWith("/api/moderacion/")
                         || path.endsWith("/api/usuarios/validar-password")
         );
+    }
+
+    private static boolean isPublicPasswordResetPath(Request request) {
+        String path = request != null && request.url() != null ? request.url().encodedPath() : "";
+        return path.endsWith("/api/auth/password-reset/request")
+                || path.endsWith("/api/auth/password-reset/confirm")
+                || path.endsWith("/api/auth/password-reset/resend")
+                || path.endsWith("/auth/password-reset/request")
+                || path.endsWith("/auth/password-reset/confirm")
+                || path.endsWith("/auth/password-reset/resend");
     }
 
     private static void handleUnauthorized() {

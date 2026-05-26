@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/RcLayMain"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_create_account_screen"
+    tools:context=".Activitys.ActRecuperarContrasena">
+
+    <View
+        android:id="@+id/RcGlowTop"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:alpha="0.42"
+        android:background="@drawable/bg_glow_purple"
+        android:translationX="-55dp"
+        android:translationY="-35dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/RcGlowCenter"
+        android:layout_width="220dp"
+        android:layout_height="220dp"
+        android:alpha="0.18"
+        android:background="@drawable/bg_glow_soft_white"
+        android:translationY="110dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/RcGlowBottom"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:alpha="0.38"
+        android:background="@drawable/bg_glow_pink"
+        android:translationX="70dp"
+        android:translationY="85dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ScrollView
+        android:id="@+id/RcScroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingStart="24dp"
+        android:paddingTop="22dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="28dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="8dp"
+            android:paddingBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/RcBtnRegresar"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_back_bubble"
+                    android:contentDescription="Regresar"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/regresarimg" />
+
+                <TextView
+                    android:id="@+id/RcTxtBrand"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/urbanist_bold"
+                    android:letterSpacing="0.05"
+                    android:text="ARTISTLAN"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="26sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/RcCardContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:background="@drawable/bg_form_glass_panel"
+                android:orientation="vertical"
+                android:padding="22dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <com.airbnb.lottie.LottieAnimationView
+                        android:id="@+id/RcLottieSide"
+                        android:layout_width="76dp"
+                        android:layout_height="71dp"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        app:lottie_autoPlay="true"
+                        app:lottie_loop="true"
+                        app:lottie_rawRes="@raw/login" />
+
+                    <TextView
+                        android:id="@+id/RcTxtTitulo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Recuperar contraseña"
+                        android:textColor="@color/artistlan_text_primary"
+                        android:textSize="24sp" />
+
+                    <View
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:visibility="invisible" />
+                </RelativeLayout>
+
+                <View
+                    android:id="@+id/RcDividerBase"
+                    android:layout_width="150dp"
+                    android:layout_height="4dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_divider_glow" />
+
+                <TextView
+                    android:id="@+id/RcTxtInstruccion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:text="Ingresa tu correo o usuario para recibir un código de recuperación."
+                    android:textColor="@color/artistlan_text_secondary"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/RcTxtCorreoUsuarioLbl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="22dp"
+                    android:fontFamily="sans-serif-black"
+                    android:text="Correo o usuario"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/RcEtCorreoUsuario"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_input_artistlan"
+                    android:hint="correo@ejemplo.com o Usuario123"
+                    android:inputType="textEmailAddress|textNoSuggestions"
+                    android:paddingStart="18dp"
+                    android:paddingEnd="18dp"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textColorHint="#9FB1C7" />
+
+                <Button
+                    android:id="@+id/RcBtnEnviarCodigo"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="18dp"
+                    android:background="@drawable/bg_btn_bubble_glass_primary"
+                    android:text="Enviar código"
+                    android:textAllCaps="false"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/RcTxtEstadoSolicitud"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center"
+                    android:text="Te enviaremos un código si la cuenta puede recuperarse."
+                    android:textColor="@color/artistlan_text_secondary"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:id="@+id/RcPanelPasoReset"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/RcTxtCodigoLbl"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Código de recuperación"
+                        android:textColor="@color/artistlan_text_primary"
+                        android:textSize="14sp" />
+
+                    <EditText
+                        android:id="@+id/RcEtCodigo"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="14dp"
+                        android:background="@drawable/bg_input_artistlan"
+                        android:digits="0123456789"
+                        android:hint="123456"
+                        android:inputType="number"
+                        android:maxLength="6"
+                        android:paddingStart="18dp"
+                        android:paddingEnd="18dp"
+                        android:textColor="@color/artistlan_text_primary"
+                        android:textColorHint="#9FB1C7" />
+
+                    <TextView
+                        android:id="@+id/RcTxtNuevaContrasenaLbl"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Nueva contraseña"
+                        android:textColor="@color/artistlan_text_primary"
+                        android:textSize="14sp" />
+
+                    <EditText
+                        android:id="@+id/RcEtNuevaContrasena"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="14dp"
+                        android:background="@drawable/bg_input_artistlan"
+                        android:hint="Nueva1234"
+                        android:inputType="textPassword"
+                        android:paddingStart="18dp"
+                        android:paddingEnd="18dp"
+                        android:textColor="@color/artistlan_text_primary"
+                        android:textColorHint="#9FB1C7" />
+
+                    <TextView
+                        android:id="@+id/RcTxtConfirmarContrasenaLbl"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Confirmar contraseña"
+                        android:textColor="@color/artistlan_text_primary"
+                        android:textSize="14sp" />
+
+                    <EditText
+                        android:id="@+id/RcEtConfirmarContrasena"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_input_artistlan"
+                        android:hint="Nueva1234"
+                        android:inputType="textPassword"
+                        android:paddingStart="18dp"
+                        android:paddingEnd="18dp"
+                        android:textColor="@color/artistlan_text_primary"
+                        android:textColorHint="#9FB1C7" />
+
+                    <Button
+                        android:id="@+id/RcBtnCambiarContrasena"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="20dp"
+                        android:background="@drawable/bg_btn_bubble_glass_primary"
+                        android:text="Cambiar contraseña"
+                        android:textAllCaps="false"
+                        android:textColor="@color/artistlan_text_primary"
+                        android:textSize="16sp" />
+
+                    <Button
+                        android:id="@+id/RcBtnReenviarCodigo"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_btn_bubble_glass_secondary"
+                        android:text="Reenviar código"
+                        android:textAllCaps="false"
+                        android:textColor="@color/artistlan_text_primary"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/RcTxtVolverLogin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:gravity="center"
+                    android:text="Volver al login"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

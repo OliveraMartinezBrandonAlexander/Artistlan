@@ -13,14 +13,14 @@
         android:id="@+id/segmentContainerSolicitudes"
         android:layout_width="match_parent"
         android:layout_height="46dp"
-        android:background="@drawable/bg_solicitudes_segment_container_mensajes"
+            android:background="@android:color/transparent"
         android:padding="4dp">
 
         <View
             android:id="@+id/segmentIndicatorSolicitudes"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:background="@drawable/bg_solicitudes_segment_indicator_mensajes" />
+            android:background="@android:color/transparent" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -64,7 +64,7 @@
             android:id="@+id/btnSolicitudesMarcarTodasLeidas"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_action_outline_soft"
+            android:background="@android:color/transparent"
             android:paddingStart="14dp"
             android:paddingTop="8dp"
             android:paddingEnd="14dp"
@@ -79,7 +79,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:background="@drawable/bg_action_outline_soft"
+            android:background="@android:color/transparent"
             android:paddingStart="14dp"
             android:paddingTop="8dp"
             android:paddingEnd="14dp"
@@ -121,7 +121,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
-                    android:background="@drawable/bg_action_outline_soft"
+                    android:background="@android:color/transparent"
                     android:paddingStart="14dp"
                     android:paddingTop="8dp"
                     android:paddingEnd="14dp"

@@ -21,6 +21,8 @@ import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.ConvocatoriaApi;
 import com.example.artistlan.Conector.model.ConvocatoriaDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.adapter.ConvocatoriaHomeAdapter;
 
@@ -43,10 +45,14 @@ public class FragConvocatorias extends Fragment {
         View root = inflater.inflate(R.layout.fragment_frag_convocatorias, container, false);
         ThemeModuleStyler.styleFragment(this, root);
         new BotonesMenuSuperior(this);
+        ThemeManager tm = new ThemeManager(requireContext());
 
         rvCalendarioEventos = root.findViewById(R.id.rvCalendarioEventos);
         pbCalendarioEventos = root.findViewById(R.id.pbCalendarioEventos);
         tvCalendarioEventosEstado = root.findViewById(R.id.tvCalendarioEventosEstado);
+        ThemeApplier.applyTextPrimary(root.findViewById(R.id.tvTituloConvocatoriaModulo), tm);
+        ThemeApplier.applyTextSecondary(root.findViewById(R.id.tvSubtituloConvocatoriaModulo), tm);
+        ThemeApplier.applyTextSecondary(tvCalendarioEventosEstado, tm);
 
         configurarLista();
         cargarConvocatorias();

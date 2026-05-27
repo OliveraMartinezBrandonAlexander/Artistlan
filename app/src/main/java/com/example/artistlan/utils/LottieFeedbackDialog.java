@@ -1,14 +1,15 @@
 package com.example.artistlan.utils;
 
 import android.animation.ValueAnimator;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -38,22 +39,38 @@ public class LottieFeedbackDialog {
     }
 
     public void showLoading(@NonNull String message) {
+        showLoading(message, false);
+    }
+
+    public void showLoading(@NonNull String message, boolean cancelable) {
         ensureDialog();
-        bindState("Cargando", message, R.raw.lottie_time, true, false, null);
+        bindState("Cargando", message, R.raw.lottie_time, true, false, null, cancelable);
         showIfNeeded();
     }
 
     public void showSuccess(@NonNull String message, @Nullable Runnable onDismiss) {
+        showSuccess(message, onDismiss, true);
+    }
+
+    public void showSuccess(@NonNull String message, @Nullable Runnable onDismiss, boolean autoDismiss) {
         ensureDialog();
-        bindState("\u00C9xito", message, R.raw.lottie_success, false, false, null);
+        bindState("\u00C9xito", message, R.raw.lottie_success, false, !autoDismiss, this::dismiss, true);
         showIfNeeded();
-        scheduleSuccessDismiss(onDismiss);
+        if (autoDismiss) {
+            scheduleSuccessDismiss(onDismiss);
+        }
     }
 
     public void showError(@NonNull String message) {
         ensureDialog();
-        bindState("Error", message, R.raw.lottie_error, false, true, this::dismiss);
+        bindState("Error", message, R.raw.lottie_error, false, true, this::dismiss, true);
         showIfNeeded();
+    }
+
+    public void updateMessage(@NonNull String message) {
+        if (messageView != null) {
+            messageView.setText(message);
+        }
     }
 
     public void dismiss() {
@@ -87,9 +104,10 @@ public class LottieFeedbackDialog {
         okButton = root.findViewById(R.id.feedbackOk);
 
         ThemeManager tm = new ThemeManager(context);
+        root.setBackground(DialogThemeHelper.createDialogBackground(context));
         ThemeApplier.applyTextPrimary(titleView, tm);
         ThemeApplier.applyTextSecondary(messageView, tm);
-        ThemeApplier.applySecondaryButton(okButton, tm);
+        CardThemeHelper.applySecondaryBubbleButton(okButton, tm);
 
         dialog = new Dialog(context);
         dialog.setContentView(root);
@@ -107,7 +125,8 @@ public class LottieFeedbackDialog {
             int lottieRawRes,
             boolean loop,
             boolean showOkButton,
-            @Nullable Runnable okAction
+            @Nullable Runnable okAction,
+            boolean cancelable
     ) {
         cancelSuccessDismiss();
         if (titleView != null) {
@@ -121,7 +140,7 @@ public class LottieFeedbackDialog {
             okButton.setOnClickListener(okAction == null ? null : v -> okAction.run());
         }
         if (dialog != null) {
-            dialog.setCancelable(showOkButton);
+            dialog.setCancelable(cancelable);
             dialog.setCanceledOnTouchOutside(false);
         }
         if (lottieView != null) {
@@ -136,13 +155,15 @@ public class LottieFeedbackDialog {
         if (dialog == null) {
             return;
         }
+        if (!canShow()) {
+            return;
+        }
         if (!dialog.isShowing()) {
             dialog.show();
         }
         Window window = dialog.getWindow();
         if (window != null) {
-            window.setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT);
-            window.getDecorView().setPadding(0, 0, 0, 0);
+            DialogThemeHelper.applyDialogWindowSize(dialog, context);
         }
     }
 
@@ -161,6 +182,14 @@ public class LottieFeedbackDialog {
             uiHandler.removeCallbacks(successAutoDismiss);
             successAutoDismiss = null;
         }
+    }
+
+    private boolean canShow() {
+        if (context instanceof Activity) {
+            Activity activity = (Activity) context;
+            return !activity.isFinishing() && (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1 || !activity.isDestroyed());
+        }
+        return true;
     }
 }
 

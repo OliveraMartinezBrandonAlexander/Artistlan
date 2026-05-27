@@ -43,6 +43,7 @@
                     android:src="@drawable/regresarimg" />
 
                 <TextView
+                    android:id="@+id/tvTransaccionesTitulo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="14dp"
@@ -56,12 +57,13 @@
             </LinearLayout>
 
             <FrameLayout
+                android:id="@+id/layoutTransaccionesTabs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="8dp"
-                android:background="@drawable/bg_centro_tabs_container"
+                android:background="@android:color/transparent"
                 android:padding="4dp">
 
                 <com.google.android.material.tabs.TabLayout
@@ -69,9 +71,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@android:color/transparent"
-                    app:tabBackground="@drawable/bg_centro_tab_item"
+                    app:tabBackground="@android:color/transparent"
                     app:tabIndicatorColor="@android:color/transparent"
-                    app:tabIndicatorHeight="0dp"
+                    app:tabIndicatorHeight="3dp"
                     app:tabGravity="fill"
                     app:tabMode="fixed"
                     app:tabRippleColor="@color/artistlan_menu_accent_soft"

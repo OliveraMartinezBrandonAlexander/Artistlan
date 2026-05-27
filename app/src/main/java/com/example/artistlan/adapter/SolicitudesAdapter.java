@@ -9,7 +9,6 @@ import android.widget.TextView;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -18,8 +17,8 @@ import com.example.artistlan.Conector.model.SolicitudDTO;
 import com.example.artistlan.Fragments.MensajeUiUtils;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
-import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
@@ -67,10 +66,15 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
         ThemeApplier.applyTextSecondary(holder.tvMensaje, tm);
         ThemeApplier.applyTextSecondary(holder.tvOrigenNombre, tm);
         ThemeApplier.applyTextSecondary(holder.tvFecha, tm);
-        ThemeApplier.applyPrimaryButton(holder.btnDetalle, tm);
-        ThemeApplier.applyPrimaryButton(holder.btnAceptar, tm);
-        ThemeApplier.applySecondaryButton(holder.btnRechazar, tm);
-        ThemeApplier.applyCardContainer(holder.cardRoot, tm);
+        ThemeApplier.applyTextSecondary(holder.tvMotivoRechazo, tm);
+        CardThemeHelper.applyMessageCard(holder.cardRoot, tm, item.isPendiente());
+        CardThemeHelper.applySecondaryBubbleSurface(holder.btnDetalle, holder.btnDetalle, tm);
+        CardThemeHelper.applyPrimaryBubbleSurface(holder.btnAceptar, holder.btnAceptar, tm);
+        CardThemeHelper.applySecondaryBubbleSurface(holder.btnRechazar, holder.btnRechazar, tm);
+        CardThemeHelper.applyFilterButton(holder.btnEliminar, tm);
+        CardThemeHelper.applyAccentDot(holder.unreadDot, tm);
+        CardThemeHelper.applySoftChip(holder.tvMotivoRechazo, tm);
+        CardThemeHelper.applySoftChip(holder.tvReferencia, tm);
 
         holder.tvTitulo.setText("Obra: " + item.getTituloSeguro());
 
@@ -90,7 +94,7 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
         holder.tvOrigenNombre.setText((esRecibida ? "De: " : "Para: ") + actor);
 
         holder.tvEstado.setText(item.getEstadoVisual());
-        holder.tvEstado.setBackgroundResource(obtenerFondoEstado(item));
+        CardThemeHelper.applyStatusChip(holder.tvEstado, item.getEstadoVisual(), tm);
 
         holder.unreadDot.setVisibility(View.GONE);
         holder.btnMarcarLeida.setVisibility(View.GONE);
@@ -106,15 +110,6 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
             holder.tvReferencia.setVisibility(View.VISIBLE);
             holder.tvReferencia.setText(referencia);
         }
-
-        int surface = ContextCompat.getColor(holder.itemView.getContext(), R.color.artistlan_menu_surface);
-        int surfacePending = ContextCompat.getColor(holder.itemView.getContext(), R.color.artistlan_menu_surface_soft);
-        int strokeSoft = ContextCompat.getColor(holder.itemView.getContext(), R.color.artistlan_menu_stroke_soft);
-        int strokePending = ContextCompat.getColor(holder.itemView.getContext(), R.color.artistlan_secondary);
-
-        holder.cardRoot.setCardBackgroundColor(item.isPendiente() ? surfacePending : surface);
-        holder.cardRoot.setStrokeColor(item.isPendiente() ? strokePending : strokeSoft);
-        holder.cardRoot.setStrokeWidth(item.isPendiente() ? 2 : 1);
 
         boolean mostrarAceptar = modoLista == ModoLista.RECIBIDAS && item.puedeSerResueltaPorVendedor();
         boolean mostrarRechazar = modoLista == ModoLista.RECIBIDAS && item.puedeSerResueltaPorVendedor();
@@ -202,16 +197,6 @@ public class SolicitudesAdapter extends RecyclerView.Adapter<SolicitudesAdapter.
                 return;
             }
         }
-    }
-
-    private int obtenerFondoEstado(SolicitudDTO item) {
-        if (item.isPendiente()) return R.drawable.bg_chip_solicitud_pendiente;
-        if (item.isAceptada()) return R.drawable.bg_chip_solicitud_aceptada;
-        if (item.isRechazada()) return R.drawable.bg_chip_solicitud_rechazada;
-        if (item.isCancelada()) return R.drawable.bg_chip_solicitud_cancelada;
-        if (item.isExpirada()) return R.drawable.bg_chip_solicitud_expirada;
-        if (item.isPagada()) return R.drawable.bg_chip_solicitud_pagada;
-        return R.drawable.bg_chip_solicitud_atendida;
     }
 
     static class SolicitudViewHolder extends RecyclerView.ViewHolder {

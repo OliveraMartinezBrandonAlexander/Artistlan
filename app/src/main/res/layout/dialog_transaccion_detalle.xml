@@ -26,7 +26,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
-            android:background="@drawable/bg_action_outline_soft"
+            android:background="@android:color/transparent"
             android:paddingStart="10dp"
             android:paddingTop="6dp"
             android:paddingEnd="10dp"
@@ -40,7 +40,7 @@
             android:id="@+id/btnDetalleCerrarTop"
             android:layout_width="36dp"
             android:layout_height="36dp"
-            android:background="@drawable/bg_back_bubble"
+            android:background="@android:color/transparent"
             android:contentDescription="Cerrar detalle"
             android:padding="8dp"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
@@ -72,7 +72,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="160dp"
                 android:adjustViewBounds="true"
-                android:background="#F0E6FF"
+                android:background="@android:color/transparent"
                 android:scaleType="centerCrop"
                 android:src="@drawable/imagencargaobras" />
 

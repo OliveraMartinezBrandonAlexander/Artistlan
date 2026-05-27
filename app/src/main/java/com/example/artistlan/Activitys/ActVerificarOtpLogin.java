@@ -2,16 +2,20 @@ package com.example.artistlan.Activitys;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.example.artistlan.Conector.ApiErrorParser;
 import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.SessionManager;
@@ -25,6 +29,11 @@ import com.example.artistlan.Conector.model.TwoFactorVerifyLoginRequest;
 import com.example.artistlan.Conector.model.TwoFactorVerifyLoginResponse;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.ArtistlanLoadingDialog;
+import com.example.artistlan.utils.CardThemeHelper;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -48,16 +57,25 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
     private EditText etCode;
     private Button btnVerify;
     private Button btnResend;
+    private ImageButton btnBack;
     private TextView tvTimer;
     private TextView tvInfo;
     private TextView tvResendCooldown;
+    private TextView tvTitle;
+    private View root;
+    private View card;
+    private LottieAnimationView otpLottie;
 
     private Auth2FAApi auth2FAApi;
     private UsuarioApi usuarioApi;
     private SessionManager sessionManager;
+    private ThemeManager themeManager;
+    private ArtistlanLoadingDialog feedbackDialog;
     private CountDownTimer otpCountDownTimer;
     private CountDownTimer resendCountDownTimer;
+    private final Handler uiHandler = new Handler(Looper.getMainLooper());
     private boolean resendCooldownActive = false;
+    private boolean requestInFlight = false;
 
     private String mode = MODE_LOGIN;
     private String temporaryToken;
@@ -73,13 +91,22 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
         etCode = findViewById(R.id.otpCodeInput);
         btnVerify = findViewById(R.id.otpVerifyButton);
         btnResend = findViewById(R.id.otpResendButton);
+        btnBack = findViewById(R.id.otpBackButton);
         tvTimer = findViewById(R.id.otpTimerText);
         tvInfo = findViewById(R.id.otpInfoText);
         tvResendCooldown = findViewById(R.id.otpResendCooldownText);
+        tvTitle = findViewById(R.id.otpTitleText);
+        root = findViewById(R.id.otpRoot);
+        card = findViewById(R.id.otpCard);
+        otpLottie = findViewById(R.id.otpLottie);
 
         auth2FAApi = RetrofitClient.getClient().create(Auth2FAApi.class);
         usuarioApi = RetrofitClient.getClient().create(UsuarioApi.class);
         sessionManager = new SessionManager(this);
+        themeManager = new ThemeManager(this);
+        feedbackDialog = new ArtistlanLoadingDialog(this);
+
+        applyTheme();
 
         mode = getIntent().getStringExtra(EXTRA_MODE);
         if (mode == null || mode.trim().isEmpty()) {
@@ -93,14 +120,12 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
         if (MODE_LOGIN.equals(mode)) {
             if (temporaryToken == null || temporaryToken.trim().isEmpty()) {
-                Toast.makeText(this, "Token temporal inválido. Inicia sesión nuevamente.", Toast.LENGTH_LONG).show();
-                finish();
+                finishWithError("Token temporal inválido. Inicia sesión nuevamente.");
                 return;
             }
         } else if (MODE_ACTIVATION.equals(mode)) {
             if (jwtToken == null || jwtToken.trim().isEmpty()) {
-                Toast.makeText(this, "Sesión no válida. Vuelve a iniciar sesión.", Toast.LENGTH_LONG).show();
-                finish();
+                finishWithError("Sesión no válida. Vuelve a iniciar sesión.");
                 return;
             }
         }
@@ -109,15 +134,43 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
         btnVerify.setOnClickListener(v -> verifyCode());
         btnResend.setOnClickListener(v -> resendCode());
+        btnBack.setOnClickListener(v -> finish());
 
         startOtpTimer();
     }
 
+    private void applyTheme() {
+        ThemeApplier.applySystemBars(this, themeManager);
+        if (root != null) {
+            root.setBackgroundColor(themeManager.color(ThemeKeys.BG_BOTTOM));
+        }
+        if (card != null && card.getBackground() != null) {
+            card.getBackground().setColorFilter(themeManager.color(ThemeKeys.ACCOUNT_GLASS_PANEL), PorterDuff.Mode.SRC_ATOP);
+        }
+        ThemeApplier.applyTextPrimary(tvTitle, themeManager);
+        ThemeApplier.applyTextSecondary(tvInfo, themeManager);
+        ThemeApplier.applyTextSecondary(tvTimer, themeManager);
+        ThemeApplier.applyTextSecondary(tvResendCooldown, themeManager);
+        ThemeApplier.applyInput(etCode, themeManager);
+        CardThemeHelper.applyPrimaryBubbleButton(btnVerify, themeManager);
+        CardThemeHelper.applySecondaryBubbleButton(btnResend, themeManager);
+        if (btnBack != null) {
+            btnBack.setColorFilter(themeManager.color(ThemeKeys.ICON_ACTIVE), PorterDuff.Mode.SRC_IN);
+            ThemeApplier.animatePress(btnBack);
+        }
+        ThemeApplier.animatePress(btnVerify);
+        ThemeApplier.animatePress(btnResend);
+    }
+
     private void verifyCode() {
+        if (requestInFlight) {
+            return;
+        }
         String code = etCode.getText().toString().trim();
         if (!code.matches("\\d{6}")) {
             etCode.setError("El código debe tener 6 dígitos");
             etCode.requestFocus();
+            feedbackDialog.showError("Ingresa el código de 6 dígitos.");
             return;
         }
 
@@ -129,13 +182,13 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
     }
 
     private void verifyLoginCode(String code) {
-        setLoadingState(true);
+        setLoadingState(true, "Verificando código...");
 
         TwoFactorVerifyLoginRequest request = new TwoFactorVerifyLoginRequest(temporaryToken, code);
         auth2FAApi.verifyLogin(request).enqueue(new Callback<TwoFactorVerifyLoginResponse>() {
             @Override
             public void onResponse(Call<TwoFactorVerifyLoginResponse> call, Response<TwoFactorVerifyLoginResponse> response) {
-                setLoadingState(false);
+                closeLoadingState();
 
                 if (!response.isSuccessful()) {
                     handleVerifyLoginErrorResponse(response);
@@ -143,33 +196,25 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                 }
 
                 if (response.body() == null) {
-                    Toast.makeText(
-                            ActVerificarOtpLogin.this,
-                            "No se pudo verificar el código",
-                            Toast.LENGTH_LONG
-                    ).show();
+                    feedbackDialog.showError("No se pudo verificar el código");
                     return;
                 }
 
                 TwoFactorVerifyLoginResponse body = response.body();
                 if (!Boolean.TRUE.equals(body.getSuccess())) {
-                    Toast.makeText(
-                            ActVerificarOtpLogin.this,
-                            body.getMessage() != null ? body.getMessage() : "Código incorrecto o expirado",
-                            Toast.LENGTH_LONG
-                    ).show();
+                    feedbackDialog.showError(body.getMessage() != null ? body.getMessage() : "Código incorrecto o expirado");
                     return;
                 }
 
                 UsuariosDTO user = body.getUser();
                 if (user == null || user.getIdUsuario() == null || user.getIdUsuario() <= 0) {
-                    Toast.makeText(ActVerificarOtpLogin.this, "Respuesta inválida del servidor", Toast.LENGTH_LONG).show();
+                    feedbackDialog.showError("Respuesta inválida del servidor");
                     return;
                 }
 
                 String token = body.getToken();
                 if (token == null || token.trim().isEmpty() || "null".equalsIgnoreCase(token.trim())) {
-                    Toast.makeText(ActVerificarOtpLogin.this, "No se recibió token de sesión válido", Toast.LENGTH_LONG).show();
+                    feedbackDialog.showError("No se recibió token de sesión válido");
                     return;
                 }
 
@@ -179,14 +224,16 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
                 Intent intent = new Intent(ActVerificarOtpLogin.this, ActFragmentoPrincipal.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-                finish();
+                feedbackDialog.showSuccess("Código verificado", () -> {
+                    startActivity(intent);
+                    finish();
+                });
             }
 
             @Override
             public void onFailure(Call<TwoFactorVerifyLoginResponse> call, Throwable t) {
-                setLoadingState(false);
-                Toast.makeText(ActVerificarOtpLogin.this, "Error de conexión al verificar código", Toast.LENGTH_LONG).show();
+                closeLoadingState();
+                feedbackDialog.showError("Error de conexión al verificar código");
             }
         });
     }
@@ -215,19 +262,11 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
         String backendMessage = ApiErrorParser.extractMessage(response);
 
         if (code == 400 || code == 401) {
-            Toast.makeText(
-                    this,
-                    backendMessage != null ? backendMessage : "Código incorrecto o expirado",
-                    Toast.LENGTH_LONG
-            ).show();
+            feedbackDialog.showError(backendMessage != null ? backendMessage : "Código incorrecto o expirado");
             return;
         }
 
-        Toast.makeText(
-                this,
-                backendMessage != null ? backendMessage : "No se pudo verificar el código",
-                Toast.LENGTH_LONG
-        ).show();
+        feedbackDialog.showError(backendMessage != null ? backendMessage : "No se pudo verificar el código");
     }
 
     private String buildReadableAuthErrorMessage(AuthErrorResponseDTO authError, String fallbackMessage) {
@@ -267,16 +306,20 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
     private void handleBlockedVerifyLogin(String message) {
         temporaryToken = null;
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
 
         Intent intent = new Intent(ActVerificarOtpLogin.this, ActIniciarSesion.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(intent);
-        finish();
+        feedbackDialog.showError(message);
+        uiHandler.postDelayed(() -> {
+            if (!isFinishing()) {
+                startActivity(intent);
+                finish();
+            }
+        }, 900L);
     }
 
     private void verifyActivationCode(String code) {
-        setLoadingState(true);
+        setLoadingState(true, "Verificando código...");
 
         auth2FAApi.verifyActivation(
                 buildAuthorizationHeader(),
@@ -284,42 +327,36 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
         ).enqueue(new Callback<TwoFactorResponse>() {
             @Override
             public void onResponse(Call<TwoFactorResponse> call, Response<TwoFactorResponse> response) {
-                setLoadingState(false);
+                closeLoadingState();
 
                 if (!response.isSuccessful() || response.body() == null) {
                     String backendMessage = ApiErrorParser.extractMessage(response);
-                    Toast.makeText(
-                            ActVerificarOtpLogin.this,
-                            backendMessage != null ? backendMessage : "No se pudo verificar el código",
-                            Toast.LENGTH_LONG
-                    ).show();
+                    feedbackDialog.showError(backendMessage != null ? backendMessage : "No se pudo verificar el código");
                     return;
                 }
 
                 TwoFactorResponse body = response.body();
                 if (!Boolean.TRUE.equals(body.getSuccess())) {
-                    Toast.makeText(
-                            ActVerificarOtpLogin.this,
-                            body.getMessage() != null ? body.getMessage() : "Código incorrecto o expirado",
-                            Toast.LENGTH_LONG
-                    ).show();
+                    feedbackDialog.showError(body.getMessage() != null ? body.getMessage() : "Código incorrecto o expirado");
                     return;
                 }
 
                 sessionManager.updateTwoFactorEnabled(true);
-                Toast.makeText(ActVerificarOtpLogin.this, "2FA activado correctamente", Toast.LENGTH_LONG).show();
-                finish();
+                feedbackDialog.showSuccess("2FA activado correctamente", ActVerificarOtpLogin.this::finish);
             }
 
             @Override
             public void onFailure(Call<TwoFactorResponse> call, Throwable t) {
-                setLoadingState(false);
-                Toast.makeText(ActVerificarOtpLogin.this, "Error de conexión al verificar código", Toast.LENGTH_LONG).show();
+                closeLoadingState();
+                feedbackDialog.showError("Error de conexión al verificar código");
             }
         });
     }
 
     private void resendCode() {
+        if (requestInFlight) {
+            return;
+        }
         if (MODE_ACTIVATION.equals(mode)) {
             resendActivationCode();
             return;
@@ -329,35 +366,27 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
     private void resendLoginCode() {
         if (temporaryToken == null || temporaryToken.trim().isEmpty()) {
-            Toast.makeText(this, "Token temporal inválido", Toast.LENGTH_LONG).show();
+            feedbackDialog.showError("Token temporal inválido");
             return;
         }
 
-        setLoadingState(true);
+        setLoadingState(true, "Reenviando código...");
         TwoFactorResendRequest request = new TwoFactorResendRequest(temporaryToken);
 
         auth2FAApi.resend(request).enqueue(new Callback<TwoFactorResponse>() {
             @Override
             public void onResponse(Call<TwoFactorResponse> call, Response<TwoFactorResponse> response) {
-                setLoadingState(false);
+                closeLoadingState();
 
                 if (!response.isSuccessful() || response.body() == null) {
                     String backendMessage = ApiErrorParser.extractMessage(response);
-                    Toast.makeText(
-                            ActVerificarOtpLogin.this,
-                            backendMessage != null ? backendMessage : "No se pudo reenviar el código",
-                            Toast.LENGTH_LONG
-                    ).show();
+                    feedbackDialog.showError(backendMessage != null ? backendMessage : "No se pudo reenviar el código");
                     return;
                 }
 
                 TwoFactorResponse body = response.body();
                 if (!Boolean.TRUE.equals(body.getSuccess())) {
-                    Toast.makeText(
-                            ActVerificarOtpLogin.this,
-                            body.getMessage() != null ? body.getMessage() : "No se pudo reenviar el código",
-                            Toast.LENGTH_LONG
-                    ).show();
+                    feedbackDialog.showError(body.getMessage() != null ? body.getMessage() : "No se pudo reenviar el código");
                     return;
                 }
 
@@ -367,58 +396,50 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
                 startOtpTimer();
                 startResendCooldown();
-                Toast.makeText(ActVerificarOtpLogin.this, "Código reenviado", Toast.LENGTH_SHORT).show();
+                feedbackDialog.showSuccess("Código reenviado", null);
             }
 
             @Override
             public void onFailure(Call<TwoFactorResponse> call, Throwable t) {
-                setLoadingState(false);
-                Toast.makeText(ActVerificarOtpLogin.this, "Error de conexión al reenviar código", Toast.LENGTH_LONG).show();
+                closeLoadingState();
+                feedbackDialog.showError("Error de conexión al reenviar código");
             }
         });
     }
 
     private void resendActivationCode() {
         if (jwtToken == null || jwtToken.trim().isEmpty()) {
-            Toast.makeText(this, "Sesión no válida. Vuelve a iniciar sesión.", Toast.LENGTH_LONG).show();
+            feedbackDialog.showError("Sesión no válida. Vuelve a iniciar sesión.");
             return;
         }
 
-        setLoadingState(true);
+        setLoadingState(true, "Reenviando código...");
         auth2FAApi.requestActivation(buildAuthorizationHeader()).enqueue(new Callback<TwoFactorResponse>() {
             @Override
             public void onResponse(Call<TwoFactorResponse> call, Response<TwoFactorResponse> response) {
-                setLoadingState(false);
+                closeLoadingState();
 
                 if (!response.isSuccessful() || response.body() == null) {
                     String backendMessage = ApiErrorParser.extractMessage(response);
-                    Toast.makeText(
-                            ActVerificarOtpLogin.this,
-                            backendMessage != null ? backendMessage : "No se pudo reenviar el código",
-                            Toast.LENGTH_LONG
-                    ).show();
+                    feedbackDialog.showError(backendMessage != null ? backendMessage : "No se pudo reenviar el código");
                     return;
                 }
 
                 TwoFactorResponse body = response.body();
                 if (!Boolean.TRUE.equals(body.getSuccess())) {
-                    Toast.makeText(
-                            ActVerificarOtpLogin.this,
-                            body.getMessage() != null ? body.getMessage() : "No se pudo reenviar el código",
-                            Toast.LENGTH_LONG
-                    ).show();
+                    feedbackDialog.showError(body.getMessage() != null ? body.getMessage() : "No se pudo reenviar el código");
                     return;
                 }
 
                 startOtpTimer();
                 startResendCooldown();
-                Toast.makeText(ActVerificarOtpLogin.this, "Código reenviado", Toast.LENGTH_SHORT).show();
+                feedbackDialog.showSuccess("Código reenviado", null);
             }
 
             @Override
             public void onFailure(Call<TwoFactorResponse> call, Throwable t) {
-                setLoadingState(false);
-                Toast.makeText(ActVerificarOtpLogin.this, "Error de conexión al reenviar código", Toast.LENGTH_LONG).show();
+                closeLoadingState();
+                feedbackDialog.showError("Error de conexión al reenviar código");
             }
         });
     }
@@ -480,10 +501,39 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
         });
     }
 
-    private void setLoadingState(boolean loading) {
+    private void setLoadingState(boolean loading, String message) {
+        requestInFlight = loading;
         btnVerify.setEnabled(!loading);
         etCode.setEnabled(!loading);
         btnResend.setEnabled(!loading && !resendCooldownActive);
+        btnBack.setEnabled(!loading);
+        btnVerify.setAlpha(loading ? 0.68f : 1f);
+        btnResend.setAlpha((loading || resendCooldownActive) ? 0.68f : 1f);
+        btnBack.setAlpha(loading ? 0.68f : 1f);
+        if (loading) {
+            feedbackDialog.showLoading(message);
+        }
+    }
+
+    private void closeLoadingState() {
+        requestInFlight = false;
+        btnVerify.setEnabled(true);
+        etCode.setEnabled(true);
+        btnResend.setEnabled(!resendCooldownActive);
+        btnBack.setEnabled(true);
+        btnVerify.setAlpha(1f);
+        btnResend.setAlpha(resendCooldownActive ? 0.68f : 1f);
+        btnBack.setAlpha(1f);
+        feedbackDialog.dismiss();
+    }
+
+    private void finishWithError(String message) {
+        feedbackDialog.showError(message);
+        uiHandler.postDelayed(() -> {
+            if (!isFinishing()) {
+                finish();
+            }
+        }, 900L);
     }
 
     private void startOtpTimer() {
@@ -544,6 +594,13 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
         }
         if (resendCountDownTimer != null) {
             resendCountDownTimer.cancel();
+        }
+        uiHandler.removeCallbacksAndMessages(null);
+        if (otpLottie != null) {
+            otpLottie.cancelAnimation();
+        }
+        if (feedbackDialog != null) {
+            feedbackDialog.release();
         }
     }
 }

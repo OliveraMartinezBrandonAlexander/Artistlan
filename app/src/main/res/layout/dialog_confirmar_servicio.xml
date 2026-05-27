@@ -1,15 +1,15 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dialogConfirmarServicioRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_dialog_solid_panel"
     android:orientation="vertical"
     android:padding="24dp">
 
     <TextView
+        android:id="@+id/txtTituloConfirmarServicio"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="¿Publicar servicio?"
-        android:textColor="#2C3E50"
         android:textSize="22sp"
         android:fontFamily="sans-serif-medium"
         android:textStyle="bold" />
@@ -18,14 +18,12 @@
         android:layout_width="match_parent"
         android:layout_height="250dp"
         android:layout_marginTop="16dp"
-        android:background="@drawable/bg_form_glass_panel_solid"
         android:padding="12dp">
 
         <TextView
             android:id="@+id/txtResumenServicio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#5D6D7E"
             android:textSize="15sp"
             android:lineSpacingExtra="5dp"/>
     </ScrollView>
@@ -33,24 +31,21 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="end"
+        android:orientation="vertical"
         android:layout_marginTop="20dp">
 
         <Button
             android:id="@+id/btnEditar"
-            android:background="@drawable/bg_btn_bubble_glass_secondary"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Editar"
-            android:textColor="#A68966" />
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Editar" />
 
         <Button
             android:id="@+id/btnConfirmarPublicar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_btn_bubble_glass_primary"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="10dp"
             android:text="Publicar"
-            android:textColor="#FFFFFF"
-            android:layout_marginStart="12dp"/>
+            android:layout_marginStart="0dp"/>
     </LinearLayout>
 </LinearLayout>

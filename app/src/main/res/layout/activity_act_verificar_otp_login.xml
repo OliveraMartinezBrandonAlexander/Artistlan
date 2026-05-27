@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/otpRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_create_account_screen"
@@ -20,15 +21,49 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/otpTitleText"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-black"
-            android:gravity="center"
-            android:text="Verificacion en dos pasos"
-            android:textColor="@color/artistlan_text_primary"
-            android:textSize="24sp" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/otpBackButton"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:background="@drawable/bg_back_bubble"
+                android:contentDescription="Regresar"
+                android:padding="10dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/regresarimg" />
+
+            <TextView
+                android:id="@+id/otpTitleText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-black"
+                android:gravity="center"
+                android:text="Verificación en dos pasos"
+                android:textColor="@color/artistlan_text_primary"
+                android:textSize="23sp" />
+
+            <View
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:visibility="invisible" />
+        </LinearLayout>
+
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/otpLottie"
+            android:layout_width="92dp"
+            android:layout_height="92dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="12dp"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true"
+            app:lottie_rawRes="@raw/lottie_time" />
 
         <TextView
             android:id="@+id/otpInfoText"
@@ -52,7 +87,7 @@
             android:inputType="number"
             android:maxLength="6"
             android:textColor="@color/artistlan_text_primary"
-            android:textColorHint="#9FB1C7"
+            android:textColorHint="@color/artistlan_text_hint"
             android:textSize="20sp" />
 
         <Button
@@ -72,7 +107,7 @@
             android:layout_height="56dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/bg_btn_bubble_glass_secondary"
-            android:text="Reenviar codigo"
+            android:text="Reenviar código"
             android:textAllCaps="false"
             android:textColor="@color/artistlan_text_primary"
             android:textSize="16sp" />
@@ -83,7 +118,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
-            android:text="Puedes reenviar el codigo en 60s"
+            android:text="Puedes reenviar el código en 60s"
             android:textColor="@color/artistlan_text_secondary"
             android:textSize="13sp"
             android:visibility="gone" />

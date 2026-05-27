@@ -4,19 +4,14 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -41,7 +36,7 @@ import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAdapter;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
-import com.example.artistlan.utils.DialogThemeHelper;
+import com.example.artistlan.utils.ArtistlanDialogFactory;
 import com.example.artistlan.utils.LottieFeedbackDialog;
 
 import java.util.ArrayList;
@@ -355,84 +350,49 @@ public class FragMisServicios extends Fragment {
             return;
         }
 
-        LinearLayout contenedor = new LinearLayout(requireContext());
-        contenedor.setOrientation(LinearLayout.VERTICAL);
-        int padding = dpToPx(24);
-        contenedor.setPadding(padding, dpToPx(8), padding, 0);
-
-        TextView mensaje = new TextView(requireContext());
-        mensaje.setText("Ingresa tu contraseña para continuar.");
-        contenedor.addView(mensaje);
-
-        EditText etContrasena = new EditText(requireContext());
-        etContrasena.setHint("Contraseña");
-        etContrasena.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        etContrasena.setSingleLine(true);
-        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        inputParams.topMargin = dpToPx(12);
-        contenedor.addView(etContrasena, inputParams);
-
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setTitle("Confirmar contraseña")
-                .setView(contenedor)
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Confirmar", null)
-                .create();
-        dialog.setOnDismissListener(d -> etContrasena.setText(""));
-        dialog.show();
-        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
-
-        Button btnConfirmar = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-        Button btnCancelar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-        btnConfirmar.setOnClickListener(v -> {
-            if (validacionPasswordEnCurso) {
-                return;
-            }
-            String contrasena = etContrasena.getText() != null ? etContrasena.getText().toString().trim() : "";
-            if (contrasena.isEmpty()) {
-                etContrasena.setError("Ingresa tu contraseña");
-                etContrasena.requestFocus();
-                return;
-            }
-            validacionPasswordEnCurso = true;
-            setEstadoDialogoValidacionPassword(etContrasena, btnConfirmar, btnCancelar, false);
-            validarPasswordActual(contrasena, new PasswordValidationCallback() {
-                @Override
-                public void onValid() {
-                    validacionPasswordEnCurso = false;
-                    if (!isAdded()) {
+        ArtistlanDialogFactory.showPassword(
+                this,
+                "Confirmar contraseña",
+                "Ingresa tu contraseña para continuar.",
+                "Contraseña",
+                "Confirmar",
+                "Cancelar",
+                (contrasena, handle) -> {
+                    if (validacionPasswordEnCurso) {
+                        handle.setLoading(false);
                         return;
                     }
-                    dialog.dismiss();
-                    eliminarServicio(servicioItem, position);
-                }
+                    validacionPasswordEnCurso = true;
+                    validarPasswordActual(contrasena, new PasswordValidationCallback() {
+                        @Override
+                        public void onValid() {
+                            validacionPasswordEnCurso = false;
+                            if (!isAdded()) {
+                                return;
+                            }
+                            handle.dismiss();
+                            eliminarServicio(servicioItem, position);
+                        }
 
-                @Override
-                public void onInvalid(String mensajeError) {
-                    validacionPasswordEnCurso = false;
-                    if (!isAdded()) {
-                        return;
-                    }
-                    etContrasena.setText("");
-                    etContrasena.requestFocus();
-                    setEstadoDialogoValidacionPassword(etContrasena, btnConfirmar, btnCancelar, true);
-                    Toast.makeText(requireContext(), mensajeError, Toast.LENGTH_SHORT).show();
-                }
+                        @Override
+                        public void onInvalid(String mensajeError) {
+                            validacionPasswordEnCurso = false;
+                            if (!isAdded()) {
+                                return;
+                            }
+                            handle.showError(mensajeError);
+                        }
 
-                @Override
-                public void onError(String mensajeError) {
-                    validacionPasswordEnCurso = false;
-                    if (!isAdded()) {
-                        return;
-                    }
-                    setEstadoDialogoValidacionPassword(etContrasena, btnConfirmar, btnCancelar, true);
-                    Toast.makeText(requireContext(), mensajeError, Toast.LENGTH_SHORT).show();
-                }
-            });
-        });
+                        @Override
+                        public void onError(String mensajeError) {
+                            validacionPasswordEnCurso = false;
+                            if (!isAdded()) {
+                                return;
+                            }
+                            handle.showError(mensajeError);
+                        }
+                    });
+                });
     }
 
     private void validarPasswordActual(String contrasena, PasswordValidationCallback callback) {
@@ -473,18 +433,6 @@ public class FragMisServicios extends Fragment {
                 callback.onError("Inténtalo de nuevo");
             }
         });
-    }
-
-    private void setEstadoDialogoValidacionPassword(EditText etContrasena, Button btnConfirmar, Button btnCancelar, boolean habilitado) {
-        if (etContrasena != null) {
-            etContrasena.setEnabled(habilitado);
-        }
-        if (btnConfirmar != null) {
-            btnConfirmar.setEnabled(habilitado);
-        }
-        if (btnCancelar != null) {
-            btnCancelar.setEnabled(habilitado);
-        }
     }
 
     private void eliminarServicio(TarjetaTextoServicioItem servicioItem, int position) {
@@ -829,11 +777,6 @@ public class FragMisServicios extends Fragment {
         }
         recyclerMisServicios.setVisibility(tieneDatos ? View.VISIBLE : View.GONE);
         tvEmptyMisServicios.setVisibility(mostrarEmpty ? View.VISIBLE : View.GONE);
-    }
-
-    private int dpToPx(int dp) {
-        float density = requireContext().getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
     }
 
     private interface PasswordValidationCallback {

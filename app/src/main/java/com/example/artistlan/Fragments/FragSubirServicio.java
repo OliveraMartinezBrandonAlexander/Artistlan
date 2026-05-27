@@ -759,12 +759,15 @@ public class FragSubirServicio extends Fragment {
 
         ThemeManager tm = new ThemeManager(requireContext());
         TextView txtResumen = view.findViewById(R.id.txtResumenServicio);
+        TextView txtTituloDialog = view.findViewById(R.id.txtTituloConfirmarServicio);
         Button btnEditar = view.findViewById(R.id.btnEditar);
         Button btnPublicar = view.findViewById(R.id.btnConfirmarPublicar);
 
+        view.setBackground(DialogThemeHelper.createDialogBackground(requireContext()));
+        ThemeApplier.applyTextPrimary(txtTituloDialog, tm);
         ThemeApplier.applyTextPrimary(txtResumen, tm);
-        ThemeApplier.applySecondaryButton(btnEditar, tm);
-        ThemeApplier.applyPrimaryButton(btnPublicar, tm);
+        CardThemeHelper.applySecondaryBubbleButton(btnEditar, tm);
+        CardThemeHelper.applyPrimaryBubbleButton(btnPublicar, tm);
 
         String categoriaTxt = categoria != null ? categoria.getNombreCategoria() : "Sin cambio";
         String precioTxt = (min == null && max == null) ? "A convenir" : ((min != null ? min : "-") + " / " + (max != null ? max : "-"));
@@ -809,7 +812,7 @@ public class FragSubirServicio extends Fragment {
         });
         dialog.show();
         DialogThemeHelper.styleDialogWindow(dialog, requireContext());
-        DialogThemeHelper.styleButtonPair(btnPublicar, btnEditar, requireContext());
+        DialogThemeHelper.applyDialogWindowSize(dialog, requireContext());
         if (dialog.getWindow() != null && dialog.getWindow().getDecorView() != null) {
             ThemeApplier.applyCardContainer(dialog.getWindow().getDecorView(), tm);
         }

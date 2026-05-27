@@ -295,6 +295,17 @@
                         android:textAllCaps="false"
                         android:textColor="@color/artistlan_text_primary"
                         android:textSize="16sp" />
+
+                    <Button
+                        android:id="@+id/RcBtnCambiarCuenta"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_btn_bubble_glass_secondary"
+                        android:text="Cambiar cuenta"
+                        android:textAllCaps="false"
+                        android:textColor="@color/artistlan_text_primary"
+                        android:textSize="15sp" />
                 </LinearLayout>
 
                 <TextView

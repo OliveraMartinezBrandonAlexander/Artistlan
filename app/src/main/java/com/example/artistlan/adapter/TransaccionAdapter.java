@@ -14,8 +14,9 @@ import com.bumptech.glide.Glide;
 import com.example.artistlan.Conector.model.TransaccionResumenDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
-import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
+import com.google.android.material.card.MaterialCardView;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -73,7 +74,10 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
         ThemeApplier.applyTextSecondary(holder.tvNombrePersona, tm);
         ThemeApplier.applyTextSecondary(holder.tvFecha, tm);
         ThemeApplier.applyTextPrimary(holder.tvPrecio, tm);
-        ThemeApplier.applyCardContainer(holder.itemView, tm);
+        CardThemeHelper.applyMessageCard(holder.cardRoot, tm, false);
+        CardThemeHelper.applyThemedSurface(holder.cardImagen, tm, 18);
+        CardThemeHelper.applySoftChip(holder.tvTipo, tm);
+        CardThemeHelper.applySoftChip(holder.tvFecha, tm);
 
         holder.tvTituloObra.setText(textoSeguro(item.getTituloObra(), context.getString(R.string.transaccion_titulo_fallback)));
         holder.tvNombrePersona.setText(obtenerUsuarioRelacionado(item));
@@ -88,6 +92,7 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
         String estado = item.getEstado();
         if (estado != null && !estado.trim().isEmpty()) {
             holder.tvEstado.setText(formatearEstadoVisual(estado));
+            CardThemeHelper.applyStatusChip(holder.tvEstado, holder.tvEstado.getText().toString(), tm);
             holder.tvEstado.setVisibility(View.VISIBLE);
         } else {
             holder.tvEstado.setVisibility(View.GONE);
@@ -284,6 +289,8 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         private final ImageView imgObra;
+        private final MaterialCardView cardRoot;
+        private final View cardImagen;
         private final TextView tvTituloObra;
         private final TextView tvRolPersona;
         private final TextView tvNombrePersona;
@@ -295,6 +302,8 @@ public class TransaccionAdapter extends RecyclerView.Adapter<TransaccionAdapter.
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
+            cardRoot = (MaterialCardView) itemView;
+            cardImagen = itemView.findViewById(R.id.cardImagenTransaccion);
             imgObra = itemView.findViewById(R.id.imgTransaccionObra);
             tvTituloObra = itemView.findViewById(R.id.tvTransaccionTitulo);
             tvRolPersona = itemView.findViewById(R.id.tvTransaccionRolPersona);

@@ -11,6 +11,7 @@ import android.graphics.drawable.StateListDrawable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -21,6 +22,7 @@ import androidx.core.graphics.ColorUtils;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.card.MaterialCardView;
 
 import java.text.Normalizer;
 import java.util.Locale;
@@ -53,6 +55,79 @@ public final class CardThemeHelper {
                 1,
                 dp(textView, 12)
         ));
+    }
+
+    public static void applySoftChip(@Nullable TextView textView, @NonNull ThemeManager tm) {
+        applyChip(textView, tm);
+    }
+
+    public static void applyStatusChip(@Nullable TextView textView, @Nullable String estado, @NonNull ThemeManager tm) {
+        if (textView == null) {
+            return;
+        }
+        String normalized = normalizar(estado);
+        boolean important = normalized.contains("pend") || normalized.contains("no leid") || normalized.contains("nuevo");
+        int fill = important ? tm.color(ThemeKeys.BUTTON_SECONDARY_BG) : tm.color(ThemeKeys.CARD_CHIP_BG);
+        int text = chooseTextColor(
+                tm,
+                fill,
+                important ? tm.color(ThemeKeys.BUTTON_TEXT_LIGHT) : tm.color(ThemeKeys.CARD_CHIP_TEXT),
+                tm.color(ThemeKeys.TEXT_PRIMARY),
+                tm.color(ThemeKeys.TEXT_SECONDARY),
+                Color.WHITE,
+                Color.BLACK
+        );
+        textView.setTextColor(text);
+        textView.setBackground(roundedDrawable(
+                fill,
+                ColorUtils.setAlphaComponent(tm.color(ThemeKeys.CARD_BORDER), 190),
+                1,
+                dp(textView, 12)
+        ));
+    }
+
+    public static void applyMessageCard(@Nullable MaterialCardView card, @NonNull ThemeManager tm, boolean highlighted) {
+        if (card == null) {
+            return;
+        }
+        card.setCardBackgroundColor(highlighted
+                ? ColorUtils.blendARGB(tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL), tm.color(ThemeKeys.BUTTON_SECONDARY_BG), 0.16f)
+                : tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL));
+        card.setStrokeColor(highlighted ? tm.color(ThemeKeys.ACCENT_PRIMARY) : tm.color(ThemeKeys.CARD_BORDER));
+        card.setStrokeWidth(Math.max(1, Math.round(dp(card, highlighted ? 2 : 1))));
+        card.setRadius(dp(card, 18));
+        card.setCardElevation(dp(card, highlighted ? 3 : 1));
+    }
+
+    public static void applyThemedSurface(@Nullable View view, @NonNull ThemeManager tm, int radiusDp) {
+        if (view == null) {
+            return;
+        }
+        view.setBackground(roundedDrawable(
+                tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL),
+                tm.color(ThemeKeys.CARD_BORDER),
+                1,
+                dp(view, radiusDp)
+        ));
+    }
+
+    public static void applyAccentDot(@Nullable View view, @NonNull ThemeManager tm) {
+        if (view == null) {
+            return;
+        }
+        view.setBackground(roundedDrawable(
+                tm.color(ThemeKeys.ACCENT_PRIMARY),
+                tm.color(ThemeKeys.ACCENT_PRIMARY_LIGHT),
+                1,
+                dp(view, 99)
+        ));
+    }
+
+    public static void tintProgress(@Nullable ProgressBar progressBar, @NonNull ThemeManager tm) {
+        if (progressBar == null) {
+            return;
+        }
+        progressBar.setIndeterminateTintList(ColorStateList.valueOf(tm.color(ThemeKeys.ACCENT_PRIMARY)));
     }
 
     public static void applyStatusChip(@Nullable TextView textView, @Nullable String estado) {

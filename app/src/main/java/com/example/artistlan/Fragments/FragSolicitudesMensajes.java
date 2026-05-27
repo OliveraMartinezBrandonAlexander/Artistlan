@@ -3,6 +3,7 @@ package com.example.artistlan.Fragments;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.LayoutInflater;
@@ -16,7 +17,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -31,6 +31,11 @@ import com.example.artistlan.Conector.model.SolicitudDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.adapter.SolicitudesAdapter;
+import com.example.artistlan.utils.ArtistlanDialogFactory;
+import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogConfig;
+import com.example.artistlan.utils.DialogThemeHelper;
+import com.example.artistlan.Theme.ThemeManager;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
@@ -115,6 +120,7 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
         layoutAccionesLocal = view.findViewById(R.id.layoutSolicitudesAccionesLocal);
         btnCargarMasSolicitudes = view.findViewById(R.id.btnCargarMasSolicitudes);
         layoutLoaderMasSolicitudes = view.findViewById(R.id.layoutLoaderMasSolicitudes);
+        aplicarTemaVisual(view);
 
         recyclerSolicitudes.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new SolicitudesAdapter(this);
@@ -163,11 +169,29 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
                 : SolicitudesAdapter.ModoLista.ENVIADAS);
 
         moverIndicador(modo == ModoSolicitudes.RECIBIDAS, animar);
-        int selectedColor = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_primary);
-        int defaultColor = ContextCompat.getColor(requireContext(), R.color.artistlan_menu_text_secondary);
+        ThemeManager tm = new ThemeManager(requireContext());
+        int selectedColor = tm.color(com.example.artistlan.Theme.ThemeKeys.BUTTON_TEXT_DARK);
+        int defaultColor = tm.color(com.example.artistlan.Theme.ThemeKeys.TEXT_SECONDARY);
         btnEnviadas.setTextColor(modo == ModoSolicitudes.ENVIADAS ? selectedColor : defaultColor);
         btnRecibidas.setTextColor(modo == ModoSolicitudes.ENVIADAS ? defaultColor : selectedColor);
         cargarSolicitudes();
+    }
+
+    private void aplicarTemaVisual(@NonNull View root) {
+        ThemeManager tm = new ThemeManager(requireContext());
+        CardThemeHelper.applyThemedSurface(segmentContainer, tm, 28);
+        CardThemeHelper.applyPrimaryBubbleSurface(segmentIndicator, null, tm);
+        btnEnviadas.setBackgroundColor(Color.TRANSPARENT);
+        btnRecibidas.setBackgroundColor(Color.TRANSPARENT);
+        CardThemeHelper.applySecondaryBubbleSurface(btnRecargar, btnRecargar, tm);
+        CardThemeHelper.applySecondaryBubbleSurface(btnMarcarTodasLeidas, btnMarcarTodasLeidas, tm);
+        CardThemeHelper.applySecondaryBubbleSurface(btnCargarMasSolicitudes, btnCargarMasSolicitudes, tm);
+        CardThemeHelper.applyThemedSurface(emptyState, tm, 24);
+        com.example.artistlan.Theme.ThemeApplier.applyTextPrimary(emptyTitle, tm);
+        com.example.artistlan.Theme.ThemeApplier.applyTextSecondary(emptySubtitle, tm);
+        com.example.artistlan.Theme.ThemeApplier.applyTextSecondary(root.findViewById(R.id.txtCargandoMasSolicitudes), tm);
+        CardThemeHelper.tintProgress(progressSolicitudes, tm);
+        CardThemeHelper.tintProgress(root.findViewById(R.id.progressMasSolicitudes), tm);
     }
 
     private void moverIndicador(boolean izquierda, boolean animar) {
@@ -430,16 +454,18 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
             detalle.append("\n").append(MensajeUiUtils.etiquetaReferencia(item.getReferenciaTipo(), item.getReferenciaId()));
         }
 
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
+        DialogConfig.Builder builder = DialogConfig.builder()
                 .setTitle(item.getTituloSeguro())
                 .setMessage(detalle.toString())
-                .setPositiveButton("Cerrar", null);
+                .setType(DialogConfig.Type.INFO)
+                .setPositiveText("Cerrar");
 
         Integer destino = resolverDestinoReferencia(item.getReferenciaTipo());
         if (destino != null) {
-            builder.setNeutralButton("Ir a referencia", (dialog, which) -> navegarADestinoSeguro(destino));
+            builder.setNeutralText("Ir a referencia")
+                    .setOnNeutral(() -> navegarADestinoSeguro(destino));
         }
-        builder.show();
+        ArtistlanDialogFactory.show(this, builder.build());
     }
 
     private void appendLineaSiTieneTexto(@NonNull StringBuilder builder, @NonNull String etiqueta, @Nullable String valor) {
@@ -484,12 +510,14 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
             return;
         }
 
-        new MaterialAlertDialogBuilder(requireContext())
+        ArtistlanDialogFactory.show(this, DialogConfig.builder()
                 .setTitle("Aceptar solicitud")
                 .setMessage("Al aceptar, otras solicitudes pendientes de esta obra pueden cerrarse autom\u00E1ticamente.")
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Aceptar", (dialog, which) -> ejecutarAceptar(item))
-                .show();
+                .setType(DialogConfig.Type.CONFIRM)
+                .setNegativeText("Cancelar")
+                .setPositiveText("Aceptar")
+                .setOnPositive(() -> ejecutarAceptar(item))
+                .build());
     }
 
     @Override
@@ -509,16 +537,21 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
         inputMotivo.setMinLines(2);
         inputMotivo.setMaxLines(4);
 
-        new MaterialAlertDialogBuilder(requireContext())
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Rechazar solicitud")
                 .setMessage("Puedes agregar un motivo opcional.")
                 .setView(inputMotivo)
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Rechazar", (dialog, which) -> {
+                .setPositiveButton("Rechazar", (dialogInterface, which) -> {
                     String motivo = inputMotivo.getText() != null ? inputMotivo.getText().toString().trim() : null;
                     ejecutarRechazar(item, (motivo == null || motivo.isEmpty()) ? null : motivo);
                 })
                 .show();
+        ThemeManager tm = new ThemeManager(requireContext());
+        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+        DialogThemeHelper.applyDialogWindowSize(dialog, requireContext());
+        CardThemeHelper.applyPrimaryBubbleButton(dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE), tm);
+        CardThemeHelper.applySecondaryBubbleButton(dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE), tm);
     }
 
     @Override
@@ -532,12 +565,14 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
             return;
         }
 
-        new MaterialAlertDialogBuilder(requireContext())
+        ArtistlanDialogFactory.show(this, DialogConfig.builder()
                 .setTitle("Cancelar solicitud")
                 .setMessage("Vas a cancelar esta solicitud de compra.")
-                .setNegativeButton("Volver", null)
-                .setPositiveButton("Cancelar solicitud", (dialog, which) -> ejecutarCancelar(item))
-                .show();
+                .setType(DialogConfig.Type.DANGER)
+                .setNegativeText("Volver")
+                .setPositiveText("Cancelar solicitud")
+                .setOnPositive(() -> ejecutarCancelar(item))
+                .build());
     }
 
     private void ejecutarAceptar(@NonNull SolicitudDTO item) {

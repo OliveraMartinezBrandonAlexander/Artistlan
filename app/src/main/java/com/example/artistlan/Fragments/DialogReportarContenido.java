@@ -1,7 +1,6 @@
 package com.example.artistlan.Fragments;
 
 import android.app.Dialog;
-import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -25,8 +24,8 @@ import com.example.artistlan.Conector.model.CrearReporteRequestDTO;
 import com.example.artistlan.Conector.model.ReporteDetalleDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
-import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.DialogThemeHelper;
 import com.example.artistlan.utils.ReporteUiPermissions;
 
@@ -108,27 +107,24 @@ public class DialogReportarContenido extends DialogFragment {
         dialog.setOnShowListener(d -> {
             ThemeManager tm = new ThemeManager(requireContext());
             DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+            DialogThemeHelper.applyFieldDialogWindowSize(dialog, requireContext());
 
             ThemeApplier.applyTextSecondary(tvMensaje, tm);
             ThemeApplier.applyTextPrimary(tvTituloObjetivo, tm);
             ThemeApplier.applyInput(etDescripcion, tm);
+            DialogThemeHelper.applyDialogComboStyle(spinnerMotivo, requireContext());
 
-            if (view.getBackground() != null) {
-                view.getBackground().setColorFilter(
-                        tm.color(ThemeKeys.DIALOG_BG),
-                        PorterDuff.Mode.SRC_ATOP
-                );
-            }
+            view.setBackground(DialogThemeHelper.createFieldDialogBackground(requireContext()));
 
             Button btnCancelar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
             Button btnEnviar = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
 
             if (btnCancelar != null) {
-                ThemeApplier.applySecondaryButton(btnCancelar, tm);
+                CardThemeHelper.applySecondaryBubbleButton(btnCancelar, tm);
             }
 
             if (btnEnviar != null) {
-                ThemeApplier.applyPrimaryButton(btnEnviar, tm);
+                CardThemeHelper.applyPrimaryBubbleButton(btnEnviar, tm);
                 btnEnviar.setOnClickListener(v -> intentarEnviarReporte(dialog));
             }
         });
@@ -157,13 +153,7 @@ public class DialogReportarContenido extends DialogFragment {
         motivos.add("Comportamiento sospechoso");
         motivos.add(MOTIVO_OTRO);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                motivos
-        );
-
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> adapter = DialogThemeHelper.createDialogComboAdapter(requireContext(), motivos);
         spinnerMotivo.setAdapter(adapter);
     }
 

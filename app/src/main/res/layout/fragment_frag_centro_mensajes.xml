@@ -79,6 +79,7 @@
                 android:textSize="12sp" />
 
             <FrameLayout
+                android:id="@+id/layoutCentroMensajesTabs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -90,13 +91,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@android:color/transparent"
-                    app:tabBackground="@drawable/bg_centro_tab_item"
                     app:tabIndicatorColor="@android:color/transparent"
                     app:tabIndicatorHeight="0dp"
                     app:tabMode="fixed"
-                    app:tabRippleColor="@color/artistlan_menu_accent_soft"
-                    app:tabSelectedTextColor="@color/artistlan_menu_text_primary"
-                    app:tabTextColor="@color/artistlan_menu_text_secondary" />
+                    app:tabRippleColor="@android:color/transparent" />
             </FrameLayout>
 
         </LinearLayout>

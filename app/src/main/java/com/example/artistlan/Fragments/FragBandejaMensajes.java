@@ -22,9 +22,13 @@ import com.example.artistlan.Conector.api.NotificacionesApi;
 import com.example.artistlan.Conector.model.NotificacionDTO;
 import com.example.artistlan.Conector.model.PageResponseNotificacionDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.adapter.NotificacionesAdapter;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.example.artistlan.utils.ArtistlanDialogFactory;
+import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogConfig;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -86,6 +90,7 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
         layoutAccionesLocal = view.findViewById(R.id.layoutBandejaAccionesLocal);
         btnCargarMasNotificaciones = view.findViewById(R.id.btnCargarMasNotificaciones);
         layoutLoaderMasNotificaciones = view.findViewById(R.id.layoutLoaderMasNotificaciones);
+        aplicarTemaVisual(view);
 
         recyclerMensajes.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new NotificacionesAdapter(this);
@@ -287,6 +292,19 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
         emptySubtitle.setText(subtitulo);
     }
 
+    private void aplicarTemaVisual(@NonNull View root) {
+        ThemeManager tm = new ThemeManager(requireContext());
+        CardThemeHelper.applySecondaryBubbleSurface(btnMarcarTodasLeidas, btnMarcarTodasLeidas, tm);
+        CardThemeHelper.applySecondaryBubbleSurface(btnRecargar, btnRecargar, tm);
+        CardThemeHelper.applySecondaryBubbleSurface(btnCargarMasNotificaciones, btnCargarMasNotificaciones, tm);
+        CardThemeHelper.applyThemedSurface(emptyState, tm, 24);
+        ThemeApplier.applyTextPrimary(emptyTitle, tm);
+        ThemeApplier.applyTextSecondary(emptySubtitle, tm);
+        ThemeApplier.applyTextSecondary(root.findViewById(R.id.txtCargandoMasNotificaciones), tm);
+        CardThemeHelper.tintProgress(progressMensajes, tm);
+        CardThemeHelper.tintProgress(root.findViewById(R.id.progressMasNotificaciones), tm);
+    }
+
     private void confirmarMarcarTodas() {
         if (!vistaListaInicializada()) {
             return;
@@ -295,12 +313,14 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
             Toast.makeText(requireContext(), "No hay mensajes para marcar.", Toast.LENGTH_SHORT).show();
             return;
         }
-        new MaterialAlertDialogBuilder(requireContext())
+        ArtistlanDialogFactory.show(this, DialogConfig.builder()
                 .setTitle("Marcar todo como le\u00EDdo")
                 .setMessage("Se marcar\u00E1n como le\u00EDdos todos los mensajes de la bandeja.")
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Marcar", (dialog, which) -> marcarTodasLeidas())
-                .show();
+                .setType(DialogConfig.Type.CONFIRM)
+                .setNegativeText("Cancelar")
+                .setPositiveText("Marcar")
+                .setOnPositive(this::marcarTodasLeidas)
+                .build());
     }
 
     private void marcarTodasLeidas() {
@@ -367,17 +387,19 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
                 .append("Fecha: ").append(MensajeUiUtils.formatearFechaCorta(item.getFecha())).append("\n")
                 .append("Origen: ").append(origenVisual);
 
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
+        DialogConfig.Builder builder = DialogConfig.builder()
                 .setTitle(item.getTituloSeguro())
                 .setMessage(detalle.toString())
-                .setPositiveButton("Cerrar", null);
+                .setType(DialogConfig.Type.INFO)
+                .setPositiveText("Cerrar");
 
         String ctaTexto = MensajeUiUtils.obtenerTextoCtaSemantico(item);
         Integer destino = MensajeUiUtils.obtenerDestinoSemantico(item);
         if (ctaTexto != null && destino != null) {
-            builder.setNeutralButton(ctaTexto, (dialog, which) -> navegarSemantico(item, destino));
+            builder.setNeutralText(ctaTexto)
+                    .setOnNeutral(() -> navegarSemantico(item, destino));
         }
-        builder.show();
+        ArtistlanDialogFactory.show(this, builder.build());
     }
 
     @Override
@@ -462,12 +484,14 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
 
     @Override
     public void onEliminar(@NonNull NotificacionDTO item) {
-        new MaterialAlertDialogBuilder(requireContext())
+        ArtistlanDialogFactory.show(this, DialogConfig.builder()
                 .setTitle("Eliminar mensaje")
                 .setMessage("Esta acci\u00F3n eliminar\u00E1 el mensaje de forma permanente.")
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Eliminar", (dialog, which) -> eliminarNotificacion(item))
-                .show();
+                .setType(DialogConfig.Type.DANGER)
+                .setNegativeText("Cancelar")
+                .setPositiveText("Eliminar")
+                .setOnPositive(() -> eliminarNotificacion(item))
+                .build());
     }
 
     private void eliminarNotificacion(@NonNull NotificacionDTO item) {

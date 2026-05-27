@@ -8,7 +8,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -17,8 +16,8 @@ import com.example.artistlan.Conector.model.NotificacionDTO;
 import com.example.artistlan.Fragments.MensajeUiUtils;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
-import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
@@ -58,9 +57,13 @@ public class NotificacionesAdapter extends RecyclerView.Adapter<NotificacionesAd
         ThemeApplier.applyTextSecondary(holder.tvMensaje, tm);
         ThemeApplier.applyTextSecondary(holder.tvOrigenNombre, tm);
         ThemeApplier.applyTextSecondary(holder.tvFecha, tm);
-        ThemeApplier.applyPrimaryButton(holder.btnVerDetalle, tm);
-        ThemeApplier.applySecondaryButton(holder.btnMarcarLeida, tm);
-        ThemeApplier.applyCardContainer(holder.cardRoot, tm);
+        CardThemeHelper.applyMessageCard(holder.cardRoot, tm, !item.isLeida());
+        CardThemeHelper.applyPrimaryBubbleSurface(holder.btnVerDetalle, holder.btnVerDetalle, tm);
+        CardThemeHelper.applySecondaryBubbleSurface(holder.btnMarcarLeida, holder.btnMarcarLeida, tm);
+        CardThemeHelper.applyFilterButton(holder.btnEliminar, tm);
+        CardThemeHelper.applyAccentDot(holder.unreadDot, tm);
+        CardThemeHelper.applySoftChip(holder.tvChipOrigen, tm);
+        CardThemeHelper.applySoftChip(holder.tvReferencia, tm);
 
         holder.tvTitulo.setText(item.getTituloSeguro());
         holder.tvMensaje.setText(MensajeUiUtils.formatearMensajeConMotivo(item.getMensajeSeguro()));
@@ -73,23 +76,11 @@ public class NotificacionesAdapter extends RecyclerView.Adapter<NotificacionesAd
         holder.tvOrigenNombre.setText("De: " + origenVisual);
 
         holder.tvChipOrigen.setText(item.esDeSistema() ? "SISTEMA" : "USUARIO");
-        holder.tvChipOrigen.setBackgroundResource(item.esDeSistema()
-                ? R.drawable.bg_chip_mensaje_sistema
-                : R.drawable.bg_chip_mensaje_usuario);
 
         holder.tvReferencia.setVisibility(View.GONE);
 
         holder.unreadDot.setVisibility(item.isLeida() ? View.GONE : View.VISIBLE);
         holder.btnMarcarLeida.setVisibility(item.isLeida() ? View.GONE : View.VISIBLE);
-
-        int surfaceRead = ContextCompat.getColor(holder.itemView.getContext(), R.color.artistlan_menu_surface);
-        int surfaceUnread = ContextCompat.getColor(holder.itemView.getContext(), R.color.artistlan_menu_surface_soft);
-        int strokeRead = ContextCompat.getColor(holder.itemView.getContext(), R.color.artistlan_menu_stroke_soft);
-        int strokeUnread = ContextCompat.getColor(holder.itemView.getContext(), R.color.artistlan_menu_accent);
-
-        holder.cardRoot.setCardBackgroundColor(item.isLeida() ? surfaceRead : surfaceUnread);
-        holder.cardRoot.setStrokeColor(item.isLeida() ? strokeRead : strokeUnread);
-        holder.cardRoot.setStrokeWidth(item.isLeida() ? 1 : 2);
 
         Glide.with(holder.itemView)
                 .load(item.getFotoOrigen())

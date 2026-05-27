@@ -1,10 +1,12 @@
 package com.example.artistlan.Fragments;
 
 import android.os.Bundle;
+import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,7 +19,11 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.example.artistlan.Activitys.ActFragmentoPrincipal;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -52,6 +58,7 @@ public class FragTransacciones extends Fragment {
         tabLayout = view.findViewById(R.id.tabLayoutTransacciones);
         viewPager = view.findViewById(R.id.viewPagerTransacciones);
         btnAtras = view.findViewById(R.id.btnTransaccionesAtras);
+        aplicarTemaVisual(view);
         if (btnAtras != null) {
             btnAtras.setOnClickListener(v -> navegarAtrasSeguro());
         }
@@ -143,6 +150,19 @@ public class FragTransacciones extends Fragment {
         }
 
         requireActivity().finish();
+    }
+
+    private void aplicarTemaVisual(@NonNull View root) {
+        ThemeManager tm = new ThemeManager(requireContext());
+        TextView titulo = root.findViewById(R.id.tvTransaccionesTitulo);
+        ThemeApplier.applyTextPrimary(titulo, tm);
+        CardThemeHelper.applyFilterButton(btnAtras, tm);
+        CardThemeHelper.applyThemedSurface(root.findViewById(R.id.layoutTransaccionesTabs), tm, 24);
+        if (tabLayout != null) {
+            tabLayout.setTabTextColors(tm.color(ThemeKeys.TEXT_SECONDARY), tm.color(ThemeKeys.TEXT_PRIMARY));
+            tabLayout.setSelectedTabIndicatorColor(tm.color(ThemeKeys.ACCENT_PRIMARY));
+            tabLayout.setTabRippleColor(ColorStateList.valueOf(tm.color(ThemeKeys.FILTER_BUTTON_BG)));
+        }
     }
 
     private static class TransaccionesPagerAdapter extends FragmentStateAdapter {

@@ -16,6 +16,7 @@ import com.example.artistlan.Conector.model.SolicitudDTO;
 import com.example.artistlan.TarjetaTextoObra.model.TarjetaTextoObraItem;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.DialogThemeHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -64,6 +65,9 @@ public final class SolicitudCompraUiHelper {
                 })
                 .show();
         DialogThemeHelper.styleAlertDialog(dialog, fragment.requireContext());
+        DialogThemeHelper.applyDialogWindowSize(dialog, fragment.requireContext());
+        CardThemeHelper.applyPrimaryBubbleButton(dialog.getButton(AlertDialog.BUTTON_POSITIVE), tm);
+        CardThemeHelper.applySecondaryBubbleButton(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), tm);
     }
 
     private static void enviarSolicitudCompra(

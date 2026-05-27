@@ -7,10 +7,10 @@ import android.content.Intent;
 import android.net.Uri;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
-import com.example.artistlan.utils.DialogThemeHelper;
+import com.example.artistlan.utils.ArtistlanDialogFactory;
+import com.example.artistlan.utils.DialogConfig;
 
 import java.util.Locale;
 
@@ -52,23 +52,25 @@ public final class ContactoDialogHelper {
             texto = "No hay informacion de contacto disponible.";
         }
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(fragment.requireContext())
+        DialogConfig.Builder builder = DialogConfig.builder()
                 .setTitle(tituloDialogo)
                 .setMessage(texto)
-                .setNegativeButton("Cerrar", null);
+                .setType(DialogConfig.Type.INFO)
+                .setNegativeText("Cerrar");
 
         if (!isBlank(info.contactoPrincipal)) {
-            builder.setPositiveButton("Copiar contacto", (dialog, which) ->
-                    copiarTexto(fragment, "Contacto", info.contactoPrincipal));
+            builder.setPositiveText("Copiar contacto")
+                    .setOnPositive(() -> copiarTexto(fragment, "Contacto", info.contactoPrincipal));
+        } else {
+            builder.setPositiveText("Aceptar");
         }
 
         if (puedeAbrirContacto(info)) {
-            builder.setNeutralButton("Contactar", (dialog, which) ->
-                    abrirContacto(fragment, info));
+            builder.setNeutralText("Contactar")
+                    .setOnNeutral(() -> abrirContacto(fragment, info));
         }
 
-        AlertDialog dialog = builder.show();
-        DialogThemeHelper.styleAlertDialog(dialog, fragment.requireContext());
+        ArtistlanDialogFactory.show(fragment, builder.build());
     }
 
     private static void abrirContacto(Fragment fragment, ContactoInfo info) {

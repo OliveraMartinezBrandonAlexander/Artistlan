@@ -34,6 +34,9 @@ import com.example.artistlan.adapter.TransaccionAdapter;
 import com.example.artistlan.pagos.PagoSyncManager;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogThemeHelper;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -78,6 +81,7 @@ public abstract class BaseTransaccionesFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
 
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
@@ -87,6 +91,10 @@ public abstract class BaseTransaccionesFragment extends Fragment {
         recyclerTransacciones = view.findViewById(R.id.recyclerTransacciones);
         tvTransaccionesVacias = view.findViewById(R.id.tvTransaccionesVacias);
         progressTransacciones = view.findViewById(R.id.progressTransacciones);
+        ThemeManager tm = new ThemeManager(requireContext());
+        ThemeApplier.applyTextPrimary(tvTransaccionesVacias, tm);
+        CardThemeHelper.applyThemedSurface(tvTransaccionesVacias, tm, 24);
+        CardThemeHelper.tintProgress(progressTransacciones, tm);
 
         recyclerTransacciones.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerTransacciones.setHasFixedSize(true);
@@ -360,9 +368,14 @@ public abstract class BaseTransaccionesFragment extends Fragment {
         }
 
         dialog.show();
-        ThemeApplier.applySecondaryButton(btnCerrarTop, tm);
-        ThemeApplier.applyPrimaryButton(btnAbrirPaypal, tm);
-        ThemeApplier.applySecondaryButton(btnContactar, tm);
+        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+        DialogThemeHelper.applyDialogWindowSize(dialog, requireContext());
+        CardThemeHelper.applyFilterButton(btnCerrarTop, tm);
+        CardThemeHelper.applySecondaryBubbleSurface(btnReportarTop, btnReportarTop, tm);
+        CardThemeHelper.applyStatusChip(tvEstado, tvEstado.getText().toString(), tm);
+        CardThemeHelper.applyThemedSurface(imgObra, tm, 18);
+        CardThemeHelper.applyPrimaryBubbleSurface(btnAbrirPaypal, btnAbrirPaypal, tm);
+        CardThemeHelper.applySecondaryBubbleSurface(btnContactar, btnContactar, tm);
         if (dialog.getWindow() != null) {
             DisplayMetrics dm = getResources().getDisplayMetrics();
             int width = (int) (dm.widthPixels * 0.94f);

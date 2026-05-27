@@ -59,7 +59,9 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.ArtistlanDialogFactory;
 import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogConfig;
 import com.example.artistlan.utils.DialogThemeHelper;
 import com.example.artistlan.utils.LottieFeedbackDialog;
 import java.io.File;
@@ -241,20 +243,19 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
             return;
         }
 
-        String[] opciones = {"Elegir de galería", "Tomar foto con cámara"};
-
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setTitle("Selecciona una opci\u00F3n")
-                .setItems(opciones, (d, which) -> {
-                    if (which == 0) {
-                        Toast.makeText(getContext(), "Se recomienda una imagen en formato 4:3 para mejor visualización. No se deformará tu imagen.", Toast.LENGTH_SHORT).show();
-                        seleccionarImagenObraLauncher.launch("image/*");
-                    } else if (which == 1) {
-                        abrirCamaraConPermiso();
-                    }
+        ArtistlanDialogFactory.show(this, DialogConfig.builder()
+                .setTitle("Imagen de obra")
+                .setMessage("Selecciona cómo quieres agregar la imagen de la obra.")
+                .setType(DialogConfig.Type.INFO)
+                .setPositiveText("Elegir de galería")
+                .setNegativeText("Tomar foto")
+                .setNeutralText("Cancelar")
+                .setOnPositive(() -> {
+                    Toast.makeText(getContext(), "Se recomienda una imagen en formato 4:3 para mejor visualización. No se deformará tu imagen.", Toast.LENGTH_SHORT).show();
+                    seleccionarImagenObraLauncher.launch("image/*");
                 })
-                .show();
-        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+                .setOnNegative(this::abrirCamaraConPermiso)
+                .build());
     }
 
     private void abrirCamaraConPermiso() {
@@ -1013,12 +1014,15 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
         ThemeManager tm = new ThemeManager(requireContext());
         TextView txtResumen = view.findViewById(R.id.txtResumenObra);
+        TextView txtTituloDialog = view.findViewById(R.id.txtTituloConfirmarObra);
         Button btnEditar = view.findViewById(R.id.btnEditar);
         Button btnPublicar = view.findViewById(R.id.btnConfirmarPublicar);
 
+        view.setBackground(DialogThemeHelper.createDialogBackground(requireContext()));
+        ThemeApplier.applyTextPrimary(txtTituloDialog, tm);
         ThemeApplier.applyTextPrimary(txtResumen, tm);
-        ThemeApplier.applySecondaryButton(btnEditar, tm);
-        ThemeApplier.applyPrimaryButton(btnPublicar, tm);
+        CardThemeHelper.applySecondaryBubbleButton(btnEditar, tm);
+        CardThemeHelper.applyPrimaryBubbleButton(btnPublicar, tm);
 
         String resumen =
                 "Título:\n" + titulo + "\n\n" +
@@ -1060,7 +1064,7 @@ public class FragSubirObra extends Fragment implements View.OnClickListener {
 
         dialog.show();
         DialogThemeHelper.styleDialogWindow(dialog, requireContext());
-        DialogThemeHelper.styleButtonPair(btnPublicar, btnEditar, requireContext());
+        DialogThemeHelper.applyDialogWindowSize(dialog, requireContext());
         if (dialog.getWindow() != null && dialog.getWindow().getDecorView() != null) {
             ThemeEffectsApplier.applyPanelGlass(dialog.getWindow().getDecorView(), tm);
         }

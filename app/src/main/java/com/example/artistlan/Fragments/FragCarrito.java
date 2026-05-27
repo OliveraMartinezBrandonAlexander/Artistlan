@@ -18,7 +18,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
@@ -36,6 +35,9 @@ import com.example.artistlan.Conector.model.CrearOrdenPaypalCarritoResponseDTO;
 import com.example.artistlan.Conector.model.CrearOrdenPaypalResponseDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.adapter.CarritoObraAdapter;
+import com.example.artistlan.utils.ArtistlanDialogFactory;
+import com.example.artistlan.utils.ArtistlanLoadingDialog;
+import com.example.artistlan.utils.DialogConfig;
 import com.example.artistlan.pagos.PagoPaypalSessionManager;
 import com.example.artistlan.pagos.PagoSyncManager;
 import com.google.gson.JsonElement;
@@ -68,6 +70,7 @@ public class FragCarrito extends Fragment {
     private CarritoApi carritoApi;
     private PagoPaypalApi pagoPaypalApi;
     private CarritoPaypalApi carritoPaypalApi;
+    private ArtistlanLoadingDialog feedbackDialog;
     private int idUsuarioLogueado = -1;
     private final Set<Integer> obrasEnEliminacion = new HashSet<>();
     private boolean compraEnProceso = false;
@@ -92,6 +95,7 @@ public class FragCarrito extends Fragment {
         carritoApi = RetrofitClient.getClient().create(CarritoApi.class);
         pagoPaypalApi = RetrofitClient.getClient().create(PagoPaypalApi.class);
         carritoPaypalApi = RetrofitClient.getClient().create(CarritoPaypalApi.class);
+        feedbackDialog = new ArtistlanLoadingDialog(this);
         ultimaVersionPagoRefrescada = PagoSyncManager.getLastCaptureAt(requireContext());
 
         btnVolverExplorar = view.findViewById(R.id.btnVolverExplorar);
@@ -147,6 +151,10 @@ public class FragCarrito extends Fragment {
 
     @Override
     public void onDestroyView() {
+        if (feedbackDialog != null) {
+            feedbackDialog.release();
+            feedbackDialog = null;
+        }
         super.onDestroyView();
         if (menuInferior != null) {
             menuInferior.setVisibility(View.VISIBLE);
@@ -310,12 +318,14 @@ public class FragCarrito extends Fragment {
         }
 
         String titulo = safe(item.getTitulo(), "esta obra");
-        new AlertDialog.Builder(requireContext())
+        ArtistlanDialogFactory.show(this, DialogConfig.builder()
                 .setTitle("Quitar del carrito")
                 .setMessage("Si quitas \"" + titulo + "\" del carrito perderas su reserva y la obra volvera a estar disponible para otros compradores.\n\nDeseas continuar?")
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Quitar", (dialog, which) -> quitarDelCarrito(idObra))
-                .show();
+                .setType(DialogConfig.Type.DANGER)
+                .setNegativeText("Cancelar")
+                .setPositiveText("Quitar")
+                .setOnPositive(() -> quitarDelCarrito(idObra))
+                .build());
     }
 
     private void quitarDelCarrito(int idObra) {
@@ -323,6 +333,9 @@ public class FragCarrito extends Fragment {
             return;
         }
         obrasEnEliminacion.add(idObra);
+        if (feedbackDialog != null) {
+            feedbackDialog.showLoading("Quitando obra del carrito...");
+        }
         carritoApi.eliminarDelCarrito(idUsuarioLogueado, idObra).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
@@ -332,13 +345,16 @@ public class FragCarrito extends Fragment {
                 }
                 if (!response.isSuccessful()) {
                     String backendMessage = ApiErrorParser.extractMessage(response);
-                    Toast.makeText(requireContext(),
-                            backendMessage != null ? backendMessage : "No se pudo quitar del carrito (" + response.code() + ")",
-                            Toast.LENGTH_LONG).show();
+                    if (feedbackDialog != null) {
+                        feedbackDialog.showError(backendMessage != null ? backendMessage : "No se pudo quitar del carrito (" + response.code() + ")");
+                    }
                     return;
                 }
-                Toast.makeText(requireContext(), "Obra eliminada del carrito", Toast.LENGTH_SHORT).show();
-                cargarCarrito();
+                if (feedbackDialog != null) {
+                    feedbackDialog.showSuccess("Obra eliminada del carrito", FragCarrito.this::cargarCarrito);
+                } else {
+                    cargarCarrito();
+                }
             }
 
             @Override
@@ -347,7 +363,9 @@ public class FragCarrito extends Fragment {
                 if (!isAdded()) {
                     return;
                 }
-                Toast.makeText(requireContext(), "Error de red al quitar del carrito", Toast.LENGTH_LONG).show();
+                if (feedbackDialog != null) {
+                    feedbackDialog.showError("Error de red al quitar del carrito");
+                }
             }
         });
     }
@@ -494,16 +512,14 @@ public class FragCarrito extends Fragment {
         if (!isAdded()) {
             return;
         }
-        new AlertDialog.Builder(requireContext())
+        ArtistlanDialogFactory.show(this, DialogConfig.builder()
                 .setTitle("Confirmar compra")
                 .setMessage("Estas a punto de comprar esta obra.\n\nTu pago se procesara de forma segura mediante PayPal.\nSi lo deseas, puedes contactar al vendedor antes de continuar.\nDespues podras dar seguimiento en tu historial.\n\nDeseas continuar?")
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Continuar", (dialog, which) -> {
-                    if (onConfirmar != null) {
-                        onConfirmar.run();
-                    }
-                })
-                .show();
+                .setType(DialogConfig.Type.CONFIRM)
+                .setNegativeText("Cancelar")
+                .setPositiveText("Continuar")
+                .setOnPositive(onConfirmar)
+                .build());
     }
 
     private void iniciarCompraObra(CarritoDTO item) {

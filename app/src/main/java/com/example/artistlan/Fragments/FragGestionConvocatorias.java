@@ -1,6 +1,10 @@
 package com.example.artistlan.Fragments;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.app.DatePickerDialog;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -23,9 +27,12 @@ import com.example.artistlan.Conector.RetrofitClient;
 import com.example.artistlan.Conector.api.ConvocatoriaApi;
 import com.example.artistlan.Conector.model.ConvocatoriaDTO;
 import com.example.artistlan.R;
-import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogThemeHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -37,6 +44,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+import androidx.core.graphics.ColorUtils;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -67,10 +75,16 @@ public class FragGestionConvocatorias extends Fragment {
         convocatoriaApi = RetrofitClient.getClient().create(ConvocatoriaApi.class);
 
         ImageButton btnRegresar = view.findViewById(R.id.btnRegresarAdminConvocatorias);
+        TextView tvTitulo = view.findViewById(R.id.tvTituloGestionConvocatorias);
         recyclerView = view.findViewById(R.id.rvConvocatoriasAdmin);
         progressBar = view.findViewById(R.id.pbConvocatorias);
         tvEstado = view.findViewById(R.id.tvEstadoConvocatorias);
         FloatingActionButton btnNueva = view.findViewById(R.id.fabNuevaConvocatoria);
+        ThemeManager tm = new ThemeManager(requireContext());
+        CardThemeHelper.applyFilterButton(btnRegresar, tm);
+        ThemeApplier.applyTextPrimary(tvTitulo, tm);
+        ThemeApplier.applyTextSecondary(tvEstado, tm);
+        aplicarFabTema(btnNueva, tm);
 
         menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) menuInferior.setVisibility(View.GONE);
@@ -96,7 +110,7 @@ public class FragGestionConvocatorias extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
 
-        btnNueva.setOnClickListener(v -> mostrarDialogConvocatoria(null));
+        btnNueva.setOnClickListener(v -> animarNuevaConvocatoria(btnNueva));
         cargarConvocatorias();
     }
 
@@ -198,8 +212,7 @@ public class FragGestionConvocatorias extends Fragment {
         }));
 
         dialog.show();
-        ThemeApplier.applyPrimaryButton(dialog.getButton(AlertDialog.BUTTON_POSITIVE), tm);
-        ThemeApplier.applySecondaryButton(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), tm);
+        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
         ThemeApplier.applyInput(etTitulo, tm);
         ThemeApplier.applyInput(etDescripcion, tm);
         ThemeApplier.applyInput(etFecha, tm);
@@ -320,16 +333,17 @@ public class FragGestionConvocatorias extends Fragment {
     }
 
     private void confirmarEliminar(ConvocatoriaDTO item) {
-        new MaterialAlertDialogBuilder(requireContext())
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Eliminar convocatoria")
                 .setMessage("¿Seguro que deseas eliminar?")
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Eliminar", (dialog, which) -> {
+                .setPositiveButton("Eliminar", (dialogInterface, which) -> {
                     if (item.getIdConvocatoria() != null) {
                         eliminarConvocatoria(item.getIdConvocatoria());
                     }
                 })
                 .show();
+        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
     }
 
     private void eliminarConvocatoria(int id) {
@@ -374,10 +388,79 @@ public class FragGestionConvocatorias extends Fragment {
         if (!isAdded()) {
             return;
         }
-        new MaterialAlertDialogBuilder(requireContext())
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(titulo)
                 .setMessage(mensaje)
                 .setPositiveButton("Entendido", null)
                 .show();
+        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+    }
+
+    private void aplicarFabTema(@Nullable FloatingActionButton fab, @NonNull ThemeManager tm) {
+        if (fab == null) {
+            return;
+        }
+        int backgroundColor = tm.color(ThemeKeys.BUTTON_PRIMARY_BG);
+        fab.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
+        fab.setImageTintList(ColorStateList.valueOf(resolveReadableTextColor(
+                backgroundColor,
+                tm.color(ThemeKeys.BUTTON_TEXT_DARK),
+                tm.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                tm.color(ThemeKeys.TEXT_PRIMARY),
+                tm.color(ThemeKeys.TEXT_SECONDARY)
+        )));
+        fab.setRippleColor(tm.color(ThemeKeys.BUTTON_SECONDARY_BG));
+    }
+
+    private void animarNuevaConvocatoria(@NonNull FloatingActionButton fab) {
+        fab.animate().cancel();
+        fab.setEnabled(false);
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(
+                ObjectAnimator.ofFloat(fab, View.ROTATION, 0f, 35f, 0f),
+                ObjectAnimator.ofFloat(fab, View.SCALE_X, 1f, 1.04f, 1f),
+                ObjectAnimator.ofFloat(fab, View.SCALE_Y, 1f, 1.04f, 1f)
+        );
+        set.setDuration(150);
+        set.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                fab.setEnabled(true);
+                if (isAdded()) {
+                    mostrarDialogConvocatoria(null);
+                }
+            }
+        });
+        set.start();
+    }
+
+    private int resolveReadableTextColor(int backgroundColor, int preferred, int... candidates) {
+        int opaqueBackground = ColorUtils.setAlphaComponent(backgroundColor, 255);
+        if (safeContrast(preferred, opaqueBackground) >= 4.5d) {
+            return preferred;
+        }
+        int selected = preferred;
+        double bestContrast = safeContrast(preferred, opaqueBackground);
+        for (int candidate : candidates) {
+            double contrast = safeContrast(candidate, opaqueBackground);
+            if (contrast > bestContrast) {
+                bestContrast = contrast;
+                selected = candidate;
+            }
+        }
+        if (bestContrast >= 4.5d) {
+            return selected;
+        }
+        double whiteContrast = safeContrast(Color.WHITE, opaqueBackground);
+        double blackContrast = safeContrast(Color.BLACK, opaqueBackground);
+        return whiteContrast >= blackContrast ? Color.WHITE : Color.BLACK;
+    }
+
+    private double safeContrast(int foregroundColor, int backgroundColor) {
+        try {
+            return ColorUtils.calculateContrast(foregroundColor, ColorUtils.setAlphaComponent(backgroundColor, 255));
+        } catch (IllegalArgumentException ignored) {
+            return 0d;
+        }
     }
 }

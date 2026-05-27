@@ -17,7 +17,7 @@
             <item
                 android:id="@+id/navCalendario"
                 android:icon="@drawable/ic_nav_calendario_artistlan"
-                android:title="Calendario de eventos" />
+                android:title="Convocatoria" />
         </group>
     </menu>
     </item>

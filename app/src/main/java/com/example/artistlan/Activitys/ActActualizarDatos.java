@@ -16,9 +16,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
-import android.text.InputType;
 import android.util.Patterns;
-import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -26,7 +24,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -62,9 +59,10 @@ import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Fragments.FragCentroMensajes;
 import com.example.artistlan.Fragments.FragSolicitudesMensajes;
+import com.example.artistlan.utils.ArtistlanDialogFactory;
+import com.example.artistlan.utils.ArtistlanLoadingDialog;
 import com.example.artistlan.utils.CardThemeHelper;
-import com.example.artistlan.utils.DialogThemeHelper;
-import com.example.artistlan.utils.LottieFeedbackDialog;
+import com.example.artistlan.utils.DialogConfig;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -108,7 +106,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     private TextView txtTitulo, txtDesc, txtIndicacion, tvCorreo, tvUsuario, tvFotoPerfil,
             tvNombre, tvDescripcion, tvCategoria, tvRedes, tvTelefono, tvFecha, tvUbicacion,
             tvCambiarFotografia, txtTituloTopBar;
-    private LottieFeedbackDialog feedbackDialog;
+    private ArtistlanLoadingDialog feedbackDialog;
     private boolean actualizacionEnCurso = false;
     private long ultimoClickTopbarMs = 0L;
 
@@ -170,7 +168,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         btnEliminarCuenta = findViewById(R.id.btnEliminarCuenta);
 
         applyThemeOnlyColors();
-        feedbackDialog = new LottieFeedbackDialog(this);
+        feedbackDialog = new ArtistlanLoadingDialog(this);
 
         btnEliminarCuenta.setOnClickListener(this);
         btnActualizarDatos.setOnClickListener(this);
@@ -558,20 +556,19 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     }
 
     private void mostrarOpcionesFotoPerfil() {
-        String[] opciones = {"Elegir de galería", "Tomar foto con cámara"};
-
-        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Selecciona una opción")
-                .setItems(opciones, (dialogInterface, which) -> {
-                    if (which == 0) {
-                        Toast.makeText(this, "Selecciona una imagen cuadrada para que tu foto se vea correctamente.", Toast.LENGTH_SHORT).show();
-                        seleccionarImagenperfilLauncher.launch("image/*");
-                    } else if (which == 1) {
-                        abrirCamaraPerfilConPermiso();
-                    }
+        ArtistlanDialogFactory.show(this, DialogConfig.builder()
+                .setTitle("Foto de perfil")
+                .setMessage("Selecciona cómo quieres actualizar tu foto.")
+                .setType(DialogConfig.Type.INFO)
+                .setPositiveText("Elegir de galería")
+                .setNegativeText("Tomar foto")
+                .setNeutralText("Cancelar")
+                .setOnPositive(() -> {
+                    Toast.makeText(this, "Selecciona una imagen cuadrada para que tu foto se vea correctamente.", Toast.LENGTH_SHORT).show();
+                    seleccionarImagenperfilLauncher.launch("image/*");
                 })
-                .show();
-        DialogThemeHelper.styleAlertDialog(dialog, this);
+                .setOnNegative(this::abrirCamaraPerfilConPermiso)
+                .build());
     }
 
     private void abrirCamaraPerfilConPermiso() {
@@ -706,69 +703,26 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     }
 
     private void mostrarDialogoDesactivarCuentaConContrasena() {
-        LinearLayout contenedor = new LinearLayout(this);
-        contenedor.setOrientation(LinearLayout.VERTICAL);
-        contenedor.setPadding(dpToPx(24), dpToPx(8), dpToPx(24), 0);
-
-        TextView tvMensaje = new TextView(this);
-        tvMensaje.setText("Tu cuenta se desactivará. No se borrará físicamente.\n\nSe conservarán tu historial de compras, ventas y transacciones.\n\nPara confirmar, ingresa tu contraseña actual.");
-        tvMensaje.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
-        contenedor.addView(tvMensaje);
-
-        EditText etContrasenaActual = new EditText(this);
-        etContrasenaActual.setHint("Ingresa tu contraseña actual");
-        etContrasenaActual.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        etContrasenaActual.setSingleLine(true);
-
-        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+        ArtistlanDialogFactory.showPassword(
+                this,
+                "Desactivar cuenta",
+                "Tu cuenta se desactivará. No se borrará físicamente.\n\nSe conservarán tu historial de compras, ventas y transacciones.\n\nPara confirmar, ingresa tu contraseña actual.",
+                "Ingresa tu contraseña actual",
+                "Desactivar cuenta",
+                "Cancelar",
+                this::desactivarCuentaConApiV11
         );
-        inputParams.topMargin = dpToPx(16);
-        contenedor.addView(etContrasenaActual, inputParams);
-
-        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Desactivar cuenta")
-                .setView(contenedor)
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Desactivar cuenta", null)
-                .create();
-
-        dialog.setOnShowListener(d -> {
-            Button btnConfirmar = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE);
-            Button btnCancelar = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE);
-
-            btnConfirmar.setOnClickListener(v -> {
-                String contrasenaActual = etContrasenaActual.getText() != null
-                        ? etContrasenaActual.getText().toString().trim()
-                        : "";
-
-                if (contrasenaActual.isEmpty()) {
-                    etContrasenaActual.setError("Ingresa tu contraseña actual.");
-                    etContrasenaActual.requestFocus();
-                    return;
-                }
-
-                etContrasenaActual.setError(null);
-                desactivarCuentaConApiV11(contrasenaActual, dialog, etContrasenaActual, btnConfirmar, btnCancelar);
-            });
-        });
-
-        dialog.show();
-        DialogThemeHelper.styleAlertDialog(dialog, this);
     }
 
     private void mostrarDialogoDesactivarCuenta() {
-        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+        ArtistlanDialogFactory.show(this, DialogConfig.builder()
                 .setTitle("Desactivar cuenta")
                 .setMessage("Tu cuenta se desactivará y ya no podrá iniciar sesión ni operar normalmente. Tu historial de compras, ventas, reportes y transacciones se conservará. Esta acción no borra físicamente tu información. ¿Deseas confirmar la desactivación de tu cuenta?")
-                .setPositiveButton("Sí, desactivar", (dialogInterface, which) -> {
-                    dialogInterface.dismiss();
-                    desactivarCuentaConApi();
-                })
-                .setNegativeButton("Cancelar", null)
-                .show();
-        DialogThemeHelper.styleAlertDialog(dialog, this);
+                .setType(DialogConfig.Type.DANGER)
+                .setPositiveText("Sí, desactivar")
+                .setNegativeText("Cancelar")
+                .setOnPositive(this::desactivarCuentaConApi)
+                .build());
     }
 
     private void desactivarCuentaConApi() {
@@ -826,18 +780,12 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         return backendMessage != null ? backendMessage : "No se pudo desactivar la cuenta. Inténtalo de nuevo más tarde.";
     }
 
-    private void desactivarCuentaConApiV11(
-            String contrasenaActual,
-            androidx.appcompat.app.AlertDialog dialog,
-            EditText etContrasenaActual,
-            Button btnConfirmar,
-            Button btnCancelar
-    ) {
+    private void desactivarCuentaConApiV11(String contrasenaActual, ArtistlanDialogFactory.PasswordDialogHandle handle) {
         SharedPreferences prefs = getSharedPreferences(SessionManager.PREF_NAME, MODE_PRIVATE);
         int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
 
         if (idUsuario == -1) {
-            Toast.makeText(this, "Error: sesión no válida", Toast.LENGTH_SHORT).show();
+            handle.showError("Error: sesión no válida");
             return;
         }
 
@@ -847,37 +795,24 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         request.setMotivo("Cuenta desactivada desde Android por solicitud del usuario");
         request.setConfirmacion(true);
 
-        setEstadoDialogoDesactivacion(dialog, etContrasenaActual, btnConfirmar, btnCancelar, false);
-
         api.desactivarCuenta(idUsuario, request).enqueue(new Callback<RespuestaModeracionDTO>() {
             @Override
             public void onResponse(Call<RespuestaModeracionDTO> call, Response<RespuestaModeracionDTO> response) {
                 if (response.isSuccessful()) {
-                    dialog.dismiss();
-                    Toast.makeText(
-                            ActActualizarDatos.this,
-                            "Tu cuenta fue desactivada correctamente.",
-                            Toast.LENGTH_LONG
-                    ).show();
-                    cerrarSesionYRedirigirALogin();
+                    handle.dismiss();
+                    if (feedbackDialog != null) {
+                        feedbackDialog.showSuccess("Tu cuenta fue desactivada correctamente.", ActActualizarDatos.this::cerrarSesionYRedirigirALogin);
+                    } else {
+                        cerrarSesionYRedirigirALogin();
+                    }
                 } else {
-                    setEstadoDialogoDesactivacion(dialog, etContrasenaActual, btnConfirmar, btnCancelar, true);
-                    Toast.makeText(
-                            ActActualizarDatos.this,
-                            construirMensajeErrorDesactivacionV11(response),
-                            Toast.LENGTH_LONG
-                    ).show();
+                    handle.showError(construirMensajeErrorDesactivacionV11(response));
                 }
             }
 
             @Override
             public void onFailure(Call<RespuestaModeracionDTO> call, Throwable t) {
-                setEstadoDialogoDesactivacion(dialog, etContrasenaActual, btnConfirmar, btnCancelar, true);
-                Toast.makeText(
-                        ActActualizarDatos.this,
-                        "Error de conexión al desactivar la cuenta.",
-                        Toast.LENGTH_LONG
-                ).show();
+                handle.showError("Error de conexión al desactivar la cuenta.");
             }
         });
     }
@@ -896,31 +831,6 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             return backendMessage != null ? backendMessage : "La cuenta no puede desactivarse.";
         }
         return backendMessage != null ? backendMessage : "No se pudo desactivar la cuenta.";
-    }
-
-    private void setEstadoDialogoDesactivacion(
-            androidx.appcompat.app.AlertDialog dialog,
-            EditText etContrasenaActual,
-            Button btnConfirmar,
-            Button btnCancelar,
-            boolean habilitado
-    ) {
-        if (dialog != null) {
-            dialog.setCancelable(habilitado);
-            dialog.setCanceledOnTouchOutside(habilitado);
-        }
-        if (etContrasenaActual != null) {
-            etContrasenaActual.setEnabled(habilitado);
-        }
-        if (btnConfirmar != null) {
-            btnConfirmar.setEnabled(habilitado);
-        }
-        if (btnCancelar != null) {
-            btnCancelar.setEnabled(habilitado);
-        }
-        if (btnEliminarCuenta != null) {
-            btnEliminarCuenta.setEnabled(habilitado);
-        }
     }
 
     private int dpToPx(int dp) {

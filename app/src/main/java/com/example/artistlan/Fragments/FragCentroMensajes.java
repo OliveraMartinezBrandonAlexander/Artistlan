@@ -1,7 +1,12 @@
 package com.example.artistlan.Fragments;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,12 +19,15 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.core.graphics.ColorUtils;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.artistlan.Activitys.ActFragmentoPrincipal;
 import com.example.artistlan.BotonesMenuSuperior;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -32,13 +40,16 @@ public class FragCentroMensajes extends Fragment {
     private TabLayout tabLayout;
     private ViewPager2 viewPager;
     private View menuInferior;
+    private View layoutTabs;
     private ImageButton btnAtras;
     private ImageButton btnMenuOpciones;
     private TextView tvResumenContador;
+    private ThemeManager themeManager;
     private int notificacionesNoLeidas = 0;
     private int solicitudesPendientes = 0;
     private long ultimoRefreshResumenMs = 0L;
     private boolean refrescoResumenEnCurso = false;
+    private boolean tabsThemeListenerAttached = false;
     private static final long RESUMEN_REFRESH_MIN_INTERVAL_MS = 800L;
     private CentroMensajesPagerAdapter pagerAdapter;
     private int modoSolicitudesPendiente = FragSolicitudesMensajes.MODO_RECIBIDAS;
@@ -54,6 +65,7 @@ public class FragCentroMensajes extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ThemeModuleStyler.styleFragment(this, view);
+        themeManager = new ThemeManager(requireContext());
 
         new BotonesMenuSuperior(this);
 
@@ -64,6 +76,7 @@ public class FragCentroMensajes extends Fragment {
 
         tabLayout = view.findViewById(R.id.tabLayoutCentroMensajes);
         viewPager = view.findViewById(R.id.viewPagerCentroMensajes);
+        layoutTabs = view.findViewById(R.id.layoutCentroMensajesTabs);
         btnAtras = view.findViewById(R.id.btnCentroMensajesAtras);
         btnMenuOpciones = view.findViewById(R.id.btnCentroMensajesMenu);
         tvResumenContador = view.findViewById(R.id.tvCentroMensajesResumenContador);
@@ -91,6 +104,7 @@ public class FragCentroMensajes extends Fragment {
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) ->
                 tab.setText(position == 0 ? "Mensajes (0)" : "Solicitudes (0)")
         ).attach();
+        configurarTabsTematicos();
 
         int tabInicial = 0;
         Bundle args = getArguments();
@@ -105,6 +119,10 @@ public class FragCentroMensajes extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        if (isAdded()) {
+            themeManager = new ThemeManager(requireContext());
+            aplicarTemaTabsCentro();
+        }
         if (menuInferior != null) {
             menuInferior.setVisibility(View.GONE);
         }
@@ -131,6 +149,9 @@ public class FragCentroMensajes extends Fragment {
         btnAtras = null;
         btnMenuOpciones = null;
         tvResumenContador = null;
+        layoutTabs = null;
+        themeManager = null;
+        tabsThemeListenerAttached = false;
         if (menuInferior != null) {
             menuInferior.setVisibility(View.VISIBLE);
         }
@@ -207,11 +228,170 @@ public class FragCentroMensajes extends Fragment {
         com.google.android.material.tabs.TabLayout.Tab bandeja = tabLayout.getTabAt(0);
         com.google.android.material.tabs.TabLayout.Tab solicitudes = tabLayout.getTabAt(1);
         if (bandeja != null) {
-            bandeja.setText("Mensajes (" + notificacionesNoLeidas + ")");
+            actualizarTextoTab(bandeja, "Mensajes (" + notificacionesNoLeidas + ")");
         }
         if (solicitudes != null) {
-            solicitudes.setText("Solicitudes (" + solicitudesPendientes + ")");
+            actualizarTextoTab(solicitudes, "Solicitudes (" + solicitudesPendientes + ")");
         }
+    }
+
+    private void configurarTabsTematicos() {
+        if (tabLayout == null || themeManager == null) {
+            return;
+        }
+        aplicarTemaTabsCentro();
+        if (tabsThemeListenerAttached) {
+            return;
+        }
+        tabsThemeListenerAttached = true;
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                aplicarEstadoTabCentro(tab, true);
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                aplicarEstadoTabCentro(tab, false);
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+                aplicarEstadoTabCentro(tab, true);
+            }
+        });
+    }
+
+    private void aplicarTemaTabsCentro() {
+        if (tabLayout == null || themeManager == null) {
+            return;
+        }
+        if (layoutTabs != null) {
+            layoutTabs.setBackground(crearFondoRedondeado(
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), 190),
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE), 150),
+                    1,
+                    16
+            ));
+        }
+        tabLayout.setSelectedTabIndicatorColor(Color.TRANSPARENT);
+        tabLayout.setTabRippleColor(ColorStateList.valueOf(
+                ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.ACCENT_PRIMARY), 34)
+        ));
+
+        for (int i = 0; i < tabLayout.getTabCount(); i++) {
+            TabLayout.Tab tab = tabLayout.getTabAt(i);
+            if (tab != null) {
+                CharSequence text = tab.getText();
+                tab.setCustomView(crearVistaTab(text != null ? text.toString() : ""));
+            }
+        }
+        aplicarEstadoTabsCentro();
+    }
+
+    @NonNull
+    private TextView crearVistaTab(@NonNull String texto) {
+        TextView tabView = new TextView(requireContext());
+        tabView.setText(texto);
+        tabView.setGravity(Gravity.CENTER);
+        tabView.setSingleLine(true);
+        tabView.setTextSize(13);
+        tabView.setTypeface(tabView.getTypeface(), Typeface.BOLD);
+        tabView.setMinHeight(dpToPx(42));
+        tabView.setIncludeFontPadding(false);
+        tabView.setPadding(dpToPx(10), dpToPx(8), dpToPx(10), dpToPx(8));
+        return tabView;
+    }
+
+    private void actualizarTextoTab(@NonNull TabLayout.Tab tab, @NonNull String texto) {
+        tab.setText(texto);
+        View customView = tab.getCustomView();
+        if (customView instanceof TextView) {
+            ((TextView) customView).setText(texto);
+            aplicarEstadoTabCentro(tab, tab.getPosition() == tabLayout.getSelectedTabPosition());
+        }
+    }
+
+    private void aplicarEstadoTabsCentro() {
+        if (tabLayout == null) {
+            return;
+        }
+        int selected = tabLayout.getSelectedTabPosition();
+        for (int i = 0; i < tabLayout.getTabCount(); i++) {
+            aplicarEstadoTabCentro(tabLayout.getTabAt(i), i == selected);
+        }
+    }
+
+    private void aplicarEstadoTabCentro(@Nullable TabLayout.Tab tab, boolean seleccionado) {
+        if (tab == null || themeManager == null) {
+            return;
+        }
+        View customView = tab.getCustomView();
+        if (!(customView instanceof TextView)) {
+            return;
+        }
+        TextView tabView = (TextView) customView;
+        tabView.animate().cancel();
+        if (seleccionado) {
+            tabView.setTextColor(resolverColorTextoSobre(themeManager.color(ThemeKeys.ACCENT_PRIMARY)));
+            tabView.setBackground(crearFondoTabActivo());
+            tabView.setAlpha(1f);
+            tabView.setScaleX(1f);
+            tabView.setScaleY(1f);
+            tabView.animate().scaleX(1.02f).scaleY(1.02f).setDuration(110)
+                    .withEndAction(() -> tabView.animate().scaleX(1f).scaleY(1f).setDuration(110).start())
+                    .start();
+        } else {
+            tabView.setTextColor(themeManager.color(ThemeKeys.TEXT_SECONDARY));
+            tabView.setBackground(crearFondoTabInactivo());
+            tabView.setAlpha(0.88f);
+            tabView.setScaleX(0.98f);
+            tabView.setScaleY(0.98f);
+        }
+    }
+
+    private GradientDrawable crearFondoTabActivo() {
+        int base = themeManager.color(ThemeKeys.ACCENT_PRIMARY);
+        int end = ColorUtils.blendARGB(base, themeManager.color(ThemeKeys.BG_BOTTOM), 0.18f);
+        GradientDrawable drawable = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{base, end}
+        );
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setCornerRadius(dpToPx(13));
+        drawable.setStroke(dpToPx(1), ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.CARD_BORDER), 170));
+        return drawable;
+    }
+
+    private GradientDrawable crearFondoTabInactivo() {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.BUTTON_SECONDARY_BG), 90));
+        drawable.setCornerRadius(dpToPx(13));
+        drawable.setStroke(dpToPx(1), ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE), 95));
+        return drawable;
+    }
+
+    private GradientDrawable crearFondoRedondeado(int fillColor, int strokeColor, int strokeDp, int radiusDp) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setColor(fillColor);
+        drawable.setCornerRadius(dpToPx(radiusDp));
+        drawable.setStroke(dpToPx(strokeDp), strokeColor);
+        return drawable;
+    }
+
+    private int resolverColorTextoSobre(int backgroundColor) {
+        int darkText = themeManager.color(ThemeKeys.BUTTON_TEXT_DARK);
+        int lightText = themeManager.color(ThemeKeys.BUTTON_TEXT_LIGHT);
+        double darkContrast = ColorUtils.calculateContrast(darkText, backgroundColor);
+        double lightContrast = ColorUtils.calculateContrast(lightText, backgroundColor);
+        return darkContrast >= lightContrast ? darkText : lightText;
+    }
+
+    private int dpToPx(int dp) {
+        float density = requireContext().getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 
     private void onMarcarTodoClick() {

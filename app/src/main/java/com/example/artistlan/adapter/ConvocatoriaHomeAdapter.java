@@ -1,10 +1,12 @@
 package com.example.artistlan.adapter;
 
 import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,10 +15,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.artistlan.Conector.model.ConvocatoriaDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHomeAdapter.ViewHolder> {
 
@@ -25,6 +31,7 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
     }
 
     private final List<ConvocatoriaDTO> items = new ArrayList<>();
+    private final Set<Integer> expandedPositions = new HashSet<>();
     private final OnVerMasClick onVerMasClick;
 
     public ConvocatoriaHomeAdapter(OnVerMasClick onVerMasClick) {
@@ -33,6 +40,7 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
 
     public void actualizar(List<ConvocatoriaDTO> nuevas) {
         items.clear();
+        expandedPositions.clear();
         if (nuevas != null) items.addAll(nuevas);
         notifyDataSetChanged();
     }
@@ -50,15 +58,41 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
         ConvocatoriaDTO item = items.get(position);
 
         holder.tvTitulo.setText(textoSeguro(item.getTitulo(), "Sin titulo"));
-        holder.tvDescripcion.setText(textoSeguro(item.getDescripcion(), "Sin descripcion"));
+        DescripcionVisual descripcionVisual = prepararDescripcion(textoSeguro(item.getDescripcion(), "Sin descripcion"));
+        holder.tvDescripcion.setText(descripcionVisual.resumen);
+        holder.tvDetalle.setText(descripcionVisual.detalle);
+        boolean expandido = expandedPositions.contains(position);
+        boolean tieneDetalle = !TextUtils.isEmpty(descripcionVisual.detalle);
+        holder.tvDetalle.setVisibility(tieneDetalle && expandido ? View.VISIBLE : View.GONE);
+        holder.tvVerDescripcion.setVisibility(tieneDetalle ? View.VISIBLE : View.GONE);
+        holder.tvVerDescripcion.setText(expandido ? "Ocultar detalles" : "Ver detalles");
         String fecha = textoSeguro(item.getFecha(), "");
         holder.tvFecha.setText(fecha.isEmpty() ? "Sin fecha" : "Fecha: " + fecha);
 
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
-        ThemeApplier.applyTextPrimary(holder.tvTitulo, tm);
+        CardThemeHelper.applyFlatCard(holder.layoutCard, tm);
+        CardThemeHelper.applyChip(holder.tvFecha, tm);
+        CardThemeHelper.applyChip(holder.tvTitulo, tm);
+        ThemeApplier.applyTextSecondary(holder.tvDescripcionLabel, tm);
         ThemeApplier.applyTextSecondary(holder.tvDescripcion, tm);
-        ThemeApplier.applyTextSecondary(holder.tvFecha, tm);
-        ThemeApplier.applyPrimaryButton(holder.btnVerMas, tm);
+        ThemeApplier.applyTextSecondary(holder.tvDetalle, tm);
+        CardThemeHelper.applyFilterSurface(holder.tvVerDescripcion, tm);
+        holder.tvVerDescripcion.setTextColor(tm.color(ThemeKeys.FILTER_BUTTON_STROKE));
+        CardThemeHelper.applyPrimaryBubbleButton(holder.btnVerMas, tm);
+        holder.tvVerDescripcion.setGravity(Gravity.CENTER);
+
+        holder.tvVerDescripcion.setOnClickListener(v -> {
+            int currentPosition = holder.getBindingAdapterPosition();
+            if (currentPosition == RecyclerView.NO_POSITION) {
+                return;
+            }
+            if (expandedPositions.contains(currentPosition)) {
+                expandedPositions.remove(currentPosition);
+            } else {
+                expandedPositions.add(currentPosition);
+            }
+            notifyItemChanged(currentPosition);
+        });
 
         String enlace = item.getEnlace();
         boolean enlaceValido = !TextUtils.isEmpty(enlace)
@@ -83,16 +117,80 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
         return limpio.isEmpty() ? fallback : limpio;
     }
 
+    private DescripcionVisual prepararDescripcion(String descripcion) {
+        String limpio = descripcion.replace("\r\n", "\n").replace('\r', '\n').trim();
+        String[] partes = limpio.split("\\n+");
+        List<String> lineas = new ArrayList<>();
+        for (String parte : partes) {
+            String linea = parte.trim();
+            if (!linea.isEmpty()) {
+                lineas.add(linea);
+            }
+        }
+        if (lineas.size() > 1) {
+            StringBuilder detalle = new StringBuilder();
+            for (int i = 1; i < lineas.size(); i++) {
+                if (detalle.length() > 0) {
+                    detalle.append("\n");
+                }
+                detalle.append(formatearDetalle(lineas.get(i)));
+            }
+            return new DescripcionVisual(lineas.get(0), detalle.toString());
+        }
+        if (limpio.length() > 180) {
+            int corte = encontrarCorteNatural(limpio, 150, 210);
+            return new DescripcionVisual(limpio.substring(0, corte).trim(), limpio.substring(corte).trim());
+        }
+        return new DescripcionVisual(limpio, "");
+    }
+
+    private String formatearDetalle(String linea) {
+        if (linea.contains(":")) {
+            return "- " + linea;
+        }
+        return linea;
+    }
+
+    private int encontrarCorteNatural(String texto, int desde, int hasta) {
+        int limite = Math.min(hasta, texto.length());
+        for (int i = desde; i < limite; i++) {
+            char c = texto.charAt(i);
+            if (c == '.' || c == ';' || c == ':') {
+                return i + 1;
+            }
+        }
+        int espacio = texto.lastIndexOf(' ', limite);
+        return espacio > desde ? espacio : limite;
+    }
+
+    private static class DescripcionVisual {
+        final String resumen;
+        final String detalle;
+
+        DescripcionVisual(String resumen, String detalle) {
+            this.resumen = resumen;
+            this.detalle = detalle;
+        }
+    }
+
     static class ViewHolder extends RecyclerView.ViewHolder {
         final TextView tvTitulo;
+        final TextView tvDescripcionLabel;
         final TextView tvDescripcion;
+        final TextView tvDetalle;
+        final TextView tvVerDescripcion;
         final TextView tvFecha;
         final Button btnVerMas;
+        final LinearLayout layoutCard;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
+            layoutCard = itemView.findViewById(R.id.layoutMainConvocatoriaCard);
             tvTitulo = itemView.findViewById(R.id.tvMainTituloConvocatoria);
+            tvDescripcionLabel = itemView.findViewById(R.id.tvMainDescripcionLabelConvocatoria);
             tvDescripcion = itemView.findViewById(R.id.tvMainDescripcionConvocatoria);
+            tvDetalle = itemView.findViewById(R.id.tvMainDetalleConvocatoria);
+            tvVerDescripcion = itemView.findViewById(R.id.tvMainVerDescripcionConvocatoria);
             tvFecha = itemView.findViewById(R.id.tvMainFechaConvocatoria);
             btnVerMas = itemView.findViewById(R.id.btnMainVerMasConvocatoria);
         }

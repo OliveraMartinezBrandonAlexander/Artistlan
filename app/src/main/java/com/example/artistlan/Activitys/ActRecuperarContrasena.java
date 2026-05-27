@@ -5,6 +5,7 @@ import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -30,7 +31,8 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
-import com.example.artistlan.utils.LottieFeedbackDialog;
+import com.example.artistlan.utils.ArtistlanLoadingDialog;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.PasswordPressVisibilityHelper;
 
 import java.util.Locale;
@@ -57,6 +59,7 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
     private Button btnEnviarCodigo;
     private Button btnCambiarContrasena;
     private Button btnReenviarCodigo;
+    private Button btnCambiarCuenta;
     private TextView txtVolverLogin;
     private TextView txtBrand;
     private TextView txtTitulo;
@@ -80,7 +83,7 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
     private LottieAnimationView sideLottie;
 
     private ThemeManager themeManager;
-    private LottieFeedbackDialog feedbackDialog;
+    private ArtistlanLoadingDialog feedbackDialog;
     private PasswordResetApi passwordResetApi;
 
     private String temporaryToken;
@@ -93,7 +96,7 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
         setContentView(R.layout.activity_act_recuperar_contrasena);
 
         themeManager = new ThemeManager(this);
-        feedbackDialog = new LottieFeedbackDialog(this);
+        feedbackDialog = new ArtistlanLoadingDialog(this);
         passwordResetApi = RetrofitClient.getClient().create(PasswordResetApi.class);
 
         bindViews();
@@ -116,6 +119,7 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
         btnEnviarCodigo = findViewById(R.id.RcBtnEnviarCodigo);
         btnCambiarContrasena = findViewById(R.id.RcBtnCambiarContrasena);
         btnReenviarCodigo = findViewById(R.id.RcBtnReenviarCodigo);
+        btnCambiarCuenta = findViewById(R.id.RcBtnCambiarCuenta);
         txtVolverLogin = findViewById(R.id.RcTxtVolverLogin);
 
         txtBrand = findViewById(R.id.RcTxtBrand);
@@ -180,9 +184,10 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
                 themeManager.color(ThemeKeys.ICON_ACTIVE)
         );
 
-        ThemeApplier.applyPrimaryButton(btnEnviarCodigo, themeManager);
-        ThemeApplier.applyPrimaryButton(btnCambiarContrasena, themeManager);
-        ThemeApplier.applySecondaryButton(btnReenviarCodigo, themeManager);
+        CardThemeHelper.applyPrimaryBubbleButton(btnEnviarCodigo, themeManager);
+        CardThemeHelper.applyPrimaryBubbleButton(btnCambiarContrasena, themeManager);
+        CardThemeHelper.applySecondaryBubbleButton(btnReenviarCodigo, themeManager);
+        CardThemeHelper.applySecondaryBubbleButton(btnCambiarCuenta, themeManager);
 
         ThemeEffectsApplier.applyGlowIntensity(glowTop, themeManager, ThemeKeys.GLOW_PRIMARY);
         ThemeEffectsApplier.applyGlowIntensity(glowCenter, themeManager, ThemeKeys.GLOW_TERTIARY);
@@ -201,12 +206,14 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
         btnEnviarCodigo.setOnClickListener(this);
         btnCambiarContrasena.setOnClickListener(this);
         btnReenviarCodigo.setOnClickListener(this);
+        btnCambiarCuenta.setOnClickListener(this);
         txtVolverLogin.setOnClickListener(this);
 
         ThemeApplier.animatePress(btnRegresar);
         ThemeApplier.animatePress(btnEnviarCodigo);
         ThemeApplier.animatePress(btnCambiarContrasena);
         ThemeApplier.animatePress(btnReenviarCodigo);
+        ThemeApplier.animatePress(btnCambiarCuenta);
         ThemeApplier.animatePress(txtVolverLogin);
     }
 
@@ -227,12 +234,16 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
 
         if (showResetStep) {
             clearResetFields();
+            playStepAnimation(R.raw.lottie_time);
+            animateStepTransition(panelPasoReset);
             txtInstruccion.setText("Revisa tu correo y completa el cambio de contraseña.");
             txtEstadoSolicitud.setText("Captura el código de 6 dígitos. Expira en 5 minutos.");
             etCodigo.requestFocus();
             return;
         }
 
+        playStepAnimation(R.raw.login);
+        animateStepTransition(cardContainer);
         txtInstruccion.setText("Ingresa tu correo o usuario para recibir un código de recuperación.");
         txtEstadoSolicitud.setText("Te enviaremos un código si la cuenta puede recuperarse.");
         clearResetFields();
@@ -272,6 +283,8 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
             confirmarCambioContrasena();
         } else if (viewId == R.id.RcBtnReenviarCodigo) {
             reenviarCodigo();
+        } else if (viewId == R.id.RcBtnCambiarCuenta) {
+            cambiarCuenta();
         } else if (viewId == R.id.RcBtnRegresar || viewId == R.id.RcTxtVolverLogin) {
             finish();
         }
@@ -283,6 +296,7 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
         String usuarioOCorreo = getTrimmedText(etCorreoUsuario);
         if (usuarioOCorreo.isEmpty()) {
             showFieldError(etCorreoUsuario, "Ingresa tu correo o usuario.");
+            feedbackDialog.showError("Ingresa tu correo o usuario para enviar el código.");
             return;
         }
 
@@ -303,6 +317,7 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
 
                             updateRecoveryStep(false);
                             txtEstadoSolicitud.setText(safeMessage(body.getMessage(), DEFAULT_REQUEST_MESSAGE));
+                            feedbackDialog.showError(safeMessage(body.getMessage(), DEFAULT_REQUEST_MESSAGE));
                             etCorreoUsuario.requestFocus();
                             return;
                         }
@@ -334,26 +349,32 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
 
         if (codigo.isEmpty()) {
             showFieldError(etCodigo, "Ingresa el código de recuperación.");
+            feedbackDialog.showError("Ingresa el código de recuperación.");
             return;
         }
         if (!codigo.matches("\\d{" + OTP_LENGTH + "}")) {
             showFieldError(etCodigo, "Ingresa un código válido de 6 dígitos.");
+            feedbackDialog.showError("Ingresa un código válido de 6 dígitos.");
             return;
         }
         if (isBlankForPassword(nuevaContrasena)) {
             showFieldError(etNuevaContrasena, "Ingresa una nueva contraseña.");
+            feedbackDialog.showError("Ingresa una nueva contraseña.");
             return;
         }
         if (isBlankForPassword(confirmarContrasena)) {
             showFieldError(etConfirmarContrasena, "Confirma la nueva contraseña.");
+            feedbackDialog.showError("Confirma la nueva contraseña.");
             return;
         }
         if (nuevaContrasena.length() < PASSWORD_MIN_LENGTH || nuevaContrasena.length() > PASSWORD_MAX_LENGTH) {
             showFieldError(etNuevaContrasena, "Usa una contraseña de 8 a 72 caracteres.");
+            feedbackDialog.showError("Usa una contraseña de 8 a 72 caracteres.");
             return;
         }
         if (!TextUtils.equals(nuevaContrasena, confirmarContrasena)) {
             showFieldError(etConfirmarContrasena, "Las contraseñas no coinciden.");
+            feedbackDialog.showError("Las contraseñas no coinciden.");
             return;
         }
 
@@ -371,6 +392,7 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
                 closeLoadingState();
                 if (response.isSuccessful() && response.body() != null) {
                     temporaryToken = null;
+                    playStepAnimation(R.raw.lottie_success);
                     feedbackDialog.showSuccess(
                             safeMessage(response.body().getMessage(), DEFAULT_SUCCESS_MESSAGE),
                             ActRecuperarContrasena.this::volverAlLogin
@@ -451,6 +473,7 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
         if (code == 400 || code == 410) {
             if (containsText(normalized, "codigo incorrecto")) {
                 showFieldError(etCodigo, "Código incorrecto.");
+                feedbackDialog.showError("Código incorrecto. Revisa el correo y vuelve a intentarlo.");
                 return;
             }
             if (containsText(normalized, "codigo expirado") || containsText(normalized, "token invalido")) {
@@ -462,14 +485,17 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
             }
             if (containsText(normalized, "contrasenas no coinciden")) {
                 showFieldError(etConfirmarContrasena, "Las contraseñas no coinciden.");
+                feedbackDialog.showError("Las contraseñas no coinciden.");
                 return;
             }
             if (containsText(normalized, "debe tener entre")) {
                 showFieldError(etNuevaContrasena, "Usa una contraseña de 8 a 72 caracteres.");
+                feedbackDialog.showError("Usa una contraseña de 8 a 72 caracteres.");
                 return;
             }
             if (containsText(normalized, "diferente a la actual")) {
                 showFieldError(etNuevaContrasena, "La nueva contraseña debe ser diferente a la actual.");
+                feedbackDialog.showError("La nueva contraseña debe ser diferente a la actual.");
                 return;
             }
         }
@@ -524,12 +550,14 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
         btnEnviarCodigo.setEnabled(enabled);
         btnCambiarContrasena.setEnabled(enabled);
         btnReenviarCodigo.setEnabled(enabled);
+        btnCambiarCuenta.setEnabled(enabled);
         btnRegresar.setEnabled(enabled);
         txtVolverLogin.setEnabled(enabled);
 
         btnEnviarCodigo.setAlpha(enabled ? 1f : 0.68f);
         btnCambiarContrasena.setAlpha(enabled ? 1f : 0.68f);
         btnReenviarCodigo.setAlpha(enabled ? 1f : 0.68f);
+        btnCambiarCuenta.setAlpha(enabled ? 1f : 0.68f);
         btnRegresar.setAlpha(enabled ? 1f : 0.68f);
         txtVolverLogin.setAlpha(enabled ? 1f : 0.68f);
     }
@@ -537,6 +565,43 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
     private void showFieldError(EditText field, String message) {
         field.setError(message);
         field.requestFocus();
+        field.animate()
+                .translationX(8f)
+                .setDuration(70)
+                .withEndAction(() -> field.animate().translationX(0f).setDuration(90).start())
+                .start();
+    }
+
+    private void cambiarCuenta() {
+        temporaryToken = null;
+        etCorreoUsuario.setText("");
+        clearAllErrors();
+        updateRecoveryStep(false);
+        txtEstadoSolicitud.setText("Puedes ingresar otra cuenta para recibir un nuevo código.");
+        etCorreoUsuario.requestFocus();
+    }
+
+    private void animateStepTransition(View view) {
+        if (view == null) {
+            return;
+        }
+        view.setAlpha(0.88f);
+        view.setTranslationY(10f);
+        view.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(180)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .start();
+    }
+
+    private void playStepAnimation(int rawRes) {
+        if (sideLottie == null) {
+            return;
+        }
+        sideLottie.cancelAnimation();
+        sideLottie.setAnimation(rawRes);
+        sideLottie.playAnimation();
     }
 
     private void clearAllErrors() {

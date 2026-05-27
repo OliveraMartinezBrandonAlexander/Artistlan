@@ -28,22 +28,24 @@
             android:paddingEnd="16dp">
 
             <TextView
+                android:id="@+id/tvTituloConvocatoriaModulo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Calendario de eventos"
-                android:textColor="@color/artistlan_menu_stroke_soft"
+                android:text="Convocatoria"
+                android:textColor="@color/artistlan_text_primary"
                 android:textSize="28sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-condensed-medium" />
 
             <TextView
+                android:id="@+id/tvSubtituloConvocatoriaModulo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:gravity="center"
                 android:text="Convocatorias, fechas y actividades de la comunidad"
-                android:textColor="@android:color/darker_gray"
+                android:textColor="@color/artistlan_text_secondary"
                 android:textSize="16sp"
                 android:fontFamily="sans-serif-light" />
 
@@ -61,7 +63,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:gravity="center"
-                android:textColor="#555555"
+                android:textColor="@color/artistlan_text_secondary"
                 android:visibility="gone" />
 
             <androidx.recyclerview.widget.RecyclerView

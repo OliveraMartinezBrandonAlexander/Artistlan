@@ -1,19 +1,26 @@
 package com.example.artistlan.Activitys;
 
+import android.app.PendingIntent;
 import android.Manifest;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.text.InputType;
 import android.util.Patterns;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -26,11 +33,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import androidx.navigation.NavDeepLinkBuilder;
 
 import com.bumptech.glide.Glide;
 import com.example.artistlan.Conector.ApiErrorParser;
@@ -48,6 +60,9 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.Fragments.FragCentroMensajes;
+import com.example.artistlan.Fragments.FragSolicitudesMensajes;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.DialogThemeHelper;
 import com.example.artistlan.utils.LottieFeedbackDialog;
 
@@ -67,12 +82,16 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ActActualizarDatos extends AppCompatActivity implements View.OnClickListener {
+    private static final long TOPBAR_NAV_DEBOUNCE_MS = 500L;
 
     private Button btnActualizarDatos, btnEliminarCuenta;
     private ImageButton IsbtnRegresar;
     private EditText etCorreo, etNombre, etDescripcion, etRedes, etTelefono, etFecha, etUsuario, etUbicacion;
     private ImageView btnCambiarFoto, imgFotoPerfil;
     private Spinner spinnerCategoriaUsuario;
+    private View contenedorCambiarFoto, topBar, topBarLight, notiBadge;
+    private ImageButton btnMenuLateral, btnCarrito, btnNotificaciones;
+    private ImageView ivLogo;
 
     private UsuarioApi api;
     private List<CategoriaDTO> listaCategorias;
@@ -85,11 +104,13 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
 
     // Theme
     private ThemeManager themeManager;
-    private View rootMain, topDivider, cardDivider, cardContainer;
+    private View rootMain, topDivider, cardDivider, cardContainer, glowTop, glowCenter, glowBottom;
     private TextView txtTitulo, txtDesc, txtIndicacion, tvCorreo, tvUsuario, tvFotoPerfil,
-            tvNombre, tvDescripcion, tvCategoria, tvRedes, tvTelefono, tvFecha, tvUbicacion;
+            tvNombre, tvDescripcion, tvCategoria, tvRedes, tvTelefono, tvFecha, tvUbicacion,
+            tvCambiarFotografia, txtTituloTopBar;
     private LottieFeedbackDialog feedbackDialog;
     private boolean actualizacionEnCurso = false;
+    private long ultimoClickTopbarMs = 0L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,6 +124,17 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         topDivider = findViewById(R.id.IsTopDivider);
         cardDivider = findViewById(R.id.IsCardDivider);
         cardContainer = findViewById(R.id.IsLayCard);
+        glowTop = findViewById(R.id.AdGlowTop);
+        glowCenter = findViewById(R.id.AdGlowCenter);
+        glowBottom = findViewById(R.id.AdGlowBottom);
+        topBar = findViewById(R.id.layoutBarraSuperior);
+        topBarLight = findViewById(R.id.topBarLight);
+        btnMenuLateral = findViewById(R.id.btnMenuLateral);
+        btnCarrito = findViewById(R.id.btnCarrito);
+        btnNotificaciones = findViewById(R.id.btnNotificaciones);
+        ivLogo = findViewById(R.id.ivLogo);
+        txtTituloTopBar = findViewById(R.id.txtTituloTopBar);
+        notiBadge = findViewById(R.id.notiBadge);
 
         txtTitulo = findViewById(R.id.IsTxtTitulo);
         txtDesc = findViewById(R.id.IsTxtDesc);
@@ -117,6 +149,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         tvTelefono = findViewById(R.id.tvTelefono);
         tvFecha = findViewById(R.id.tvFecha);
         tvUbicacion = findViewById(R.id.tvUbicacion);
+        tvCambiarFotografia = findViewById(R.id.tvCambiarFotografia);
 
         // Enlazar XML
         etCorreo = findViewById(R.id.correo);
@@ -133,6 +166,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         IsbtnRegresar = findViewById(R.id.IsbtnRegresar);
         imgFotoPerfil = findViewById(R.id.imgFotoPerfil);
         btnCambiarFoto = findViewById(R.id.btnCambiarFoto);
+        contenedorCambiarFoto = findViewById(R.id.contenedorCambiarFoto);
         btnEliminarCuenta = findViewById(R.id.btnEliminarCuenta);
 
         applyThemeOnlyColors();
@@ -197,14 +231,76 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                         }
                 );
 
-        btnCambiarFoto.setOnClickListener(v -> mostrarOpcionesFotoPerfil());
+        View.OnClickListener cambiarFotoListener = v -> mostrarOpcionesFotoPerfil();
+        btnCambiarFoto.setOnClickListener(cambiarFotoListener);
+        if (contenedorCambiarFoto != null) {
+            contenedorCambiarFoto.setOnClickListener(cambiarFotoListener);
+        }
+        configurarAccionesTopbar();
 
         cargarDatosUsuario();
         cargarCategoriasDesdeApi();
     }
 
+    private void configurarAccionesTopbar() {
+        if (btnMenuLateral != null) {
+            btnMenuLateral.setEnabled(true);
+            btnMenuLateral.setClickable(true);
+            btnMenuLateral.setOnClickListener(v -> {
+                if (!puedeEjecutarAccionTopbar()) return;
+                v.animate()
+                        .rotationBy(90f)
+                        .setDuration(160)
+                        .withEndAction(() -> v.setRotation(0f))
+                        .start();
+                finish();
+            });
+        }
+        if (btnNotificaciones != null) {
+            btnNotificaciones.setEnabled(true);
+            btnNotificaciones.setClickable(true);
+            btnNotificaciones.setOnClickListener(v -> {
+                if (!puedeEjecutarAccionTopbar()) return;
+                v.animate()
+                        .rotationBy(12f)
+                        .setDuration(90)
+                        .withEndAction(() -> v.animate().rotation(0f).setDuration(120).start())
+                        .start();
+                abrirCentroMensajesDesdeTopbar();
+            });
+        }
+    }
+
+    private boolean puedeEjecutarAccionTopbar() {
+        long ahora = SystemClock.elapsedRealtime();
+        if (ahora - ultimoClickTopbarMs < TOPBAR_NAV_DEBOUNCE_MS) {
+            return false;
+        }
+        ultimoClickTopbarMs = ahora;
+        return true;
+    }
+
+    private void abrirCentroMensajesDesdeTopbar() {
+        Bundle args = new Bundle();
+        args.putInt(FragCentroMensajes.ARG_TAB_INICIAL, 0);
+        args.putInt(FragCentroMensajes.ARG_SOLICITUDES_MODO, FragSolicitudesMensajes.MODO_RECIBIDAS);
+        try {
+            PendingIntent pendingIntent = new NavDeepLinkBuilder(this)
+                    .setComponentName(ActFragmentoPrincipal.class)
+                    .setGraph(R.navigation.navegador)
+                    .setDestination(R.id.fragCentroMensajes)
+                    .setArguments(args)
+                    .createPendingIntent();
+            pendingIntent.send();
+            finish();
+        } catch (PendingIntent.CanceledException e) {
+            Toast.makeText(this, "No se pudo abrir notificaciones", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void applyThemeOnlyColors() {
         ThemeApplier.applySystemBars(this, themeManager);
+        aplicarTemaMenuSuperior();
 
         if (rootMain != null) {
             rootMain.setBackgroundColor(themeManager.color(ThemeKeys.BG_BOTTOM));
@@ -249,15 +345,20 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             );
         }
 
-        ThemeApplier.applyPrimaryButton(btnActualizarDatos, themeManager);
-        ThemeApplier.applySecondaryButton(btnEliminarCuenta, themeManager);
+        aplicarBotonPrincipal(btnActualizarDatos, themeManager);
+        aplicarBotonSecundario(btnEliminarCuenta, themeManager);
 
         if (IsbtnRegresar != null) {
-            IsbtnRegresar.setColorFilter(themeManager.color(ThemeKeys.ICON_ACTIVE), PorterDuff.Mode.SRC_ATOP);
+            CardThemeHelper.applyFilterButton(IsbtnRegresar, themeManager);
+            ThemeApplier.animatePress(IsbtnRegresar);
         }
 
         if (btnCambiarFoto != null) {
-            btnCambiarFoto.setColorFilter(themeManager.color(ThemeKeys.ICON_ACTIVE), PorterDuff.Mode.SRC_ATOP);
+            aplicarIconButtonBubble(btnCambiarFoto, themeManager, themeManager.color(ThemeKeys.BUTTON_PRIMARY_BG));
+        }
+        ThemeApplier.applyTextSecondary(tvCambiarFotografia, themeManager);
+        if (contenedorCambiarFoto != null) {
+            ThemeApplier.animatePress(contenedorCambiarFoto);
         }
 
         if (topDivider != null && topDivider.getBackground() != null) {
@@ -269,6 +370,191 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         }
 
         ThemeEffectsApplier.applyPanelGlass(cardContainer, themeManager);
+        ThemeEffectsApplier.applyGlowIntensity(glowTop, themeManager, ThemeKeys.GLOW_PRIMARY);
+        ThemeEffectsApplier.applyGlowIntensity(glowCenter, themeManager, ThemeKeys.GLOW_TERTIARY);
+        ThemeEffectsApplier.applyGlowIntensity(glowBottom, themeManager, ThemeKeys.GLOW_SECONDARY);
+    }
+
+    private void aplicarTemaMenuSuperior() {
+        if (topBar != null && topBar.getBackground() != null) {
+            topBar.getBackground().setColorFilter(themeManager.color(ThemeKeys.MENU_TOPBAR), PorterDuff.Mode.SRC_ATOP);
+        }
+        ThemeEffectsApplier.applyTopLight(topBarLight, themeManager);
+        if (txtTituloTopBar != null) {
+            txtTituloTopBar.setTextColor(themeManager.color(ThemeKeys.MENU_TITLE));
+        }
+        if (ivLogo != null) {
+            ivLogo.setVisibility(View.GONE);
+        }
+        if (btnMenuLateral != null) {
+            btnMenuLateral.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_IN);
+        }
+        if (btnCarrito != null) {
+            btnCarrito.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_IN);
+        }
+        if (btnNotificaciones != null) {
+            btnNotificaciones.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_IN);
+        }
+        if (notiBadge != null && notiBadge.getBackground() != null) {
+            int badgeColor = themeManager.color(ThemeKeys.MENU_BADGE);
+            notiBadge.getBackground().setColorFilter(badgeColor, PorterDuff.Mode.SRC_ATOP);
+            if (notiBadge instanceof TextView) {
+                ((TextView) notiBadge).setTextColor(elegirColorTextoBotonTema(
+                        badgeColor,
+                        themeManager.color(ThemeKeys.BUTTON_TEXT_DARK),
+                        themeManager.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                        themeManager.color(ThemeKeys.TEXT_PRIMARY),
+                        themeManager.color(ThemeKeys.TEXT_SECONDARY)
+                ));
+            }
+        }
+    }
+
+    private void aplicarBotonPrincipal(@Nullable Button button, @NonNull ThemeManager tm) {
+        aplicarFormaBoton(button);
+        int backgroundColor = tm.color(ThemeKeys.BUTTON_PRIMARY_BG);
+        int strokeColor = elegirColorTextoBoton(
+                backgroundColor,
+                tm.color(ThemeKeys.BUTTON_TEXT_DARK),
+                tm.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                tm.color(ThemeKeys.TEXT_PRIMARY),
+                tm.color(ThemeKeys.TEXT_SECONDARY)
+        );
+        aplicarFondoBotonTema(button, backgroundColor, strokeColor);
+        aplicarTextoBotonTema(button, backgroundColor, tm.color(ThemeKeys.BUTTON_TEXT_DARK),
+                tm.color(ThemeKeys.BUTTON_TEXT_LIGHT), tm.color(ThemeKeys.TEXT_PRIMARY), tm.color(ThemeKeys.TEXT_SECONDARY));
+    }
+
+    private void aplicarBotonSecundario(@Nullable Button button, @NonNull ThemeManager tm) {
+        aplicarFormaBoton(button);
+        int backgroundColor = tm.color(ThemeKeys.BUTTON_SECONDARY_BG);
+        int strokeColor = elegirColorTextoBoton(
+                backgroundColor,
+                tm.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                tm.color(ThemeKeys.BUTTON_TEXT_DARK),
+                tm.color(ThemeKeys.TEXT_PRIMARY),
+                tm.color(ThemeKeys.TEXT_SECONDARY)
+        );
+        aplicarFondoBotonTema(button, backgroundColor, strokeColor);
+        aplicarTextoBotonTema(button, backgroundColor, tm.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                tm.color(ThemeKeys.BUTTON_TEXT_DARK), tm.color(ThemeKeys.TEXT_PRIMARY), tm.color(ThemeKeys.TEXT_SECONDARY));
+    }
+
+    private void aplicarFormaBoton(@Nullable Button button) {
+        if (button == null) return;
+        button.setAllCaps(false);
+        button.setTextSize(17);
+        button.setTypeface(Typeface.create("sans-serif-black", Typeface.BOLD));
+        button.setMinHeight(dpToPx(62));
+        button.setPadding(dpToPx(18), 0, dpToPx(18), 0);
+        ViewGroup.LayoutParams params = button.getLayoutParams();
+        if (params != null) {
+            params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            params.height = dpToPx(62);
+            button.setLayoutParams(params);
+        }
+    }
+
+    private void aplicarFondoBotonTema(@Nullable Button button, int backgroundColor, int textColor) {
+        if (button == null) return;
+        button.setBackgroundTintList(null);
+        button.setBackground(crearFondoBubbleTema(backgroundColor, textColor));
+        ThemeApplier.animatePress(button);
+    }
+
+    @NonNull
+    private LayerDrawable crearFondoBubbleTema(int backgroundColor, int textColor) {
+        float radius = dpToPx(40);
+
+        GradientDrawable shadow = new GradientDrawable();
+        shadow.setShape(GradientDrawable.RECTANGLE);
+        shadow.setColor(ColorUtils.setAlphaComponent(Color.BLACK, 42));
+        shadow.setCornerRadius(radius);
+
+        GradientDrawable fill = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{
+                        ColorUtils.blendARGB(backgroundColor, Color.WHITE, 0.24f),
+                        backgroundColor,
+                        ColorUtils.blendARGB(backgroundColor, Color.BLACK, 0.10f)
+                }
+        );
+        fill.setShape(GradientDrawable.RECTANGLE);
+        fill.setCornerRadius(radius);
+        fill.setStroke(dpToPx(1), ColorUtils.setAlphaComponent(textColor, 90));
+
+        GradientDrawable highlight = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{ColorUtils.setAlphaComponent(Color.WHITE, 78), Color.TRANSPARENT}
+        );
+        highlight.setShape(GradientDrawable.RECTANGLE);
+        highlight.setCornerRadius(dpToPx(30));
+
+        LayerDrawable drawable = new LayerDrawable(new android.graphics.drawable.Drawable[]{shadow, fill, highlight});
+        drawable.setLayerInset(0, 0, dpToPx(6), 0, 0);
+        drawable.setLayerInset(2, dpToPx(16), dpToPx(8), dpToPx(16), dpToPx(34));
+        return drawable;
+    }
+
+    private void aplicarTextoBotonTema(@Nullable Button button, int backgroundColor, int preferredTextColor, int... themeCandidates) {
+        if (button == null) return;
+        button.setTextColor(elegirColorTextoBotonTema(backgroundColor, preferredTextColor, themeCandidates));
+    }
+
+    private int elegirColorTextoBotonTema(int backgroundColor, int preferredTextColor, int... themeCandidates) {
+        if (ColorUtils.calculateContrast(preferredTextColor, backgroundColor) >= 3.0d) {
+            return preferredTextColor;
+        }
+        int selected = preferredTextColor;
+        double bestThemeContrast = ColorUtils.calculateContrast(preferredTextColor, backgroundColor);
+        for (int candidate : themeCandidates) {
+            double contrast = ColorUtils.calculateContrast(candidate, backgroundColor);
+            if (contrast > bestThemeContrast) {
+                bestThemeContrast = contrast;
+                selected = candidate;
+            }
+        }
+        if (bestThemeContrast >= 3.0d) {
+            return selected;
+        }
+        return elegirColorTextoBoton(backgroundColor, selected);
+    }
+
+    private int elegirColorTextoBoton(int backgroundColor, int preferredTextColor, int... themeCandidates) {
+        if (ColorUtils.calculateContrast(preferredTextColor, backgroundColor) >= 4.5d) {
+            return preferredTextColor;
+        }
+        int selected = preferredTextColor;
+        double bestContrast = ColorUtils.calculateContrast(preferredTextColor, backgroundColor);
+        for (int candidate : themeCandidates) {
+            double contrast = ColorUtils.calculateContrast(candidate, backgroundColor);
+            if (contrast > bestContrast) {
+                bestContrast = contrast;
+                selected = candidate;
+            }
+        }
+        if (bestContrast >= 4.5d) {
+            return selected;
+        }
+        double contrastWhite = ColorUtils.calculateContrast(Color.WHITE, backgroundColor);
+        double contrastBlack = ColorUtils.calculateContrast(Color.BLACK, backgroundColor);
+        return contrastWhite >= contrastBlack ? Color.WHITE : Color.BLACK;
+    }
+
+    private void aplicarIconButtonBubble(@Nullable ImageView button, @NonNull ThemeManager tm, int backgroundColor) {
+        if (button == null) return;
+        int iconColor = elegirColorTextoBotonTema(
+                backgroundColor,
+                tm.color(ThemeKeys.ICON_ACTIVE),
+                tm.color(ThemeKeys.BUTTON_TEXT_DARK),
+                tm.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                tm.color(ThemeKeys.TEXT_PRIMARY),
+                tm.color(ThemeKeys.TEXT_SECONDARY)
+        );
+        button.setBackground(crearFondoBubbleTema(backgroundColor, iconColor));
+        button.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN);
+        button.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+        ThemeApplier.animatePress(button);
     }
 
     private void mostrarOpcionesFotoPerfil() {

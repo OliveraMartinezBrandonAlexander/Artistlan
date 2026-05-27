@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,11 +7,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
-    android:orientation="vertical"
     android:clickable="true"
     android:focusable="true"
     tools:context=".Fragments.FragVerPerfil">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
 
     <View
@@ -53,14 +56,19 @@
                     android:layout_marginEnd="6dp"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
+                    android:clipChildren="true"
+                    android:clipToPadding="true"
                     app:cardCornerRadius="22dp"
                     app:cardElevation="6dp"
                     app:cardBackgroundColor="@android:color/transparent"
                     app:strokeWidth="1dp">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/contenidoPerfilCard"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:clipChildren="true"
+                        android:clipToPadding="true"
                         android:paddingStart="18dp"
                         android:paddingTop="18dp"
                         android:paddingEnd="18dp"
@@ -336,6 +344,14 @@
                                     android:textSize="14sp"
                                     android:hint="Redes sociales" />
 
+                                <LinearLayout
+                                    android:id="@+id/contenedorRedesChips"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="10dp"
+                                    android:orientation="vertical"
+                                    android:visibility="gone" />
+
                             </LinearLayout>
                         </LinearLayout>
 
@@ -347,7 +363,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp"
                     android:layout_marginBottom="8dp"
+                    android:gravity="center"
                     android:text="Mis favoritos"
                     android:textStyle="bold"
                     android:textSize="18sp"/>
@@ -366,23 +384,23 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@android:color/transparent"
-                        app:tabBackground="@drawable/bg_centro_tab_item"
                         app:tabGravity="fill"
                         app:tabIndicatorColor="@android:color/transparent"
                         app:tabIndicatorHeight="0dp"
                         app:tabMode="fixed"
-                        app:tabRippleColor="@color/artistlan_menu_accent_soft"
-                        app:tabSelectedTextColor="@color/artistlan_menu_text_primary"
-                        app:tabTextColor="@color/artistlan_menu_text_secondary" />
+                        app:tabRippleColor="@android:color/transparent" />
                 </FrameLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recyclerFavoritosPerfil"
                     android:layout_width="match_parent"
-                    android:layout_height="420dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
                     android:layout_marginEnd="6dp"
-                    android:layout_marginTop="8dp"/>
+                    android:layout_marginTop="8dp"
+                    android:minHeight="420dp"
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never"/>
 
                 <TextView
                     android:id="@+id/tvFavoritosVacio"
@@ -399,4 +417,73 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-</LinearLayout>
+    </LinearLayout>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardPerfilCompactoFlotante"
+        android:layout_width="match_parent"
+        android:layout_height="78dp"
+        android:layout_gravity="top"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="74dp"
+        android:layout_marginEnd="16dp"
+        android:alpha="0"
+        android:clickable="true"
+        android:focusable="true"
+        android:translationY="-8dp"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="8dp"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:id="@+id/headerPerfilCompacto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="6dp">
+
+            <FrameLayout
+                android:id="@+id/frameFotoPerfilCompacta"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:padding="4dp">
+
+                <ImageView
+                    android:id="@+id/imgPerfilCompacta"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/img_redonda"
+                    android:clipToOutline="true"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/fotoperfilprueba" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/tvNombrePerfilCompacto"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="center_vertical"
+                android:maxLines="2"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnEditarPerfilCompacto"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="Editar perfil"
+                android:padding="9dp"
+                android:src="@drawable/ic_edit" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</FrameLayout>

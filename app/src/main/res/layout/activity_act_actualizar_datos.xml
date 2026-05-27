@@ -1,29 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/main"
-    android:orientation="vertical"
     tools:context=".Activitys.ActActualizarDatos">
 
-    <include layout="@layout/layout_menu_superior" />
+    <View
+        android:id="@+id/AdGlowTop"
+        android:layout_width="260dp"
+        android:layout_height="260dp"
+        android:alpha="0.45"
+        android:background="@drawable/bg_glow_purple"
+        android:translationX="-60dp"
+        android:translationY="-40dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <View
-        android:id="@+id/IsTopDivider"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@android:color/black" />
+        android:id="@+id/AdGlowCenter"
+        android:layout_width="220dp"
+        android:layout_height="220dp"
+        android:alpha="0.22"
+        android:background="@drawable/bg_glow_soft_white"
+        android:translationY="80dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/AdGlowBottom"
+        android:layout_width="320dp"
+        android:layout_height="320dp"
+        android:alpha="0.42"
+        android:background="@drawable/bg_glow_pink"
+        android:translationX="80dp"
+        android:translationY="80dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <LinearLayout
+        android:id="@+id/AdContent"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:paddingStart="30dp"
-        android:paddingTop="30dp"
-        android:paddingEnd="30dp"
-        android:paddingBottom="30dp">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <include layout="@layout/layout_menu_superior" />
+
+        <View
+            android:id="@+id/IsTopDivider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/black" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingStart="30dp"
+            android:paddingTop="30dp"
+            android:paddingEnd="30dp"
+            android:paddingBottom="30dp">
 
         <ScrollView
             android:id="@+id/scrollActualizarDatos"
@@ -45,7 +87,6 @@
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:src="@drawable/regresarimg"
-                    android:background="@drawable/bg_back_bubble"
                     android:scaleType="centerInside"
                     android:adjustViewBounds="true"
                     android:padding="4dp" />
@@ -151,13 +192,34 @@
                     android:background="@drawable/bg_form_glass_panel"
                     android:layout_gravity="center"/>
 
-                <ImageView
-                    android:id="@+id/btnCambiarFoto"
-                    android:src="@drawable/camarafotoperfil"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
+                <LinearLayout
+                    android:id="@+id/contenedorCambiarFoto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:padding="5dp"/>
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="12dp"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/btnCambiarFoto"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:adjustViewBounds="true"
+                        android:padding="10dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_photo_camera_artistlan" />
+
+                    <TextView
+                        android:id="@+id/tvCambiarFotografia"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Cambiar fotografía"
+                        android:textSize="13sp" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvNombre"
@@ -325,8 +387,6 @@
                     android:text="Actualizar"
                     android:padding="10dp"
                     android:layout_marginBottom="24dp"
-                    android:background="@drawable/bg_btn_bubble_glass_primary"
-                    android:textColor="@color/artistlan_text_primary"
                     android:layout_gravity="center_horizontal" />
 
                 <Button
@@ -335,11 +395,10 @@
                     android:layout_height="50dp"
                     android:text="Desactivar cuenta"
                     android:layout_marginBottom="16dp"
-                    android:layout_gravity="center_horizontal"
-                    android:background="@drawable/bg_btn_bubble_glass_secondary"
-                    android:textColor="@color/artistlan_text_primary" />
+                    android:layout_gravity="center_horizontal" />
 
             </LinearLayout>
         </ScrollView>
+        </FrameLayout>
     </LinearLayout>
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

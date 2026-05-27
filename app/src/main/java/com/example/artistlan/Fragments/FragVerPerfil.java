@@ -4,14 +4,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -27,6 +30,7 @@ import androidx.cardview.widget.CardView;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -63,6 +67,7 @@ import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAd
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 import com.example.artistlan.utils.DialogThemeHelper;
 import com.example.artistlan.utils.LikeStateManager;
+import com.example.artistlan.utils.SocialNetworkHelper;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
@@ -77,19 +82,32 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private static final long PERFIL_REFRESH_MIN_INTERVAL_MS = 3500L;
     private static final long FAVORITOS_REFRESH_MIN_INTERVAL_MS = 2500L;
     private static final String PREF_KEY_PERFIL_TAB_INDEX = "perfil_favoritos_tab_index";
+    private static final long TAB_TRANSITION_DURATION_MS = 220L;
+    private static final long CONTENT_TRANSITION_DURATION_MS = 160L;
+    private static final long CONTENT_REANIMATION_MIN_INTERVAL_MS = 650L;
+    private static final int PERFIL_FLOATING_HEADER_START_DP = 170;
+    private static final int PERFIL_FLOATING_HEADER_RANGE_DP = 60;
 
     private TextView tvNombre, tvUsuario, tvCorreo, tvDescripcion, tvTelefono, tvRedes, tvFecNac, tvCategoria, tvUbicacion, tvFavoritosVacio;
     private ImageView imgFotoPerfil;
+    private ImageView imgFotoPerfilCompacta;
     private ImageButton btnEditarPefil;
+    private ImageButton btnEditarPerfilCompacto;
     private CardView cardPerfilInfo;
+    private MaterialCardView cardPerfilCompactoFlotante;
     private FrameLayout frameFotoPerfil;
+    private FrameLayout frameFotoPerfilCompacta;
     private LinearLayout panelInfo;
     private View expandedSectionPerfil;
+    private View headerPerfilCompacto;
     private NestedScrollView scrollPerfil;
     private RecyclerView recyclerFavoritos;
     private TabLayout tabFavoritos;
     private View contenedorTabsFavoritos;
+    private View indicadorTabsFavoritos;
+    private LinearLayout contenedorRedesChips;
     private TextView tvTituloFavoritos;
+    private TextView tvNombrePerfilCompacto;
     private Button btnDesactivar2FA;
     private SessionManager sessionManager;
     private Auth2FAApi auth2FAApi;
@@ -117,6 +135,12 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private float swipeStartY = 0f;
     private boolean swipeHorizontalDetectado = false;
     private boolean validacionPassword2faEnCurso = false;
+    private int perfilFloatingHeaderStartPx = 0;
+    private int perfilFloatingHeaderRangePx = 0;
+    private int ultimoTabAnimacionContenido = -1;
+    private long ultimaAnimacionContenidoMs = 0L;
+    private String redesPerfilActual = "";
+    private boolean redesExpandidas = false;
     private final Set<String> favoritosEnCurso = new HashSet<>();
 
     @Override
@@ -150,6 +174,8 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
         btnEditarPefil = view.findViewById(R.id.btnEditarPefil);
         btnEditarPefil.setOnClickListener(this);
+        btnEditarPerfilCompacto = view.findViewById(R.id.btnEditarPerfilCompacto);
+        btnEditarPerfilCompacto.setOnClickListener(this);
 
         tvNombre = view.findViewById(R.id.VrpTxvNombre);
         tvUsuario = view.findViewById(R.id.VrpTxvUsuario);
@@ -157,17 +183,30 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tvDescripcion = view.findViewById(R.id.VrpTxvDescripcion);
         tvTelefono = view.findViewById(R.id.VrpTxvTelefono);
         tvRedes = view.findViewById(R.id.VrpTxvRedes);
+        contenedorRedesChips = view.findViewById(R.id.contenedorRedesChips);
         tvFecNac = view.findViewById(R.id.VrpTxvFecNac);
         tvCategoria = view.findViewById(R.id.VrpTxvCategoria);
         tvUbicacion = view.findViewById(R.id.VrpTxvUbicacion);
         frameFotoPerfil = view.findViewById(R.id.frameFotoPerfil);
+        frameFotoPerfilCompacta = view.findViewById(R.id.frameFotoPerfilCompacta);
+        cardPerfilCompactoFlotante = view.findViewById(R.id.cardPerfilCompactoFlotante);
+        cardPerfilCompactoFlotante.setOnClickListener(v -> {
+            if (scrollPerfil != null) {
+                scrollPerfil.smoothScrollTo(0, 0);
+            }
+        });
         imgFotoPerfil = view.findViewById(R.id.imgPerfil);
+        imgFotoPerfilCompacta = view.findViewById(R.id.imgPerfilCompacta);
+        headerPerfilCompacto = view.findViewById(R.id.headerPerfilCompacto);
+        tvNombrePerfilCompacto = view.findViewById(R.id.tvNombrePerfilCompacto);
         recyclerFavoritos = view.findViewById(R.id.recyclerFavoritosPerfil);
         tvFavoritosVacio = view.findViewById(R.id.tvFavoritosVacio);
         tabFavoritos = view.findViewById(R.id.tabFavoritosPerfil);
         contenedorTabsFavoritos = view.findViewById(R.id.contenedorTabsFavoritosPerfil);
         tvTituloFavoritos = view.findViewById(R.id.tvTituloFavoritosPerfil);
         crearBotonDesactivar2FASiHaceFalta(view);
+        configurarScrollUnificadoFavoritos();
+        configurarAnimacionScrollPerfil();
 
         recyclerFavoritos.setLayoutManager(new LinearLayoutManager(requireContext()));
         obraAdapter = new TarjetaTextoObraAdapter(new ArrayList<>(), requireContext());
@@ -190,11 +229,51 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         refrescarDatosPerfilDesdeApi();
     }
 
+    private void configurarScrollUnificadoFavoritos() {
+        if (recyclerFavoritos == null) {
+            return;
+        }
+        recyclerFavoritos.setNestedScrollingEnabled(false);
+        recyclerFavoritos.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        recyclerFavoritos.setHasFixedSize(false);
+        recyclerFavoritos.setItemAnimator(null);
+        recyclerFavoritos.setItemViewCacheSize(6);
+    }
+
+    private void configurarAnimacionScrollPerfil() {
+        if (scrollPerfil == null) {
+            return;
+        }
+        perfilFloatingHeaderStartPx = dpToPx(PERFIL_FLOATING_HEADER_START_DP);
+        perfilFloatingHeaderRangePx = dpToPx(PERFIL_FLOATING_HEADER_RANGE_DP);
+        aplicarAnimacionScrollPerfil(scrollPerfil.getScrollY());
+        scrollPerfil.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener) (v, scrollX, scrollY, oldScrollX, oldScrollY) ->
+                aplicarAnimacionScrollPerfil(scrollY)
+        );
+    }
+
+    private void aplicarAnimacionScrollPerfil(int scrollY) {
+        if (perfilFloatingHeaderRangePx <= 0) {
+            return;
+        }
+        float progress = Math.max(0f, Math.min(1f,
+                (scrollY - perfilFloatingHeaderStartPx) / (float) perfilFloatingHeaderRangePx));
+        if (cardPerfilCompactoFlotante != null) {
+            cardPerfilCompactoFlotante.setAlpha(progress);
+            cardPerfilCompactoFlotante.setTranslationY(-dpToPx(8) * (1f - progress));
+            cardPerfilCompactoFlotante.setEnabled(progress > 0.05f);
+        }
+    }
+
     @Override
     public void onResume() {
         super.onResume();
-        refreshThemeOnly();
+        refreshThemeOnly(true);
+        if (scrollPerfil != null) {
+            aplicarAnimacionScrollPerfil(scrollPerfil.getScrollY());
+        }
         cargarDatosUsuario();
+        agendarRestauracionVisualTabsFavoritos();
         long ahora = android.os.SystemClock.elapsedRealtime();
         if (ahora - ultimoRefreshPerfilMs >= PERFIL_REFRESH_MIN_INTERVAL_MS) {
             refrescarDatosPerfilDesdeApi();
@@ -203,18 +282,23 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     }
 
     private void refreshThemeOnly() {
+        refreshThemeOnly(false);
+    }
+
+    private void refreshThemeOnly(boolean force) {
         if (!isAdded()) {
             return;
         }
         themeManager = new ThemeManager(requireContext());
         int firmaTemaActual = calcularFirmaTemaPerfil();
-        if (firmaTemaActual == ultimoColorTemaAplicado) {
+        boolean temaCambio = firmaTemaActual != ultimoColorTemaAplicado;
+        if (!force && !temaCambio) {
             return;
         }
         ultimoColorTemaAplicado = firmaTemaActual;
         aplicarTemaVisualPerfil();
         RecyclerView.Adapter<?> currentAdapter = recyclerFavoritos != null ? recyclerFavoritos.getAdapter() : null;
-        if (currentAdapter != null && currentAdapter.getItemCount() > 0) {
+        if (temaCambio && currentAdapter != null && currentAdapter.getItemCount() > 0) {
             currentAdapter.notifyDataSetChanged();
         }
     }
@@ -237,8 +321,26 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 materialCard.setStrokeWidth(dpToPx(1));
             }
         }
+        if (cardPerfilCompactoFlotante != null) {
+            cardPerfilCompactoFlotante.setCardBackgroundColor(
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.BG_MID), 238)
+            );
+            cardPerfilCompactoFlotante.setRadius(dpToPx(20));
+            cardPerfilCompactoFlotante.setCardElevation(dpToPx(8));
+            cardPerfilCompactoFlotante.setStrokeColor(
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.CARD_BORDER), 150)
+            );
+            cardPerfilCompactoFlotante.setStrokeWidth(dpToPx(1));
+        }
         if (frameFotoPerfil != null) {
             frameFotoPerfil.setBackground(crearFondoOval(
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.ACCENT_PRIMARY), 38),
+                    themeManager.color(ThemeKeys.CARD_BORDER),
+                    2
+            ));
+        }
+        if (frameFotoPerfilCompacta != null) {
+            frameFotoPerfilCompacta.setBackground(crearFondoOval(
                     ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.ACCENT_PRIMARY), 38),
                     themeManager.color(ThemeKeys.CARD_BORDER),
                     2
@@ -250,7 +352,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         if (panelInfo != null) {
             panelInfo.setBackground(null);
         }
-        if (tvRedes != null) {
+        if (tvRedes != null && tvRedes.getVisibility() == View.VISIBLE) {
             tvRedes.setBackground(crearFondoRedondeado(
                     ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), 165),
                     ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE), 135),
@@ -278,9 +380,19 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
             ));
             ThemeApplier.applyIcon(btnEditarPefil, themeManager, ThemeKeys.ICON_ACTIVE);
         }
+        if (btnEditarPerfilCompacto != null) {
+            btnEditarPerfilCompacto.setBackground(crearFondoRedondeado(
+                    themeManager.color(ThemeKeys.CARD_CHIP_BG),
+                    themeManager.color(ThemeKeys.ACCENT_PRIMARY),
+                    1,
+                    14
+            ));
+            ThemeApplier.applyIcon(btnEditarPerfilCompacto, themeManager, ThemeKeys.ICON_ACTIVE);
+        }
         aplicarTemaTabsFavoritos();
         aplicarColorTextoRecursivo(cardPerfilInfo, themeManager.color(ThemeKeys.TEXT_PRIMARY));
         ThemeApplier.applyTextPrimary(tvNombre, themeManager);
+        ThemeApplier.applyTextPrimary(tvNombrePerfilCompacto, themeManager);
         ThemeApplier.applyTextSecondary(tvDescripcion, themeManager);
         ThemeApplier.applyTextSecondary(tvUsuario, themeManager);
         ThemeApplier.applyTextSecondary(tvCorreo, themeManager);
@@ -294,6 +406,8 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         if (btnDesactivar2FA != null) {
             ThemeApplier.applySecondaryButton(btnDesactivar2FA, themeManager);
         }
+        actualizarPresentacionRedes(redesPerfilActual);
+        restaurarEstadoVisualTabsFavoritos();
     }
 
     @Nullable
@@ -305,12 +419,16 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private int calcularFirmaTemaPerfil() {
         int result = 17;
         result = 31 * result + themeManager.color(ThemeKeys.ACCENT_PRIMARY);
+        result = 31 * result + themeManager.color(ThemeKeys.BG_MID);
         result = 31 * result + themeManager.color(ThemeKeys.ACCOUNT_GLASS_PANEL);
         result = 31 * result + themeManager.color(ThemeKeys.ACCOUNT_GLASS_STROKE);
         result = 31 * result + themeManager.color(ThemeKeys.CARD_BORDER);
         result = 31 * result + themeManager.color(ThemeKeys.CARD_CHIP_BG);
         result = 31 * result + themeManager.color(ThemeKeys.FILTER_BUTTON_BG);
         result = 31 * result + themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE);
+        result = 31 * result + themeManager.color(ThemeKeys.BUTTON_SECONDARY_BG);
+        result = 31 * result + themeManager.color(ThemeKeys.BUTTON_TEXT_DARK);
+        result = 31 * result + themeManager.color(ThemeKeys.BUTTON_TEXT_LIGHT);
         result = 31 * result + themeManager.color(ThemeKeys.INPUT_BG);
         result = 31 * result + themeManager.color(ThemeKeys.INPUT_STROKE);
         result = 31 * result + themeManager.color(ThemeKeys.TEXT_PRIMARY);
@@ -336,6 +454,177 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         return drawable;
     }
 
+    private void actualizarPresentacionRedes(@Nullable String redes) {
+        redesPerfilActual = redes == null ? "" : redes;
+        if (contenedorRedesChips == null || themeManager == null) {
+            if (tvRedes != null) {
+                tvRedes.setText(redesPerfilActual.trim().isEmpty() ? "Sin redes" : redesPerfilActual);
+            }
+            return;
+        }
+
+        List<String> items = SocialNetworkHelper.separarRedes(redesPerfilActual);
+        contenedorRedesChips.removeAllViews();
+        if (tvRedes != null) {
+            tvRedes.setVisibility(View.GONE);
+        }
+
+        if (items.isEmpty()) {
+            contenedorRedesChips.setVisibility(View.VISIBLE);
+            LinearLayout row = crearFilaRedes();
+            row.addView(crearChipRedSocial("Sin redes", R.drawable.ic_social_link, null));
+            contenedorRedesChips.addView(row);
+            return;
+        }
+
+        contenedorRedesChips.setVisibility(View.VISIBLE);
+        LinearLayout filaActual = null;
+        int maxChipsVisibles = 4;
+        int visibles = redesExpandidas ? items.size() : Math.min(items.size(), maxChipsVisibles);
+        for (int i = 0; i < visibles; i++) {
+            if (i % 2 == 0) {
+                filaActual = crearFilaRedes();
+                contenedorRedesChips.addView(filaActual);
+            }
+            String item = items.get(i);
+            boolean chipMas = !redesExpandidas && i == maxChipsVisibles - 1 && items.size() > maxChipsVisibles;
+            String etiqueta = chipMas
+                    ? "+" + (items.size() - maxChipsVisibles + 1)
+                    : SocialNetworkHelper.crearEtiquetaCorta(item);
+            int icono = chipMas
+                    ? R.drawable.ic_social_link
+                    : SocialNetworkHelper.resolverIconoRedSocial(item);
+            filaActual.addView(crearChipRedSocial(etiqueta, icono, chipMas ? this::toggleRedesExpandidas : null));
+        }
+        if (redesExpandidas && items.size() > maxChipsVisibles) {
+            if (visibles % 2 == 0) {
+                filaActual = crearFilaRedes();
+                contenedorRedesChips.addView(filaActual);
+            }
+            filaActual.addView(crearChipRedSocial("Ver menos", R.drawable.ic_social_link, this::toggleRedesExpandidas));
+        }
+    }
+
+    private void toggleRedesExpandidas() {
+        redesExpandidas = !redesExpandidas;
+        actualizarPresentacionRedes(redesPerfilActual);
+    }
+
+    @NonNull
+    private LinearLayout crearFilaRedes() {
+        LinearLayout row = new LinearLayout(requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.START);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.bottomMargin = dpToPx(6);
+        row.setLayoutParams(params);
+        return row;
+    }
+
+    @NonNull
+    private LinearLayout crearChipRedSocial(@NonNull String texto, int iconRes, @Nullable Runnable onClick) {
+        LinearLayout chip = new LinearLayout(requireContext());
+        chip.setOrientation(LinearLayout.HORIZONTAL);
+        chip.setGravity(Gravity.CENTER_VERTICAL);
+        chip.setPadding(dpToPx(9), dpToPx(6), dpToPx(10), dpToPx(6));
+        int chipFill = ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.CARD_CHIP_BG), 220);
+        int chipStroke = ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE), 150);
+        int iconColor = elegirColorConContraste(
+                chipFill,
+                3.0d,
+                themeManager.color(ThemeKeys.ICON_ACTIVE),
+                themeManager.color(ThemeKeys.TEXT_PRIMARY),
+                themeManager.color(ThemeKeys.TEXT_SECONDARY),
+                themeManager.color(ThemeKeys.BUTTON_TEXT_DARK),
+                themeManager.color(ThemeKeys.BUTTON_TEXT_LIGHT)
+        );
+        int textColor = elegirColorConContraste(
+                chipFill,
+                4.5d,
+                themeManager.color(ThemeKeys.TEXT_PRIMARY),
+                themeManager.color(ThemeKeys.TEXT_SECONDARY),
+                themeManager.color(ThemeKeys.BUTTON_TEXT_DARK),
+                themeManager.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                themeManager.color(ThemeKeys.ICON_ACTIVE)
+        );
+        chip.setBackground(crearFondoRedondeado(
+                chipFill,
+                chipStroke,
+                1,
+                14
+        ));
+        if (onClick != null) {
+            chip.setClickable(true);
+            chip.setFocusable(true);
+            chip.setOnClickListener(v -> onClick.run());
+        }
+
+        LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(0, dpToPx(34), 1f);
+        chipParams.setMarginEnd(dpToPx(6));
+        chip.setLayoutParams(chipParams);
+
+        ImageView icon = new ImageView(requireContext());
+        icon.setImageResource(iconRes);
+        icon.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(16), dpToPx(16));
+        iconParams.setMarginEnd(dpToPx(6));
+        chip.addView(icon, iconParams);
+
+        TextView label = new TextView(requireContext());
+        label.setText(texto);
+        label.setTextColor(textColor);
+        label.setTextSize(12);
+        label.setSingleLine(true);
+        label.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        label.setIncludeFontPadding(false);
+        chip.addView(label, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        return chip;
+    }
+
+    private int elegirColorConContraste(int backgroundColor, double minContrast, int preferredColor, int... candidates) {
+        int opaqueBackground = asegurarBackgroundOpacoParaContraste(backgroundColor);
+        if (contrasteSeguro(preferredColor, opaqueBackground) >= minContrast) {
+            return preferredColor;
+        }
+        int selected = preferredColor;
+        double bestContrast = contrasteSeguro(preferredColor, opaqueBackground);
+        for (int candidate : candidates) {
+            double contrast = contrasteSeguro(candidate, opaqueBackground);
+            if (contrast > bestContrast) {
+                bestContrast = contrast;
+                selected = candidate;
+            }
+        }
+        if (bestContrast >= minContrast) {
+            return selected;
+        }
+        double contrastWhite = contrasteSeguro(Color.WHITE, opaqueBackground);
+        double contrastBlack = contrasteSeguro(Color.BLACK, opaqueBackground);
+        return contrastWhite >= contrastBlack ? Color.WHITE : Color.BLACK;
+    }
+
+    private int asegurarBackgroundOpacoParaContraste(int backgroundColor) {
+        if (Color.alpha(backgroundColor) == 255) {
+            return backgroundColor;
+        }
+        int baseColor = themeManager != null
+                ? themeManager.color(ThemeKeys.BG_MID)
+                : Color.BLACK;
+        int opaqueBase = ColorUtils.setAlphaComponent(baseColor, 255);
+        return ColorUtils.compositeColors(backgroundColor, opaqueBase);
+    }
+
+    private double contrasteSeguro(int foregroundColor, int opaqueBackgroundColor) {
+        try {
+            return ColorUtils.calculateContrast(foregroundColor, ColorUtils.setAlphaComponent(opaqueBackgroundColor, 255));
+        } catch (IllegalArgumentException ignored) {
+            return 0d;
+        }
+    }
+
     private void aplicarColorTextoRecursivo(@Nullable View view, int textColor) {
         if (view == null) {
             return;
@@ -353,20 +642,25 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     private void setupTabs() {
         tabFavoritos.removeAllTabs();
-        tabFavoritos.addTab(tabFavoritos.newTab().setText("Obras"));
-        tabFavoritos.addTab(tabFavoritos.newTab().setText("Servicios"));
-        tabFavoritos.addTab(tabFavoritos.newTab().setText("Usuarios"));
+        tabFavoritos.addTab(crearTabFavoritos("Obras"));
+        tabFavoritos.addTab(crearTabFavoritos("Servicios"));
+        tabFavoritos.addTab(crearTabFavoritos("Artistas"));
+        prepararIndicadorTabsFavoritos();
         aplicarTemaTabsFavoritos();
         tabFavoritos.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                int previousTabIndex = selectedTabIndex;
                 selectedTabIndex = clampTabIndex(tab.getPosition());
+                aplicarEstadoTabFavoritos(tab, true, true, previousTabIndex);
+                moverIndicadorTabsFavoritos(selectedTabIndex, true);
                 guardarTabFavoritosPersistido(selectedTabIndex);
                 solicitarCargaFavoritos(selectedTabIndex, false);
             }
 
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
+                aplicarEstadoTabFavoritos(tab, false, true);
             }
 
             @Override
@@ -376,6 +670,32 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 solicitarCargaFavoritos(selectedTabIndex, false);
             }
         });
+    }
+
+    private void prepararIndicadorTabsFavoritos() {
+        if (!(contenedorTabsFavoritos instanceof FrameLayout) || indicadorTabsFavoritos != null) {
+            return;
+        }
+        indicadorTabsFavoritos = new View(requireContext());
+        indicadorTabsFavoritos.setBackground(crearFondoTabFavoritosActivo());
+        indicadorTabsFavoritos.setAlpha(1f);
+        indicadorTabsFavoritos.setTranslationZ(0f);
+        tabFavoritos.bringToFront();
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(0, 0);
+        ((FrameLayout) contenedorTabsFavoritos).addView(indicadorTabsFavoritos, 0, params);
+    }
+
+    private TabLayout.Tab crearTabFavoritos(@NonNull String texto) {
+        TextView tabView = new TextView(requireContext());
+        tabView.setText(texto);
+        tabView.setGravity(Gravity.CENTER);
+        tabView.setSingleLine(true);
+        tabView.setTextSize(13);
+        tabView.setTypeface(tabView.getTypeface(), android.graphics.Typeface.BOLD);
+        tabView.setMinHeight(dpToPx(42));
+        tabView.setPadding(dpToPx(10), dpToPx(8), dpToPx(10), dpToPx(8));
+        tabView.setIncludeFontPadding(false);
+        return tabFavoritos.newTab().setText(texto).setCustomView(tabView);
     }
 
     private void configurarSwipeFavoritos() {
@@ -443,15 +763,274 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         if (tabFavoritos == null || themeManager == null) {
             return;
         }
+        int selectedTextColor = resolverColorTextoSobre(themeManager.color(ThemeKeys.ACCENT_PRIMARY));
         tabFavoritos.setTabTextColors(
                 themeManager.color(ThemeKeys.TEXT_SECONDARY),
-                themeManager.color(ThemeKeys.TEXT_PRIMARY)
+                selectedTextColor
         );
-        tabFavoritos.setSelectedTabIndicatorColor(themeManager.color(ThemeKeys.ACCENT_PRIMARY));
-        tabFavoritos.setTabRippleColor(ColorStateList.valueOf(themeManager.color(ThemeKeys.CARD_CHIP_BG)));
-        if (tabFavoritos.getBackground() != null) {
-            tabFavoritos.getBackground().setColorFilter(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), PorterDuff.Mode.SRC_ATOP);
+        tabFavoritos.setSelectedTabIndicatorColor(android.graphics.Color.TRANSPARENT);
+        tabFavoritos.setTabRippleColor(ColorStateList.valueOf(
+                ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.ACCENT_PRIMARY), 34)
+        ));
+        if (contenedorTabsFavoritos != null) {
+            contenedorTabsFavoritos.setBackground(crearFondoRedondeado(
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), 190),
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE), 150),
+                    1,
+                    16
+            ));
         }
+        if (indicadorTabsFavoritos != null) {
+            indicadorTabsFavoritos.setBackground(crearFondoTabFavoritosActivo());
+        }
+        int selectedPosition = tabFavoritos.getSelectedTabPosition();
+        if (selectedPosition < 0) {
+            selectedPosition = selectedTabIndex;
+        }
+        for (int i = 0; i < tabFavoritos.getTabCount(); i++) {
+            TabLayout.Tab tab = tabFavoritos.getTabAt(i);
+            aplicarEstadoTabFavoritos(tab, i == selectedPosition, false);
+        }
+        agendarRestauracionVisualTabsFavoritos();
+    }
+
+    private void agendarRestauracionVisualTabsFavoritos() {
+        if (tabFavoritos == null || contenedorTabsFavoritos == null) {
+            return;
+        }
+        restaurarEstadoVisualTabsFavoritos();
+        View target = contenedorTabsFavoritos;
+        target.post(() -> {
+            if (!isAdded()) {
+                return;
+            }
+            restaurarEstadoVisualTabsFavoritos();
+            ViewTreeObserver observer = target.getViewTreeObserver();
+            if (!observer.isAlive()) {
+                return;
+            }
+            observer.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    ViewTreeObserver currentObserver = target.getViewTreeObserver();
+                    if (currentObserver.isAlive()) {
+                        currentObserver.removeOnPreDrawListener(this);
+                    }
+                    if (isAdded()) {
+                        restaurarEstadoVisualTabsFavoritos();
+                    }
+                    return true;
+                }
+            });
+        });
+    }
+
+    private void restaurarEstadoVisualTabsFavoritos() {
+        if (tabFavoritos == null || tabFavoritos.getTabCount() == 0 || themeManager == null) {
+            return;
+        }
+        int activeIndex = tabFavoritos.getSelectedTabPosition();
+        if (activeIndex < 0) {
+            activeIndex = selectedTabIndex;
+        }
+        selectedTabIndex = clampTabIndex(activeIndex);
+        TabLayout.Tab activeTab = tabFavoritos.getTabAt(selectedTabIndex);
+        if (activeTab != null && tabFavoritos.getSelectedTabPosition() != selectedTabIndex) {
+            activeTab.select();
+        }
+        restaurarTransformacionesTabsFavoritos();
+        if (indicadorTabsFavoritos != null) {
+            indicadorTabsFavoritos.animate().cancel();
+        }
+        for (int i = 0; i < tabFavoritos.getTabCount(); i++) {
+            aplicarEstadoTabFavoritos(tabFavoritos.getTabAt(i), i == selectedTabIndex, false);
+        }
+        if (indicadorTabsFavoritos != null) {
+            indicadorTabsFavoritos.setVisibility(View.VISIBLE);
+            indicadorTabsFavoritos.setAlpha(1f);
+            indicadorTabsFavoritos.setScaleX(1f);
+            indicadorTabsFavoritos.setScaleY(1f);
+            indicadorTabsFavoritos.setBackground(crearFondoTabFavoritosActivo());
+            indicadorTabsFavoritos.setTranslationZ(0f);
+        }
+        if (tabFavoritos != null) {
+            tabFavoritos.bringToFront();
+        }
+        moverIndicadorTabsFavoritos(selectedTabIndex, false);
+    }
+
+    private void restaurarTransformacionesTabsFavoritos() {
+        if (contenedorTabsFavoritos != null) {
+            contenedorTabsFavoritos.animate().cancel();
+            contenedorTabsFavoritos.setAlpha(1f);
+            contenedorTabsFavoritos.setScaleX(1f);
+            contenedorTabsFavoritos.setScaleY(1f);
+            contenedorTabsFavoritos.setTranslationX(0f);
+            contenedorTabsFavoritos.setTranslationY(0f);
+        }
+        if (tabFavoritos != null) {
+            tabFavoritos.animate().cancel();
+            tabFavoritos.setAlpha(1f);
+            tabFavoritos.setScaleX(1f);
+            tabFavoritos.setScaleY(1f);
+            tabFavoritos.setTranslationX(0f);
+            tabFavoritos.setTranslationY(0f);
+        }
+    }
+
+    private void aplicarEstadoTabFavoritos(@Nullable TabLayout.Tab tab, boolean seleccionado, boolean animar) {
+        aplicarEstadoTabFavoritos(tab, seleccionado, animar, -1);
+    }
+
+    private void aplicarEstadoTabFavoritos(@Nullable TabLayout.Tab tab, boolean seleccionado, boolean animar, int previousTabIndex) {
+        if (tab == null || themeManager == null) {
+            return;
+        }
+        View customView = tab.getCustomView();
+        if (!(customView instanceof TextView)) {
+            return;
+        }
+        TextView tabView = (TextView) customView;
+        tabView.animate().cancel();
+        if (seleccionado) {
+            tabView.setTextColor(resolverColorTextoSobre(themeManager.color(ThemeKeys.ACCENT_PRIMARY)));
+            tabView.setBackground(crearFondoTabFavoritosActivo());
+            tabView.setAlpha(1f);
+            tabView.setScaleX(1f);
+            tabView.setScaleY(1f);
+            if (animar) {
+                tabView.setTranslationX(0f);
+                tabView.setScaleX(0.98f);
+                tabView.setScaleY(0.98f);
+                tabView.animate()
+                        .alpha(1f)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(TAB_TRANSITION_DURATION_MS)
+                        .setInterpolator(new FastOutSlowInInterpolator())
+                        .start();
+            } else {
+                tabView.setTranslationX(0f);
+            }
+        } else {
+            tabView.setTextColor(themeManager.color(ThemeKeys.TEXT_SECONDARY));
+            tabView.setBackground(crearFondoTabFavoritosInactivo());
+            if (animar) {
+                tabView.animate()
+                        .alpha(0.88f)
+                        .translationX(0f)
+                        .scaleX(0.98f)
+                        .scaleY(0.98f)
+                        .setDuration(CONTENT_TRANSITION_DURATION_MS)
+                        .setInterpolator(new FastOutSlowInInterpolator())
+                        .start();
+            } else {
+                tabView.setAlpha(0.88f);
+                tabView.setTranslationX(0f);
+                tabView.setScaleX(0.98f);
+                tabView.setScaleY(0.98f);
+            }
+        }
+    }
+
+    private void moverIndicadorTabsFavoritos(int tabIndex, boolean animar) {
+        if (tabFavoritos == null || indicadorTabsFavoritos == null || contenedorTabsFavoritos == null) {
+            return;
+        }
+        TabLayout.Tab tab = tabFavoritos.getTabAt(clampTabIndex(tabIndex));
+        if (tab == null || tab.getCustomView() == null) {
+            return;
+        }
+        View tabView = tab.getCustomView();
+        if (contenedorTabsFavoritos.getWidth() <= 0 || tabView.getWidth() <= 0 || tabView.getHeight() <= 0) {
+            tabView.post(() -> moverIndicadorTabsFavoritos(tabIndex, animar));
+            return;
+        }
+        indicadorTabsFavoritos.animate().cancel();
+        indicadorTabsFavoritos.setVisibility(View.VISIBLE);
+        indicadorTabsFavoritos.setAlpha(1f);
+
+        int[] containerLocation = new int[2];
+        int[] tabLocation = new int[2];
+        contenedorTabsFavoritos.getLocationOnScreen(containerLocation);
+        tabView.getLocationOnScreen(tabLocation);
+
+        float targetX = tabLocation[0] - containerLocation[0];
+        float targetY = tabLocation[1] - containerLocation[1];
+        ViewGroup.LayoutParams params = indicadorTabsFavoritos.getLayoutParams();
+        if (params.width != tabView.getWidth() || params.height != tabView.getHeight()) {
+            params.width = tabView.getWidth();
+            params.height = tabView.getHeight();
+            indicadorTabsFavoritos.setLayoutParams(params);
+            indicadorTabsFavoritos.requestLayout();
+        }
+        indicadorTabsFavoritos.setY(targetY);
+        if (animar) {
+            indicadorTabsFavoritos.animate()
+                    .x(targetX)
+                    .setDuration(TAB_TRANSITION_DURATION_MS)
+                    .setInterpolator(new FastOutSlowInInterpolator())
+                    .start();
+        } else {
+            indicadorTabsFavoritos.setX(targetX);
+        }
+    }
+
+    private void animarEntradaContenidoFavoritos() {
+        if (recyclerFavoritos == null) {
+            return;
+        }
+        long ahora = android.os.SystemClock.elapsedRealtime();
+        int tabActual = tabFavoritos != null && tabFavoritos.getSelectedTabPosition() >= 0
+                ? tabFavoritos.getSelectedTabPosition()
+                : selectedTabIndex;
+        if (tabActual == ultimoTabAnimacionContenido
+                && ahora - ultimaAnimacionContenidoMs < CONTENT_REANIMATION_MIN_INTERVAL_MS) {
+            recyclerFavoritos.setAlpha(1f);
+            recyclerFavoritos.setTranslationY(0f);
+            return;
+        }
+        ultimoTabAnimacionContenido = tabActual;
+        ultimaAnimacionContenidoMs = ahora;
+        recyclerFavoritos.animate().cancel();
+        recyclerFavoritos.setAlpha(0.82f);
+        recyclerFavoritos.setTranslationY(dpToPx(8));
+        recyclerFavoritos.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(CONTENT_TRANSITION_DURATION_MS)
+                .setInterpolator(new FastOutSlowInInterpolator())
+                .start();
+    }
+
+    private GradientDrawable crearFondoTabFavoritosActivo() {
+        int base = themeManager.color(ThemeKeys.ACCENT_PRIMARY);
+        int end = ColorUtils.blendARGB(base, android.graphics.Color.BLACK, 0.18f);
+        GradientDrawable drawable = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{base, end}
+        );
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setCornerRadius(dpToPx(13));
+        drawable.setStroke(dpToPx(1), ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.CARD_BORDER), 170));
+        return drawable;
+    }
+
+    private GradientDrawable crearFondoTabFavoritosInactivo() {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.BUTTON_SECONDARY_BG), 90));
+        drawable.setCornerRadius(dpToPx(13));
+        drawable.setStroke(dpToPx(1), ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE), 95));
+        return drawable;
+    }
+
+    private int resolverColorTextoSobre(int backgroundColor) {
+        int darkText = themeManager.color(ThemeKeys.BUTTON_TEXT_DARK);
+        int lightText = themeManager.color(ThemeKeys.BUTTON_TEXT_LIGHT);
+        double darkContrast = ColorUtils.calculateContrast(darkText, backgroundColor);
+        double lightContrast = ColorUtils.calculateContrast(lightText, backgroundColor);
+        return darkContrast >= lightContrast ? darkText : lightText;
     }
 
     private void restaurarTabFavoritos() {
@@ -523,11 +1102,14 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         twoFactorEnabled = prefs.getBoolean("twoFactorEnabled", false);
 
         tvNombre.setText(usuario.isEmpty() ? "usuario" : usuario);
+        if (tvNombrePerfilCompacto != null) {
+            tvNombrePerfilCompacto.setText(usuario.isEmpty() ? "usuario" : usuario);
+        }
         tvUsuario.setText(nombre.isEmpty() ? "Nombre no disponible" : nombre);
         tvCorreo.setText(correo.isEmpty() ? "correo no disponible" : correo);
         tvDescripcion.setText(descripcion.isEmpty() ? "Sin descripción" : descripcion);
         tvTelefono.setText(telefono.isEmpty() ? "No disponible" : telefono);
-        tvRedes.setText(redes.isEmpty() ? "Sin redes" : redes);
+        actualizarPresentacionRedes(redes);
         tvFecNac.setText(fechaNac.isEmpty() ? "Sin fecha" : fechaNac);
         tvCategoria.setText(categoria.isEmpty() ? "Sin ocupación" : categoria);
         tvUbicacion.setText(ubicacion.isEmpty() ? "No disponible" : ubicacion);
@@ -540,8 +1122,19 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                     .error(R.drawable.fotoperfilprueba)
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .into(imgFotoPerfil);
+            if (imgFotoPerfilCompacta != null) {
+                Glide.with(this)
+                        .load(fotoPerfil)
+                        .placeholder(R.drawable.fotoperfilprueba)
+                        .error(R.drawable.fotoperfilprueba)
+                        .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                        .into(imgFotoPerfilCompacta);
+            }
         } else {
             imgFotoPerfil.setImageResource(R.drawable.fotoperfilprueba);
+            if (imgFotoPerfilCompacta != null) {
+                imgFotoPerfilCompacta.setImageResource(R.drawable.fotoperfilprueba);
+            }
         }
 
         actualizarEstadoBoton2FA();
@@ -572,11 +1165,14 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 twoFactorEnabled = Boolean.TRUE.equals(user.getTwoFactorEnabled());
 
                 tvNombre.setText(usuario);
+                if (tvNombrePerfilCompacto != null) {
+                    tvNombrePerfilCompacto.setText(usuario);
+                }
                 tvUsuario.setText(nombreCompleto);
                 tvCorreo.setText(correo);
                 tvDescripcion.setText(descripcion);
                 tvTelefono.setText(telefono);
-                tvRedes.setText(redes);
+                actualizarPresentacionRedes(user.getRedesSociales());
                 tvFecNac.setText(fechaNac);
                 tvCategoria.setText(ocupacion);
                 tvUbicacion.setText(ubicacion);
@@ -604,8 +1200,19 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                             .error(R.drawable.fotoperfilprueba)
                             .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                             .into(imgFotoPerfil);
+                    if (imgFotoPerfilCompacta != null) {
+                        Glide.with(FragVerPerfil.this)
+                                .load(fotoPerfil)
+                                .placeholder(R.drawable.fotoperfilprueba)
+                                .error(R.drawable.fotoperfilprueba)
+                                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                                .into(imgFotoPerfilCompacta);
+                    }
                 } else {
                     imgFotoPerfil.setImageResource(R.drawable.fotoperfilprueba);
+                    if (imgFotoPerfilCompacta != null) {
+                        imgFotoPerfilCompacta.setImageResource(R.drawable.fotoperfilprueba);
+                    }
                 }
 
                 actualizarEstadoBoton2FA();
@@ -998,6 +1605,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
             public void onResponse(@NonNull Call<List<FavoritoDTO>> call, @NonNull Response<List<FavoritoDTO>> response) {
                 if (response.code() == 204 || response.body() == null || response.body().isEmpty()) {
                     recyclerFavoritos.setAdapter(null);
+                    animarEntradaContenidoFavoritos();
                     tvFavoritosVacio.setVisibility(View.VISIBLE);
                     return;
                 }
@@ -1025,6 +1633,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
             obraAdapter.actualizarLista(new ArrayList<>());
             obraAdapter.setOwnedObraIds(new HashSet<>());
             recyclerFavoritos.setAdapter(obraAdapter);
+            animarEntradaContenidoFavoritos();
             tvFavoritosVacio.setVisibility(View.VISIBLE);
             return;
         }
@@ -1073,6 +1682,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                         obraAdapter.actualizarLista(items);
                         obraAdapter.setOwnedObraIds(obrasPropias);
                         recyclerFavoritos.setAdapter(obraAdapter);
+                        animarEntradaContenidoFavoritos();
                         tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
                     }
                 }
@@ -1092,6 +1702,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         if (total[0] == 0) {
             servicioAdapter.actualizarLista(new ArrayList<>());
             recyclerFavoritos.setAdapter(servicioAdapter);
+            animarEntradaContenidoFavoritos();
             tvFavoritosVacio.setVisibility(View.VISIBLE);
             return;
         }
@@ -1108,6 +1719,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                     if (done[0] == total[0]) {
                         servicioAdapter.actualizarLista(items);
                         recyclerFavoritos.setAdapter(servicioAdapter);
+                        animarEntradaContenidoFavoritos();
                         tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
                     }
                 }
@@ -1127,6 +1739,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         if (total[0] == 0) {
             artistaAdapter.actualizarLista(new ArrayList<>());
             recyclerFavoritos.setAdapter(artistaAdapter);
+            animarEntradaContenidoFavoritos();
             tvFavoritosVacio.setVisibility(View.VISIBLE);
             return;
         }
@@ -1152,6 +1765,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                             if (done[0] == total[0]) {
                                 artistaAdapter.actualizarLista(items);
                                 recyclerFavoritos.setAdapter(artistaAdapter);
+                                animarEntradaContenidoFavoritos();
                                 tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
                             }
                         });
@@ -1161,6 +1775,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                     if (done[0] == total[0]) {
                         artistaAdapter.actualizarLista(items);
                         recyclerFavoritos.setAdapter(artistaAdapter);
+                        animarEntradaContenidoFavoritos();
                         tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
                     }
                 }
@@ -1199,7 +1814,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.btnEditarPefil) {
+        if (v.getId() == R.id.btnEditarPefil || v.getId() == R.id.btnEditarPerfilCompacto) {
             Intent intent = new Intent(v.getContext(), ActActualizarDatos.class);
             v.getContext().startActivity(intent);
         }

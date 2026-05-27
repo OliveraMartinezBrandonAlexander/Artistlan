@@ -2,24 +2,31 @@ package com.example.artistlan.Fragments;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.widget.NestedScrollView;
-import androidx.core.content.ContextCompat;
+import androidx.cardview.widget.CardView;
+import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.widget.NestedScrollView;
 
 import com.bumptech.glide.Glide;
 import com.example.artistlan.BotonesMenuSuperior;
@@ -34,6 +41,7 @@ import com.example.artistlan.Conector.model.PerfilPublicoArtistaDTO;
 import com.example.artistlan.Conector.model.ServicioDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
@@ -43,6 +51,8 @@ import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAd
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 import com.example.artistlan.utils.LikeStateManager;
 import com.example.artistlan.utils.ReporteUiPermissions;
+import com.example.artistlan.utils.SocialNetworkHelper;
+import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -63,6 +73,7 @@ public class FragVerPerfilPublico extends Fragment {
     private View expandedInfo;
     private View tabsContainer;
     private View indicator;
+    private FrameLayout frameFotoPerfilPublico;
     private ImageView imgPerfil;
     private TextView tvUsuario;
     private TextView tvDescripcion;
@@ -75,17 +86,20 @@ public class FragVerPerfilPublico extends Fragment {
     private TextView btnTabObras;
     private TextView btnTabServicios;
     private Button btnReportarUsuario;
+    private LinearLayout contenedorRedesChips;
     private RecyclerView recyclerPublico;
     private NestedScrollView scrollPerfilPublico;
 
     private boolean expandido = false;
     private boolean mostrandoObras = true;
+    private boolean redesExpandidas = false;
     private float swipeStartX = 0f;
     private float swipeStartY = 0f;
     private boolean swipeHorizontalDetectado = false;
     private int idUsuarioLogueado = -1;
     private int idArtista = -1;
     private String rolUsuarioLogueado = "";
+    private String redesPublicoActual = "";
 
     private TarjetaTextoObraAdapter obraAdapter;
     private TarjetaTextoServicioAdapter servicioAdapter;
@@ -122,15 +136,24 @@ public class FragVerPerfilPublico extends Fragment {
         usuarioApi = RetrofitClient.getClient().create(UsuarioApi.class);
 
         bindViews();
+        aplicarTemaVisualPublico();
         setupExpandCollapse();
         setupTabs();
         setupRecycler();
         cargarPerfilPublico();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        themeManager = new ThemeManager(requireContext());
+        aplicarTemaVisualPublico();
+    }
+
     private void bindViews() {
         cardPerfil = root.findViewById(R.id.cardPerfilPublico);
         expandedInfo = root.findViewById(R.id.expandedInfoPublico);
+        frameFotoPerfilPublico = root.findViewById(R.id.frameFotoPerfilPublico);
         imgPerfil = root.findViewById(R.id.imgPerfilPublico);
         tvUsuario = root.findViewById(R.id.tvNombrePublico);
         tvDescripcion = root.findViewById(R.id.tvDescripcionPublico);
@@ -144,9 +167,288 @@ public class FragVerPerfilPublico extends Fragment {
         btnTabObras = root.findViewById(R.id.btnTabObras);
         btnTabServicios = root.findViewById(R.id.btnTabServicios);
         btnReportarUsuario = root.findViewById(R.id.btnReportarUsuarioPublico);
+        contenedorRedesChips = root.findViewById(R.id.contenedorRedesChipsPublico);
         recyclerPublico = root.findViewById(R.id.recyclerPublico);
         scrollPerfilPublico = root.findViewById(R.id.scrollPerfilPublico);
         tvVacio = root.findViewById(R.id.tvPublicoVacio);
+    }
+
+    private void aplicarTemaVisualPublico() {
+        if (themeManager == null) {
+            return;
+        }
+        if (root != null && root.getBackground() != null) {
+            root.getBackground().setColorFilter(themeManager.color(ThemeKeys.BG_MID), PorterDuff.Mode.SRC_ATOP);
+        }
+        if (cardPerfil instanceof CardView) {
+            CardView card = (CardView) cardPerfil;
+            ThemeApplier.applyCard(card, themeManager, ThemeKeys.ACCOUNT_GLASS_PANEL);
+            card.setRadius(dpToPx(22));
+            card.setCardElevation(dpToPx(6));
+        }
+        if (cardPerfil instanceof MaterialCardView) {
+            MaterialCardView materialCard = (MaterialCardView) cardPerfil;
+            materialCard.setStrokeColor(themeManager.color(ThemeKeys.ACCOUNT_GLASS_STROKE));
+            materialCard.setStrokeWidth(dpToPx(1));
+        }
+        if (frameFotoPerfilPublico != null) {
+            frameFotoPerfilPublico.setBackground(crearFondoOval(
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.ACCENT_PRIMARY), 38),
+                    themeManager.color(ThemeKeys.CARD_BORDER),
+                    2
+            ));
+        }
+        if (tvDescripcion != null) {
+            tvDescripcion.setBackground(null);
+        }
+        if (expandedInfo != null) {
+            expandedInfo.setBackground(null);
+        }
+        aplicarColorTextoRecursivo(cardPerfil, themeManager.color(ThemeKeys.TEXT_PRIMARY));
+        ThemeApplier.applyTextPrimary(tvUsuario, themeManager);
+        ThemeApplier.applyTextSecondary(tvDescripcion, themeManager);
+        ThemeApplier.applyTextSecondary(tvNombreCompleto, themeManager);
+        ThemeApplier.applyTextSecondary(tvFecha, themeManager);
+        ThemeApplier.applyTextSecondary(tvCategorias, themeManager);
+        ThemeApplier.applyTextSecondary(tvUbicacion, themeManager);
+        ThemeApplier.applyTextSecondary(tvRedes, themeManager);
+        ThemeApplier.applyTextSecondary(tvVacio, themeManager);
+        aplicarTemaBotonReportar();
+        aplicarTemaTabsPublicos();
+        actualizarDivisor(R.id.dividerPublicoTop);
+        actualizarDivisor(R.id.dividerPublicoInfo);
+        actualizarDivisor(R.id.dividerPublicoDetalles);
+        actualizarPresentacionRedes(redesPublicoActual);
+    }
+
+    private void aplicarTemaBotonReportar() {
+        if (btnReportarUsuario == null || themeManager == null) {
+            return;
+        }
+        int bg = ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), 225);
+        int stroke = ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE), 185);
+        btnReportarUsuario.setBackgroundTintList(null);
+        btnReportarUsuario.setBackground(crearFondoRedondeado(bg, stroke, 1, 14));
+        btnReportarUsuario.setTextColor(elegirColorConContraste(
+                bg,
+                4.5d,
+                themeManager.color(ThemeKeys.TEXT_PRIMARY),
+                themeManager.color(ThemeKeys.TEXT_SECONDARY),
+                themeManager.color(ThemeKeys.BUTTON_TEXT_DARK),
+                themeManager.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                themeManager.color(ThemeKeys.ICON_ACTIVE)
+        ));
+    }
+
+    private void actualizarDivisor(int id) {
+        if (root == null || themeManager == null) {
+            return;
+        }
+        View divider = root.findViewById(id);
+        if (divider != null) {
+            divider.setBackgroundColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.CARD_BORDER), 90));
+        }
+    }
+
+    private void actualizarPresentacionRedes(@Nullable String redes) {
+        redesPublicoActual = redes == null ? "" : redes;
+        if (contenedorRedesChips == null || themeManager == null) {
+            if (tvRedes != null) {
+                tvRedes.setText(redesPublicoActual.trim().isEmpty() ? "Sin redes" : redesPublicoActual);
+            }
+            return;
+        }
+
+        List<String> items = SocialNetworkHelper.separarRedes(redesPublicoActual);
+        contenedorRedesChips.removeAllViews();
+        if (tvRedes != null) {
+            tvRedes.setVisibility(View.GONE);
+        }
+
+        contenedorRedesChips.setVisibility(View.VISIBLE);
+        if (items.isEmpty()) {
+            LinearLayout row = crearFilaRedes();
+            row.addView(crearChipRedSocial("Sin redes", R.drawable.ic_social_link, null));
+            contenedorRedesChips.addView(row);
+            return;
+        }
+
+        LinearLayout filaActual = null;
+        int maxChipsVisibles = 4;
+        int visibles = redesExpandidas ? items.size() : Math.min(items.size(), maxChipsVisibles);
+        for (int i = 0; i < visibles; i++) {
+            if (i % 2 == 0) {
+                filaActual = crearFilaRedes();
+                contenedorRedesChips.addView(filaActual);
+            }
+            String item = items.get(i);
+            boolean chipMas = !redesExpandidas && i == maxChipsVisibles - 1 && items.size() > maxChipsVisibles;
+            String etiqueta = chipMas
+                    ? "+" + (items.size() - maxChipsVisibles + 1)
+                    : SocialNetworkHelper.crearEtiquetaCorta(item);
+            int icono = chipMas
+                    ? R.drawable.ic_social_link
+                    : SocialNetworkHelper.resolverIconoRedSocial(item);
+            filaActual.addView(crearChipRedSocial(etiqueta, icono, chipMas ? this::toggleRedesExpandidas : null));
+        }
+        if (redesExpandidas && items.size() > maxChipsVisibles) {
+            if (visibles % 2 == 0) {
+                filaActual = crearFilaRedes();
+                contenedorRedesChips.addView(filaActual);
+            }
+            if (filaActual != null) {
+                filaActual.addView(crearChipRedSocial("Ver menos", R.drawable.ic_social_link, this::toggleRedesExpandidas));
+            }
+        }
+    }
+
+    private void toggleRedesExpandidas() {
+        redesExpandidas = !redesExpandidas;
+        actualizarPresentacionRedes(redesPublicoActual);
+    }
+
+    @NonNull
+    private LinearLayout crearFilaRedes() {
+        LinearLayout row = new LinearLayout(requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.START);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.bottomMargin = dpToPx(6);
+        row.setLayoutParams(params);
+        return row;
+    }
+
+    @NonNull
+    private LinearLayout crearChipRedSocial(@NonNull String texto, int iconRes, @Nullable Runnable onClick) {
+        LinearLayout chip = new LinearLayout(requireContext());
+        chip.setOrientation(LinearLayout.HORIZONTAL);
+        chip.setGravity(Gravity.CENTER_VERTICAL);
+        chip.setPadding(dpToPx(9), dpToPx(6), dpToPx(10), dpToPx(6));
+
+        int chipFill = ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.CARD_CHIP_BG), 220);
+        int chipStroke = ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE), 150);
+        int iconColor = elegirColorConContraste(
+                chipFill,
+                3.0d,
+                themeManager.color(ThemeKeys.ICON_ACTIVE),
+                themeManager.color(ThemeKeys.TEXT_PRIMARY),
+                themeManager.color(ThemeKeys.TEXT_SECONDARY),
+                themeManager.color(ThemeKeys.BUTTON_TEXT_DARK),
+                themeManager.color(ThemeKeys.BUTTON_TEXT_LIGHT)
+        );
+        int textColor = elegirColorConContraste(
+                chipFill,
+                4.5d,
+                themeManager.color(ThemeKeys.TEXT_PRIMARY),
+                themeManager.color(ThemeKeys.TEXT_SECONDARY),
+                themeManager.color(ThemeKeys.BUTTON_TEXT_DARK),
+                themeManager.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                themeManager.color(ThemeKeys.ICON_ACTIVE)
+        );
+
+        chip.setBackground(crearFondoRedondeado(chipFill, chipStroke, 1, 14));
+        if (onClick != null) {
+            chip.setClickable(true);
+            chip.setFocusable(true);
+            chip.setOnClickListener(v -> onClick.run());
+        }
+
+        LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(0, dpToPx(34), 1f);
+        chipParams.setMarginEnd(dpToPx(6));
+        chip.setLayoutParams(chipParams);
+
+        ImageView icon = new ImageView(requireContext());
+        icon.setImageResource(iconRes);
+        icon.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(16), dpToPx(16));
+        iconParams.setMarginEnd(dpToPx(6));
+        chip.addView(icon, iconParams);
+
+        TextView label = new TextView(requireContext());
+        label.setText(texto);
+        label.setTextColor(textColor);
+        label.setTextSize(12);
+        label.setSingleLine(true);
+        label.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        label.setIncludeFontPadding(false);
+        chip.addView(label, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        return chip;
+    }
+
+    private GradientDrawable crearFondoRedondeado(int fillColor, int strokeColor, int strokeDp, int radiusDp) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setColor(fillColor);
+        drawable.setCornerRadius(dpToPx(radiusDp));
+        drawable.setStroke(dpToPx(strokeDp), strokeColor);
+        return drawable;
+    }
+
+    private GradientDrawable crearFondoOval(int fillColor, int strokeColor, int strokeDp) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.OVAL);
+        drawable.setColor(fillColor);
+        drawable.setStroke(dpToPx(strokeDp), strokeColor);
+        return drawable;
+    }
+
+    private int elegirColorConContraste(int backgroundColor, double minContrast, int preferredColor, int... candidates) {
+        int opaqueBackground = asegurarBackgroundOpacoParaContraste(backgroundColor);
+        if (contrasteSeguro(preferredColor, opaqueBackground) >= minContrast) {
+            return preferredColor;
+        }
+        int selected = preferredColor;
+        double bestContrast = contrasteSeguro(preferredColor, opaqueBackground);
+        for (int candidate : candidates) {
+            double contrast = contrasteSeguro(candidate, opaqueBackground);
+            if (contrast > bestContrast) {
+                bestContrast = contrast;
+                selected = candidate;
+            }
+        }
+        if (bestContrast >= minContrast) {
+            return selected;
+        }
+        double contrastWhite = contrasteSeguro(Color.WHITE, opaqueBackground);
+        double contrastBlack = contrasteSeguro(Color.BLACK, opaqueBackground);
+        return contrastWhite >= contrastBlack ? Color.WHITE : Color.BLACK;
+    }
+
+    private int asegurarBackgroundOpacoParaContraste(int backgroundColor) {
+        if (Color.alpha(backgroundColor) == 255) {
+            return backgroundColor;
+        }
+        int baseColor = themeManager != null
+                ? themeManager.color(ThemeKeys.BG_MID)
+                : Color.BLACK;
+        int opaqueBase = ColorUtils.setAlphaComponent(baseColor, 255);
+        return ColorUtils.compositeColors(backgroundColor, opaqueBase);
+    }
+
+    private double contrasteSeguro(int foregroundColor, int opaqueBackgroundColor) {
+        try {
+            return ColorUtils.calculateContrast(foregroundColor, ColorUtils.setAlphaComponent(opaqueBackgroundColor, 255));
+        } catch (IllegalArgumentException ignored) {
+            return 0d;
+        }
+    }
+
+    private void aplicarColorTextoRecursivo(@Nullable View view, int textColor) {
+        if (view == null) {
+            return;
+        }
+        if (view instanceof TextView) {
+            ((TextView) view).setTextColor(textColor);
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                aplicarColorTextoRecursivo(group.getChildAt(i), textColor);
+            }
+        }
     }
 
     private void setupRecycler() {
@@ -329,6 +631,8 @@ public class FragVerPerfilPublico extends Fragment {
         tvDescripcion.setText(safe(perfil.getDescripcion(), "Sin descripción"));
         tvNombreCompleto.setText("Nombre: " + safe(perfil.getNombreCompleto(), "No disponible"));
         tvRedes.setText("Redes: " + safe(perfil.getRedesSociales(), "Sin redes"));
+        redesExpandidas = false;
+        actualizarPresentacionRedes(perfil.getRedesSociales());
         tvFecha.setText("Fecha nac.: " + safe(perfil.getFechaNacimiento(), "No disponible"));
         tvUbicacion.setText("Ubicación: " + safe(perfil.getUbicacion(), "No especificada"));
         tvCategorias.setText("Ocupación: " + safe(perfil.getOcupacion(), "Sin ocupación"));

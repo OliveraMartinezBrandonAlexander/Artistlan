@@ -11,9 +11,9 @@
     tools:context=".Fragments.FragVerPerfilPublico">
 
     <View
+        android:id="@+id/dividerPublicoTop"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/artistlan_menu_stroke_soft" />
+        android:layout_height="1dp" />
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollPerfilPublico"
@@ -30,26 +30,32 @@
             android:orientation="vertical"
             android:padding="12dp">
 
-            <androidx.cardview.widget.CardView
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardPerfilPublico"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:layout_marginBottom="12dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="6dp"
+                android:layout_marginBottom="14dp"
+                android:clipChildren="true"
+                android:clipToPadding="true"
                 android:foreground="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"
-                app:cardBackgroundColor="@color/artistlan_menu_surface_soft"
+                app:cardBackgroundColor="@android:color/transparent"
                 app:cardCornerRadius="22dp"
-                app:cardElevation="10dp"
-                app:strokeColor="@color/artistlan_menu_stroke_soft"
+                app:cardElevation="6dp"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:paddingStart="18dp"
+                    android:paddingTop="18dp"
+                    android:paddingEnd="18dp"
+                    android:paddingBottom="20dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -57,67 +63,88 @@
                         android:orientation="vertical"
                         android:gravity="center_horizontal">
 
-                        <ImageView
-                            android:id="@+id/imgPerfilPublico"
-                            android:layout_width="96dp"
-                            android:layout_height="96dp"
-                            android:background="@drawable/img_redonda"
-                            android:clipToOutline="true"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/fotoperfilprueba"/>
+                        <FrameLayout
+                            android:id="@+id/frameFotoPerfilPublico"
+                            android:layout_width="124dp"
+                            android:layout_height="124dp"
+                            android:padding="5dp">
+
+                            <ImageView
+                                android:id="@+id/imgPerfilPublico"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/img_redonda"
+                                android:clipToOutline="true"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/fotoperfilprueba"/>
+                        </FrameLayout>
 
                         <TextView
                             android:id="@+id/tvNombrePublico"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
+                            android:layout_marginTop="14dp"
                             android:gravity="center"
                             android:text="usuario"
                             android:textStyle="bold"
-                            android:textSize="18sp"
-                            android:textColor="@color/artistlan_menu_stroke_soft"/>
+                            android:textSize="23sp"
+                            android:maxLines="2"
+                            android:ellipsize="end"/>
                     </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvDescripcionPublico"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center"
                         android:text="Descripción"
-                        android:textColor="@color/artistlan_menu_stroke_soft"
                         android:textSize="14sp"
-                        android:background="@drawable/bg_input_artistlan"
-
-                        android:padding="12dp"/>
+                        android:lineSpacingExtra="3dp"
+                        android:maxLines="4"
+                        android:ellipsize="end"
+                        android:paddingStart="14dp"
+                        android:paddingTop="11dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="11dp"/>
 
                     <Button
                         android:id="@+id/btnReportarUsuarioPublico"
                         android:layout_width="match_parent"
                         android:layout_height="44dp"
-                        android:layout_marginTop="12dp"
-                        android:backgroundTint="#D9C7EB"
+                        android:layout_marginTop="14dp"
                         android:text="Reportar usuario"
                         android:textAllCaps="false"
-                        android:textColor="@color/artistlan_text_primary"
                         android:visibility="gone" />
 
                     <LinearLayout
                         android:id="@+id/expandedInfoPublico"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
                         android:visibility="gone"
                         android:orientation="vertical"
-                        android:background="@drawable/bg_input_artistlan"
+                        android:paddingTop="2dp">
 
-                        android:padding="12dp">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Información pública"
+                            android:textStyle="bold"
+                            android:textSize="13sp"/>
+
+                        <View
+                            android:id="@+id/dividerPublicoInfo"
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="10dp"/>
 
                         <TextView
                             android:id="@+id/tvNombreCompletoPublico"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Nombre: ---"
-                            android:textColor="@color/artistlan_menu_stroke_soft"
                             android:textSize="14sp" />
 
                         <TextView
@@ -126,25 +153,28 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             android:text="Ubicación: ---"
-                            android:textColor="@color/artistlan_menu_stroke_soft"
                             android:textSize="14sp" />
 
                         <TextView
-                            android:id="@+id/tvRedesPublico"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="Redes: ---"
-                            android:textColor="@color/artistlan_menu_stroke_soft"
-                            android:textSize="14sp" />
+                            android:layout_marginTop="14dp"
+                            android:text="Detalles"
+                            android:textStyle="bold"
+                            android:textSize="13sp"/>
+
+                        <View
+                            android:id="@+id/dividerPublicoDetalles"
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="10dp"/>
 
                         <TextView
                             android:id="@+id/tvFecNacPublico"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
                             android:text="Fecha: ---"
-                            android:textColor="@color/artistlan_menu_stroke_soft"
                             android:textSize="14sp" />
 
                         <TextView
@@ -153,12 +183,41 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             android:text="Ocupación: ---"
-                            android:textColor="@color/artistlan_menu_stroke_soft"
                             android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="14dp"
+                            android:text="Redes"
+                            android:textStyle="bold"
+                            android:textSize="13sp"/>
+
+                        <TextView
+                            android:id="@+id/tvRedesPublico"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:paddingStart="12dp"
+                            android:paddingTop="8dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="8dp"
+                            android:text="Redes: ---"
+                            android:textSize="14sp" />
+
+                        <LinearLayout
+                            android:id="@+id/contenedorRedesChipsPublico"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="vertical"
+                            android:visibility="gone" />
                     </LinearLayout>
 
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardTabs"
@@ -195,8 +254,7 @@
                             android:layout_weight="1"
                             android:gravity="center"
                             android:text="OBRAS"
-                            android:textStyle="bold"
-                            android:textColor="@color/artistlan_menu_text_primary"/>
+                            android:textStyle="bold"/>
 
                         <TextView
                             android:id="@+id/btnTabServicios"
@@ -205,8 +263,7 @@
                             android:layout_weight="1"
                             android:gravity="center"
                             android:text="SERVICIOS"
-                            android:textStyle="bold"
-                            android:textColor="@color/artistlan_menu_text_secondary"/>
+                            android:textStyle="bold"/>
                     </LinearLayout>
 
                 </FrameLayout>
@@ -226,7 +283,6 @@
                 android:layout_marginTop="20dp"
                 android:gravity="center"
                 android:text="Sin contenido"
-                android:textColor="#5E5E5E"
                 android:visibility="gone" />
 
         </LinearLayout>

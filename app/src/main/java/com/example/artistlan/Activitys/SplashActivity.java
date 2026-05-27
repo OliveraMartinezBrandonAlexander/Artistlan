@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -23,12 +24,15 @@ import com.example.artistlan.Theme.ThemeManager;
 public class SplashActivity extends AppCompatActivity {
 
     private static final long ENTRY_DURATION_MS = 650L;
+    private static final long TITLE_DELAY_MS = 220L;
+    private static final long TITLE_DURATION_MS = 520L;
     private static final long VISIBLE_DURATION_MS = 2000L;
     private static final long FADE_DURATION_MS = 500L;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private View root;
     private LottieAnimationView loading;
+    private TextView title;
     private ThemeManager themeManager;
     private boolean navigated;
 
@@ -40,9 +44,11 @@ public class SplashActivity extends AppCompatActivity {
         themeManager = new ThemeManager(this);
         root = findViewById(R.id.SplashRoot);
         loading = findViewById(R.id.SplashLoading);
+        title = findViewById(R.id.txtArtistlanSplash);
 
         applyThemeToSplash();
         prepareLoadingAnimation();
+        prepareTitleAnimation();
         playIntro();
     }
 
@@ -64,6 +70,10 @@ public class SplashActivity extends AppCompatActivity {
                     new LottieValueCallback<>(new PorterDuffColorFilter(accentColor, PorterDuff.Mode.SRC_ATOP))
             );
         }
+
+        if (title != null) {
+            title.setTextColor(themeManager.color(ThemeKeys.MENU_TITLE));
+        }
     }
 
     private void prepareLoadingAnimation() {
@@ -75,12 +85,34 @@ public class SplashActivity extends AppCompatActivity {
         loading.playAnimation();
     }
 
+    private void prepareTitleAnimation() {
+        if (title == null) {
+            return;
+        }
+        title.setAlpha(0f);
+        title.setScaleX(0.96f);
+        title.setScaleY(0.96f);
+        title.setTranslationY(18f);
+    }
+
     private void playIntro() {
         if (loading != null) {
             loading.animate()
                     .alpha(1f)
                     .translationY(0f)
                     .setDuration(ENTRY_DURATION_MS)
+                    .setInterpolator(new AccelerateDecelerateInterpolator())
+                    .start();
+        }
+
+        if (title != null) {
+            title.animate()
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .translationY(0f)
+                    .setStartDelay(TITLE_DELAY_MS)
+                    .setDuration(TITLE_DURATION_MS)
                     .setInterpolator(new AccelerateDecelerateInterpolator())
                     .start();
         }
@@ -120,6 +152,9 @@ public class SplashActivity extends AppCompatActivity {
         handler.removeCallbacksAndMessages(null);
         if (loading != null) {
             loading.cancelAnimation();
+        }
+        if (title != null) {
+            title.animate().cancel();
         }
     }
 }

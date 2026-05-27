@@ -20,7 +20,8 @@
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
         android:elevation="16dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingTop="102dp">
 
         <FrameLayout
             android:id="@+id/segmentContainerPortafolio"
@@ -70,38 +71,106 @@
 
     </LinearLayout>
 
-    <com.getbase.floatingactionbutton.FloatingActionsMenu
-        android:id="@+id/fabMenuSubir"
+    <View
+        android:id="@+id/fabDismissOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:focusable="false"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/fabUploadPanel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="108dp"
+        android:layout_marginBottom="176dp"
         android:elevation="18dp"
-        app:fab_addButtonColorNormal="@color/GRIS"
-        app:fab_addButtonColorPressed="@color/GRIS"
-        app:fab_labelStyle="@style/CustomFabLabelStyle">
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:visibility="gone">
 
-        <com.getbase.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabSubirObraMenu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:fab_colorNormal="@android:color/white"
-            app:fab_colorPressed="#00BCD4"
-            app:fab_icon="@drawable/serport"
-            app:fab_size="mini"
-            app:fab_title="Subir Obra" />
+        <LinearLayout
+            android:id="@+id/optionSubirObra"
+            android:layout_width="176dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
 
-        <com.getbase.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabSubirServicioMenu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:fab_colorNormal="@android:color/white"
-            app:fab_colorPressed="#00BCD4"
-            app:fab_icon="@drawable/serport"
-            app:fab_size="mini"
-            app:fab_title="Subir Servicio" />
+            <ImageView
+                android:id="@+id/iconSubirObra"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_nav_arte_artistlan" />
 
-    </com.getbase.floatingactionbutton.FloatingActionsMenu>
+            <TextView
+                android:id="@+id/txtSubirObra"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:text="Subir obra"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <View
+            android:id="@+id/fabUploadDivider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp" />
+
+        <LinearLayout
+            android:id="@+id/optionSubirServicio"
+            android:layout_width="176dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <ImageView
+                android:id="@+id/iconSubirServicio"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_servicios" />
+
+            <TextView
+                android:id="@+id/txtSubirServicio"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:text="Subir servicio"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabSubirPortafolio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="120dp"
+        android:contentDescription="Subir"
+        android:elevation="18dp"
+        android:src="@drawable/ic_add_artistlan"
+        app:fabSize="normal" />
 
 </FrameLayout>

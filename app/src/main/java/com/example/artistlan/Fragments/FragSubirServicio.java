@@ -2,8 +2,10 @@ package com.example.artistlan.Fragments;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -156,6 +158,7 @@ public class FragSubirServicio extends Fragment {
         aplicarTemaFormulario(view);
         cargarCategoriasDesdeBD();
         configurarModoPantalla(view);
+        aplicarTemaBotones();
         if (modoEdicion) {
             cargarServicioParaEditar();
         }
@@ -266,12 +269,20 @@ public class FragSubirServicio extends Fragment {
 
     private void aplicarTemaFormulario(@NonNull View root) {
         ThemeManager tm = new ThemeManager(requireContext());
-        aplicarBotonPrincipal(btnPublicarServicio, tm);
+        aplicarTemaBotones(tm);
         CardThemeHelper.applyFilterButton(btnRegresarServicio, tm);
         aplicarTextosFormulario(root, tm);
         aplicarInputsFormulario(tm);
         aplicarTemaSpinner(spinnerCategoriaServicio);
         aplicarTemaSpinner(spinnerTipoContacto);
+    }
+
+    private void aplicarTemaBotones() {
+        aplicarTemaBotones(new ThemeManager(requireContext()));
+    }
+
+    private void aplicarTemaBotones(@NonNull ThemeManager tm) {
+        aplicarBotonPrincipal(btnPublicarServicio, tm);
     }
 
     private void aplicarTextosFormulario(@NonNull View view, @NonNull ThemeManager tm) {
@@ -353,7 +364,103 @@ public class FragSubirServicio extends Fragment {
             params.height = dpToPx(62);
             button.setLayoutParams(params);
         }
-        ThemeApplier.applyPrimaryButton(button, tm);
+        int backgroundColor = tm.color(ThemeKeys.BUTTON_PRIMARY_BG);
+        int strokeColor = elegirColorTextoBoton(
+                backgroundColor,
+                tm.color(ThemeKeys.BUTTON_TEXT_DARK),
+                tm.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                tm.color(ThemeKeys.TEXT_PRIMARY),
+                tm.color(ThemeKeys.TEXT_SECONDARY)
+        );
+        aplicarFondoBotonTema(button, backgroundColor, strokeColor);
+        aplicarTextoBotonTema(button, backgroundColor, tm.color(ThemeKeys.BUTTON_TEXT_DARK),
+                tm.color(ThemeKeys.BUTTON_TEXT_LIGHT), tm.color(ThemeKeys.TEXT_PRIMARY), tm.color(ThemeKeys.TEXT_SECONDARY));
+    }
+
+    private void aplicarFondoBotonTema(@Nullable Button button, int backgroundColor, int textColor) {
+        if (button == null) return;
+        button.setBackgroundTintList(null);
+        button.setBackground(crearFondoBubbleTema(backgroundColor, textColor));
+        ThemeApplier.animatePress(button);
+    }
+
+    @NonNull
+    private LayerDrawable crearFondoBubbleTema(int backgroundColor, int textColor) {
+        float radius = dpToPx(40);
+
+        GradientDrawable shadow = new GradientDrawable();
+        shadow.setShape(GradientDrawable.RECTANGLE);
+        shadow.setColor(ColorUtils.setAlphaComponent(Color.BLACK, 42));
+        shadow.setCornerRadius(radius);
+
+        GradientDrawable fill = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{
+                        ColorUtils.blendARGB(backgroundColor, Color.WHITE, 0.24f),
+                        backgroundColor,
+                        ColorUtils.blendARGB(backgroundColor, Color.BLACK, 0.10f)
+                }
+        );
+        fill.setShape(GradientDrawable.RECTANGLE);
+        fill.setCornerRadius(radius);
+        fill.setStroke(dpToPx(1), ColorUtils.setAlphaComponent(textColor, 90));
+
+        GradientDrawable highlight = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{ColorUtils.setAlphaComponent(Color.WHITE, 78), Color.TRANSPARENT}
+        );
+        highlight.setShape(GradientDrawable.RECTANGLE);
+        highlight.setCornerRadius(dpToPx(30));
+
+        LayerDrawable drawable = new LayerDrawable(new android.graphics.drawable.Drawable[]{shadow, fill, highlight});
+        drawable.setLayerInset(0, 0, dpToPx(7), 0, 0);
+        drawable.setLayerInset(2, dpToPx(16), dpToPx(8), dpToPx(16), dpToPx(34));
+        return drawable;
+    }
+
+    private void aplicarTextoBotonTema(@Nullable Button button, int backgroundColor, int preferredTextColor, int... themeCandidates) {
+        if (button == null) return;
+        button.setTextColor(elegirColorTextoBotonTema(backgroundColor, preferredTextColor, themeCandidates));
+    }
+
+    private int elegirColorTextoBotonTema(int backgroundColor, int preferredTextColor, int... themeCandidates) {
+        if (ColorUtils.calculateContrast(preferredTextColor, backgroundColor) >= 3.0d) {
+            return preferredTextColor;
+        }
+        int selected = preferredTextColor;
+        double bestThemeContrast = ColorUtils.calculateContrast(preferredTextColor, backgroundColor);
+        for (int candidate : themeCandidates) {
+            double contrast = ColorUtils.calculateContrast(candidate, backgroundColor);
+            if (contrast > bestThemeContrast) {
+                bestThemeContrast = contrast;
+                selected = candidate;
+            }
+        }
+        if (bestThemeContrast >= 3.0d) {
+            return selected;
+        }
+        return elegirColorTextoBoton(backgroundColor, selected);
+    }
+
+    private int elegirColorTextoBoton(int backgroundColor, int preferredTextColor, int... themeCandidates) {
+        if (ColorUtils.calculateContrast(preferredTextColor, backgroundColor) >= 4.5d) {
+            return preferredTextColor;
+        }
+        int selected = preferredTextColor;
+        double bestContrast = ColorUtils.calculateContrast(preferredTextColor, backgroundColor);
+        for (int candidate : themeCandidates) {
+            double contrast = ColorUtils.calculateContrast(candidate, backgroundColor);
+            if (contrast > bestContrast) {
+                bestContrast = contrast;
+                selected = candidate;
+            }
+        }
+        if (bestContrast >= 4.5d) {
+            return selected;
+        }
+        double contrastWhite = ColorUtils.calculateContrast(Color.WHITE, backgroundColor);
+        double contrastBlack = ColorUtils.calculateContrast(Color.BLACK, backgroundColor);
+        return contrastWhite >= contrastBlack ? Color.WHITE : Color.BLACK;
     }
 
     private void configurarInputTypeContacto() {

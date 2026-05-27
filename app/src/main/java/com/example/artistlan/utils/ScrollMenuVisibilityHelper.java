@@ -280,7 +280,11 @@ public class ScrollMenuVisibilityHelper {
 
     @Nullable
     private View findTopCompanion(@NonNull View root) {
-        return root.findViewById(R.id.explorarHeader);
+        View explorarHeader = root.findViewById(R.id.explorarHeader);
+        if (explorarHeader != null) {
+            return explorarHeader;
+        }
+        return root.findViewById(R.id.portafolioHeader);
     }
 
     private void ensureThresholds() {

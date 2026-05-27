@@ -250,11 +250,9 @@
                     android:layout_gravity="center_horizontal"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
-                    android:background="@drawable/bg_btn_bubble_glass_primary"
                     android:padding="10dp"
                     android:text="PUBLICAR"
                     android:textAllCaps="false"
-                    android:textColor="@color/artistlan_text_primary"
                     android:textStyle="bold" />
 
             </LinearLayout>

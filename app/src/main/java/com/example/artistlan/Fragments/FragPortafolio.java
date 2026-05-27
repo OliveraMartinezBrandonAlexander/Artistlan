@@ -1,16 +1,25 @@
 package com.example.artistlan.Fragments;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.os.Bundle;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.GradientDrawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.navigation.NavBackStackEntry;
@@ -20,11 +29,12 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
-import com.getbase.floatingactionbutton.FloatingActionButton;
-import com.getbase.floatingactionbutton.FloatingActionsMenu;
+import com.example.artistlan.utils.CardThemeHelper;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.List;
 
 public class FragPortafolio extends Fragment {
@@ -43,16 +53,25 @@ public class FragPortafolio extends Fragment {
     private ViewPager2 viewPager;
     private View rootView;
     private View portafolioHeader;
-    private View topBarFrame;
     private View bottomBarFrame;
     private View segmentContainer;
     private View segmentIndicator;
     private Button btnSegmentMisObras;
     private Button btnSegmentMisServicios;
-    private FloatingActionsMenu fabMenu;
-    private FloatingActionButton fabSubirObra, fabSubirServicio;
+    private FloatingActionButton fabSubirPortafolio;
+    private LinearLayout fabUploadPanel;
+    private View fabDismissOverlay;
+    private View optionSubirObra;
+    private View optionSubirServicio;
+    private View fabUploadDivider;
+    private ImageView iconSubirObra;
+    private ImageView iconSubirServicio;
+    private TextView txtSubirObra;
+    private TextView txtSubirServicio;
     private ThemeManager themeManager;
     private ViewTreeObserver.OnPreDrawListener overlayInsetsListener;
+    private boolean uploadPanelOpen = false;
+    private boolean bottomMenuVisibleForFab = true;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -75,9 +94,16 @@ public class FragPortafolio extends Fragment {
         segmentIndicator = view.findViewById(R.id.segmentIndicatorPortafolio);
         btnSegmentMisObras = view.findViewById(R.id.btnSegmentMisObras);
         btnSegmentMisServicios = view.findViewById(R.id.btnSegmentMisServicios);
-        fabMenu = view.findViewById(R.id.fabMenuSubir);
-        fabSubirObra = view.findViewById(R.id.fabSubirObraMenu);
-        fabSubirServicio = view.findViewById(R.id.fabSubirServicioMenu);
+        fabSubirPortafolio = view.findViewById(R.id.fabSubirPortafolio);
+        fabUploadPanel = view.findViewById(R.id.fabUploadPanel);
+        fabDismissOverlay = view.findViewById(R.id.fabDismissOverlay);
+        optionSubirObra = view.findViewById(R.id.optionSubirObra);
+        optionSubirServicio = view.findViewById(R.id.optionSubirServicio);
+        fabUploadDivider = view.findViewById(R.id.fabUploadDivider);
+        iconSubirObra = view.findViewById(R.id.iconSubirObra);
+        iconSubirServicio = view.findViewById(R.id.iconSubirServicio);
+        txtSubirObra = view.findViewById(R.id.txtSubirObra);
+        txtSubirServicio = view.findViewById(R.id.txtSubirServicio);
 
         viewPager.setAdapter(new PortafolioPagerAdapter(this));
         viewPager.setOffscreenPageLimit(2);
@@ -91,14 +117,17 @@ public class FragPortafolio extends Fragment {
         observarRefreshDesdeSubidas();
         view.post(this::ensureDataLoadedForCurrentTab);
 
-        fabSubirObra.setOnClickListener(v -> {
+        fabSubirPortafolio.setOnClickListener(v -> setUploadPanelOpen(!uploadPanelOpen, true));
+        fabDismissOverlay.setOnClickListener(v -> setUploadPanelOpen(false, true));
+
+        optionSubirObra.setOnClickListener(v -> {
+            setUploadPanelOpen(false, false);
             Navigation.findNavController(view).navigate(R.id.fragSubirObra);
-            fabMenu.collapse();
         });
 
-        fabSubirServicio.setOnClickListener(v -> {
+        optionSubirServicio.setOnClickListener(v -> {
+            setUploadPanelOpen(false, false);
             Navigation.findNavController(view).navigate(R.id.fragSubirServicio);
-            fabMenu.collapse();
         });
     }
 
@@ -113,8 +142,8 @@ public class FragPortafolio extends Fragment {
         overlayInsetsListener = null;
         rootView = null;
         portafolioHeader = null;
-        topBarFrame = null;
         bottomBarFrame = null;
+        uploadPanelOpen = false;
         super.onDestroyView();
     }
 
@@ -133,7 +162,6 @@ public class FragPortafolio extends Fragment {
         if (rootView == null || viewPager == null || portafolioHeader == null) {
             return;
         }
-        topBarFrame = requireActivity().findViewById(R.id.topBarFrame);
         bottomBarFrame = requireActivity().findViewById(R.id.MenuInferiorFrame);
         overlayInsetsListener = () -> {
             actualizarInsetsOverlay();
@@ -144,54 +172,42 @@ public class FragPortafolio extends Fragment {
     }
 
     private void actualizarInsetsOverlay() {
-        if (viewPager == null || portafolioHeader == null) {
+        if (fabSubirPortafolio == null || fabUploadPanel == null) {
             return;
         }
-        int visibleTopBar = calcularVisibleTopBar();
-        int visibleBottomBar = calcularVisibleBottomBar();
-        int headerHeight = Math.max(portafolioHeader.getHeight(), dpToPx(54));
-        int headerTop = visibleTopBar > 0 ? visibleTopBar : calcularSafeTopInset();
-        int topPadding = headerTop + headerHeight + dpToPx(8);
-        int bottomPadding = visibleBottomBar;
-
-        if (portafolioHeader.getTranslationY() != headerTop) {
-            portafolioHeader.setTranslationY(headerTop);
+        boolean bottomVisible = isBottomBarVisuallyVisible();
+        if (bottomVisible == bottomMenuVisibleForFab) {
+            return;
         }
-        if (viewPager.getPaddingTop() != topPadding || viewPager.getPaddingBottom() != bottomPadding) {
-            viewPager.setPadding(0, topPadding, 0, bottomPadding);
-        }
+        bottomMenuVisibleForFab = bottomVisible;
+        float targetTranslationY = bottomVisible ? 0f : dpToPx(70);
+        animarControlesFlotantes(targetTranslationY);
     }
 
-    private int calcularVisibleTopBar() {
-        if (topBarFrame == null) {
-            return 0;
-        }
-        int height = topBarFrame.getHeight();
-        if (height <= 0) {
-            return 0;
-        }
-        int translationY = Math.round(topBarFrame.getTranslationY());
-        boolean oculto = translationY <= -Math.round(height * 0.5f);
-        return oculto ? 0 : height;
-    }
-
-    private int calcularVisibleBottomBar() {
+    private boolean isBottomBarVisuallyVisible() {
         if (bottomBarFrame == null) {
-            return 0;
+            return true;
         }
         int height = bottomBarFrame.getHeight();
         if (height <= 0) {
-            return 0;
+            return true;
         }
-        int translationY = Math.round(bottomBarFrame.getTranslationY());
-        boolean oculto = translationY >= Math.round(height * 0.5f);
-        return oculto ? 0 : height;
+        return bottomBarFrame.getTranslationY() < height * 0.45f;
     }
 
-    private int calcularSafeTopInset() {
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        int statusBarHeight = resourceId > 0 ? getResources().getDimensionPixelSize(resourceId) : 0;
-        return Math.max(statusBarHeight, dpToPx(24)) + dpToPx(8);
+    private void animarControlesFlotantes(float targetTranslationY) {
+        animarTranslationYSiCambio(fabSubirPortafolio, targetTranslationY);
+        animarTranslationYSiCambio(fabUploadPanel, targetTranslationY);
+    }
+
+    private void animarTranslationYSiCambio(@Nullable View view, float targetTranslationY) {
+        if (view == null || Math.abs(view.getTranslationY() - targetTranslationY) < 1f) {
+            return;
+        }
+        view.animate()
+                .translationY(targetTranslationY)
+                .setDuration(180)
+                .start();
     }
 
     private int dpToPx(int dp) {
@@ -327,33 +343,150 @@ public class FragPortafolio extends Fragment {
     }
 
     private void aplicarTemaFabSubida() {
-        int primary = themeManager.color(ThemeKeys.BUTTON_PRIMARY_BG);
-        int secondary = themeManager.color(ThemeKeys.BUTTON_SECONDARY_BG);
-        int icon = themeManager.color(ThemeKeys.ICON_ACTIVE);
-        aplicarColorFabPorReflexion(fabMenu, "setAddButtonColorNormal", primary);
-        aplicarColorFabPorReflexion(fabMenu, "setAddButtonColorPressed", secondary);
-        aplicarColorFabPorReflexion(fabSubirObra, "setColorNormal", themeManager.color(ThemeKeys.FILTER_BUTTON_BG));
-        aplicarColorFabPorReflexion(fabSubirObra, "setColorPressed", themeManager.color(ThemeKeys.ACCENT_PRIMARY));
-        aplicarColorFabPorReflexion(fabSubirServicio, "setColorNormal", themeManager.color(ThemeKeys.FILTER_BUTTON_BG));
-        aplicarColorFabPorReflexion(fabSubirServicio, "setColorPressed", themeManager.color(ThemeKeys.ACCENT_PRIMARY));
-        if (fabSubirObra != null) {
-            fabSubirObra.setColorFilter(icon, PorterDuff.Mode.SRC_IN);
+        if (fabSubirPortafolio != null) {
+            fabSubirPortafolio.setBackgroundTintList(ColorStateList.valueOf(themeManager.color(ThemeKeys.BUTTON_PRIMARY_BG)));
+            fabSubirPortafolio.setImageTintList(ColorStateList.valueOf(themeManager.color(ThemeKeys.BUTTON_TEXT_DARK)));
+            fabSubirPortafolio.setRippleColor(themeManager.color(ThemeKeys.BUTTON_SECONDARY_BG));
         }
-        if (fabSubirServicio != null) {
-            fabSubirServicio.setColorFilter(icon, PorterDuff.Mode.SRC_IN);
+        CardThemeHelper.applyFilterSurface(fabUploadPanel, themeManager);
+        int panelColor = ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), 205);
+        int contrastPanelColor = ColorUtils.compositeColors(panelColor, ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.BG_MID), 255));
+        int textColor = elegirColorTemaLegiblePreferido(contrastPanelColor,
+                themeManager.color(ThemeKeys.TEXT_SECONDARY),
+                themeManager.color(ThemeKeys.TEXT_PRIMARY),
+                themeManager.color(ThemeKeys.BUTTON_TEXT_DARK),
+                themeManager.color(ThemeKeys.CARD_BORDER));
+        int iconColor = elegirColorLegible(contrastPanelColor,
+                themeManager.color(ThemeKeys.ICON_ACTIVE),
+                themeManager.color(ThemeKeys.BUTTON_PRIMARY_BG),
+                textColor,
+                themeManager.color(ThemeKeys.CARD_BORDER),
+                Color.WHITE,
+                Color.BLACK);
+        if (fabUploadPanel != null) {
+            GradientDrawable panelBg = new GradientDrawable();
+            panelBg.setShape(GradientDrawable.RECTANGLE);
+            panelBg.setCornerRadius(dpToPx(16));
+            panelBg.setColor(panelColor);
+            panelBg.setStroke(dpToPx(1), themeManager.color(ThemeKeys.CARD_BORDER));
+            fabUploadPanel.setBackground(panelBg);
+        }
+        if (fabUploadDivider != null) {
+            fabUploadDivider.setBackgroundColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.CARD_BORDER), 120));
+        }
+        aplicarColorTexto(txtSubirObra, textColor);
+        aplicarColorTexto(txtSubirServicio, textColor);
+        tintIcon(iconSubirObra, iconColor);
+        tintIcon(iconSubirServicio, iconColor);
+        ThemeApplier.animatePress(fabSubirPortafolio);
+        ThemeApplier.animatePress(optionSubirObra);
+        ThemeApplier.animatePress(optionSubirServicio);
+    }
+
+    private void aplicarColorTexto(@Nullable TextView textView, int color) {
+        if (textView != null) {
+            textView.setTextColor(color);
         }
     }
 
-    private void aplicarColorFabPorReflexion(@Nullable Object target, @NonNull String methodName, int color) {
-        if (target == null) {
+    private void tintIcon(@Nullable ImageView iconView, int color) {
+        if (iconView != null) {
+            iconView.setColorFilter(color, PorterDuff.Mode.SRC_IN);
+        }
+    }
+
+    private int elegirColorLegible(int backgroundColor, int... candidates) {
+        int selected = candidates.length > 0 ? candidates[0] : Color.WHITE;
+        double bestContrast = -1;
+        for (int candidate : candidates) {
+            double contrast = ColorUtils.calculateContrast(candidate, backgroundColor);
+            if (contrast > bestContrast) {
+                bestContrast = contrast;
+                selected = candidate;
+            }
+        }
+        return selected;
+    }
+
+    private int elegirColorTemaLegiblePreferido(int backgroundColor, int preferred, int... themeCandidates) {
+        if (ColorUtils.calculateContrast(preferred, backgroundColor) >= 3.0) {
+            return preferred;
+        }
+        int selected = elegirColorLegible(backgroundColor, themeCandidates);
+        if (ColorUtils.calculateContrast(selected, backgroundColor) >= 3.0) {
+            return selected;
+        }
+        return elegirColorLegible(backgroundColor, selected, Color.WHITE, Color.BLACK);
+    }
+
+    private void setUploadPanelOpen(boolean open, boolean animate) {
+        uploadPanelOpen = open;
+        animarFabSubida(open, animate);
+        if (fabDismissOverlay != null) {
+            fabDismissOverlay.setVisibility(open ? View.VISIBLE : View.GONE);
+        }
+        if (fabUploadPanel == null) {
             return;
         }
-        try {
-            java.lang.reflect.Method method = target.getClass().getMethod(methodName, int.class);
-            method.invoke(target, color);
-        } catch (Exception ignored) {
-            // La libreria de FAB varia entre versiones; si no expone el setter, conserva el XML.
+        fabUploadPanel.animate().cancel();
+        if (open) {
+            fabUploadPanel.bringToFront();
+            if (fabSubirPortafolio != null) {
+                fabSubirPortafolio.bringToFront();
+            }
+            fabUploadPanel.setVisibility(View.VISIBLE);
+            if (animate) {
+                fabUploadPanel.setAlpha(0f);
+                fabUploadPanel.setScaleX(0.96f);
+                fabUploadPanel.setScaleY(0.96f);
+                fabUploadPanel.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(140).start();
+            } else {
+                fabUploadPanel.setAlpha(1f);
+                fabUploadPanel.setScaleX(1f);
+                fabUploadPanel.setScaleY(1f);
+            }
+            return;
         }
+        if (animate && fabUploadPanel.getVisibility() == View.VISIBLE) {
+            fabUploadPanel.animate()
+                    .alpha(0f)
+                    .scaleX(0.96f)
+                    .scaleY(0.96f)
+                    .setDuration(110)
+                    .withEndAction(() -> {
+                        if (!uploadPanelOpen && fabUploadPanel != null) {
+                            fabUploadPanel.setVisibility(View.GONE);
+                        }
+                    })
+                    .start();
+        } else {
+            fabUploadPanel.setVisibility(View.GONE);
+            fabUploadPanel.setAlpha(1f);
+            fabUploadPanel.setScaleX(1f);
+            fabUploadPanel.setScaleY(1f);
+        }
+    }
+
+    private void animarFabSubida(boolean open, boolean animate) {
+        if (fabSubirPortafolio == null) {
+            return;
+        }
+        float targetRotation = open ? 45f : 0f;
+        float targetScale = open ? 1.06f : 1f;
+        if (!animate) {
+            fabSubirPortafolio.setRotation(targetRotation);
+            fabSubirPortafolio.setScaleX(targetScale);
+            fabSubirPortafolio.setScaleY(targetScale);
+            return;
+        }
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(
+                ObjectAnimator.ofFloat(fabSubirPortafolio, View.ROTATION, targetRotation),
+                ObjectAnimator.ofFloat(fabSubirPortafolio, View.SCALE_X, targetScale),
+                ObjectAnimator.ofFloat(fabSubirPortafolio, View.SCALE_Y, targetScale)
+        );
+        set.setDuration(160);
+        set.start();
     }
 
     private void aplicarEstadoBotones(int position) {

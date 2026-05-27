@@ -96,8 +96,6 @@
 
                     android:padding="10dp"
                     android:text="Subir imagen"
-                    android:background="@drawable/bg_btn_bubble_glass_secondary"
-                    android:textColor="@color/artistlan_text_primary"
                     android:textAllCaps="false"
                     android:textStyle="bold" />
 
@@ -366,9 +364,7 @@
                     android:layout_marginBottom="10dp"
                     android:padding="10dp"
                     android:text="Publicar"
-                    android:background="@drawable/bg_btn_bubble_glass_primary"
                     android:textAllCaps="false"
-                    android:textColor="@color/artistlan_text_primary"
                     android:textStyle="bold" />
             </LinearLayout>
         </ScrollView>

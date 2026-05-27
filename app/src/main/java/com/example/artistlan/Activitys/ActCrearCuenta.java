@@ -196,8 +196,8 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
                 themeManager.color(ThemeKeys.ICON_ACTIVE)
         );
 
-        ThemeApplier.applyPrimaryButton(btnCrear, themeManager);
-        ThemeApplier.applySecondaryButton(resultOk, themeManager);
+        CardThemeHelper.applyPrimaryBubbleButton(btnCrear, themeManager);
+        CardThemeHelper.applySecondaryBubbleButton(resultOk, themeManager);
         CardThemeHelper.applyFilterButton(btnRegresar, themeManager);
 
         ThemeEffectsApplier.applyGlowIntensity(glowTop, themeManager, ThemeKeys.GLOW_PRIMARY);

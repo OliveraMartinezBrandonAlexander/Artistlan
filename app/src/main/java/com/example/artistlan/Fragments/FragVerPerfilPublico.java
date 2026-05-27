@@ -752,6 +752,7 @@ public class FragVerPerfilPublico extends Fragment {
             item.setEditable(!Boolean.FALSE.equals(dto.getEditable()));
             item.setEliminable(!Boolean.FALSE.equals(dto.getEliminable()));
             item.setPuedeSolicitarCompra(Boolean.TRUE.equals(dto.getPuedeSolicitarCompra()));
+            item.setIdAutor(dto.getIdUsuario());
             items.add(item);
         }
         return items;

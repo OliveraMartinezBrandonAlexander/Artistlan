@@ -217,7 +217,9 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
         obraAdapter.setOnLikeClickListener(this::eliminarFavoritoObra);
         obraAdapter.setOnPrimaryActionClickListener(this::solicitarCompraDesdeFavoritos);
+        obraAdapter.setOnAuthorClickListener(this::abrirPerfilPublicoDesdeObraFavorita);
         servicioAdapter.setOnLikeClickListener(this::eliminarFavoritoServicio);
+        servicioAdapter.setOnAuthorClickListener(this::abrirPerfilPublicoDesdeServicioFavorito);
         artistaAdapter.setOnLikeClickListener(this::eliminarFavoritoArtista);
         artistaAdapter.setOnVisitarClickListener(this::abrirPerfilPublicoDesdeFavoritos);
 
@@ -1544,8 +1546,33 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         if (!isAdded() || artistaItem == null || artistaItem.getIdArtista() == null) {
             return;
         }
+        abrirPerfilPublicoDesdeId(artistaItem.getIdArtista());
+    }
+
+    private void abrirPerfilPublicoDesdeObraFavorita(TarjetaTextoObraItem obraItem, int position) {
+        if (!isAdded() || obraItem == null || obraItem.getIdAutor() == null) {
+            return;
+        }
+        abrirPerfilPublicoDesdeId(obraItem.getIdAutor());
+    }
+
+    private void abrirPerfilPublicoDesdeServicioFavorito(TarjetaTextoServicioItem servicioItem, int position) {
+        if (!isAdded() || servicioItem == null || servicioItem.getIdUsuario() == null) {
+            return;
+        }
+        abrirPerfilPublicoDesdeId(servicioItem.getIdUsuario());
+    }
+
+    private void abrirPerfilPublicoDesdeId(int idArtista) {
+        if (idArtista <= 0) {
+            return;
+        }
+        if (idArtista == idUsuarioLogueado) {
+            NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfil);
+            return;
+        }
         Bundle args = new Bundle();
-        args.putInt("idArtista", artistaItem.getIdArtista());
+        args.putInt("idArtista", idArtista);
         NavHostFragment.findNavController(this).navigate(R.id.fragVerPerfilPublico, args);
     }
 
@@ -1672,6 +1699,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                         item.setEditable(!Boolean.FALSE.equals(dto.getEditable()));
                         item.setEliminable(!Boolean.FALSE.equals(dto.getEliminable()));
                         item.setPuedeSolicitarCompra(Boolean.TRUE.equals(dto.getPuedeSolicitarCompra()));
+                        item.setIdAutor(dto.getIdUsuario());
                         items.add(item);
                         if (dto.getIdUsuario() != null && dto.getIdUsuario() == idUsuarioLogueado && dto.getIdObra() != null) {
                             obrasPropias.add(dto.getIdObra());

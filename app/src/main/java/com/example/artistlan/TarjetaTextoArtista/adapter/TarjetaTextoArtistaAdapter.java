@@ -2,6 +2,7 @@ package com.example.artistlan.TarjetaTextoArtista.adapter;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.animation.OvershootInterpolator;
 import android.view.View;
@@ -52,6 +53,7 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
     private Context context;
     private int tarjetaExpandida = -1;
     private Integer currentUserId;
+    private long lastVisitarClickMs = 0L;
 
     private static final String[] DEFAULT_DESCRIPCIONES = new String[] {
             "Hola, estoy usando Artistlan",
@@ -111,7 +113,7 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         ThemeApplier.applyTextSecondary(holder.categoria, tm);
         ThemeApplier.applyTextSecondary(holder.descripcion, tm);
         ThemeApplier.applyTextSecondary(holder.likes, tm);
-        ThemeApplier.applyPrimaryButton(holder.btnVisitar, tm);
+        CardThemeHelper.applyPrimaryBubbleButton(holder.btnVisitar, tm);
         CardThemeHelper.applyFlatCard(holder.layoutArtistaCard, tm);
         CardThemeHelper.applyChip(holder.categoria, tm);
 
@@ -174,12 +176,20 @@ public class TarjetaTextoArtistaAdapter extends RecyclerView.Adapter<TarjetaText
         View.OnClickListener visitarPerfilListener = v -> {
             int adapterPosition = holder.getAdapterPosition();
             if (onVisitarClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
+                long ahora = SystemClock.elapsedRealtime();
+                if (ahora - lastVisitarClickMs < LIKE_BUTTON_COOLDOWN_MS) {
+                    return;
+                }
+                lastVisitarClickMs = ahora;
+                v.setEnabled(false);
+                v.postDelayed(() -> v.setEnabled(true), LIKE_BUTTON_COOLDOWN_MS);
                 onVisitarClickListener.onVisitarClick(listaArtistas.get(adapterPosition), adapterPosition);
             } else {
                 Toast.makeText(context, "Perfil no disponible", Toast.LENGTH_SHORT).show();
             }
         };
         holder.imgPerfil.setOnClickListener(visitarPerfilListener);
+        holder.nombre.setOnClickListener(visitarPerfilListener);
         holder.btnVisitar.setVisibility(esPerfilPropio ? View.GONE : View.VISIBLE);
         holder.btnVisitar.setEnabled(!esPerfilPropio);
 

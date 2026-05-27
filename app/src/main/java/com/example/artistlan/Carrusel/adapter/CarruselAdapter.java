@@ -335,7 +335,7 @@ public class CarruselAdapter extends RecyclerView.Adapter<CarruselAdapter.Carrus
         ThemeApplier.applyTextPrimary(holder.tvLikesCarrusel, tm);
         ThemeApplier.applyTextPrimary(holder.tvInfoCompleta, tm);
         ThemeApplier.applyTextSecondary(holder.tvDescripcion, tm);
-        ThemeApplier.applyPrimaryButton(holder.btnSolicitarCompraCarrusel, tm);
+        CardThemeHelper.applyPrimaryBubbleButton(holder.btnSolicitarCompraCarrusel, tm);
         if (holder.imgObra.getBackground() != null) {
             holder.imgObra.getBackground().setColorFilter(tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL), PorterDuff.Mode.SRC_ATOP);
         }

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -58,6 +59,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     private final Context context;
     private int tarjetaExpandida = -1;
     private int lastAnimatedPosition = -1;
+    private long lastAuthorClickMs = 0L;
     private Integer currentUserId;
     private boolean entryAnimationsEnabled = true;
     private boolean portfolioHeaderEnabled = false;
@@ -108,8 +110,8 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         ThemeApplier.applyTextPrimary(holder.precioRango, tm);
         ThemeApplier.applyTextSecondary(holder.categoria, tm);
         ThemeApplier.applyTextPrimary(holder.tvPublicationTitle, tm);
-        ThemeApplier.applyPrimaryButton(holder.btnContactar, tm);
-        ThemeApplier.applySecondaryButton(holder.btnReportarServicio, tm);
+        CardThemeHelper.applyPrimaryBubbleButton(holder.btnContactar, tm);
+        CardThemeHelper.applySecondaryBubbleButton(holder.btnReportarServicio, tm);
         CardThemeHelper.applyFlatCard(holder.layoutServicioCard, tm);
         CardThemeHelper.applyFilterSurface(holder.publicationHeader, tm);
         CardThemeHelper.applyFilterButton(holder.btnMoreOptions, tm);
@@ -171,11 +173,9 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
         holder.imgAutor.setOnClickListener(v -> {
             animatePress(v);
-            int adapterPosition = holder.getBindingAdapterPosition();
-            if (onAuthorClickListener != null && adapterPosition != RecyclerView.NO_POSITION) {
-                onAuthorClickListener.onAuthorClick(listaServicios.get(adapterPosition), adapterPosition);
-            }
+            dispatchAuthorClick(holder);
         });
+        holder.autor.setOnClickListener(v -> dispatchAuthorClick(holder));
         boolean expandido = (tarjetaExpandida == position);
         holder.descripcion.setMaxLines(expandido ? Integer.MAX_VALUE : 2);
         animarVista(holder.expandedSection, expandido);
@@ -231,6 +231,24 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
                 tm.color(ThemeKeys.LIKE_ACTIVE),
                 tm.color(ThemeKeys.TEXT_SECONDARY)
         );
+    }
+
+    private void dispatchAuthorClick(@NonNull ViewHolder holder) {
+        int adapterPosition = holder.getBindingAdapterPosition();
+        if (adapterPosition == RecyclerView.NO_POSITION || onAuthorClickListener == null) {
+            return;
+        }
+        long ahora = SystemClock.elapsedRealtime();
+        if (ahora - lastAuthorClickMs < LIKE_BUTTON_COOLDOWN_MS) {
+            return;
+        }
+        lastAuthorClickMs = ahora;
+        View authorClickView = holder.imgAutor != null ? holder.imgAutor : holder.autor;
+        if (authorClickView != null) {
+            authorClickView.setEnabled(false);
+            authorClickView.postDelayed(() -> authorClickView.setEnabled(true), LIKE_BUTTON_COOLDOWN_MS);
+        }
+        onAuthorClickListener.onAuthorClick(listaServicios.get(adapterPosition), adapterPosition);
     }
 
     private String formatearPrecioRango(Double min, Double max) {

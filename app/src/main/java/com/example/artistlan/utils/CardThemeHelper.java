@@ -3,7 +3,11 @@ package com.example.artistlan.utils;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -97,6 +101,154 @@ public final class CardThemeHelper {
                 2,
                 dp(button, 14)
         ));
+    }
+
+    public static void applyPrimaryBubbleButton(@Nullable Button button, @NonNull ThemeManager tm) {
+        applyBubbleView(button, button, tm, ThemeKeys.BUTTON_PRIMARY_BG, ThemeKeys.BUTTON_TEXT_DARK, ThemeKeys.BUTTON_TEXT_LIGHT);
+    }
+
+    public static void applySecondaryBubbleButton(@Nullable Button button, @NonNull ThemeManager tm) {
+        applyBubbleView(button, button, tm, ThemeKeys.BUTTON_SECONDARY_BG, ThemeKeys.BUTTON_TEXT_LIGHT, ThemeKeys.BUTTON_TEXT_DARK);
+    }
+
+    public static void applyPrimaryBubbleSurface(@Nullable View view, @Nullable TextView label, @NonNull ThemeManager tm) {
+        applyBubbleView(view, label, tm, ThemeKeys.BUTTON_PRIMARY_BG, ThemeKeys.BUTTON_TEXT_DARK, ThemeKeys.BUTTON_TEXT_LIGHT);
+    }
+
+    public static void applySecondaryBubbleSurface(@Nullable View view, @Nullable TextView label, @NonNull ThemeManager tm) {
+        applyBubbleView(view, label, tm, ThemeKeys.BUTTON_SECONDARY_BG, ThemeKeys.BUTTON_TEXT_LIGHT, ThemeKeys.BUTTON_TEXT_DARK);
+    }
+
+    private static void applyBubbleView(
+            @Nullable View view,
+            @Nullable TextView label,
+            @NonNull ThemeManager tm,
+            @NonNull String backgroundKey,
+            @NonNull String preferredTextKey,
+            @NonNull String alternateTextKey
+    ) {
+        if (view == null) {
+            return;
+        }
+
+        int backgroundColor = tm.color(backgroundKey);
+        int textColor = chooseTextColor(
+                tm,
+                backgroundColor,
+                tm.color(preferredTextKey),
+                tm.color(alternateTextKey),
+                tm.color(ThemeKeys.TEXT_PRIMARY),
+                tm.color(ThemeKeys.TEXT_SECONDARY)
+        );
+
+        view.setBackgroundTintList(null);
+        if (label != null) {
+            if (label instanceof Button) {
+                ((Button) label).setAllCaps(false);
+            }
+            label.setTypeface(Typeface.create("sans-serif-black", Typeface.BOLD));
+            label.setTextColor(new ColorStateList(
+                    new int[][]{
+                            new int[]{-android.R.attr.state_enabled},
+                            new int[]{android.R.attr.state_pressed},
+                            new int[]{android.R.attr.state_focused},
+                            new int[]{android.R.attr.state_selected},
+                            new int[]{}
+                    },
+                    new int[]{
+                            ColorUtils.setAlphaComponent(textColor, Math.round(Color.alpha(textColor) * 0.62f)),
+                            textColor,
+                            textColor,
+                            textColor,
+                            textColor
+                    }
+            ));
+        }
+
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{-android.R.attr.state_enabled}, createBubbleDrawable(view, tm, ColorUtils.setAlphaComponent(backgroundColor, Math.round(Color.alpha(backgroundColor) * 0.46f)), textColor));
+        states.addState(new int[]{android.R.attr.state_pressed}, createBubbleDrawable(view, tm, blendForInteraction(tm, backgroundColor, 0.10f), textColor));
+        states.addState(new int[]{android.R.attr.state_focused}, createBubbleDrawable(view, tm, blendForInteraction(tm, backgroundColor, 0.08f), textColor));
+        states.addState(new int[]{android.R.attr.state_selected}, createBubbleDrawable(view, tm, blendForInteraction(tm, backgroundColor, 0.06f), textColor));
+        states.addState(new int[]{}, createBubbleDrawable(view, tm, backgroundColor, textColor));
+        view.setBackground(states);
+    }
+
+    @NonNull
+    private static LayerDrawable createBubbleDrawable(@NonNull View view, @NonNull ThemeManager tm, int backgroundColor, int textColor) {
+        float radius = dp(view, 40);
+
+        GradientDrawable shadow = new GradientDrawable();
+        shadow.setShape(GradientDrawable.RECTANGLE);
+        shadow.setColor(ColorUtils.setAlphaComponent(composeOverThemeSurface(tm, tm.color(ThemeKeys.TEXT_PRIMARY)), 42));
+        shadow.setCornerRadius(radius);
+
+        GradientDrawable fill = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{
+                        ColorUtils.blendARGB(backgroundColor, Color.WHITE, 0.24f),
+                        backgroundColor,
+                        ColorUtils.blendARGB(backgroundColor, Color.BLACK, 0.10f)
+                }
+        );
+        fill.setShape(GradientDrawable.RECTANGLE);
+        fill.setCornerRadius(radius);
+        fill.setStroke(Math.max(1, Math.round(dp(view, 1))), ColorUtils.setAlphaComponent(textColor, 90));
+
+        GradientDrawable highlight = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{ColorUtils.setAlphaComponent(Color.WHITE, 78), Color.TRANSPARENT}
+        );
+        highlight.setShape(GradientDrawable.RECTANGLE);
+        highlight.setCornerRadius(dp(view, 30));
+
+        LayerDrawable drawable = new LayerDrawable(new Drawable[]{shadow, fill, highlight});
+        drawable.setLayerInset(0, 0, Math.round(dp(view, 6)), 0, 0);
+        drawable.setLayerInset(2, Math.round(dp(view, 16)), Math.round(dp(view, 8)), Math.round(dp(view, 16)), Math.round(dp(view, 34)));
+        return drawable;
+    }
+
+    private static int chooseTextColor(@NonNull ThemeManager tm, int backgroundColor, int preferred, int... candidates) {
+        int opaqueBackground = composeOverThemeSurface(tm, backgroundColor);
+        if (safeContrast(preferred, opaqueBackground) >= 4.5d) {
+            return preferred;
+        }
+
+        int selected = preferred;
+        double bestContrast = safeContrast(preferred, opaqueBackground);
+        for (int candidate : candidates) {
+            double contrast = safeContrast(candidate, opaqueBackground);
+            if (contrast > bestContrast) {
+                bestContrast = contrast;
+                selected = candidate;
+            }
+        }
+        if (bestContrast >= 4.5d) {
+            return selected;
+        }
+
+        double contrastWhite = safeContrast(Color.WHITE, opaqueBackground);
+        double contrastBlack = safeContrast(Color.BLACK, opaqueBackground);
+        return contrastWhite >= contrastBlack ? Color.WHITE : Color.BLACK;
+    }
+
+    private static int blendForInteraction(@NonNull ThemeManager tm, int color, float ratio) {
+        return ColorUtils.blendARGB(color, composeOverThemeSurface(tm, tm.color(ThemeKeys.BG_MID)), ratio);
+    }
+
+    private static int composeOverThemeSurface(@NonNull ThemeManager tm, int color) {
+        int bottom = ColorUtils.setAlphaComponent(tm.color(ThemeKeys.BG_BOTTOM), 255);
+        int mid = tm.color(ThemeKeys.BG_MID);
+        int surface = Color.alpha(mid) < 255 ? ColorUtils.compositeColors(mid, bottom) : ColorUtils.setAlphaComponent(mid, 255);
+        return Color.alpha(color) < 255 ? ColorUtils.compositeColors(color, surface) : ColorUtils.setAlphaComponent(color, 255);
+    }
+
+    private static double safeContrast(int foreground, int background) {
+        try {
+            return ColorUtils.calculateContrast(foreground, ColorUtils.setAlphaComponent(background, 255));
+        } catch (IllegalArgumentException ignored) {
+            return 0d;
+        }
     }
 
     public static void applyAvatarStroke(@Nullable ShapeableImageView imageView, @NonNull ThemeManager tm) {

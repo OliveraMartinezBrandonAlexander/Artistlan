@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -103,6 +104,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     private ModoTarjetaObra modoTarjeta;
     private int tarjetaExpandida = -1;
     private int lastAnimatedPosition = -1;
+    private long lastAuthorClickMs = 0L;
     private boolean entryAnimationsEnabled = true;
 
     public TarjetaTextoObraAdapter(List<TarjetaTextoObraItem> listaObras, Context context) {
@@ -238,9 +240,9 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         ThemeApplier.applyTextSecondary(holder.medidas, tm);
         ThemeApplier.applyTextPrimary(holder.precio, tm);
         ThemeApplier.applyTextPrimary(holder.tvPublicationTitle, tm);
-        ThemeApplier.applyPrimaryButton(holder.btnAccionPrincipal, tm);
-        ThemeApplier.applySecondaryButton(holder.btnAccionSecundaria, tm);
-        ThemeApplier.applySecondaryButton(holder.btnReportarObra, tm);
+        CardThemeHelper.applyPrimaryBubbleButton(holder.btnAccionPrincipal, tm);
+        CardThemeHelper.applySecondaryBubbleButton(holder.btnAccionSecundaria, tm);
+        CardThemeHelper.applySecondaryBubbleButton(holder.btnReportarObra, tm);
         CardThemeHelper.applyFlatCard(holder.layoutObraCard, tm);
         CardThemeHelper.applyFilterSurface(holder.publicationHeader, tm);
         CardThemeHelper.applyFilterButton(holder.btnMoreOptions, tm);
@@ -330,16 +332,9 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
         holder.imgAutor.setOnClickListener(v -> {
             animatePress(v);
-
-            int adapterPosition = holder.getBindingAdapterPosition();
-            if (adapterPosition == RecyclerView.NO_POSITION) {
-                return;
-            }
-
-            if (onAuthorClickListener != null) {
-                onAuthorClickListener.onAuthorClick(listaObras.get(adapterPosition), adapterPosition);
-            }
+            dispatchAuthorClick(holder);
         });
+        holder.autor.setOnClickListener(v -> dispatchAuthorClick(holder));
     }
 
     private void cargarImagenObra(@NonNull ViewHolder holder, @NonNull TarjetaTextoObraItem obra) {
@@ -439,6 +434,24 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         }
         onCardClickListener.onCardClick(listaObras.get(adapterPosition), adapterPosition);
         return true;
+    }
+
+    private void dispatchAuthorClick(@NonNull ViewHolder holder) {
+        int adapterPosition = holder.getBindingAdapterPosition();
+        if (adapterPosition == RecyclerView.NO_POSITION || onAuthorClickListener == null) {
+            return;
+        }
+        long ahora = SystemClock.elapsedRealtime();
+        if (ahora - lastAuthorClickMs < LIKE_BUTTON_COOLDOWN_MS) {
+            return;
+        }
+        lastAuthorClickMs = ahora;
+        View authorClickView = holder.imgAutor != null ? holder.imgAutor : holder.autor;
+        if (authorClickView != null) {
+            authorClickView.setEnabled(false);
+            authorClickView.postDelayed(() -> authorClickView.setEnabled(true), LIKE_BUTTON_COOLDOWN_MS);
+        }
+        onAuthorClickListener.onAuthorClick(listaObras.get(adapterPosition), adapterPosition);
     }
 
     private void triggerLike(@NonNull ViewHolder holder, boolean onlyLikeIfNeeded) {

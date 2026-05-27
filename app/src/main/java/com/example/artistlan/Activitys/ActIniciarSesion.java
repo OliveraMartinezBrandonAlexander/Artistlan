@@ -42,6 +42,7 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.PasswordPressVisibilityHelper;
 
 import retrofit2.Call;
@@ -68,6 +69,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
     private View resultOk;
     private TextView resultTitle, resultMessage;
     private TextView txtBrand, txtTitulo, txtInstruccion, txtCorreoLbl, txtUsuarioLbl, txtPassLbl, txtForgotPassword;
+    private TextView txtBtnIniciarSesion;
     private LottieAnimationView resultLottie, sideLottie;
 
     private ThemeManager themeManager;
@@ -119,6 +121,7 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         txtUsuarioLbl = findViewById(R.id.IsTxtUsuarioLbl);
         txtPassLbl = findViewById(R.id.IsTxtPassLbl);
         txtForgotPassword = findViewById(R.id.IsTxtForgotPassword);
+        txtBtnIniciarSesion = findViewById(R.id.IsTxtBtnIniciarSesion);
 
         sideLottie = findViewById(R.id.IsLottieSide);
 
@@ -180,8 +183,11 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
                 themeManager.color(ThemeKeys.ICON_ACTIVE)
         );
 
-        ThemeApplier.applyPrimaryButton(btnIniciarSesion, themeManager);
-        ThemeApplier.applySecondaryButton(resultOk, themeManager);
+        CardThemeHelper.applyPrimaryBubbleSurface(btnIniciarSesion, txtBtnIniciarSesion, themeManager);
+        if (resultOk instanceof android.widget.Button) {
+            CardThemeHelper.applySecondaryBubbleButton((android.widget.Button) resultOk, themeManager);
+        }
+        CardThemeHelper.applyFilterButton(btnRegresar, themeManager);
 
         ThemeEffectsApplier.applyGlowIntensity(glowTop, themeManager, ThemeKeys.GLOW_PRIMARY);
         ThemeEffectsApplier.applyGlowIntensity(glowCenter, themeManager, ThemeKeys.GLOW_TERTIARY);

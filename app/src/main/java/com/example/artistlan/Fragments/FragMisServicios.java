@@ -103,6 +103,7 @@ public class FragMisServicios extends Fragment {
         adapter = new TarjetaTextoServicioAdapter(new ArrayList<>(), requireContext());
         adapter.setEntryAnimationsEnabled(false);
         adapter.setPortfolioHeaderEnabled(true);
+        adapter.setOwnershipBadgeEnabled(false);
         adapter.setCurrentUserId(idUsuarioLogueado);
         adapter.setOnLikeClickListener(this::toggleLikeServicio);
         adapter.setOnEditClickListener(this::editarServicio);

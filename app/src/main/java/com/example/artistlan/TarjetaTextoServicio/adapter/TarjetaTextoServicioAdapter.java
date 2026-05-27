@@ -63,6 +63,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     private Integer currentUserId;
     private boolean entryAnimationsEnabled = true;
     private boolean portfolioHeaderEnabled = false;
+    private boolean ownershipBadgeEnabled = true;
 
     public TarjetaTextoServicioAdapter(List<TarjetaTextoServicioItem> listaServicios, Context context) {
         this.listaServicios = listaServicios;
@@ -78,6 +79,10 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     public void setEntryAnimationsEnabled(boolean enabled) { this.entryAnimationsEnabled = enabled; }
     public void setPortfolioHeaderEnabled(boolean enabled) {
         this.portfolioHeaderEnabled = enabled;
+        notifyDataSetChanged();
+    }
+    public void setOwnershipBadgeEnabled(boolean enabled) {
+        this.ownershipBadgeEnabled = enabled;
         notifyDataSetChanged();
     }
     public void setCurrentUserId(Integer currentUserId) {
@@ -130,7 +135,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         boolean esServicioPropio = servicio.getIdUsuario() != null
                 && getCurrentUserId() != null
                 && servicio.getIdUsuario().equals(getCurrentUserId());
-        holder.tvBadgeServicio.setVisibility(esServicioPropio ? View.VISIBLE : View.GONE);
+        holder.tvBadgeServicio.setVisibility(esServicioPropio && ownershipBadgeEnabled ? View.VISIBLE : View.GONE);
         holder.tvBadgeServicio.setText("Mi servicio");
         configurarEncabezadoPublicacion(holder, servicio);
         bindLikeUi(holder, servicio, true);

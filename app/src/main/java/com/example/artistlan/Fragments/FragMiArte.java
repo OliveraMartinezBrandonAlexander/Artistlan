@@ -104,6 +104,7 @@ public class FragMiArte extends Fragment {
         ThemeApplier.applyTextSecondary(tvEmptyMiArte, new ThemeManager(requireContext()));
         adapter = new TarjetaTextoObraAdapter(new ArrayList<>(), requireContext(), ModoTarjetaObra.MIS_OBRAS);
         adapter.setEntryAnimationsEnabled(false);
+        adapter.setOwnershipBadgeEnabled(false);
         adapter.setOnLikeClickListener(this::toggleLikeObra);
         adapter.setOnEditClickListener(this::editarObra);
         adapter.setOnDeleteClickListener(this::confirmarEliminacionObra);

@@ -56,9 +56,9 @@
             android:clickable="true"
             android:focusable="true"
             android:paddingStart="6dp"
-            android:paddingTop="10dp"
+            android:paddingTop="8dp"
             android:paddingEnd="6dp"
-            android:paddingBottom="12dp">
+            android:paddingBottom="8dp">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/imgAutor"
@@ -87,55 +87,15 @@
                 android:textSize="15sp"
                 android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="@id/imgAutor"
-                app:layout_constraintEnd_toStartOf="@id/estadoResumen"
+                app:layout_constraintEnd_toStartOf="@id/obraMetaChipsRow"
                 app:layout_constraintStart_toEndOf="@id/imgAutor"
-                app:layout_constraintTop_toTopOf="@id/imgAutor" />
-
-            <TextView
-                android:id="@+id/categoria"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:background="@drawable/bg_chip_glass"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:paddingStart="9dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="9dp"
-                android:paddingBottom="4dp"
-                android:text="Categor&#237;a"
-                android:textColor="@color/artistlan_text_primary"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                app:layout_constrainedWidth="true"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/estadoResumen" />
-
-            <TextView
-                android:id="@+id/estadoResumen"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/bg_chip_glass"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:paddingStart="7dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="7dp"
-                android:paddingBottom="4dp"
-                android:text="Estado"
-                android:textColor="@color/artistlan_text_primary"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                app:layout_constrainedWidth="true"
-                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/imgAutor" />
 
             <LinearLayout
                 android:id="@+id/likeContainer"
                 android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_marginTop="6dp"
+                android:layout_height="44dp"
+                android:layout_marginTop="4dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -152,8 +112,8 @@
 
                 <ImageButton
                     android:id="@+id/btnLike"
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
                     android:layout_marginStart="2dp"
                     android:background="@android:color/transparent"
                     android:contentDescription="Me gusta"
@@ -178,38 +138,104 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@id/likeContainer" />
 
+            <FrameLayout
+                android:id="@+id/bottomBadgeSlot"
+                android:layout_width="76dp"
+                android:layout_height="0dp"
+                app:layout_constraintBottom_toBottomOf="@id/likeContainer"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@id/likeContainer">
+
+                <TextView
+                    android:id="@+id/tvBadgeObra"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_chip_glass"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:paddingStart="7dp"
+                    android:paddingTop="3dp"
+                    android:paddingEnd="7dp"
+                    android:paddingBottom="3dp"
+                    android:text="Mi arte"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
             <androidx.constraintlayout.widget.Barrier
                 android:id="@+id/headerBottomBarrier"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:barrierDirection="bottom"
-                app:constraint_referenced_ids="imgAutor,autor,categoria,estadoResumen" />
+                app:constraint_referenced_ids="imgAutor,autor,obraMetaChipsRow" />
 
-            <TextView
-                android:id="@+id/tvBadgeObra"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/obraMetaChipsRow"
+                android:layout_width="150dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_chip_glass"
-                android:paddingStart="6dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="6dp"
-                android:paddingBottom="4dp"
-                android:text="Mi arte"
-                android:textColor="@color/artistlan_text_primary"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/headerBottomBarrier" />
+                android:layout_marginStart="6dp"
+                android:baselineAligned="false"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="@id/imgAutor"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/imgAutor">
+
+                <TextView
+                    android:id="@+id/categoria"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_chip_glass"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:paddingStart="7dp"
+                    android:paddingTop="3dp"
+                    android:paddingEnd="7dp"
+                    android:paddingBottom="3dp"
+                    android:text="Categor&#237;a"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/estadoResumen"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_chip_glass"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:paddingStart="7dp"
+                    android:paddingTop="3dp"
+                    android:paddingEnd="7dp"
+                    android:paddingBottom="3dp"
+                    android:text="Estado"
+                    android:textColor="@color/artistlan_text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
 
             <ImageView
                 android:id="@+id/imgObra"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="4dp"
                 android:adjustViewBounds="false"
                 android:background="@android:color/transparent"
+                android:padding="2dp"
                 android:scaleType="centerCrop"
                 app:layout_constraintDimensionRatio="1:1"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -233,7 +259,7 @@
                 android:id="@+id/titulo"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="5dp"
                 android:ellipsize="end"
                 android:gravity="center"
                 android:maxLines="2"
@@ -244,13 +270,13 @@
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvBadgeObra" />
+                app:layout_constraintTop_toBottomOf="@id/headerBottomBarrier" />
 
             <LinearLayout
                 android:id="@+id/expanded_section"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="5dp"
                 android:orientation="vertical"
                 android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -261,6 +287,7 @@
                     android:id="@+id/descripcion"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:ellipsize="end"
                     android:lineSpacingExtra="3dp"
                     android:text="Descripci&#243;n completa"
                     android:textColor="@color/artistlan_text_primary"

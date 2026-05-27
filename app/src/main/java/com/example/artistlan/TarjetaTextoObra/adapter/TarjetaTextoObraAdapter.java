@@ -106,6 +106,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
     private int lastAnimatedPosition = -1;
     private long lastAuthorClickMs = 0L;
     private boolean entryAnimationsEnabled = true;
+    private boolean ownershipBadgeEnabled = true;
 
     public TarjetaTextoObraAdapter(List<TarjetaTextoObraItem> listaObras, Context context) {
         this(listaObras, context, ModoTarjetaObra.EXPLORAR);
@@ -130,6 +131,11 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
     public void setEntryAnimationsEnabled(boolean enabled) {
         this.entryAnimationsEnabled = enabled;
+    }
+
+    public void setOwnershipBadgeEnabled(boolean enabled) {
+        this.ownershipBadgeEnabled = enabled;
+        notifyDataSetChanged();
     }
 
     public void setOnLikeClickListener(OnLikeClickListener listener) {
@@ -210,6 +216,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
 
         boolean expandido = position == tarjetaExpandida;
         obra.setExpandido(expandido);
+        holder.descripcion.setMaxLines(expandido ? Integer.MAX_VALUE : 2);
         animarVista(holder.expandedSection, expandido);
 
         configurarBotones(holder, obra);
@@ -265,7 +272,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         holder.likes.setText(String.valueOf(obra.getLikes()));
 
         boolean esObraPropia = esContenidoPropio(obra);
-        holder.tvBadgeObra.setVisibility(esObraPropia ? View.VISIBLE : View.GONE);
+        holder.tvBadgeObra.setVisibility(esObraPropia && ownershipBadgeEnabled ? View.VISIBLE : View.GONE);
         holder.tvBadgeObra.setText("Mi arte");
 
         configurarEncabezadoPublicacion(holder, obra);

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.MotionEvent;
@@ -13,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -22,6 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
@@ -60,6 +63,7 @@ import com.example.artistlan.TarjetaTextoServicio.adapter.TarjetaTextoServicioAd
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 import com.example.artistlan.utils.DialogThemeHelper;
 import com.example.artistlan.utils.LikeStateManager;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -78,6 +82,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
     private ImageView imgFotoPerfil;
     private ImageButton btnEditarPefil;
     private CardView cardPerfilInfo;
+    private FrameLayout frameFotoPerfil;
     private LinearLayout panelInfo;
     private View expandedSectionPerfil;
     private NestedScrollView scrollPerfil;
@@ -155,6 +160,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tvFecNac = view.findViewById(R.id.VrpTxvFecNac);
         tvCategoria = view.findViewById(R.id.VrpTxvCategoria);
         tvUbicacion = view.findViewById(R.id.VrpTxvUbicacion);
+        frameFotoPerfil = view.findViewById(R.id.frameFotoPerfil);
         imgFotoPerfil = view.findViewById(R.id.imgPerfil);
         recyclerFavoritos = view.findViewById(R.id.recyclerFavoritosPerfil);
         tvFavoritosVacio = view.findViewById(R.id.tvFavoritosVacio);
@@ -201,11 +207,11 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
             return;
         }
         themeManager = new ThemeManager(requireContext());
-        int colorActual = themeManager.color(ThemeKeys.ACCENT_PRIMARY);
-        if (colorActual == ultimoColorTemaAplicado) {
+        int firmaTemaActual = calcularFirmaTemaPerfil();
+        if (firmaTemaActual == ultimoColorTemaAplicado) {
             return;
         }
-        ultimoColorTemaAplicado = colorActual;
+        ultimoColorTemaAplicado = firmaTemaActual;
         aplicarTemaVisualPerfil();
         RecyclerView.Adapter<?> currentAdapter = recyclerFavoritos != null ? recyclerFavoritos.getAdapter() : null;
         if (currentAdapter != null && currentAdapter.getItemCount() > 0) {
@@ -223,24 +229,111 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         }
         if (cardPerfilInfo != null) {
             ThemeApplier.applyCard(cardPerfilInfo, themeManager, ThemeKeys.ACCOUNT_GLASS_PANEL);
+            cardPerfilInfo.setRadius(dpToPx(22));
+            cardPerfilInfo.setCardElevation(dpToPx(6));
+            if (cardPerfilInfo instanceof MaterialCardView) {
+                MaterialCardView materialCard = (MaterialCardView) cardPerfilInfo;
+                materialCard.setStrokeColor(themeManager.color(ThemeKeys.ACCOUNT_GLASS_STROKE));
+                materialCard.setStrokeWidth(dpToPx(1));
+            }
         }
-        if (panelInfo != null && panelInfo.getBackground() != null) {
-            panelInfo.getBackground().mutate().setColorFilter(themeManager.color(ThemeKeys.INPUT_BG), PorterDuff.Mode.SRC_ATOP);
+        if (frameFotoPerfil != null) {
+            frameFotoPerfil.setBackground(crearFondoOval(
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.ACCENT_PRIMARY), 38),
+                    themeManager.color(ThemeKeys.CARD_BORDER),
+                    2
+            ));
+        }
+        if (tvDescripcion != null) {
+            tvDescripcion.setBackground(null);
+        }
+        if (panelInfo != null) {
+            panelInfo.setBackground(null);
+        }
+        if (tvRedes != null) {
+            tvRedes.setBackground(crearFondoRedondeado(
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), 165),
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE), 135),
+                    1,
+                    14
+            ));
+        }
+        View dividerInfoPersonal = findViewByIdLocal(R.id.dividerPerfilInfoPersonal);
+        if (dividerInfoPersonal != null) {
+            dividerInfoPersonal.setBackgroundColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.CARD_BORDER), 90));
+        }
+        View dividerDetalles = findViewByIdLocal(R.id.dividerPerfilDetalles);
+        if (dividerDetalles != null) {
+            dividerDetalles.setBackgroundColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.CARD_BORDER), 90));
         }
         if (contenedorTabsFavoritos != null && contenedorTabsFavoritos.getBackground() != null) {
             contenedorTabsFavoritos.getBackground().mutate().setColorFilter(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), PorterDuff.Mode.SRC_ATOP);
         }
         if (btnEditarPefil != null) {
+            btnEditarPefil.setBackground(crearFondoRedondeado(
+                    themeManager.color(ThemeKeys.CARD_CHIP_BG),
+                    themeManager.color(ThemeKeys.ACCENT_PRIMARY),
+                    1,
+                    14
+            ));
             ThemeApplier.applyIcon(btnEditarPefil, themeManager, ThemeKeys.ICON_ACTIVE);
-        }
-        if (btnDesactivar2FA != null) {
-            ThemeApplier.applySecondaryButton(btnDesactivar2FA, themeManager);
         }
         aplicarTemaTabsFavoritos();
         aplicarColorTextoRecursivo(cardPerfilInfo, themeManager.color(ThemeKeys.TEXT_PRIMARY));
         ThemeApplier.applyTextPrimary(tvNombre, themeManager);
+        ThemeApplier.applyTextSecondary(tvDescripcion, themeManager);
+        ThemeApplier.applyTextSecondary(tvUsuario, themeManager);
+        ThemeApplier.applyTextSecondary(tvCorreo, themeManager);
+        ThemeApplier.applyTextSecondary(tvTelefono, themeManager);
+        ThemeApplier.applyTextSecondary(tvRedes, themeManager);
+        ThemeApplier.applyTextSecondary(tvFecNac, themeManager);
+        ThemeApplier.applyTextSecondary(tvCategoria, themeManager);
+        ThemeApplier.applyTextSecondary(tvUbicacion, themeManager);
         ThemeApplier.applyTextPrimary(tvTituloFavoritos, themeManager);
         ThemeApplier.applyTextSecondary(tvFavoritosVacio, themeManager);
+        if (btnDesactivar2FA != null) {
+            ThemeApplier.applySecondaryButton(btnDesactivar2FA, themeManager);
+        }
+    }
+
+    @Nullable
+    private View findViewByIdLocal(int id) {
+        View view = getView();
+        return view != null ? view.findViewById(id) : null;
+    }
+
+    private int calcularFirmaTemaPerfil() {
+        int result = 17;
+        result = 31 * result + themeManager.color(ThemeKeys.ACCENT_PRIMARY);
+        result = 31 * result + themeManager.color(ThemeKeys.ACCOUNT_GLASS_PANEL);
+        result = 31 * result + themeManager.color(ThemeKeys.ACCOUNT_GLASS_STROKE);
+        result = 31 * result + themeManager.color(ThemeKeys.CARD_BORDER);
+        result = 31 * result + themeManager.color(ThemeKeys.CARD_CHIP_BG);
+        result = 31 * result + themeManager.color(ThemeKeys.FILTER_BUTTON_BG);
+        result = 31 * result + themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE);
+        result = 31 * result + themeManager.color(ThemeKeys.INPUT_BG);
+        result = 31 * result + themeManager.color(ThemeKeys.INPUT_STROKE);
+        result = 31 * result + themeManager.color(ThemeKeys.TEXT_PRIMARY);
+        result = 31 * result + themeManager.color(ThemeKeys.TEXT_SECONDARY);
+        result = 31 * result + themeManager.color(ThemeKeys.ICON_ACTIVE);
+        return result;
+    }
+
+    private GradientDrawable crearFondoRedondeado(int fillColor, int strokeColor, int strokeDp, int radiusDp) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setColor(fillColor);
+        drawable.setCornerRadius(dpToPx(radiusDp));
+        drawable.setStroke(dpToPx(strokeDp), strokeColor);
+        return drawable;
+    }
+
+    private GradientDrawable crearFondoOval(int fillColor, int strokeColor, int strokeDp) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.OVAL);
+        drawable.setColor(fillColor);
+        drawable.setStroke(dpToPx(strokeDp), strokeColor);
+        return drawable;
     }
 
     private void aplicarColorTextoRecursivo(@Nullable View view, int textColor) {
@@ -432,7 +525,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         tvNombre.setText(usuario.isEmpty() ? "usuario" : usuario);
         tvUsuario.setText(nombre.isEmpty() ? "Nombre no disponible" : nombre);
         tvCorreo.setText(correo.isEmpty() ? "correo no disponible" : correo);
-        tvDescripcion.setText(descripcion.isEmpty() ? "Sin descripcion" : descripcion);
+        tvDescripcion.setText(descripcion.isEmpty() ? "Sin descripción" : descripcion);
         tvTelefono.setText(telefono.isEmpty() ? "No disponible" : telefono);
         tvRedes.setText(redes.isEmpty() ? "Sin redes" : redes);
         tvFecNac.setText(fechaNac.isEmpty() ? "Sin fecha" : fechaNac);
@@ -470,7 +563,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 String usuario = textoSeguro(user.getUsuario(), "usuario");
                 String nombreCompleto = textoSeguro(user.getNombreCompleto(), "Nombre no disponible");
                 String correo = textoSeguro(user.getCorreo(), "correo no disponible");
-                String descripcion = textoSeguro(user.getDescripcion(), "Sin descripcion");
+                String descripcion = textoSeguro(user.getDescripcion(), "Sin descripción");
                 String telefono = textoSeguro(user.getTelefono(), "No disponible");
                 String redes = textoSeguro(user.getRedesSociales(), "Sin redes");
                 String fechaNac = textoSeguro(user.getFechaNacimiento(), "Sin fecha");

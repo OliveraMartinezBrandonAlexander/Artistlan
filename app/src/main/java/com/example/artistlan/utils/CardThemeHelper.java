@@ -152,6 +152,28 @@ public final class CardThemeHelper {
         button.setColorFilter(tm.color(ThemeKeys.FILTER_BUTTON_STROKE), PorterDuff.Mode.SRC_IN);
     }
 
+    public static void applyFilterTextButton(@Nullable TextView button, @NonNull ThemeManager tm) {
+        if (button == null) {
+            return;
+        }
+        button.setTypeface(Typeface.create("sans-serif-black", Typeface.BOLD));
+        button.setTextColor(chooseTextColor(
+                tm,
+                tm.color(ThemeKeys.FILTER_BUTTON_BG),
+                tm.color(ThemeKeys.FILTER_BUTTON_STROKE),
+                tm.color(ThemeKeys.TEXT_PRIMARY),
+                tm.color(ThemeKeys.TEXT_SECONDARY),
+                Color.WHITE,
+                Color.BLACK
+        ));
+        button.setBackground(roundedDrawable(
+                tm.color(ThemeKeys.FILTER_BUTTON_BG),
+                tm.color(ThemeKeys.FILTER_BUTTON_STROKE),
+                2,
+                dp(button, 16)
+        ));
+    }
+
     public static void applyFilterSurface(@Nullable View view, @NonNull ThemeManager tm) {
         if (view == null) {
             return;

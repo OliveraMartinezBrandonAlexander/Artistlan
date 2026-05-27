@@ -10,6 +10,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.artistlan.Conector.model.ReporteResumenDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.ModeracionUiMapper;
 
 import java.util.ArrayList;
@@ -40,15 +43,27 @@ public class ReportesModeracionAdapter extends RecyclerView.Adapter<ReportesMode
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ReporteResumenDTO reporte = reportes.get(position);
+        ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         holder.tvIdReporte.setText("Reporte #" + safeNumero(reporte.getIdReporte()));
-        holder.tvTipoObjetivo.setText("Tipo: " + ModeracionUiMapper.formatTipoObjetivo(reporte.getTipoObjetivo()));
+        holder.tvTipoObjetivo.setText(ModeracionUiMapper.formatTipoObjetivo(reporte.getTipoObjetivo()));
         holder.tvTituloObjetivo.setText("Objetivo: " + resolverTitulo(reporte));
         holder.tvMotivo.setText("Motivo: " + safeText(reporte.getMotivo(), "Sin motivo"));
-        holder.tvEstado.setText("Estado: " + ModeracionUiMapper.formatEstadoReporte(reporte.getEstado()));
-        holder.tvPrioridad.setText("Prioridad: " + ModeracionUiMapper.formatPrioridad(reporte.getPrioridad()));
+        holder.tvEstado.setText(ModeracionUiMapper.formatEstadoReporte(reporte.getEstado()));
+        holder.tvPrioridad.setText(ModeracionUiMapper.formatPrioridad(reporte.getPrioridad()));
         holder.tvReportante.setText("Reportante: " + safeText(reporte.getNombreUsuarioReportante(), "No disponible"));
         holder.tvModeradorAsignado.setText("Moderador: " + ModeracionUiMapper.formatModeradorAsignado(reporte.getNombreModeradorAsignado()));
         holder.tvFechaReporte.setText("Fecha: " + safeText(reporte.getFechaReporte(), "No disponible"));
+
+        CardThemeHelper.applyFlatCard(holder.itemView, tm);
+        CardThemeHelper.applySoftChip(holder.tvTipoObjetivo, tm);
+        CardThemeHelper.applyStatusChip(holder.tvEstado, reporte.getEstado(), tm);
+        CardThemeHelper.applySoftChip(holder.tvPrioridad, tm);
+        ThemeApplier.applyTextPrimary(holder.tvIdReporte, tm);
+        ThemeApplier.applyTextPrimary(holder.tvTituloObjetivo, tm);
+        ThemeApplier.applyTextSecondary(holder.tvMotivo, tm);
+        ThemeApplier.applyTextSecondary(holder.tvReportante, tm);
+        ThemeApplier.applyTextSecondary(holder.tvModeradorAsignado, tm);
+        ThemeApplier.applyTextSecondary(holder.tvFechaReporte, tm);
 
         holder.itemView.setOnClickListener(v -> {
             if (onReporteClickListener != null) {

@@ -16,8 +16,8 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.artistlan.Conector.model.CarritoDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
-import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -100,12 +100,11 @@ public class CarritoObraAdapter extends RecyclerView.Adapter<CarritoObraAdapter.
         ThemeApplier.applyTextPrimary(holder.tvTitulo, tm);
         ThemeApplier.applyTextSecondary(holder.tvArtista, tm);
         ThemeApplier.applyTextSecondary(holder.tvPrecio, tm);
-        ThemeApplier.applyTextSecondary(holder.tvEstado, tm);
         ThemeApplier.applyTextSecondary(holder.tvReservaDetalle, tm);
-        ThemeApplier.applyPrimaryButton(holder.btnComprar, tm);
-        ThemeApplier.applySecondaryButton(holder.btnContactar, tm);
-        ThemeApplier.applySecondaryButton(holder.btnQuitar, tm);
-        ThemeApplier.applyCardContainer(holder.itemView, tm);
+        CardThemeHelper.applyPrimaryBubbleButton(holder.btnComprar, tm);
+        CardThemeHelper.applySecondaryBubbleButton(holder.btnContactar, tm);
+        CardThemeHelper.applyFilterActionButton(holder.btnQuitar, tm);
+        CardThemeHelper.applyFlatCard(holder.itemView, tm);
 
         holder.tvTitulo.setText(safe(item.getTitulo(), "Obra sin titulo"));
         holder.tvArtista.setText("Artista: " + safe(item.getNombreAutor(), "No disponible"));
@@ -120,6 +119,7 @@ public class CarritoObraAdapter extends RecyclerView.Adapter<CarritoObraAdapter.
             holder.tvReservaDetalle.setVisibility(View.VISIBLE);
             holder.tvReservaDetalle.setText("Estado: " + estadoTexto);
         }
+        CardThemeHelper.applyStatusChip(holder.tvEstado, estadoTexto, tm);
 
         holder.btnComprar.setOnClickListener(v -> {
             int adapterPosition = holder.getBindingAdapterPosition();

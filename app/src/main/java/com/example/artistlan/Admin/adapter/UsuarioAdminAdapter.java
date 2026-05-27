@@ -17,6 +17,7 @@ import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.utils.CardThemeHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,8 +83,9 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         ThemeApplier.applyTextPrimary(holder.tvNombre, tm);
         ThemeApplier.applyTextSecondary(holder.tvUsuario, tm);
-        ThemeApplier.applyTextSecondary(holder.tvRol, tm);
-        ThemeApplier.applyPrimaryButton(holder.btnCambiarRol, tm);
+        CardThemeHelper.applySoftChip(holder.tvRol, tm);
+        CardThemeHelper.applyPrimaryBubbleButton(holder.btnCambiarRol, tm);
+        CardThemeHelper.applyMessageCard(holder.cardUsuario, tm, false);
 
         holder.btnCambiarRol.setOnClickListener(v -> listener.onCambiarRol(item));
 
@@ -116,6 +118,7 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         final ImageView imgUsuario;
+        final com.google.android.material.card.MaterialCardView cardUsuario;
         final TextView tvNombre;
         final TextView tvUsuario;
         final TextView tvRol;
@@ -123,6 +126,7 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
+            cardUsuario = (com.google.android.material.card.MaterialCardView) itemView;
             imgUsuario = itemView.findViewById(R.id.imgUsuarioAdmin);
             tvNombre = itemView.findViewById(R.id.tvNombreUsuarioAdmin);
             tvUsuario = itemView.findViewById(R.id.tvUsuarioAdmin);

@@ -42,7 +42,10 @@ import com.example.artistlan.Conector.model.ResolverReporteRequestDTO;
 import com.example.artistlan.Conector.model.RespuestaModeracionDTO;
 import com.example.artistlan.Conector.model.TomarReporteRequestDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.ModeracionUiMapper;
 
 import java.text.Normalizer;
@@ -87,8 +90,11 @@ public class FragDetalleReporteModeracion extends Fragment {
     private TextView tvAccionResolucion;
     private TextView tvMensajeRespuesta;
     private TextView tvFechaResolucion;
+    private TextView tvTituloPantalla;
+    private TextView tvSubtituloPantalla;
     private Button btnTomarReporte;
 
+    private View cardInfoReporte;
     private View cardResolverReporte;
     private Spinner spinnerAccionResolver;
     private EditText etMensajeRespuesta;
@@ -98,6 +104,7 @@ public class FragDetalleReporteModeracion extends Fragment {
     private Button btnResolverReporte;
 
     private ModeracionApi moderacionApi;
+    private ThemeManager themeManager;
     private int idReporte = -1;
     private int idUsuarioActual = -1;
     private String rolActual = "USER";
@@ -123,6 +130,7 @@ public class FragDetalleReporteModeracion extends Fragment {
         viewDestroyed = false;
         logDebug(TAG_NAV_CRASH_DEBUG, "onViewCreated -> viewDestroyed=false");
         ThemeModuleStyler.styleFragment(this, view);
+        themeManager = new ThemeManager(requireContext());
 
         moderacionApi = RetrofitClient.getClient().create(ModeracionApi.class);
         bindViews(view);
@@ -148,6 +156,7 @@ public class FragDetalleReporteModeracion extends Fragment {
 
         configurarScrollYTeclado();
         ocultarSeccionResolucion();
+        aplicarTemaVisual();
         validarPermisosYCargar();
     }
 
@@ -156,6 +165,8 @@ public class FragDetalleReporteModeracion extends Fragment {
         contenedorDetalle = view.findViewById(R.id.contenedorDetalleReporteModeracion);
         progressBar = view.findViewById(R.id.progressDetalleReporteModeracion);
         tvError = view.findViewById(R.id.tvErrorDetalleReporteModeracion);
+        tvTituloPantalla = view.findViewById(R.id.tvTituloPantallaDetalleReporteModeracion);
+        tvSubtituloPantalla = view.findViewById(R.id.tvSubtituloPantallaDetalleReporteModeracion);
         tvIdReporte = view.findViewById(R.id.tvIdDetalleReporteModeracion);
         tvTipoObjetivo = view.findViewById(R.id.tvTipoObjetivoDetalleModeracion);
         tvTituloObjetivo = view.findViewById(R.id.tvTituloObjetivoDetalleModeracion);
@@ -175,6 +186,7 @@ public class FragDetalleReporteModeracion extends Fragment {
         tvFechaResolucion = view.findViewById(R.id.tvFechaResolucionDetalleModeracion);
         btnTomarReporte = view.findViewById(R.id.btnTomarReporteModeracion);
 
+        cardInfoReporte = view.findViewById(R.id.cardInfoReporteModeracion);
         cardResolverReporte = view.findViewById(R.id.cardResolverReporteModeracion);
         spinnerAccionResolver = view.findViewById(R.id.spinnerAccionResolverModeracion);
         etMensajeRespuesta = view.findViewById(R.id.etMensajeRespuestaModeracion);
@@ -185,6 +197,52 @@ public class FragDetalleReporteModeracion extends Fragment {
         if (detailScrollView != null) {
             scrollBasePaddingBottom = detailScrollView.getPaddingBottom();
         }
+    }
+
+    private void aplicarTemaVisual() {
+        if (themeManager == null) {
+            return;
+        }
+        CardThemeHelper.tintProgress(progressBar, themeManager);
+        CardThemeHelper.applyThemedSurface(cardInfoReporte, themeManager, 18);
+        CardThemeHelper.applyThemedSurface(cardResolverReporte, themeManager, 18);
+        CardThemeHelper.applyPrimaryBubbleButton(btnTomarReporte, themeManager);
+        CardThemeHelper.applyPrimaryBubbleButton(btnResolverReporte, themeManager);
+        CardThemeHelper.applyFilterSurface(spinnerAccionResolver, themeManager);
+        ThemeApplier.applyInput(etMensajeRespuesta, themeManager);
+        ThemeApplier.applyInput(etMotivoAccion, themeManager);
+        ThemeApplier.applyInput(etFechaFinSuspension, themeManager);
+
+        TextView[] primarios = new TextView[]{
+                tvTituloPantalla, tvIdReporte, tvTituloObjetivo,
+                findTextView(R.id.tvResolverTituloModeracion),
+                findTextView(R.id.tvResolverAccionLabelModeracion),
+                findTextView(R.id.tvResolverMensajeLabelModeracion),
+                findTextView(R.id.tvResolverMotivoLabelModeracion),
+                findTextView(R.id.tvResolverFechaLabelModeracion)
+        };
+        for (TextView tv : primarios) {
+            ThemeApplier.applyTextPrimary(tv, themeManager);
+        }
+        TextView[] secundarios = new TextView[]{
+                tvSubtituloPantalla, tvDescripcionObjetivo, tvReportante, tvUsuarioReportado,
+                tvMotivo, tvDescripcionReporte, tvModeradorAsignado, tvFechaReporte,
+                tvFechaInicioRevision, tvAccionResolucion, tvMensajeRespuesta, tvFechaResolucion,
+                findTextView(R.id.tvResolverSubtituloModeracion)
+        };
+        for (TextView tv : secundarios) {
+            ThemeApplier.applyTextSecondary(tv, themeManager);
+        }
+        CardThemeHelper.applySoftChip(tvTipoObjetivo, themeManager);
+        CardThemeHelper.applyStatusChip(tvEstado, null, themeManager);
+        CardThemeHelper.applySoftChip(tvPrioridad, themeManager);
+        ThemeApplier.applyTextSecondary(tvError, themeManager);
+    }
+
+    @Nullable
+    private TextView findTextView(int id) {
+        View view = getView();
+        return view != null ? view.findViewById(id) : null;
     }
 
     @Override
@@ -346,8 +404,19 @@ public class FragDetalleReporteModeracion extends Fragment {
         configurarCampoOpcional(tvFechaResolucion, "Fecha de resoluci\u00f3n: ", reporte.getFechaResolucion());
 
         cargarImagenObjetivo(reporte.getImagenObjetivo());
+        aplicarChipsDetalle(reporte);
         actualizarBotonTomar(reporte);
         actualizarSeccionResolucion(reporte);
+    }
+
+    private void aplicarChipsDetalle(@NonNull ReporteDetalleDTO reporte) {
+        if (themeManager == null) {
+            return;
+        }
+        tvTipoObjetivo.setText("Tipo: " + ModeracionUiMapper.formatTipoObjetivo(reporte.getTipoObjetivo()));
+        CardThemeHelper.applySoftChip(tvTipoObjetivo, themeManager);
+        CardThemeHelper.applyStatusChip(tvEstado, reporte.getEstado(), themeManager);
+        CardThemeHelper.applySoftChip(tvPrioridad, themeManager);
     }
 
     private void cargarImagenObjetivo(@Nullable String imagenObjetivo) {

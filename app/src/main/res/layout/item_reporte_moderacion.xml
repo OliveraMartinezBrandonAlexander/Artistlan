@@ -28,7 +28,7 @@
 
         <TextView
             android:id="@+id/tvTipoObjetivoModeracion"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="Tipo: N/A"
@@ -56,7 +56,7 @@
 
         <TextView
             android:id="@+id/tvEstadoModeracionItem"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="Estado: N/A"
@@ -65,7 +65,7 @@
 
         <TextView
             android:id="@+id/tvPrioridadModeracionItem"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="Prioridad: N/A"

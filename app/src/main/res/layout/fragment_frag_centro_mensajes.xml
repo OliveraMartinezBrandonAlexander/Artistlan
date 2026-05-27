@@ -9,6 +9,7 @@
     tools:context=".Fragments.FragCentroMensajes">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbarCentroMensajes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/artistlan_menu_bg"
@@ -16,6 +17,7 @@
         app:elevation="0dp">
 
         <LinearLayout
+            android:id="@+id/headerCentroMensajes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/artistlan_menu_bg"
@@ -42,6 +44,7 @@
                     android:src="@drawable/regresarimg" />
 
                 <TextView
+                    android:id="@+id/tvTituloCentroMensajes"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="14dp"

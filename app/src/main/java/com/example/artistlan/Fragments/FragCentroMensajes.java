@@ -29,6 +29,7 @@ import com.example.artistlan.R;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -44,6 +45,7 @@ public class FragCentroMensajes extends Fragment {
     private ImageButton btnAtras;
     private ImageButton btnMenuOpciones;
     private TextView tvResumenContador;
+    private TextView tvTituloCentroMensajes;
     private ThemeManager themeManager;
     private int notificacionesNoLeidas = 0;
     private int solicitudesPendientes = 0;
@@ -80,6 +82,7 @@ public class FragCentroMensajes extends Fragment {
         btnAtras = view.findViewById(R.id.btnCentroMensajesAtras);
         btnMenuOpciones = view.findViewById(R.id.btnCentroMensajesMenu);
         tvResumenContador = view.findViewById(R.id.tvCentroMensajesResumenContador);
+        tvTituloCentroMensajes = view.findViewById(R.id.tvTituloCentroMensajes);
         btnAtras.setOnClickListener(v -> navegarAtrasSeguro());
         btnMenuOpciones.setOnClickListener(this::mostrarMenuAcciones);
 
@@ -149,6 +152,7 @@ public class FragCentroMensajes extends Fragment {
         btnAtras = null;
         btnMenuOpciones = null;
         tvResumenContador = null;
+        tvTituloCentroMensajes = null;
         layoutTabs = null;
         themeManager = null;
         tabsThemeListenerAttached = false;
@@ -268,11 +272,34 @@ public class FragCentroMensajes extends Fragment {
         }
         if (layoutTabs != null) {
             layoutTabs.setBackground(crearFondoRedondeado(
-                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), 190),
-                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE), 150),
-                    1,
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), 220),
+                    ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE), 185),
+                    2,
                     16
             ));
+        }
+        View root = getView();
+        if (root != null) {
+            View appbar = root.findViewById(R.id.appbarCentroMensajes);
+            View header = root.findViewById(R.id.headerCentroMensajes);
+            View pager = root.findViewById(R.id.viewPagerCentroMensajes);
+            if (appbar != null) {
+                appbar.setBackgroundColor(themeManager.color(ThemeKeys.BG_MID));
+            }
+            if (header != null) {
+                header.setBackgroundColor(themeManager.color(ThemeKeys.BG_MID));
+            }
+            if (pager != null) {
+                pager.setBackgroundColor(themeManager.color(ThemeKeys.BG_MID));
+            }
+        }
+        CardThemeHelper.applyFilterButton(btnAtras, themeManager);
+        CardThemeHelper.applyFilterButton(btnMenuOpciones, themeManager);
+        if (tvTituloCentroMensajes != null) {
+            tvTituloCentroMensajes.setTextColor(themeManager.color(ThemeKeys.TEXT_PRIMARY));
+        }
+        if (tvResumenContador != null) {
+            tvResumenContador.setTextColor(themeManager.color(ThemeKeys.TEXT_SECONDARY));
         }
         tabLayout.setSelectedTabIndicatorColor(Color.TRANSPARENT);
         tabLayout.setTabRippleColor(ColorStateList.valueOf(
@@ -297,6 +324,7 @@ public class FragCentroMensajes extends Fragment {
         tabView.setSingleLine(true);
         tabView.setTextSize(13);
         tabView.setTypeface(tabView.getTypeface(), Typeface.BOLD);
+        tabView.setBackgroundTintList(null);
         tabView.setMinHeight(dpToPx(42));
         tabView.setIncludeFontPadding(false);
         tabView.setPadding(dpToPx(10), dpToPx(8), dpToPx(10), dpToPx(8));
@@ -352,6 +380,12 @@ public class FragCentroMensajes extends Fragment {
 
     private GradientDrawable crearFondoTabActivo() {
         int base = themeManager.color(ThemeKeys.ACCENT_PRIMARY);
+        int bottom = ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.BG_BOTTOM), 255);
+        int mid = themeManager.color(ThemeKeys.BG_MID);
+        int surface = Color.alpha(mid) < 255 ? ColorUtils.compositeColors(mid, bottom) : ColorUtils.setAlphaComponent(mid, 255);
+        if (Color.alpha(base) < 255) {
+            base = ColorUtils.compositeColors(base, surface);
+        }
         int end = ColorUtils.blendARGB(base, themeManager.color(ThemeKeys.BG_BOTTOM), 0.18f);
         GradientDrawable drawable = new GradientDrawable(
                 GradientDrawable.Orientation.LEFT_RIGHT,
@@ -366,7 +400,7 @@ public class FragCentroMensajes extends Fragment {
     private GradientDrawable crearFondoTabInactivo() {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setShape(GradientDrawable.RECTANGLE);
-        drawable.setColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.BUTTON_SECONDARY_BG), 90));
+        drawable.setColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_BG), 180));
         drawable.setCornerRadius(dpToPx(13));
         drawable.setStroke(dpToPx(1), ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.FILTER_BUTTON_STROKE), 95));
         return drawable;

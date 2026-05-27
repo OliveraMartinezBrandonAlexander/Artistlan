@@ -26,6 +26,7 @@
             android:src="@drawable/regresarimg" />
 
         <TextView
+            android:id="@+id/tvTituloCarrito"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
@@ -95,6 +96,7 @@
     </FrameLayout>
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/cardResumenCarrito"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardBackgroundColor="@color/artistlan_menu_surface_soft"

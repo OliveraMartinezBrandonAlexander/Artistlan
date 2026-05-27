@@ -66,6 +66,7 @@
             android:padding="12dp">
 
             <TextView
+                android:id="@+id/tvLabelEstadoModeracion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Estado"
@@ -79,6 +80,7 @@
                 android:layout_marginTop="6dp" />
 
             <TextView
+                android:id="@+id/tvLabelTipoModeracion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -93,6 +95,7 @@
                 android:layout_marginTop="6dp" />
 
             <TextView
+                android:id="@+id/tvLabelPrioridadModeracion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -130,7 +133,7 @@
             android:layout_marginTop="20dp"
             android:gravity="center"
             android:text="Sin reportes"
-            android:textColor="#5E5E5E"
+            android:textColor="@color/artistlan_menu_text_secondary"
             android:visibility="gone" />
 
         <androidx.recyclerview.widget.RecyclerView

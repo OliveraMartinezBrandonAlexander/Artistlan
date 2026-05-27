@@ -34,9 +34,13 @@ import com.example.artistlan.Conector.model.CarritoDTO;
 import com.example.artistlan.Conector.model.CrearOrdenPaypalCarritoResponseDTO;
 import com.example.artistlan.Conector.model.CrearOrdenPaypalResponseDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeManager;
+import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.adapter.CarritoObraAdapter;
 import com.example.artistlan.utils.ArtistlanDialogFactory;
 import com.example.artistlan.utils.ArtistlanLoadingDialog;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.DialogConfig;
 import com.example.artistlan.pagos.PagoPaypalSessionManager;
 import com.example.artistlan.pagos.PagoSyncManager;
@@ -63,7 +67,9 @@ public class FragCarrito extends Fragment {
     private TextView tvCarritoVacioSub;
     private TextView tvResumenCantidad;
     private TextView tvResumenTotal;
+    private TextView tvTituloCarrito;
     private LinearLayout layoutCarritoVacio;
+    private View cardResumenCarrito;
     private View menuInferior;
     private ProgressBar progressCarrito;
     private CarritoObraAdapter adapter;
@@ -71,6 +77,7 @@ public class FragCarrito extends Fragment {
     private PagoPaypalApi pagoPaypalApi;
     private CarritoPaypalApi carritoPaypalApi;
     private ArtistlanLoadingDialog feedbackDialog;
+    private ThemeManager themeManager;
     private int idUsuarioLogueado = -1;
     private final Set<Integer> obrasEnEliminacion = new HashSet<>();
     private boolean compraEnProceso = false;
@@ -88,6 +95,8 @@ public class FragCarrito extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ThemeModuleStyler.styleFragment(this, view);
+        themeManager = new ThemeManager(requireContext());
 
         SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", prefs.getInt("id", -1));
@@ -105,7 +114,9 @@ public class FragCarrito extends Fragment {
         tvCarritoVacioSub = view.findViewById(R.id.tvCarritoVacioSub);
         tvResumenCantidad = view.findViewById(R.id.tvResumenCantidad);
         tvResumenTotal = view.findViewById(R.id.tvResumenTotal);
+        tvTituloCarrito = view.findViewById(R.id.tvTituloCarrito);
         layoutCarritoVacio = view.findViewById(R.id.layoutCarritoVacio);
+        cardResumenCarrito = view.findViewById(R.id.cardResumenCarrito);
         progressCarrito = view.findViewById(R.id.progressCarrito);
         menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
@@ -114,6 +125,7 @@ public class FragCarrito extends Fragment {
 
         btnVolverExplorar.setOnClickListener(v -> volverAExplorar());
         btnComprarCarrito.setOnClickListener(v -> prepararCompraCarrito());
+        aplicarTemaVisual();
 
         recyclerViewCarrito.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new CarritoObraAdapter(requireContext());
@@ -326,6 +338,22 @@ public class FragCarrito extends Fragment {
                 .setPositiveText("Quitar")
                 .setOnPositive(() -> quitarDelCarrito(idObra))
                 .build());
+    }
+
+    private void aplicarTemaVisual() {
+        if (themeManager == null) {
+            return;
+        }
+        CardThemeHelper.applyFilterButton(btnVolverExplorar, themeManager);
+        CardThemeHelper.applyPrimaryBubbleButton(btnComprarCarrito, themeManager);
+        CardThemeHelper.applyThemedSurface(cardResumenCarrito, themeManager, 18);
+        CardThemeHelper.applyThemedSurface(layoutCarritoVacio, themeManager, 24);
+        CardThemeHelper.tintProgress(progressCarrito, themeManager);
+        ThemeApplier.applyTextPrimary(tvTituloCarrito, themeManager);
+        ThemeApplier.applyTextPrimary(tvCarritoVacio, themeManager);
+        ThemeApplier.applyTextSecondary(tvCarritoVacioSub, themeManager);
+        ThemeApplier.applyTextSecondary(tvResumenCantidad, themeManager);
+        ThemeApplier.applyTextPrimary(tvResumenTotal, themeManager);
     }
 
     private void quitarDelCarrito(int idObra) {

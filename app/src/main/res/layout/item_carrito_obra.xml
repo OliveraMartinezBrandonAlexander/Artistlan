@@ -87,7 +87,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="Reserva hasta: 01/01/2026 12:30"
-                    android:textColor="#5A497A"
+                    android:textColor="@color/artistlan_text_secondary"
                     android:textSize="12sp"
                     android:visibility="gone" />
             </LinearLayout>
@@ -103,7 +103,6 @@
                 android:id="@+id/btnCarritoComprar"
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
-                android:backgroundTint="@color/artistlan_secondary"
                 android:text="Comprar"
                 android:textAllCaps="false" />
 
@@ -112,7 +111,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
                 android:layout_marginTop="8dp"
-                android:backgroundTint="#D7C4EC"
                 android:text="Contactar artista"
                 android:textAllCaps="false" />
 
@@ -121,7 +119,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
                 android:layout_marginTop="8dp"
-                android:backgroundTint="#EFD2D2"
                 android:text="Quitar del carrito"
                 android:textAllCaps="false" />
         </LinearLayout>

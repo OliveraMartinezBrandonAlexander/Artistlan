@@ -165,7 +165,7 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
             txtVolverLogin.setTextColor(themeManager.color(ThemeKeys.ICON_ACTIVE));
         }
         if (btnRegresar != null) {
-            btnRegresar.setColorFilter(themeManager.color(ThemeKeys.ICON_ACTIVE), PorterDuff.Mode.SRC_IN);
+            CardThemeHelper.applyFilterButton(btnRegresar, themeManager);
         }
 
         ThemeApplier.applyInput(etCorreoUsuario, themeManager);

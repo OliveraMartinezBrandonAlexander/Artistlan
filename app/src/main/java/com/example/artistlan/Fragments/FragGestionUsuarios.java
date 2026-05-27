@@ -31,7 +31,11 @@ import com.example.artistlan.Conector.model.CambiarRolRequestDTO;
 import com.example.artistlan.Conector.model.PageResponseUsuariosDTO;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.CardThemeHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -59,6 +63,11 @@ public class FragGestionUsuarios extends Fragment {
     private View menuInferior;
     private Button btnCargarMasUsuarios;
     private LinearLayout layoutLoaderMasUsuarios;
+    private ImageButton btnRegresar;
+    private TextView tvTitulo;
+    private TextView txtCargandoMas;
+    private ProgressBar progressMasUsuarios;
+    private ThemeManager themeManager;
 
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable pendingSearchRunnable;
@@ -80,16 +89,20 @@ public class FragGestionUsuarios extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ThemeModuleStyler.styleFragment(this, view);
+        themeManager = new ThemeManager(requireContext());
 
         usuarioApi = RetrofitClient.getClient().create(UsuarioApi.class);
 
-        ImageButton btnRegresar = view.findViewById(R.id.btnRegresarAdminUsuarios);
+        btnRegresar = view.findViewById(R.id.btnRegresarAdminUsuarios);
         recyclerView = view.findViewById(R.id.rvUsuariosAdmin);
         progressBar = view.findViewById(R.id.pbUsuarios);
         tvEstado = view.findViewById(R.id.tvEstadoUsuarios);
         searchUsuarios = view.findViewById(R.id.searchUsuariosAdmin);
         btnCargarMasUsuarios = view.findViewById(R.id.btnCargarMasUsuarios);
         layoutLoaderMasUsuarios = view.findViewById(R.id.layoutLoaderMasUsuarios);
+        tvTitulo = view.findViewById(R.id.tvTituloGestionUsuarios);
+        txtCargandoMas = view.findViewById(R.id.txtCargandoMasUsuarios);
+        progressMasUsuarios = view.findViewById(R.id.progressMasUsuarios);
 
         menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
@@ -122,6 +135,7 @@ public class FragGestionUsuarios extends Fragment {
         }
 
         configurarBuscadorUsuarios();
+        aplicarTemaVisual();
         reiniciarYCargarPrimeraPagina();
     }
 
@@ -277,6 +291,27 @@ public class FragGestionUsuarios extends Fragment {
                 return true;
             }
         });
+    }
+
+    private void aplicarTemaVisual() {
+        if (themeManager == null) {
+            return;
+        }
+        CardThemeHelper.applyFilterButton(btnRegresar, themeManager);
+        CardThemeHelper.applyPrimaryBubbleButton(btnCargarMasUsuarios, themeManager);
+        CardThemeHelper.tintProgress(progressBar, themeManager);
+        CardThemeHelper.tintProgress(progressMasUsuarios, themeManager);
+        ThemeApplier.applyTextPrimary(tvTitulo, themeManager);
+        ThemeApplier.applyTextSecondary(tvEstado, themeManager);
+        ThemeApplier.applyTextSecondary(txtCargandoMas, themeManager);
+        if (searchUsuarios != null) {
+            CardThemeHelper.applyFilterSurface(searchUsuarios, themeManager);
+            TextView searchText = searchUsuarios.findViewById(androidx.appcompat.R.id.search_src_text);
+            if (searchText != null) {
+                searchText.setTextColor(themeManager.color(ThemeKeys.TEXT_PRIMARY));
+                searchText.setHintTextColor(themeManager.color(ThemeKeys.INPUT_HINT));
+            }
+        }
     }
 
     private void actualizarBusqueda(String texto, boolean conDebounce) {

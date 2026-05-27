@@ -25,8 +25,12 @@ import com.example.artistlan.Conector.SessionManager;
 import com.example.artistlan.Conector.api.ModeracionApi;
 import com.example.artistlan.Conector.model.ReporteResumenDTO;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.adapter.ReportesModeracionAdapter;
+import com.example.artistlan.utils.CardThemeHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,9 +50,12 @@ public class FragModeracionReportes extends Fragment {
     private TextView tvVacio;
     private TextView btnToggleFiltros;
     private View contenedorFiltros;
+    private TextView tvTitulo;
+    private TextView tvSubtitulo;
 
     private ModeracionApi moderacionApi;
     private ReportesModeracionAdapter adapter;
+    private ThemeManager themeManager;
 
     private int idUsuarioActual = -1;
     private String rolActual = "USER";
@@ -67,12 +74,14 @@ public class FragModeracionReportes extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ThemeModuleStyler.styleFragment(this, view);
+        themeManager = new ThemeManager(requireContext());
 
         moderacionApi = RetrofitClient.getClient().create(ModeracionApi.class);
         cargarSesionActual();
         bindViews(view);
         configurarRecycler();
         configurarFiltros();
+        aplicarTemaVisual(view);
         validarPermisosYCargar();
     }
 
@@ -99,6 +108,8 @@ public class FragModeracionReportes extends Fragment {
         tvVacio = view.findViewById(R.id.tvModeracionVacio);
         btnToggleFiltros = view.findViewById(R.id.btnToggleFiltrosModeracion);
         contenedorFiltros = view.findViewById(R.id.contenedorFiltrosModeracion);
+        tvTitulo = view.findViewById(R.id.tvTituloModeracion);
+        tvSubtitulo = view.findViewById(R.id.tvSubtituloModeracion);
     }
 
     private void configurarRecycler() {
@@ -185,6 +196,35 @@ public class FragModeracionReportes extends Fragment {
         );
         adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapterSpinner);
+    }
+
+    private void aplicarTemaVisual(@NonNull View root) {
+        if (themeManager == null) {
+            return;
+        }
+        ThemeApplier.applyTextPrimary(tvTitulo, themeManager);
+        ThemeApplier.applyTextSecondary(tvSubtitulo, themeManager);
+        ThemeApplier.applyTextSecondary(tvVacio, themeManager);
+        CardThemeHelper.applyFilterTextButton(btnToggleFiltros, themeManager);
+        CardThemeHelper.applyThemedSurface(contenedorFiltros, themeManager, 18);
+        CardThemeHelper.applyFilterSurface(spinnerEstado, themeManager);
+        CardThemeHelper.applyFilterSurface(spinnerTipo, themeManager);
+        CardThemeHelper.applyFilterSurface(spinnerPrioridad, themeManager);
+        CardThemeHelper.tintProgress(progressBar, themeManager);
+        if (checkSoloMios != null) {
+            checkSoloMios.setTextColor(themeManager.color(ThemeKeys.TEXT_PRIMARY));
+            checkSoloMios.setButtonTintList(android.content.res.ColorStateList.valueOf(
+                    themeManager.color(ThemeKeys.ACCENT_PRIMARY)
+            ));
+        }
+        TextView[] labels = new TextView[]{
+                root.findViewById(R.id.tvLabelEstadoModeracion),
+                root.findViewById(R.id.tvLabelTipoModeracion),
+                root.findViewById(R.id.tvLabelPrioridadModeracion)
+        };
+        for (TextView label : labels) {
+            ThemeApplier.applyTextPrimary(label, themeManager);
+        }
     }
 
     private int findIndexByBackendValue(@NonNull List<FilterOption> options, @Nullable String backendValue) {

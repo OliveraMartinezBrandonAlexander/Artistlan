@@ -1,5 +1,6 @@
 package com.example.artistlan.Admin.adapter;
 
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,15 +54,27 @@ public class ConvocatoriaAdminAdapter extends RecyclerView.Adapter<ConvocatoriaA
         holder.tvTitulo.setText(item.getTitulo());
         holder.tvDescripcion.setText(formatearDescripcion(item.getDescripcion()));
         holder.tvFecha.setText(item.getFecha() == null ? "Sin fecha" : "Fecha: " + item.getFecha());
+        String enlace = item.getEnlace() == null ? "" : item.getEnlace().trim();
+        boolean tieneEnlace = !TextUtils.isEmpty(enlace);
+        holder.tvEnlace.setText(enlace);
+        holder.dividerEnlace.setVisibility(tieneEnlace ? View.VISIBLE : View.GONE);
+        holder.tvEnlaceLabel.setVisibility(tieneEnlace ? View.VISIBLE : View.GONE);
+        holder.tvEnlace.setVisibility(tieneEnlace ? View.VISIBLE : View.GONE);
 
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
 
-        CardThemeHelper.applyFlatCard(holder.card, tm);
+        CardThemeHelper.applyMessageCard(holder.card, tm, false);
+        CardThemeHelper.applyGlassChipSection(holder.layoutHeaderChip, tm, 16);
         CardThemeHelper.applyThemedSurface(holder.layoutBody, tm, 14);
         CardThemeHelper.applyChip(holder.tvFecha, tm);
-        CardThemeHelper.applySolidHeader(holder.tvTitulo, holder.tvTitulo, tm);
+        holder.tvTitulo.setBackground(null);
+        ThemeApplier.applyTextPrimary(holder.tvTitulo, tm);
         ThemeApplier.applyTextSecondary(holder.tvDescripcionLabel, tm);
-        ThemeApplier.applyTextSecondary(holder.tvDescripcion, tm);
+        ThemeApplier.applyTextSecondary(holder.tvEnlaceLabel, tm);
+        ThemeApplier.applyTextPrimary(holder.tvDescripcion, tm);
+        ThemeApplier.applyTextPrimary(holder.tvEnlace, tm);
+        CardThemeHelper.applySubtleDivider(holder.dividerHeader, tm);
+        CardThemeHelper.applySubtleDivider(holder.dividerEnlace, tm);
         CardThemeHelper.applyPrimaryBubbleButton(holder.btnEditar, tm);
         CardThemeHelper.applySecondaryBubbleButton(holder.btnEliminar, tm);
 
@@ -98,22 +111,32 @@ public class ConvocatoriaAdminAdapter extends RecyclerView.Adapter<ConvocatoriaA
         final TextView tvTitulo;
         final TextView tvDescripcion;
         final TextView tvFecha;
+        final TextView tvEnlace;
         final Button btnEditar;
         final Button btnEliminar;
         final MaterialCardView card;
         final View layoutBody;
+        final View layoutHeaderChip;
         final TextView tvDescripcionLabel;
+        final TextView tvEnlaceLabel;
+        final View dividerHeader;
+        final View dividerEnlace;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             card = itemView.findViewById(R.id.cardAdminConvocatoria);
             layoutBody = itemView.findViewById(R.id.layoutAdminConvocatoriaBody);
+            layoutHeaderChip = itemView.findViewById(R.id.layoutAdminConvocatoriaHeaderChip);
             tvTitulo = itemView.findViewById(R.id.tvTituloConvocatoria);
             tvDescripcionLabel = itemView.findViewById(R.id.tvDescripcionAdminLabelConvocatoria);
             tvDescripcion = itemView.findViewById(R.id.tvDescripcionConvocatoria);
             tvFecha = itemView.findViewById(R.id.tvFechaConvocatoria);
+            tvEnlaceLabel = itemView.findViewById(R.id.tvEnlaceAdminLabelConvocatoria);
+            tvEnlace = itemView.findViewById(R.id.tvEnlaceConvocatoria);
             btnEditar = itemView.findViewById(R.id.btnEditarConvocatoria);
             btnEliminar = itemView.findViewById(R.id.btnEliminarConvocatoria);
+            dividerHeader = itemView.findViewById(R.id.dividerAdminConvocatoriaHeader);
+            dividerEnlace = itemView.findViewById(R.id.dividerAdminConvocatoriaEnlace);
         }
     }
 }

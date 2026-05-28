@@ -11,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -167,7 +169,7 @@ public class FragGestionConvocatorias extends Fragment {
         TextInputEditText etDescripcion = form.findViewById(R.id.etDescripcionConvocatoria);
         TextInputEditText etFecha = form.findViewById(R.id.etFechaConvocatoria);
         TextInputEditText etEnlace = form.findViewById(R.id.etEnlaceConvocatoria);
-        form.setBackground(DialogThemeHelper.createFieldDialogBackground(requireContext()));
+        form.setBackgroundColor(Color.TRANSPARENT);
 
         boolean editando = actual != null;
         if (editando) {
@@ -180,15 +182,58 @@ public class FragGestionConvocatorias extends Fragment {
         etFecha.setOnClickListener(v -> mostrarDatePicker(etFecha));
 
         ThemeManager tm = new ThemeManager(requireContext());
+        LinearLayout dialogContent = new LinearLayout(requireContext());
+        dialogContent.setOrientation(LinearLayout.VERTICAL);
+        dialogContent.setPadding(dpToPx(18), dpToPx(18), dpToPx(18), dpToPx(16));
+        dialogContent.setBackground(DialogThemeHelper.createDialogBackground(requireContext()));
+
+        TextView title = new TextView(requireContext());
+        title.setText(editando ? "Editar convocatoria" : "Nueva convocatoria");
+        title.setTextColor(tm.color(ThemeKeys.TEXT_PRIMARY));
+        title.setTextSize(24f);
+        title.setTypeface(android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.BOLD));
+        dialogContent.addView(title, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        LinearLayout.LayoutParams formParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        formParams.topMargin = dpToPx(14);
+        dialogContent.addView(form, formParams);
+
+        LinearLayout actions = new LinearLayout(requireContext());
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setGravity(android.view.Gravity.END);
+        LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        actionsParams.topMargin = dpToPx(16);
+
+        Button btnCancelar = new Button(requireContext());
+        btnCancelar.setText("Cancelar");
+        btnCancelar.setAllCaps(false);
+        Button btnGuardar = new Button(requireContext());
+        btnGuardar.setText(editando ? "Actualizar" : "Publicar");
+        btnGuardar.setAllCaps(false);
+        CardThemeHelper.applySecondaryBubbleButton(btnCancelar, tm);
+        CardThemeHelper.applyPrimaryBubbleButton(btnGuardar, tm);
+
+        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(0, dpToPx(46), 1f);
+        LinearLayout.LayoutParams saveParams = new LinearLayout.LayoutParams(0, dpToPx(46), 1f);
+        saveParams.leftMargin = dpToPx(10);
+        actions.addView(btnCancelar, cancelParams);
+        actions.addView(btnGuardar, saveParams);
+        dialogContent.addView(actions, actionsParams);
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(editando ? "Editar convocatoria" : "Nueva convocatoria")
-                .setView(form)
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton(editando ? "Actualizar" : "Publicar", null)
+                .setView(dialogContent)
                 .create();
 
-        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+        btnGuardar.setOnClickListener(v -> {
             limpiarErrores(tilTitulo, tilDescripcion, tilFecha, tilEnlace);
 
             String titulo = obtenerTexto(etTitulo);
@@ -212,15 +257,26 @@ public class FragGestionConvocatorias extends Fragment {
                 crearConvocatoria(body);
             }
             dialog.dismiss();
-        }));
+        });
+        btnCancelar.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
-        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
         DialogThemeHelper.applyFieldDialogWindowSize(dialog, requireContext());
-        ThemeApplier.applyInput(etTitulo, tm);
-        ThemeApplier.applyInput(etDescripcion, tm);
-        ThemeApplier.applyInput(etFecha, tm);
-        ThemeApplier.applyInput(etEnlace, tm);
+        DialogThemeHelper.applyLightGlassTextInputLayoutStyle(tilTitulo, requireContext());
+        DialogThemeHelper.applyLightGlassTextInputLayoutStyle(tilDescripcion, requireContext());
+        DialogThemeHelper.applyLightGlassTextInputLayoutStyle(tilFecha, requireContext());
+        DialogThemeHelper.applyLightGlassTextInputLayoutStyle(tilEnlace, requireContext());
+        DialogThemeHelper.applyLightGlassTextInputEditTextStyle(etTitulo, requireContext());
+        DialogThemeHelper.applyLightGlassTextInputEditTextStyle(etDescripcion, requireContext());
+        DialogThemeHelper.applyLightGlassTextInputEditTextStyle(etFecha, requireContext());
+        DialogThemeHelper.applyLightGlassTextInputEditTextStyle(etEnlace, requireContext());
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * requireContext().getResources().getDisplayMetrics().density);
     }
 
     private void mostrarDatePicker(TextInputEditText etFecha) {

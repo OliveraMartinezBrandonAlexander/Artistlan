@@ -663,6 +663,8 @@ public class ActRecuperarContrasena extends AppCompatActivity implements View.On
     @Override
     protected void onResume() {
         super.onResume();
+        themeManager = new ThemeManager(this);
+        applyThemeOnlyColors();
         if (sideLottie != null && !sideLottie.isAnimating()) {
             sideLottie.playAnimation();
         }

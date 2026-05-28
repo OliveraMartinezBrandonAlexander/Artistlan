@@ -3,22 +3,31 @@ package com.example.artistlan.Activitys;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.DatePickerDialog;
+import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
@@ -37,6 +46,7 @@ import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.DialogThemeHelper;
 import com.example.artistlan.utils.PasswordPressVisibilityHelper;
+import com.example.artistlan.utils.TermsDialogHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -53,10 +63,11 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
 
     private Button btnCrear;
     private ImageButton btnRegresar;
+    private CheckBox chkTerms;
     private EditText edtEmail, edtNombre, edtTel, edtFecha, edtUsuario, edtContra, edtContraConf;
     private UsuarioApi api;
 
-    private View glowTop, glowCenter, glowBottom, formContainer, dividerShimmer, dividerBase, rootMain;
+    private View glowTop, glowCenter, glowBottom, formContainer, dividerShimmer, dividerBase, rootMain, termsContainer;
     private ObjectAnimator glowTopY, glowTopX, glowTopAlpha;
     private ObjectAnimator glowCenterY, glowCenterX, glowCenterAlpha;
     private ObjectAnimator glowBottomY, glowBottomX, glowBottomAlpha;
@@ -66,7 +77,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
     private Button resultOk;
     private TextView resultTitle, resultMessage;
     private TextView txtBrand, txtTitulo, txtUsuarioMainLbl, txtUsuarioDescLbl, txtEmailLbl, txtNombreLbl,
-            txtTelLbl, txtFechaLbl, txtPassMainLbl, txtPassDescLbl, txtPassConfLbl, txtSeparador2;
+            txtTelLbl, txtFechaLbl, txtPassMainLbl, txtPassDescLbl, txtPassConfLbl, txtSeparador2, txtTerms;
     private LottieAnimationView resultLottie, sideLottie;
 
     private ThemeManager themeManager;
@@ -76,6 +87,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
 
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
     private static final long MIN_WAIT_VISIBLE_MS = 1400L;
+    private static final String STATE_TERMS_ACCEPTED = "termsAccepted";
     private long waitingShownAt = 0L;
 
     @Override
@@ -89,6 +101,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         rootMain = findViewById(R.id.CrcLayMain);
 
         btnCrear = findViewById(R.id.CrcBtnCrc);
+        chkTerms = findViewById(R.id.CrcChkTerms);
         edtEmail = findViewById(R.id.CrcEdtEmail);
         edtNombre = findViewById(R.id.CrcEdtNombre);
         edtTel = findViewById(R.id.CrcEdtTel);
@@ -103,6 +116,7 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         glowCenter = findViewById(R.id.CrcGlowCenter);
         glowBottom = findViewById(R.id.CrcGlowBottom);
         formContainer = findViewById(R.id.CrcFormContainer);
+        termsContainer = findViewById(R.id.CrcTermsContainer);
         dividerShimmer = findViewById(R.id.CrcDividerShimmer);
         dividerBase = findViewById(R.id.CrcDividerBase);
 
@@ -126,11 +140,27 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         txtPassDescLbl = findViewById(R.id.CrcTxtPassDescLbl);
         txtPassConfLbl = findViewById(R.id.CrcTxtPassConfLbl);
         txtSeparador2 = findViewById(R.id.CrcTxtSeparador2);
+        txtTerms = findViewById(R.id.CrcTxtTerms);
+
+        if (savedInstanceState != null && chkTerms != null) {
+            chkTerms.setChecked(savedInstanceState.getBoolean(STATE_TERMS_ACCEPTED, false));
+        }
 
         applyThemeOnlyColors();
+        setupTermsText();
 
         btnCrear.setOnClickListener(this);
         btnRegresar.setOnClickListener(this);
+        if (termsContainer != null) {
+            termsContainer.setOnClickListener(v -> chkTerms.setChecked(!chkTerms.isChecked()));
+        }
+        if (chkTerms != null) {
+            chkTerms.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isChecked) {
+                    applyTermsTheme(false);
+                }
+            });
+        }
         resultOk.setOnClickListener(v -> {
             hideResultDialog();
             if (closeAfterDialog) finish();
@@ -178,8 +208,15 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         ThemeApplier.applyTextPrimary(txtPassConfLbl, themeManager);
         ThemeApplier.applyTextPrimary(resultTitle, themeManager);
         ThemeApplier.applyTextSecondary(resultMessage, themeManager);
+        applyTermsTheme(false);
+        if (resultTitle != null) {
+            resultTitle.setTextSize(24f);
+        }
+        if (resultOverlay != null) {
+            resultOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.BG_BOTTOM), 184));
+        }
         if (resultDialog != null) {
-            resultDialog.setBackground(DialogThemeHelper.createDialogBackground(this));
+            resultDialog.setBackground(DialogThemeHelper.createLightGlassDialogBackground(this));
         }
 
         ThemeApplier.applyInput(edtEmail, themeManager);
@@ -223,6 +260,50 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         }
 
         tintDecorativeLottie(sideLottie, themeManager.color(ThemeKeys.ICON_ACTIVE));
+    }
+
+    private void setupTermsText() {
+        if (txtTerms == null) {
+            return;
+        }
+        String text = "Acepto los Términos y Condiciones";
+        SpannableString spannable = new SpannableString(text);
+        int start = text.indexOf("Términos");
+        int end = text.length();
+        if (start >= 0) {
+            spannable.setSpan(new ClickableSpan() {
+                @Override
+                public void onClick(View widget) {
+                    TermsDialogHelper.show(ActCrearCuenta.this);
+                }
+
+                @Override
+                public void updateDrawState(TextPaint ds) {
+                    super.updateDrawState(ds);
+                    ds.setColor(themeManager.color(ThemeKeys.ACCENT_PRIMARY));
+                    ds.setUnderlineText(false);
+                    ds.setFakeBoldText(true);
+                }
+            }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        txtTerms.setText(spannable);
+        txtTerms.setMovementMethod(LinkMovementMethod.getInstance());
+        txtTerms.setHighlightColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.ACCENT_PRIMARY), 48));
+    }
+
+    private void applyTermsTheme(boolean error) {
+        if (chkTerms != null) {
+            chkTerms.setButtonTintList(ColorStateList.valueOf(themeManager.color(ThemeKeys.ACCENT_PRIMARY)));
+        }
+        if (txtTerms != null) {
+            txtTerms.setTextColor(error ? themeManager.color(ThemeKeys.ACCENT_PRIMARY) : themeManager.color(ThemeKeys.TEXT_SECONDARY));
+            txtTerms.setHighlightColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.ACCENT_PRIMARY), 48));
+        }
+        if (termsContainer != null) {
+            termsContainer.setBackground(error
+                    ? DialogThemeHelper.createLightGlassFieldBackground(this)
+                    : DialogThemeHelper.createLightGlassDialogBackground(this));
+        }
     }
 
     private void tintDecorativeLottie(LottieAnimationView lottieView, int color) {
@@ -516,6 +597,20 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
             edtContraConf.requestFocus();
             return false;
         }
+        if (chkTerms == null || !chkTerms.isChecked()) {
+            applyTermsTheme(true);
+            showErrorDialog("Términos requeridos", "Debes aceptar los Términos y Condiciones para crear tu cuenta.");
+            if (termsContainer != null) {
+                termsContainer.requestFocus();
+                termsContainer.animate()
+                        .translationX(8f)
+                        .setDuration(70)
+                        .withEndAction(() -> termsContainer.animate().translationX(0f).setDuration(90).start())
+                        .start();
+            }
+            return false;
+        }
+        applyTermsTheme(false);
 
         return true;
     }
@@ -649,6 +744,12 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         if (resultLottie != null) resultLottie.cancelAnimation();
         if (sideLottie != null) sideLottie.cancelAnimation();
         uiHandler.removeCallbacksAndMessages(null);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(STATE_TERMS_ACCEPTED, chkTerms != null && chkTerms.isChecked());
     }
 
     @Override

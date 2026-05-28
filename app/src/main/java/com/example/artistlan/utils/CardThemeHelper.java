@@ -44,6 +44,58 @@ public final class CardThemeHelper {
         view.setBackground(roundedDrawable(Color.TRANSPARENT, tm.color(ThemeKeys.CARD_BORDER), 2, dp(view, 18)));
     }
 
+    public static void applyGradientGlassCard(@Nullable View view, @NonNull ThemeManager tm, int radiusDp) {
+        if (view == null) {
+            return;
+        }
+
+        int panel = tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL);
+        int chip = tm.color(ThemeKeys.CARD_CHIP_BG);
+        int accent = ColorUtils.setAlphaComponent(tm.color(ThemeKeys.ACCENT_PRIMARY), 58);
+        int secondary = ColorUtils.setAlphaComponent(tm.color(ThemeKeys.ACCENT_SECONDARY), 38);
+
+        GradientDrawable fill = new GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                new int[]{
+                        ColorUtils.blendARGB(panel, accent, 0.24f),
+                        ColorUtils.blendARGB(panel, chip, 0.18f),
+                        ColorUtils.blendARGB(panel, secondary, 0.20f)
+                }
+        );
+        fill.setShape(GradientDrawable.RECTANGLE);
+        fill.setCornerRadius(dp(view, radiusDp));
+        fill.setStroke(Math.max(1, Math.round(dp(view, 1))), ColorUtils.setAlphaComponent(tm.color(ThemeKeys.CARD_BORDER), 205));
+
+        GradientDrawable sheen = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{
+                        ColorUtils.setAlphaComponent(Color.WHITE, 38),
+                        Color.TRANSPARENT,
+                        ColorUtils.setAlphaComponent(tm.color(ThemeKeys.ACCENT_PRIMARY_LIGHT), 28)
+                }
+        );
+        sheen.setShape(GradientDrawable.RECTANGLE);
+        sheen.setCornerRadius(dp(view, radiusDp));
+
+        LayerDrawable drawable = new LayerDrawable(new Drawable[]{fill, sheen});
+        drawable.setLayerInset(1, Math.round(dp(view, 1)), Math.round(dp(view, 1)), Math.round(dp(view, 1)), Math.round(dp(view, 1)));
+        view.setBackground(drawable);
+    }
+
+    public static void applySearchInput(@Nullable TextView input, @NonNull ThemeManager tm) {
+        if (input == null) {
+            return;
+        }
+        input.setTextColor(tm.color(ThemeKeys.TEXT_PRIMARY));
+        input.setHintTextColor(tm.color(ThemeKeys.INPUT_HINT));
+        input.setBackground(roundedDrawable(
+                tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL),
+                tm.color(ThemeKeys.FILTER_BUTTON_STROKE),
+                2,
+                dp(input, 18)
+        ));
+    }
+
     public static void applyChip(@Nullable TextView textView, @NonNull ThemeManager tm) {
         if (textView == null) {
             return;
@@ -54,6 +106,18 @@ public final class CardThemeHelper {
                 ColorUtils.setAlphaComponent(tm.color(ThemeKeys.CARD_BORDER), 190),
                 1,
                 dp(textView, 12)
+        ));
+    }
+
+    public static void applyGlassChipSection(@Nullable View view, @NonNull ThemeManager tm, int radiusDp) {
+        if (view == null) {
+            return;
+        }
+        view.setBackground(roundedDrawable(
+                tm.color(ThemeKeys.CARD_CHIP_BG),
+                ColorUtils.setAlphaComponent(tm.color(ThemeKeys.CARD_BORDER), 190),
+                1,
+                dp(view, radiusDp)
         ));
     }
 
@@ -109,6 +173,13 @@ public final class CardThemeHelper {
                 1,
                 dp(view, radiusDp)
         ));
+    }
+
+    public static void applySubtleDivider(@Nullable View view, @NonNull ThemeManager tm) {
+        if (view == null) {
+            return;
+        }
+        view.setBackgroundColor(ColorUtils.setAlphaComponent(tm.color(ThemeKeys.CARD_BORDER), 150));
     }
 
     public static void applySolidHeader(@Nullable View view, @Nullable TextView label, @NonNull ThemeManager tm) {

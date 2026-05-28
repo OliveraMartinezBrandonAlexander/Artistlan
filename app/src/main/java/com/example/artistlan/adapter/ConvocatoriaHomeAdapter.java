@@ -70,13 +70,19 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
         holder.tvFecha.setText(fecha.isEmpty() ? "Sin fecha" : "Fecha: " + fecha);
 
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
-        CardThemeHelper.applyFlatCard(holder.layoutCard, tm);
+        CardThemeHelper.applyThemedSurface(holder.layoutCard, tm, 18);
+        CardThemeHelper.applyGlassChipSection(holder.layoutHeaderChip, tm, 16);
         CardThemeHelper.applyThemedSurface(holder.layoutBody, tm, 14);
+        CardThemeHelper.applyThemedSurface(holder.layoutEnlaceSection, tm, 14);
         CardThemeHelper.applyChip(holder.tvFecha, tm);
-        CardThemeHelper.applySolidHeader(holder.tvTitulo, holder.tvTitulo, tm);
+        holder.tvTitulo.setBackground(null);
+        ThemeApplier.applyTextPrimary(holder.tvTitulo, tm);
         ThemeApplier.applyTextSecondary(holder.tvDescripcionLabel, tm);
-        ThemeApplier.applyTextSecondary(holder.tvDescripcion, tm);
-        ThemeApplier.applyTextSecondary(holder.tvDetalle, tm);
+        ThemeApplier.applyTextSecondary(holder.tvEnlaceLabel, tm);
+        ThemeApplier.applyTextPrimary(holder.tvDescripcion, tm);
+        ThemeApplier.applyTextPrimary(holder.tvDetalle, tm);
+        CardThemeHelper.applySubtleDivider(holder.dividerHeader, tm);
+        CardThemeHelper.applySubtleDivider(holder.dividerEnlace, tm);
         CardThemeHelper.applyFilterSurface(holder.tvVerDescripcion, tm);
         holder.tvVerDescripcion.setTextColor(tm.color(ThemeKeys.FILTER_BUTTON_STROKE));
         CardThemeHelper.applyPrimaryBubbleButton(holder.btnVerMas, tm);
@@ -177,6 +183,7 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
     static class ViewHolder extends RecyclerView.ViewHolder {
         final TextView tvTitulo;
         final TextView tvDescripcionLabel;
+        final TextView tvEnlaceLabel;
         final TextView tvDescripcion;
         final TextView tvDetalle;
         final TextView tvVerDescripcion;
@@ -184,18 +191,27 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
         final Button btnVerMas;
         final LinearLayout layoutCard;
         final LinearLayout layoutBody;
+        final View layoutHeaderChip;
+        final View layoutEnlaceSection;
+        final View dividerHeader;
+        final View dividerEnlace;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             layoutCard = itemView.findViewById(R.id.layoutMainConvocatoriaCard);
             layoutBody = itemView.findViewById(R.id.layoutMainConvocatoriaBody);
+            layoutHeaderChip = itemView.findViewById(R.id.layoutMainConvocatoriaHeaderChip);
+            layoutEnlaceSection = itemView.findViewById(R.id.layoutMainConvocatoriaEnlaceSection);
             tvTitulo = itemView.findViewById(R.id.tvMainTituloConvocatoria);
             tvDescripcionLabel = itemView.findViewById(R.id.tvMainDescripcionLabelConvocatoria);
+            tvEnlaceLabel = itemView.findViewById(R.id.tvMainEnlaceLabelConvocatoria);
             tvDescripcion = itemView.findViewById(R.id.tvMainDescripcionConvocatoria);
             tvDetalle = itemView.findViewById(R.id.tvMainDetalleConvocatoria);
             tvVerDescripcion = itemView.findViewById(R.id.tvMainVerDescripcionConvocatoria);
             tvFecha = itemView.findViewById(R.id.tvMainFechaConvocatoria);
             btnVerMas = itemView.findViewById(R.id.btnMainVerMasConvocatoria);
+            dividerHeader = itemView.findViewById(R.id.dividerMainConvocatoriaHeader);
+            dividerEnlace = itemView.findViewById(R.id.dividerMainConvocatoriaEnlace);
         }
     }
 }

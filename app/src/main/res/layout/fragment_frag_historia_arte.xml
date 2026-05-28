@@ -39,6 +39,23 @@
             android:textColor="@color/artistlan_text_secondary"
             android:textSize="14sp" />
 
+        <EditText
+            android:id="@+id/etBuscarHistoriaArte"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_input_artistlan"
+            android:drawablePadding="10dp"
+            android:hint="Buscar etapa, artista o concepto"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLines="1"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textColor="@color/artistlan_text_primary"
+            android:textColorHint="@color/artistlan_text_secondary"
+            android:textSize="14sp" />
+
         <ProgressBar
             android:id="@+id/pbHistoriaArte"
             android:layout_width="40dp"

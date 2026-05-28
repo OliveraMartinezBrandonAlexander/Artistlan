@@ -1,5 +1,7 @@
 package com.example.artistlan.Activitys;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
@@ -36,6 +38,7 @@ import androidx.navigation.NavDestination;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
@@ -62,6 +65,8 @@ import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.pagos.PagoPaypalSessionManager;
 import com.example.artistlan.pagos.PagoSyncManager;
+import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogThemeHelper;
 import com.example.artistlan.utils.ScrollMenuVisibilityHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.card.MaterialCardView;
@@ -90,6 +95,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private View topBarFrame;
     private View bottomBarFrame;
     private View mainContent;
+    private View mainContentRoot;
 
     private View topBarLight, bottomBarLight;
 
@@ -121,6 +127,9 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private long ultimaAccionNavegacion = 0L;
     private long ultimaNavegacionCentroMensajes = 0L;
     private long ultimoRefrescoBadgeMs = 0L;
+    private boolean isBellAnimating = false;
+    private int ultimoConteoNotificaciones = -1;
+    private int ultimoTotalBadgeMensajes = -1;
     private boolean capturandoPagoDeepLink = false;
     private boolean activationPromptShown = false;
     private boolean activationRequestInProgress = false;
@@ -158,7 +167,6 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         configurarEventos();
         prepararAnimacionesIniciales();
         animarEntradaUI();
-        animarCampana();
         animarGlows();
         refrescarBadgeMensajes(true);
         mostrarModalActivacion2FAIfNeeded();
@@ -181,6 +189,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         bottomBarContainer = findViewById(R.id.MenuInferior);
         navCard = findViewById(R.id.navCard);
         mainContent = findViewById(R.id.mainContent);
+        mainContentRoot = findViewById(R.id.mainContentRoot);
 
         topBarLight = findViewById(R.id.topBarLight);
         bottomBarLight = findViewById(R.id.bottomBarLight);
@@ -195,6 +204,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private void applyThemeOnlyColors() {
         themeManager = new ThemeManager(this);
         ThemeApplier.applySystemBars(this, themeManager);
+        ThemeApplier.applyFragmentBackground(mainContentRoot, themeManager, menuGlowTop, menuGlowCenter, menuGlowBottom);
 
         if (topBar != null && topBar.getBackground() != null) {
             topBar.getBackground().setColorFilter(
@@ -498,14 +508,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         if (btnNotificaciones != null) {
             btnNotificaciones.setOnClickListener(v -> {
                 if (!puedeEjecutarNavegacion()) return;
-                v.animate()
-                        .rotationBy(12f)
-                        .setDuration(90)
-                        .withEndAction(() ->
-                                v.animate().rotation(0f).setDuration(120).start()
-                        )
-                        .start();
-
+                animarCampanaNotificaciones();
                 abrirCentroMensajes(0);
             });
         }
@@ -760,7 +763,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         ultimoRefrescoBadgeMs = ahora;
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
         int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
-        MensajesBadgeManager.refrescarBadge(idUsuario, this::actualizarBadgeMensajesVisual);
+        MensajesBadgeManager.refrescarBadgeDetalle(idUsuario, this::actualizarBadgeMensajes);
     }
 
     public boolean navegarDesdeCentroMensajes(int destinationId, Bundle args) {
@@ -841,20 +844,99 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         }
     }
 
-    private void animarCampana() {
-        if (btnNotificaciones == null) return;
+    private void animarCampanaNotificaciones() {
+        if (isBellAnimating || btnNotificaciones == null) return;
+        if (isFinishing() || isDestroyed() || !btnNotificaciones.isAttachedToWindow()) return;
+
+        if (btnNotificaciones.getWidth() == 0 || btnNotificaciones.getHeight() == 0) {
+            btnNotificaciones.post(this::animarCampanaNotificaciones);
+            return;
+        }
 
         cancelAnimator(bellAnimator);
+        isBellAnimating = true;
 
-        bellAnimator = ObjectAnimator.ofFloat(btnNotificaciones, "rotation", -7f, 7f);
-        bellAnimator.setDuration(420);
-        bellAnimator.setRepeatCount(1);
-        bellAnimator.setRepeatMode(ValueAnimator.REVERSE);
+        btnNotificaciones.animate().cancel();
+        btnNotificaciones.setPivotX(btnNotificaciones.getWidth() / 2f);
+        btnNotificaciones.setPivotY(0f);
+
+        bellAnimator = ObjectAnimator.ofFloat(
+                btnNotificaciones,
+                View.ROTATION,
+                0f, -34f, 30f, -24f, 18f, -12f, 7f, -3f, 0f
+        );
+        bellAnimator.setDuration(820);
         bellAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        bellAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                finalizarAnimacionCampana();
+            }
 
-        btnNotificaciones.postDelayed(() -> {
-            if (bellAnimator != null) bellAnimator.start();
-        }, 750);
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                finalizarAnimacionCampana();
+            }
+        });
+        bellAnimator.start();
+
+        btnNotificaciones.animate()
+                .scaleX(1.12f)
+                .scaleY(1.12f)
+                .setDuration(120)
+                .withEndAction(() -> {
+                    if (btnNotificaciones != null && btnNotificaciones.isAttachedToWindow()) {
+                        btnNotificaciones.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(240)
+                                .start();
+                    }
+                })
+                .start();
+
+        if (notiBadge != null && notiBadge.getVisibility() == View.VISIBLE && notiBadge.isAttachedToWindow()) {
+            notiBadge.animate().cancel();
+            notiBadge.animate()
+                    .scaleX(1.18f)
+                    .scaleY(1.18f)
+                    .setDuration(120)
+                    .withEndAction(() -> {
+                        if (notiBadge != null && notiBadge.isAttachedToWindow()) {
+                            notiBadge.animate()
+                                    .scaleX(1f)
+                                    .scaleY(1f)
+                                    .setDuration(180)
+                                    .start();
+                        }
+                    })
+                    .start();
+        }
+    }
+
+    private void finalizarAnimacionCampana() {
+        if (btnNotificaciones != null) {
+            btnNotificaciones.setRotation(0f);
+        }
+        isBellAnimating = false;
+    }
+
+    private void actualizarBadgeMensajes(@NonNull MensajesBadgeManager.BadgeDetalle detalle) {
+        int conteoNotificaciones = detalle.getNotificacionesNoLeidas();
+        int totalPendientes = detalle.getTotalPendientes();
+        boolean aumentoNotificaciones = ultimoConteoNotificaciones != -1
+                && conteoNotificaciones > ultimoConteoNotificaciones;
+        boolean aumentoTotalVisible = ultimoTotalBadgeMensajes != -1
+                && totalPendientes > ultimoTotalBadgeMensajes;
+
+        actualizarBadgeMensajesVisual(totalPendientes);
+
+        if (aumentoNotificaciones || aumentoTotalVisible) {
+            animarCampanaNotificaciones();
+        }
+
+        ultimoConteoNotificaciones = conteoNotificaciones;
+        ultimoTotalBadgeMensajes = totalPendientes;
     }
 
     private void actualizarBadgeMensajesVisual(int totalPendientes) {
@@ -862,6 +944,8 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         if (totalPendientes <= 0) {
             notiBadge.setVisibility(View.GONE);
+            notiBadge.setScaleX(1f);
+            notiBadge.setScaleY(1f);
             return;
         }
 
@@ -1188,11 +1272,12 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         Button activarAhora = dialogView.findViewById(R.id.twoFactorActivationPrimaryButton);
         Button masTarde = dialogView.findViewById(R.id.twoFactorActivationSecondaryButton);
 
+        dialogView.setBackground(DialogThemeHelper.createLightGlassDialogBackground(this));
         ThemeApplier.applyTextPrimary(title, themeManager);
         ThemeApplier.applyTextSecondary(message, themeManager);
         ThemeApplier.applyTextPrimary(lockIcon, themeManager);
-        ThemeApplier.applyPrimaryButton(activarAhora, themeManager);
-        ThemeApplier.applySecondaryButton(masTarde, themeManager);
+        CardThemeHelper.applyPrimaryBubbleButton(activarAhora, themeManager);
+        CardThemeHelper.applySecondaryBubbleButton(masTarde, themeManager);
 
         twoFactorPromptDialog = new AlertDialog.Builder(this)
                 .setView(dialogView)
@@ -1211,6 +1296,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         masTarde.setOnClickListener(v -> twoFactorPromptDialog.dismiss());
 
         twoFactorPromptDialog.show();
+        DialogThemeHelper.applyDialogWindowSize(twoFactorPromptDialog, this);
     }
 
     private void mostrarLoadingActivacion() {

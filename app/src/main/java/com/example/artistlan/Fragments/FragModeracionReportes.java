@@ -57,6 +57,7 @@ public class FragModeracionReportes extends Fragment {
     private ModeracionApi moderacionApi;
     private ReportesModeracionAdapter adapter;
     private ThemeManager themeManager;
+    @Nullable private Call<List<ReporteResumenDTO>> reportesCall;
 
     private int idUsuarioActual = -1;
     private String rolActual = "USER";
@@ -82,8 +83,35 @@ public class FragModeracionReportes extends Fragment {
         bindViews(view);
         configurarRecycler();
         configurarFiltros();
-        aplicarTemaVisual(view);
+        reaplicarTemaModeracion();
         validarPermisosYCargar();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        View view = getView();
+        if (view != null) {
+            ThemeModuleStyler.styleFragment(this, view);
+        }
+        Context context = getContext();
+        if (context == null) {
+            return;
+        }
+        themeManager = new ThemeManager(context);
+        reaplicarTemaModeracion();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (reportesCall != null) {
+            reportesCall.cancel();
+            reportesCall = null;
+        }
+        super.onDestroyView();
     }
 
     private void cargarSesionActual() {
@@ -114,10 +142,19 @@ public class FragModeracionReportes extends Fragment {
     }
 
     private void configurarRecycler() {
-        recyclerReportes.setLayoutManager(new LinearLayoutManager(requireContext()));
+        Context context = getContext();
+        if (context == null) {
+            return;
+        }
+        recyclerReportes.setLayoutManager(new LinearLayoutManager(context));
+        recyclerReportes.setNestedScrollingEnabled(false);
+        recyclerReportes.setHasFixedSize(false);
         adapter = new ReportesModeracionAdapter(new ArrayList<>(), reporte -> {
             if (reporte == null || reporte.getIdReporte() == null || reporte.getIdReporte() <= 0) {
-                Toast.makeText(requireContext(), "No se encontr\u00f3 el reporte seleccionado.", Toast.LENGTH_SHORT).show();
+                mostrarToastSeguro("No se encontr\u00f3 el reporte seleccionado.", Toast.LENGTH_SHORT);
+                return;
+            }
+            if (!canInteractWithUi()) {
                 return;
             }
 
@@ -190,23 +227,39 @@ public class FragModeracionReportes extends Fragment {
     }
 
     private void configurarSpinner(@NonNull Spinner spinner, @NonNull List<FilterOption> valores) {
-        ArrayAdapter<FilterOption> adapterSpinner = DialogThemeHelper.createDialogComboAdapter(requireContext(), valores);
+        Context context = getContext();
+        if (context == null) {
+            return;
+        }
+        ArrayAdapter<FilterOption> adapterSpinner = DialogThemeHelper.createLightGlassComboAdapter(context, valores);
         spinner.setAdapter(adapterSpinner);
-        DialogThemeHelper.applyDialogComboStyle(spinner, requireContext());
+        DialogThemeHelper.applyLightGlassComboStyle(spinner, context);
+    }
+
+    private void reaplicarTemaModeracion() {
+        View root = getView();
+        if (root == null || !isAdded()) {
+            return;
+        }
+        aplicarTemaVisual(root);
     }
 
     private void aplicarTemaVisual(@NonNull View root) {
         if (themeManager == null) {
             return;
         }
+        ThemeModuleStyler.styleFragment(this, root);
         ThemeApplier.applyTextPrimary(tvTitulo, themeManager);
         ThemeApplier.applyTextSecondary(tvSubtitulo, themeManager);
         ThemeApplier.applyTextSecondary(tvVacio, themeManager);
         CardThemeHelper.applyFilterTextButton(btnToggleFiltros, themeManager);
         CardThemeHelper.applyThemedSurface(contenedorFiltros, themeManager, 18);
-        DialogThemeHelper.applyDialogComboStyle(spinnerEstado, requireContext());
-        DialogThemeHelper.applyDialogComboStyle(spinnerTipo, requireContext());
-        DialogThemeHelper.applyDialogComboStyle(spinnerPrioridad, requireContext());
+        Context context = getContext();
+        if (context != null) {
+            DialogThemeHelper.applyLightGlassComboStyle(spinnerEstado, context);
+            DialogThemeHelper.applyLightGlassComboStyle(spinnerTipo, context);
+            DialogThemeHelper.applyLightGlassComboStyle(spinnerPrioridad, context);
+        }
         CardThemeHelper.tintProgress(progressBar, themeManager);
         if (checkSoloMios != null) {
             checkSoloMios.setTextColor(themeManager.color(ThemeKeys.TEXT_PRIMARY));
@@ -264,25 +317,40 @@ public class FragModeracionReportes extends Fragment {
             tvVacio.setVisibility(View.VISIBLE);
             tvVacio.setText("No tienes permisos para ver moderaci\u00f3n");
         }
-        Toast.makeText(requireContext(), "No tienes permisos para ver moderaci\u00f3n", Toast.LENGTH_LONG).show();
+        reaplicarTemaModeracion();
+        mostrarToastSeguro("No tienes permisos para ver moderaci\u00f3n", Toast.LENGTH_LONG);
     }
 
     private void cargarReportes() {
+        if (!canInteractWithUi()) {
+            return;
+        }
         if (!tienePermisoModeracion()) {
             mostrarSinPermisos();
             return;
         }
 
         mostrarCarga(true);
-        moderacionApi.listarReportes(
+        if (reportesCall != null) {
+            reportesCall.cancel();
+        }
+        reportesCall = moderacionApi.listarReportes(
                 idUsuarioActual,
                 obtenerFiltroEstado(),
                 obtenerFiltroPrioridad(),
                 obtenerFiltroTipo(),
                 checkSoloMios.isChecked()
-        ).enqueue(new Callback<List<ReporteResumenDTO>>() {
+        );
+        final Call<List<ReporteResumenDTO>> callRef = reportesCall;
+        callRef.enqueue(new Callback<List<ReporteResumenDTO>>() {
             @Override
             public void onResponse(@NonNull Call<List<ReporteResumenDTO>> call, @NonNull Response<List<ReporteResumenDTO>> response) {
+                if (reportesCall == callRef) {
+                    reportesCall = null;
+                }
+                if (call.isCanceled() || !canInteractWithUi()) {
+                    return;
+                }
                 mostrarCarga(false);
 
                 if (response.code() == 204) {
@@ -299,6 +367,7 @@ public class FragModeracionReportes extends Fragment {
                     recyclerReportes.setVisibility(View.VISIBLE);
                     tvVacio.setVisibility(View.GONE);
                     adapter.actualizarLista(body);
+                    reaplicarTemaModeracion();
                     return;
                 }
 
@@ -316,6 +385,12 @@ public class FragModeracionReportes extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<List<ReporteResumenDTO>> call, @NonNull Throwable t) {
+                if (reportesCall == callRef) {
+                    reportesCall = null;
+                }
+                if (call.isCanceled() || !canInteractWithUi()) {
+                    return;
+                }
                 mostrarCarga(false);
                 mostrarError("Error de conexi\u00f3n al cargar reportes.");
             }
@@ -361,29 +436,54 @@ public class FragModeracionReportes extends Fragment {
         if (btnToggleFiltros != null) {
             btnToggleFiltros.setText(filtrosVisibles ? "Ocultar filtros" : "Mostrar filtros");
         }
+        reaplicarTemaModeracion();
     }
 
     private void mostrarCarga(boolean cargando) {
+        if (!canInteractWithUi()) {
+            return;
+        }
         progressBar.setVisibility(cargando ? View.VISIBLE : View.GONE);
         recyclerReportes.setVisibility(cargando ? View.GONE : View.VISIBLE);
         if (cargando) {
             tvVacio.setVisibility(View.GONE);
         }
+        reaplicarTemaModeracion();
     }
 
     private void mostrarListaVacia(@NonNull String mensaje) {
+        if (!canInteractWithUi()) {
+            return;
+        }
         adapter.actualizarLista(new ArrayList<>());
         recyclerReportes.setVisibility(View.GONE);
         tvVacio.setVisibility(View.VISIBLE);
         tvVacio.setText(mensaje);
+        reaplicarTemaModeracion();
     }
 
     private void mostrarError(@NonNull String mensaje) {
+        if (!canInteractWithUi()) {
+            return;
+        }
         adapter.actualizarLista(new ArrayList<>());
         recyclerReportes.setVisibility(View.GONE);
         tvVacio.setVisibility(View.VISIBLE);
         tvVacio.setText(mensaje);
-        Toast.makeText(requireContext(), mensaje, Toast.LENGTH_LONG).show();
+        reaplicarTemaModeracion();
+        mostrarToastSeguro(mensaje, Toast.LENGTH_LONG);
+    }
+
+    private void mostrarToastSeguro(@NonNull String mensaje, int duration) {
+        Context context = getContext();
+        if (!isAdded() || context == null) {
+            return;
+        }
+        Toast.makeText(context, mensaje, duration).show();
+    }
+
+    private boolean canInteractWithUi() {
+        return isAdded() && getView() != null && getContext() != null;
     }
 
     private static class FilterOption {

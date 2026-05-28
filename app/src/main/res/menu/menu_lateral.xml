@@ -27,12 +27,12 @@
             <group android:checkableBehavior="single">
                 <item
                     android:id="@+id/fragHistoriaArte"
-                    android:icon="@drawable/ic_history_art"
+                    android:icon="@drawable/ic_nav_historia_arte_artistlan"
                     android:title="Historia del arte" />
 
                 <item
                     android:id="@+id/fragHistoriaArtistlan"
-                    android:icon="@drawable/ic_artistlan_story"
+                    android:icon="@drawable/ic_nav_historia_artistlan_story"
                     android:title="Historia de Artistlan" />
             </group>
         </menu>

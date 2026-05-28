@@ -1,6 +1,7 @@
 package com.example.artistlan.Theme;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
@@ -13,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.cardview.widget.CardView;
+import androidx.core.graphics.ColorUtils;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
@@ -47,6 +49,36 @@ public class ThemeApplier {
         if (glow.getBackground() != null) {
             glow.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
         }
+    }
+
+    public static void applyFragmentBackground(View root, ThemeManager tm, View primaryGlow, View tertiaryGlow, View secondaryGlow) {
+        if (root != null) {
+            GradientDrawable background = new GradientDrawable(
+                    GradientDrawable.Orientation.TOP_BOTTOM,
+                    new int[]{
+                            ColorUtils.setAlphaComponent(tm.color(ThemeKeys.BG_TOP), 255),
+                            ColorUtils.setAlphaComponent(tm.color(ThemeKeys.BG_MID), 255),
+                            ColorUtils.setAlphaComponent(tm.color(ThemeKeys.BG_BOTTOM), 255)
+                    }
+            );
+            root.setBackground(background);
+        }
+
+        applyThemedBubble(primaryGlow, tm.color(ThemeKeys.GLOW_PRIMARY), 0.46f);
+        applyThemedBubble(tertiaryGlow, tm.color(ThemeKeys.GLOW_TERTIARY), 0.24f);
+        applyThemedBubble(secondaryGlow, tm.color(ThemeKeys.GLOW_SECONDARY), 0.34f);
+    }
+
+    private static void applyThemedBubble(View glow, int color, float maxAlpha) {
+        if (glow == null) return;
+        int center = ColorUtils.setAlphaComponent(color, Math.min(Color.alpha(color), 178));
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.OVAL);
+        drawable.setGradientType(GradientDrawable.RADIAL_GRADIENT);
+        drawable.setGradientRadius(dp(glow, 170));
+        drawable.setColors(new int[]{center, Color.TRANSPARENT});
+        glow.setBackground(drawable);
+        glow.setAlpha(Math.min(maxAlpha, Math.max(0.12f, Color.alpha(color) / 255f * maxAlpha)));
     }
 
     public static void applyPrimaryButton(View button, ThemeManager tm) {
@@ -135,5 +167,9 @@ public class ThemeApplier {
                 PorterDuff.Mode.SRC_ATOP
         );
         animatePress(view);
+    }
+
+    private static float dp(View view, int value) {
+        return value * view.getResources().getDisplayMetrics().density;
     }
 }

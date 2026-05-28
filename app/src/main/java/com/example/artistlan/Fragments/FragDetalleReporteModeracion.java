@@ -201,15 +201,22 @@ public class FragDetalleReporteModeracion extends Fragment {
     }
 
     private void aplicarTemaVisual() {
+        if (!isAdded()) {
+            return;
+        }
         if (themeManager == null) {
             return;
+        }
+        View root = getView();
+        if (root != null) {
+            ThemeModuleStyler.styleFragment(this, root);
         }
         CardThemeHelper.tintProgress(progressBar, themeManager);
         CardThemeHelper.applyThemedSurface(cardInfoReporte, themeManager, 18);
         CardThemeHelper.applyThemedSurface(cardResolverReporte, themeManager, 18);
         CardThemeHelper.applyPrimaryBubbleButton(btnTomarReporte, themeManager);
         CardThemeHelper.applyPrimaryBubbleButton(btnResolverReporte, themeManager);
-        DialogThemeHelper.applyDialogComboStyle(spinnerAccionResolver, requireContext());
+        DialogThemeHelper.applyLightGlassComboStyle(spinnerAccionResolver, requireContext());
         ThemeApplier.applyInput(etMensajeRespuesta, themeManager);
         ThemeApplier.applyInput(etMotivoAccion, themeManager);
         ThemeApplier.applyInput(etFechaFinSuspension, themeManager);
@@ -249,6 +256,15 @@ public class FragDetalleReporteModeracion extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        View view = getView();
+        if (view != null) {
+            ThemeModuleStyler.styleFragment(this, view);
+        }
+        themeManager = new ThemeManager(requireContext());
+        aplicarTemaVisual();
+        if (reporteActual != null) {
+            aplicarChipsDetalle(reporteActual);
+        }
         if (getActivity() != null && getActivity().getWindow() != null) {
             previousSoftInputMode = getActivity().getWindow().getAttributes().softInputMode;
             getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
@@ -408,6 +424,7 @@ public class FragDetalleReporteModeracion extends Fragment {
         aplicarChipsDetalle(reporte);
         actualizarBotonTomar(reporte);
         actualizarSeccionResolucion(reporte);
+        aplicarTemaVisual();
     }
 
     private void aplicarChipsDetalle(@NonNull ReporteDetalleDTO reporte) {
@@ -440,6 +457,9 @@ public class FragDetalleReporteModeracion extends Fragment {
         btnTomarReporte.setEnabled(puedeTomar);
         if (!puedeTomar) {
             btnTomarReporte.setText("Tomar reporte");
+        }
+        if (themeManager != null) {
+            CardThemeHelper.applyPrimaryBubbleButton(btnTomarReporte, themeManager);
         }
     }
 
@@ -528,6 +548,7 @@ public class FragDetalleReporteModeracion extends Fragment {
         limpiarFormularioResolucion();
         actualizarCampoFechaFinSuspension();
         setEstadoResolverReporte(false);
+        aplicarTemaVisual();
     }
 
     private void ocultarSeccionResolucion() {
@@ -571,9 +592,9 @@ public class FragDetalleReporteModeracion extends Fragment {
             labels.add(option.visibleLabel);
         }
 
-        ArrayAdapter<String> adapter = DialogThemeHelper.createDialogComboAdapter(requireContext(), labels);
+        ArrayAdapter<String> adapter = DialogThemeHelper.createLightGlassComboAdapter(requireContext(), labels);
         spinnerAccionResolver.setAdapter(adapter);
-        DialogThemeHelper.applyDialogComboStyle(spinnerAccionResolver, requireContext());
+        DialogThemeHelper.applyLightGlassComboStyle(spinnerAccionResolver, requireContext());
     }
 
     @Nullable
@@ -594,6 +615,7 @@ public class FragDetalleReporteModeracion extends Fragment {
             etFechaFinSuspension.setText("");
             etFechaFinSuspension.setError(null);
         }
+        aplicarTemaVisual();
     }
 
     private void limpiarFormularioResolucion() {
@@ -724,6 +746,13 @@ public class FragDetalleReporteModeracion extends Fragment {
         etMensajeRespuesta.setEnabled(!resolviendo);
         etMotivoAccion.setEnabled(!resolviendo);
         etFechaFinSuspension.setEnabled(!resolviendo);
+        if (themeManager != null) {
+            CardThemeHelper.applyPrimaryBubbleButton(btnResolverReporte, themeManager);
+            DialogThemeHelper.applyLightGlassComboStyle(spinnerAccionResolver, requireContext());
+            ThemeApplier.applyInput(etMensajeRespuesta, themeManager);
+            ThemeApplier.applyInput(etMotivoAccion, themeManager);
+            ThemeApplier.applyInput(etFechaFinSuspension, themeManager);
+        }
     }
 
     private void abrirSelectorFechaFinSuspension() {
@@ -882,6 +911,7 @@ public class FragDetalleReporteModeracion extends Fragment {
             btnTomarReporte.setVisibility(View.GONE);
             ocultarSeccionResolucion();
         }
+        aplicarTemaVisual();
     }
 
     private void mostrarError(@NonNull String mensaje) {
@@ -894,6 +924,7 @@ public class FragDetalleReporteModeracion extends Fragment {
         ocultarSeccionResolucion();
         tvError.setVisibility(View.VISIBLE);
         tvError.setText(mensaje);
+        aplicarTemaVisual();
         mostrarToastSeguro(mensaje);
     }
 
@@ -982,7 +1013,7 @@ public class FragDetalleReporteModeracion extends Fragment {
     }
 
     private boolean canInteractWithUi() {
-        return isAdded() && getView() != null && !viewDestroyed;
+        return isAdded() && getView() != null && getContext() != null && !viewDestroyed;
     }
 
     private void logDebug(String tag, String message) {

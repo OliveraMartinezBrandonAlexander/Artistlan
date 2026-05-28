@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -40,6 +41,7 @@ import com.example.artistlan.utils.DialogThemeHelper;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import retrofit2.Call;
@@ -362,22 +364,166 @@ public class FragGestionUsuarios extends Fragment {
     }
 
     private void mostrarDialogoRoles(UsuariosDTO usuario) {
+        ThemeManager tm = new ThemeManager(requireContext());
+        LinearLayout dialogContent = new LinearLayout(requireContext());
+        dialogContent.setOrientation(LinearLayout.VERTICAL);
+        dialogContent.setPadding(dpToPx(18), dpToPx(18), dpToPx(18), dpToPx(16));
+        dialogContent.setBackground(DialogThemeHelper.createDialogBackground(requireContext()));
+
+        TextView title = new TextView(requireContext());
+        title.setText("Cambiar rol");
+        title.setTextColor(tm.color(ThemeKeys.TEXT_PRIMARY));
+        title.setTextSize(24f);
+        title.setTypeface(android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.BOLD));
+        dialogContent.addView(title, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        LinearLayout content = new LinearLayout(requireContext());
+        content.setOrientation(LinearLayout.VERTICAL);
+        int padding = dpToPx(12);
+        content.setPadding(padding, padding, padding, padding);
+        content.setBackground(DialogThemeHelper.createLightGlassFieldBackground(requireContext()));
+
+        TextView label = new TextView(requireContext());
+        label.setText("Selecciona el nuevo rol");
+        label.setTextColor(tm.color(ThemeKeys.TEXT_SECONDARY));
+        label.setTextSize(12f);
+        label.setAllCaps(true);
+        label.setTypeface(label.getTypeface(), android.graphics.Typeface.BOLD);
+        content.addView(label, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        Spinner spinnerRol = new Spinner(requireContext());
+        spinnerRol.setAdapter(DialogThemeHelper.createLightGlassComboAdapter(requireContext(), Arrays.asList(ROLES)));
+        DialogThemeHelper.applyLightGlassComboStyle(spinnerRol, requireContext());
+        LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        spinnerParams.topMargin = dpToPx(10);
+        content.addView(spinnerRol, spinnerParams);
+
+        String rolActual = usuario.getRol() == null ? "USER" : usuario.getRol();
+        for (int i = 0; i < ROLES.length; i++) {
+            if (ROLES[i].equalsIgnoreCase(rolActual)) {
+                spinnerRol.setSelection(i);
+                break;
+            }
+        }
+
+        LinearLayout.LayoutParams contentParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        contentParams.topMargin = dpToPx(14);
+        dialogContent.addView(content, contentParams);
+
+        LinearLayout actions = new LinearLayout(requireContext());
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        actionsParams.topMargin = dpToPx(16);
+        Button btnCancelar = new Button(requireContext());
+        btnCancelar.setText("Cancelar");
+        btnCancelar.setAllCaps(false);
+        Button btnContinuar = new Button(requireContext());
+        btnContinuar.setText("Continuar");
+        btnContinuar.setAllCaps(false);
+        CardThemeHelper.applySecondaryBubbleButton(btnCancelar, tm);
+        CardThemeHelper.applyPrimaryBubbleButton(btnContinuar, tm);
+        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(0, dpToPx(46), 1f);
+        LinearLayout.LayoutParams continueParams = new LinearLayout.LayoutParams(0, dpToPx(46), 1f);
+        continueParams.leftMargin = dpToPx(10);
+        actions.addView(btnCancelar, cancelParams);
+        actions.addView(btnContinuar, continueParams);
+        dialogContent.addView(actions, actionsParams);
+
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("Cambiar rol")
-                .setItems(ROLES, (dialogInterface, which) -> confirmarCambioRol(usuario, ROLES[which]))
-                .setNegativeButton("Cancelar", null)
-                .show();
-        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+                .setView(dialogContent)
+                .create();
+        btnCancelar.setOnClickListener(v -> dialog.dismiss());
+        btnContinuar.setOnClickListener(v -> {
+            Object seleccionado = spinnerRol.getSelectedItem();
+            dialog.dismiss();
+            confirmarCambioRol(usuario, seleccionado == null ? "USER" : seleccionado.toString());
+        });
+        dialog.show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        DialogThemeHelper.applyFieldDialogWindowSize(dialog, requireContext());
     }
 
     private void confirmarCambioRol(UsuariosDTO usuario, String rolNuevo) {
+        ThemeManager tm = new ThemeManager(requireContext());
+        LinearLayout content = new LinearLayout(requireContext());
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dpToPx(18), dpToPx(18), dpToPx(18), dpToPx(16));
+        content.setBackground(DialogThemeHelper.createDialogBackground(requireContext()));
+
+        TextView title = new TextView(requireContext());
+        title.setText("Confirmar cambio");
+        title.setTextColor(tm.color(ThemeKeys.TEXT_PRIMARY));
+        title.setTextSize(24f);
+        title.setTypeface(android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.BOLD));
+        content.addView(title, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        TextView message = new TextView(requireContext());
+        message.setText("¿Cambiar rol de este usuario?");
+        message.setTextColor(tm.color(ThemeKeys.TEXT_SECONDARY));
+        message.setTextSize(14f);
+        message.setLineSpacing(dpToPx(3), 1f);
+        LinearLayout.LayoutParams messageParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        messageParams.topMargin = dpToPx(12);
+        content.addView(message, messageParams);
+
+        LinearLayout actions = new LinearLayout(requireContext());
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        actionsParams.topMargin = dpToPx(18);
+        Button btnCancelar = new Button(requireContext());
+        btnCancelar.setText("Cancelar");
+        btnCancelar.setAllCaps(false);
+        Button btnConfirmar = new Button(requireContext());
+        btnConfirmar.setText("Confirmar");
+        btnConfirmar.setAllCaps(false);
+        CardThemeHelper.applySecondaryBubbleButton(btnCancelar, tm);
+        CardThemeHelper.applyPrimaryBubbleButton(btnConfirmar, tm);
+        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(0, dpToPx(46), 1f);
+        LinearLayout.LayoutParams confirmParams = new LinearLayout.LayoutParams(0, dpToPx(46), 1f);
+        confirmParams.leftMargin = dpToPx(10);
+        actions.addView(btnCancelar, cancelParams);
+        actions.addView(btnConfirmar, confirmParams);
+        content.addView(actions, actionsParams);
+
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("Confirmar cambio")
-                .setMessage("\u00BFCambiar rol de este usuario?")
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Confirmar", (dialogInterface, which) -> cambiarRol(usuario, rolNuevo))
-                .show();
-        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+                .setView(content)
+                .create();
+        btnCancelar.setOnClickListener(v -> dialog.dismiss());
+        btnConfirmar.setOnClickListener(v -> {
+            dialog.dismiss();
+            cambiarRol(usuario, rolNuevo);
+        });
+        dialog.show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        DialogThemeHelper.applyDialogWindowSize(dialog, requireContext());
     }
 
     private void cambiarRol(UsuariosDTO usuario, String rolNuevo) {
@@ -487,5 +633,9 @@ public class FragGestionUsuarios extends Fragment {
         if (view != null) {
             Snackbar.make(view, mensaje, Snackbar.LENGTH_LONG).show();
         }
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * requireContext().getResources().getDisplayMetrics().density);
     }
 }

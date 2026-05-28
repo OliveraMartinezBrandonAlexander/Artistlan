@@ -1,14 +1,393 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootHistoriaArtistlan"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Fragments.FragHistoriaArtistlan">
+    android:background="#090610">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <ScrollView
+        android:id="@+id/scrollHistoriaArtistlan"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:paddingStart="22dp"
+        android:paddingTop="110dp"
+        android:paddingEnd="22dp"
+        android:paddingBottom="110dp">
+
+        <LinearLayout
+            android:id="@+id/contenedorHistoriaArtistlan"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingBottom="260dp">
+
+            <TextView
+                android:id="@+id/tvTituloHistoriaArtistlan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Historia de Artistlan"
+                android:textColor="#FFFFFF"
+                android:textSize="30sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvSubtituloHistoriaArtistlan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:lineSpacingExtra="3dp"
+                android:text="Una experiencia creada para conectar artistas, compradores, servicios creativos y gestión segura en una sola app."
+                android:textColor="#CFC7D8"
+                android:textSize="15sp" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="42dp" />
+
+            <LinearLayout
+                android:id="@+id/cardOrigenArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivOrigenArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_artistlan_origin" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="ORIGEN" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="El inicio de Artistlan" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="Artistlan surge como una propuesta para crear un espacio digital donde artistas, compradores y usuarios interesados en el arte puedan conectarse de una manera más organizada, visual y segura." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardProblemaArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivProblemaArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_help_artistlan" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="PROBLEMA" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="Una necesidad real para artistas" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="Muchos artistas no cuentan con una plataforma propia para mostrar su trabajo, recibir solicitudes, gestionar servicios o construir un portafolio digital con visibilidad y confianza." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardObjetivoArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivObjetivoArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_nav_historia_artistlan_story" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="OBJETIVO" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="Una plataforma para artistas" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="Brindar una aplicación móvil que permita publicar obras, ofrecer servicios artísticos, explorar contenido, guardar favoritos, gestionar solicitudes, consultar transacciones y fortalecer la interacción entre artistas y usuarios." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardObjetivosEspecificosArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivObjetivosEspecificosArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_filter_artistlan" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="ALCANCE" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="Objetivos específicos" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="Organizar perfiles y portafolios, facilitar la exploración de obras, apoyar la venta o solicitud de servicios, administrar favoritos, consultar notificaciones y ofrecer controles de moderación, seguridad y personalización visual." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardPublicoArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivPublicoArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_artista" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="COMUNIDAD" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="Público al que va dirigido" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="Está pensado para artistas que desean visibilidad, compradores que buscan piezas o servicios creativos, administradores que requieren control del sistema y usuarios que quieren descubrir, guardar y contactar talento artístico." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardEvolucionArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivEvolucionArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_nav_calendario_artistlan" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="EVOLUCIÓN" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="De idea a sistema completo" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="El proyecto comenzó con módulos básicos de publicación y exploración. Después integró perfiles, favoritos, carrito, solicitudes, transacciones, notificaciones, moderación, convocatorias y temas visuales." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardFuncionesArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivFuncionesArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_nav_arte_artistlan" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="FUNCIONES" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="Lo que permite Artistlan" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="Integra exploración, favoritos, carrito, perfiles, portafolio, convocatorias, notificaciones, solicitudes, transacciones, moderación, seguridad y personalización visual por temas." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardTecnologiasArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivTecnologiasArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_social_github" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="TECNOLOGÍAS" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="Construido con herramientas reales" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="Artistlan combina Android con Java, backend en Spring Boot, base de datos MySQL, consumo de servicios con Retrofit, autenticación con JWT e integración de pagos mediante PayPal." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardSeguridadArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivSeguridadArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_artistlan_security" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="SEGURIDAD" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="Cuentas, roles y protección" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="El sistema considera inicio de sesión, recuperación de contraseña, verificación, validación de usuarios, protección de cuenta, control de accesos por rol y flujos que reducen acciones no autorizadas." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardModeracionArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivModeracionArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_filter_artistlan" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="MODERACIÓN" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="Cuidado de la comunidad" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="Artistlan contempla reportes, revisión de contenido, gestión administrativa y seguimiento de casos para mantener una comunidad más confiable para artistas y compradores." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardTemasArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivTemasArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_edit" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="TEMAS" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="Personalización visual" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="La app permite ajustar colores de fondos, textos, tarjetas, iconos, botones, menús e inputs desde ActAjustesTema para que la experiencia pueda adaptarse al gusto del usuario." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardConvocatoriasArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivConvocatoriasArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_nav_calendario_artistlan" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="CONVOCATORIAS" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="Oportunidades para participar" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="El módulo de convocatorias ayuda a difundir eventos, llamados, oportunidades y actividades relacionadas con la comunidad artística desde una estructura clara y consultable." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardTransaccionesArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivTransaccionesArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_nav_transacciones_artistlan" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="SOLICITUDES" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="Transacciones y seguimiento" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="Las solicitudes y transacciones permiten dar seguimiento a compras, servicios, estados de atención, historial de movimientos y comunicación relacionada con una operación artística." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardFuturoArtistlan"
+                style="@style/HistoriaArtistlanCreditCardStyle">
+
+                <ImageView
+                    android:id="@+id/ivFuturoArtistlan"
+                    style="@style/HistoriaArtistlanSectionIconStyle"
+                    android:src="@drawable/ic_artistlan_ai" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditChipStyle"
+                    android:text="FUTURO" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditTitleStyle"
+                    android:text="Lo que viene después" />
+
+                <TextView
+                    style="@style/HistoriaArtistlanCreditBodyStyle"
+                    android:text="Como mejora futura se plantea integrar inteligencia artificial, recomendaciones personalizadas, chatbot de ayuda, análisis de contenido, asistencia para artistas y mejoras continuas para compradores y comunidad." />
+            </LinearLayout>
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="80dp" />
+
+            <TextView
+                android:id="@+id/tvCierreHistoriaArtistlan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"
+                android:text="Artistlan\nArte, comunidad y tecnología."
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- Sombra superior tipo créditos -->
+    <View
+        android:id="@+id/fadeTopHistoriaArtistlan"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_gravity="top" />
+
+    <!-- Sombra inferior tipo créditos -->
+    <View
+        android:id="@+id/fadeBottomHistoriaArtistlan"
+        android:layout_width="match_parent"
+        android:layout_height="130dp"
+        android:layout_gravity="bottom" />
 
 </FrameLayout>

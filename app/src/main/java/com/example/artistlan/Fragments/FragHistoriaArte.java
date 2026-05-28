@@ -1,9 +1,14 @@
 package com.example.artistlan.Fragments;
 
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -16,16 +21,27 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.artistlan.HistoriaArte.adapter.HistoriaArteAdapter;
 import com.example.artistlan.HistoriaArte.model.HistoriaArteItem;
 import com.example.artistlan.R;
+import com.example.artistlan.Theme.ThemeApplier;
+import com.example.artistlan.Theme.ThemeKeys;
+import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.CardThemeHelper;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class FragHistoriaArte extends Fragment {
 
     private RecyclerView rvHistoriaArte;
     private ProgressBar pbHistoriaArte;
     private TextView tvEstadoHistoriaArte;
+    private EditText etBuscarHistoriaArte;
+    private TextView tvTituloPrincipal;
+    private TextView tvSubtituloPrincipal;
+    private HistoriaArteAdapter adapter;
+    private final List<HistoriaArteItem> todosLosItems = new ArrayList<>();
 
     @Nullable
     @Override
@@ -41,35 +57,140 @@ public class FragHistoriaArte extends Fragment {
         rvHistoriaArte = root.findViewById(R.id.rvHistoriaArte);
         pbHistoriaArte = root.findViewById(R.id.pbHistoriaArte);
         tvEstadoHistoriaArte = root.findViewById(R.id.tvEstadoHistoriaArte);
+        etBuscarHistoriaArte = root.findViewById(R.id.etBuscarHistoriaArte);
+        tvTituloPrincipal = root.findViewById(R.id.tvTituloHistoriaArtePrincipal);
+        tvSubtituloPrincipal = root.findViewById(R.id.tvSubtituloHistoriaArtePrincipal);
 
         configurarRecycler();
+        configurarBusqueda();
         cargarContenidoLocal();
+        aplicarTemaRapido(root);
 
         return root;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        View view = getView();
+        if (view != null) {
+            aplicarTemaRapido(view);
+        }
+    }
+
     private void configurarRecycler() {
-        rvHistoriaArte.setLayoutManager(new LinearLayoutManager(requireContext()));
+        if (getContext() == null) {
+            return;
+        }
+        rvHistoriaArte.setLayoutManager(new LinearLayoutManager(getContext()));
         rvHistoriaArte.setHasFixedSize(false);
         rvHistoriaArte.setNestedScrollingEnabled(true);
         rvHistoriaArte.setItemAnimator(null);
+    }
+
+    private void configurarBusqueda() {
+        if (etBuscarHistoriaArte == null) {
+            return;
+        }
+        etBuscarHistoriaArte.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filtrarContenido(s == null ? "" : s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
     }
 
     private void cargarContenidoLocal() {
         pbHistoriaArte.setVisibility(View.VISIBLE);
         tvEstadoHistoriaArte.setVisibility(View.GONE);
 
-        List<HistoriaArteItem> items = construirContenidoHistoriaArte();
+        todosLosItems.clear();
+        todosLosItems.addAll(construirContenidoHistoriaArte());
 
         pbHistoriaArte.setVisibility(View.GONE);
 
-        if (items.isEmpty()) {
+        if (todosLosItems.isEmpty()) {
             tvEstadoHistoriaArte.setVisibility(View.VISIBLE);
             tvEstadoHistoriaArte.setText("Aún no hay contenido disponible.");
             return;
         }
 
-        rvHistoriaArte.setAdapter(new HistoriaArteAdapter(items));
+        adapter = new HistoriaArteAdapter(new ArrayList<>(todosLosItems));
+        rvHistoriaArte.setAdapter(adapter);
+        filtrarContenido(etBuscarHistoriaArte == null ? "" : etBuscarHistoriaArte.getText().toString());
+    }
+
+    private void filtrarContenido(@NonNull String consultaRaw) {
+        if (adapter == null) {
+            return;
+        }
+        String consulta = normalizar(consultaRaw);
+        List<HistoriaArteItem> filtrados = new ArrayList<>();
+
+        if (consulta.isEmpty()) {
+            filtrados.addAll(todosLosItems);
+        } else {
+            for (HistoriaArteItem item : todosLosItems) {
+                String searchable = normalizar(item.getTitulo() + " " + item.getCategoria() + " "
+                        + item.getPeriodo() + " " + item.getResumen() + " "
+                        + item.getContenido() + " " + item.getPalabrasClave());
+                if (searchable.contains(consulta)) {
+                    filtrados.add(item);
+                }
+            }
+        }
+
+        adapter.actualizarItems(filtrados);
+        tvEstadoHistoriaArte.setVisibility(filtrados.isEmpty() ? View.VISIBLE : View.GONE);
+        tvEstadoHistoriaArte.setText(filtrados.isEmpty()
+                ? "No encontramos resultados relacionados."
+                : "");
+    }
+
+    private void aplicarTemaRapido(@NonNull View root) {
+        if (getContext() == null) {
+            return;
+        }
+        ThemeManager tm = new ThemeManager(getContext());
+        ThemeApplier.applyFragmentBackground(root, tm, null, null, null);
+        ThemeApplier.applyTextPrimary(tvTituloPrincipal, tm);
+        ThemeApplier.applyTextSecondary(tvSubtituloPrincipal, tm);
+        ThemeApplier.applyTextSecondary(tvEstadoHistoriaArte, tm);
+        CardThemeHelper.tintProgress(pbHistoriaArte, tm);
+        CardThemeHelper.applySearchInput(etBuscarHistoriaArte, tm);
+        tintSearchIcon(tm);
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    private void tintSearchIcon(@NonNull ThemeManager tm) {
+        if (etBuscarHistoriaArte == null || getContext() == null) {
+            return;
+        }
+        Drawable icon = androidx.core.content.ContextCompat.getDrawable(getContext(), R.drawable.ic_search_artistlan);
+        if (icon != null) {
+            icon = icon.mutate();
+            icon.setColorFilter(tm.color(ThemeKeys.ICON_ACTIVE), PorterDuff.Mode.SRC_IN);
+            etBuscarHistoriaArte.setCompoundDrawablesWithIntrinsicBounds(icon, null, null, null);
+        }
+    }
+
+    @NonNull
+    private String normalizar(@Nullable String value) {
+        if (value == null) {
+            return "";
+        }
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT)
+                .trim();
     }
 
     private List<HistoriaArteItem> construirContenidoHistoriaArte() {

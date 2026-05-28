@@ -15,44 +15,74 @@ public final class ThemePresets {
         List<ThemePreset> presets = new ArrayList<>();
 
         // MODO CLARO: Más limpio y con acentos eléctricos
-        presets.add(preset("Candy White", "Blanco puro con acentos vibrantes",
+        presets.add(preset("Candy", "Blanco puro con acentos vibrantes",
                 "#FFFFFF", "#F0F3FF", "#E0E7FF", "#121212", "#4A5568", "#6366F1", "#EC4899"));
 
         // MODO OSCURO: Negro profundo con neones para que "salten" a la vista
-        presets.add(preset("Cyber Night", "Negro profundo y neón eléctrico",
+        presets.add(preset("Cyber", "Negro profundo y neón eléctrico",
                 "#050505", "#0F0F1A", "#050505", "#FFFFFF", "#A0AEC0", "#00F2FF", "#BC13FE"));
 
         // MODO AZUL: De azul marino a cian brillante
-        presets.add(preset("Ocean Pop", "Azul eléctrico y espuma de mar",
+        presets.add(preset("Ocean", "Azul eléctrico y espuma de mar",
                 "#010B1A", "#021B3A", "#010B1A", "#E0F2FE", "#7DD3FC", "#38BDF8", "#34D399"));
 
         // FIESTA: Colores saturados al máximo (Estilo Retrowave)
-        presets.add(preset("Super Fiesta", "Explosión de colores saturados",
+        presets.add(preset("Fiesta", "Explosión de colores saturados",
                 "#1A0033", "#2D0059", "#1A0033", "#FFFFFF", "#FFD6FF", "#FF007A", "#00FFD1"));
 
         // MORADO: Estilo galaxia vibrante
-        presets.add(preset("Ultra Violet", "Morados intensos y eléctricos",
+        presets.add(preset("Violet", "Morados intensos y eléctricos",
                 "#120024", "#240046", "#120024", "#F5F3FF", "#C4B5FD", "#9D174D", "#A855F7"));
 
         // ROSA: Muy alegre y femenino (Estilo Bubblegum)
-        presets.add(preset("Pink Punch", "Rosa intenso y energía",
+        presets.add(preset("Pink", "Rosa intenso y energía",
                 "#1F0010", "#3D0021", "#1F0010", "#FFF1F2", "#FDA4AF", "#FB7185", "#F472B6"));
 
         // VERDE: Neon Mint
-        presets.add(preset("Electric Mint", "Verde neón sobre fondo oscuro",
+        presets.add(preset("Mint", "Verde neón sobre fondo oscuro",
                 "#00120B", "#002416", "#00120B", "#F0FDF4", "#86EFAC", "#22C55E", "#00FF9D"));
 
         // DORADO: Más brillante, tipo "Sol"
-        presets.add(preset("Golden Sun", "Oro brillante y cálido",
+        presets.add(preset("Golden", "Oro brillante y cálido",
                 "#1A0F00", "#2E1B00", "#1A0F00", "#FFFBEB", "#FDE68A", "#F59E0B", "#FACC15"));
 
         // NARANJA: Sunset vibrante
-        presets.add(preset("Sunset Blast", "Naranja y rojo fuego",
+        presets.add(preset("Sunset", "Naranja y rojo fuego",
                 "#1C0900", "#361100", "#1C0900", "#FFF7ED", "#FFEDD5", "#F97316", "#EF4444"));
 
         // PREMIUM: El original pero con mucho más contraste y saturación
-        presets.add(preset("Artistlan Vivid", "Nuestra marca con esteroides",
+        presets.add(preset("Vivid", "Nuestra marca intensa",
                 "#0A001A", "#150035", "#0A001A", "#FFFFFF", "#E0E7FF", "#8B5CF6", "#F43F5E"));
+
+        presets.add(preset("Bosque", "Verde profundo y ámbar suave",
+                "#06130D", "#0D2B1B", "#04100A", "#F0FFF4", "#B7E4C7", "#2D6A4F", "#F6BD60"));
+
+        presets.add(preset("Cielo", "Celeste claro y azul sereno",
+                "#EFF8FF", "#D7ECFF", "#C5E1F7", "#102A43", "#486581", "#0EA5E9", "#2563EB"));
+
+        presets.add(preset("Coral", "Coral cálido y vino profundo",
+                "#240A13", "#451525", "#1A070D", "#FFF1F2", "#FEB2B2", "#FF6B6B", "#FFB703"));
+
+        presets.add(preset("Uva", "Uva oscura y lavanda brillante",
+                "#16051F", "#2F0A3D", "#120419", "#FAF5FF", "#D8B4FE", "#7E22CE", "#E879F9"));
+
+        presets.add(preset("Hielo", "Azules helados con alto contraste",
+                "#F8FCFF", "#E8F6FF", "#D9F0FF", "#0F172A", "#475569", "#38BDF8", "#06B6D4"));
+
+        presets.add(preset("Sakura", "Rosa sakura y ciruela",
+                "#FFF5F7", "#FFE4EC", "#FFD6E4", "#3B1020", "#7A334D", "#F472B6", "#BE185D"));
+
+        presets.add(preset("Grafito", "Grises sobrios y lima eléctrica",
+                "#101214", "#1D2226", "#090B0D", "#F8FAFC", "#CBD5E1", "#84CC16", "#22C55E"));
+
+        presets.add(preset("Cafe", "Café profundo y crema dorada",
+                "#1B1009", "#3A2416", "#140B06", "#FFF7ED", "#FED7AA", "#A16207", "#F59E0B"));
+
+        presets.add(preset("Lima", "Lima fresca sobre verde oscuro",
+                "#071405", "#17320E", "#051003", "#F7FEE7", "#BEF264", "#65A30D", "#A3E635"));
+
+        presets.add(preset("Neon", "Contraste neón azul y magenta",
+                "#030712", "#0B1026", "#020617", "#F8FAFC", "#A5B4FC", "#22D3EE", "#F0ABFC"));
 
         return presets;
     }

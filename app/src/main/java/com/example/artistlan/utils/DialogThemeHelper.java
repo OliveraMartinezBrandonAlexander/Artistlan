@@ -2,8 +2,10 @@ package com.example.artistlan.utils;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.view.View;
@@ -23,6 +25,8 @@ import androidx.core.graphics.ColorUtils;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.List;
 
@@ -103,6 +107,70 @@ public final class DialogThemeHelper {
         return bg;
     }
 
+    public static GradientDrawable createLightGlassDialogBackground(@NonNull Context context) {
+        ThemeManager tm = new ThemeManager(context);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.RECTANGLE);
+        bg.setColor(ColorUtils.setAlphaComponent(tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL), 176));
+        bg.setCornerRadius(dpToPx(context, 22));
+        bg.setStroke(dpToPx(context, 1), ColorUtils.setAlphaComponent(tm.color(ThemeKeys.CARD_BORDER), 190));
+        return bg;
+    }
+
+    public static GradientDrawable createLightGlassFieldBackground(@NonNull Context context) {
+        ThemeManager tm = new ThemeManager(context);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.RECTANGLE);
+        bg.setColor(ColorUtils.setAlphaComponent(tm.color(ThemeKeys.FILTER_BUTTON_BG), 172));
+        bg.setCornerRadius(dpToPx(context, 16));
+        bg.setStroke(dpToPx(context, 1), ColorUtils.setAlphaComponent(tm.color(ThemeKeys.FILTER_BUTTON_STROKE), 180));
+        return bg;
+    }
+
+    public static void styleLightGlassAlertDialog(@Nullable AlertDialog dialog, @NonNull Context context) {
+        if (dialog == null) {
+            return;
+        }
+        ThemeManager tm = new ThemeManager(context);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(createLightGlassDialogBackground(context));
+            tintLightGlassTextTree(dialog.getWindow().getDecorView(), tm);
+        }
+        CardThemeHelper.applyPrimaryBubbleButton(dialog.getButton(AlertDialog.BUTTON_POSITIVE), tm);
+        CardThemeHelper.applySecondaryBubbleButton(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), tm);
+        CardThemeHelper.applySecondaryBubbleButton(dialog.getButton(AlertDialog.BUTTON_NEUTRAL), tm);
+    }
+
+    public static void applyLightGlassTextInputLayoutStyle(@Nullable TextInputLayout layout, @NonNull Context context) {
+        if (layout == null) {
+            return;
+        }
+        ThemeManager tm = new ThemeManager(context);
+        layout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_FILLED);
+        layout.setBoxBackgroundColor(ColorUtils.setAlphaComponent(tm.color(ThemeKeys.FILTER_BUTTON_BG), 172));
+        layout.setBoxStrokeColor(ColorUtils.setAlphaComponent(tm.color(ThemeKeys.FILTER_BUTTON_STROKE), 210));
+        layout.setBoxStrokeErrorColor(ColorStateList.valueOf(tm.color(ThemeKeys.ACCENT_PRIMARY)));
+        layout.setHintTextColor(ColorStateList.valueOf(tm.color(ThemeKeys.TEXT_SECONDARY)));
+        layout.setDefaultHintTextColor(ColorStateList.valueOf(tm.color(ThemeKeys.TEXT_SECONDARY)));
+        layout.setErrorTextColor(ColorStateList.valueOf(tm.color(ThemeKeys.ACCENT_PRIMARY)));
+        layout.setBoxCornerRadii(
+                dpToPx(context, 14),
+                dpToPx(context, 14),
+                dpToPx(context, 14),
+                dpToPx(context, 14)
+        );
+    }
+
+    public static void applyLightGlassTextInputEditTextStyle(@Nullable TextInputEditText editText, @NonNull Context context) {
+        if (editText == null) {
+            return;
+        }
+        ThemeManager tm = new ThemeManager(context);
+        editText.setTextColor(tm.color(ThemeKeys.TEXT_PRIMARY));
+        editText.setHintTextColor(tm.color(ThemeKeys.TEXT_SECONDARY));
+        editText.setBackgroundColor(Color.TRANSPARENT);
+    }
+
     public static <T> ArrayAdapter<T> createDialogComboAdapter(@NonNull Context context, @NonNull List<T> values) {
         return new ArrayAdapter<T>(context, android.R.layout.simple_spinner_item, values) {
             @NonNull
@@ -156,6 +224,49 @@ public final class DialogThemeHelper {
         spinner.setMinimumHeight(dpToPx(context, 48));
     }
 
+    public static <T> ArrayAdapter<T> createLightGlassComboAdapter(@NonNull Context context, @NonNull List<T> values) {
+        return new ArrayAdapter<T>(context, android.R.layout.simple_spinner_item, values) {
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                styleLightComboText(view, false, false);
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                styleLightComboText(view, true, false);
+                return view;
+            }
+
+            private void styleLightComboText(@Nullable View view, boolean dropdown, boolean selected) {
+                if (!(view instanceof TextView)) {
+                    return;
+                }
+                ThemeManager tm = new ThemeManager(context);
+                TextView textView = (TextView) view;
+                textView.setTextColor(selected ? tm.color(ThemeKeys.ACCENT_PRIMARY) : tm.color(ThemeKeys.TEXT_PRIMARY));
+                textView.setHintTextColor(tm.color(ThemeKeys.TEXT_SECONDARY));
+                textView.setTextSize(dropdown ? 14f : 15f);
+                textView.setTypeface(Typeface.create("sans-serif", selected ? Typeface.BOLD : Typeface.NORMAL));
+                textView.setPadding(dpToPx(context, 12), dpToPx(context, dropdown ? 10 : 8), dpToPx(context, 12), dpToPx(context, dropdown ? 10 : 8));
+                textView.setBackgroundColor(Color.TRANSPARENT);
+            }
+        };
+    }
+
+    public static void applyLightGlassComboStyle(@Nullable Spinner spinner, @NonNull Context context) {
+        if (spinner == null) {
+            return;
+        }
+        spinner.setBackground(createLightGlassFieldBackground(context));
+        spinner.setPopupBackgroundDrawable(createLightGlassDropdownBackground(context));
+        spinner.setPadding(dpToPx(context, 10), 0, dpToPx(context, 10), 0);
+        spinner.setMinimumHeight(dpToPx(context, 46));
+    }
+
     private static void tintTextTree(@Nullable View view, @NonNull ThemeManager tm) {
         if (view == null) {
             return;
@@ -176,6 +287,21 @@ public final class DialogThemeHelper {
 
     private static int dpToPx(@NonNull Context context, int dp) {
         return Math.round(dp * context.getResources().getDisplayMetrics().density);
+    }
+
+    private static void tintLightGlassTextTree(@Nullable View view, @NonNull ThemeManager tm) {
+        if (view == null || view instanceof Button) {
+            return;
+        }
+        if (view instanceof TextView) {
+            ((TextView) view).setTextColor(tm.color(ThemeKeys.TEXT_PRIMARY));
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                tintLightGlassTextTree(group.getChildAt(i), tm);
+            }
+        }
     }
 
     @NonNull
@@ -216,6 +342,17 @@ public final class DialogThemeHelper {
         drawable.setCornerRadius(dpToPx(context, 14));
         drawable.setColor(tm.color(ThemeKeys.DIALOG_BG));
         drawable.setStroke(dpToPx(context, 1), tm.color(ThemeKeys.ACCOUNT_GLASS_STROKE));
+        return drawable;
+    }
+
+    @NonNull
+    private static GradientDrawable createLightGlassDropdownBackground(@NonNull Context context) {
+        ThemeManager tm = new ThemeManager(context);
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setCornerRadius(dpToPx(context, 14));
+        drawable.setColor(ColorUtils.setAlphaComponent(tm.color(ThemeKeys.FILTER_BUTTON_BG), 226));
+        drawable.setStroke(dpToPx(context, 1), ColorUtils.setAlphaComponent(tm.color(ThemeKeys.FILTER_BUTTON_STROKE), 190));
         return drawable;
     }
 

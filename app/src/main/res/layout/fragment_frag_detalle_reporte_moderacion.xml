@@ -28,7 +28,7 @@
             android:paddingStart="16dp"
             android:paddingTop="102dp"
             android:paddingEnd="16dp"
-            android:paddingBottom="24dp">
+            android:paddingBottom="88dp">
 
             <TextView
                 android:id="@+id/tvTituloPantallaDetalleReporteModeracion"
@@ -256,7 +256,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:layout_marginTop="16dp"
-                    android:backgroundTint="@color/artistlan_secondary"
                     android:text="Tomar reporte"
                     android:textAllCaps="false"
                     android:visibility="gone" />
@@ -310,7 +309,8 @@
                             android:id="@+id/spinnerAccionResolverModeracion"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp" />
+                            android:layout_marginTop="6dp"
+                            android:minHeight="46dp" />
 
                         <TextView
                             android:id="@+id/tvResolverMensajeLabelModeracion"
@@ -383,7 +383,6 @@
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
                             android:layout_marginTop="18dp"
-                            android:backgroundTint="@color/artistlan_secondary"
                             android:text="Resolver reporte"
                             android:textAllCaps="false" />
                     </LinearLayout>

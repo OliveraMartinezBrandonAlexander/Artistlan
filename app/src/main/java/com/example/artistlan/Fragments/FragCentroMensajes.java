@@ -3,6 +3,7 @@ package com.example.artistlan.Fragments;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -11,6 +12,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -18,7 +21,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.appcompat.widget.PopupMenu;
 import androidx.core.graphics.ColorUtils;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
@@ -30,6 +32,7 @@ import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogThemeHelper;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -459,29 +462,76 @@ public class FragCentroMensajes extends Fragment {
         if (!isAdded()) {
             return;
         }
-        PopupMenu popup = new PopupMenu(requireContext(), anchor);
-        final int MENU_MARCAR_TODO = 1;
-        final int MENU_ACTUALIZAR = 2;
+        LinearLayout content = new LinearLayout(requireContext());
+        content.setOrientation(LinearLayout.VERTICAL);
+        int padding = dpToPx(12);
+        content.setPadding(padding, padding, padding, padding);
+        content.setBackground(DialogThemeHelper.createLightGlassDialogBackground(requireContext()));
 
         boolean enMensajes = viewPager != null && viewPager.getCurrentItem() == 0;
-        if (enMensajes) {
-            popup.getMenu().add(0, MENU_MARCAR_TODO, 0, "Marcar todo como leido");
-        }
-        popup.getMenu().add(0, MENU_ACTUALIZAR, 1, "Actualizar");
+        TextView btnActualizar = crearBotonAccionHeader("Actualizar");
+        btnActualizar.setTextColor(themeManager.color(ThemeKeys.ACCENT_PRIMARY));
+        content.addView(btnActualizar, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dpToPx(44)
+        ));
 
-        popup.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-            if (id == MENU_MARCAR_TODO) {
+        View divider = null;
+        TextView btnMarcarTodo = null;
+        if (enMensajes) {
+            divider = new View(requireContext());
+            divider.setBackgroundColor(ColorUtils.setAlphaComponent(themeManager.color(ThemeKeys.CARD_BORDER), 145));
+            LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    dpToPx(1)
+            );
+            dividerParams.setMargins(dpToPx(8), dpToPx(4), dpToPx(8), dpToPx(4));
+            content.addView(divider, dividerParams);
+
+            btnMarcarTodo = crearBotonAccionHeader("Marcar todo como leido");
+            btnMarcarTodo.setTextColor(themeManager.color(ThemeKeys.TEXT_PRIMARY));
+            content.addView(btnMarcarTodo, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    dpToPx(44)
+            ));
+        }
+
+        PopupWindow popup = new PopupWindow(
+                content,
+                dpToPx(244),
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                true
+        );
+        popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popup.setOutsideTouchable(true);
+        popup.setElevation(dpToPx(8));
+
+        if (btnMarcarTodo != null) {
+            btnMarcarTodo.setOnClickListener(v -> {
+                popup.dismiss();
                 onMarcarTodoClick();
-                return true;
-            }
-            if (id == MENU_ACTUALIZAR) {
-                onActualizarClick();
-                return true;
-            }
-            return false;
+            });
+        }
+        btnActualizar.setOnClickListener(v -> {
+            popup.dismiss();
+            onActualizarClick();
         });
-        popup.show();
+        popup.showAsDropDown(anchor, -dpToPx(196), dpToPx(8));
+    }
+
+    @NonNull
+    private TextView crearBotonAccionHeader(@NonNull String texto) {
+        TextView button = new TextView(requireContext());
+        button.setText(texto);
+        button.setGravity(Gravity.CENTER_VERTICAL);
+        button.setTextSize(14f);
+        button.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        button.setMinHeight(dpToPx(44));
+        button.setPadding(dpToPx(14), 0, dpToPx(14), 0);
+        button.setBackgroundColor(Color.TRANSPARENT);
+        button.setClickable(true);
+        button.setFocusable(true);
+        return button;
     }
 
     @Nullable

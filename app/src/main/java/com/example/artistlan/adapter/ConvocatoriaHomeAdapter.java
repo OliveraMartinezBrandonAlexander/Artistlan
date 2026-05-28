@@ -71,8 +71,9 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
 
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         CardThemeHelper.applyFlatCard(holder.layoutCard, tm);
+        CardThemeHelper.applyThemedSurface(holder.layoutBody, tm, 14);
         CardThemeHelper.applyChip(holder.tvFecha, tm);
-        CardThemeHelper.applyChip(holder.tvTitulo, tm);
+        CardThemeHelper.applySolidHeader(holder.tvTitulo, holder.tvTitulo, tm);
         ThemeApplier.applyTextSecondary(holder.tvDescripcionLabel, tm);
         ThemeApplier.applyTextSecondary(holder.tvDescripcion, tm);
         ThemeApplier.applyTextSecondary(holder.tvDetalle, tm);
@@ -182,10 +183,12 @@ public class ConvocatoriaHomeAdapter extends RecyclerView.Adapter<ConvocatoriaHo
         final TextView tvFecha;
         final Button btnVerMas;
         final LinearLayout layoutCard;
+        final LinearLayout layoutBody;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             layoutCard = itemView.findViewById(R.id.layoutMainConvocatoriaCard);
+            layoutBody = itemView.findViewById(R.id.layoutMainConvocatoriaBody);
             tvTitulo = itemView.findViewById(R.id.tvMainTituloConvocatoria);
             tvDescripcionLabel = itemView.findViewById(R.id.tvMainDescripcionLabelConvocatoria);
             tvDescripcion = itemView.findViewById(R.id.tvMainDescripcionConvocatoria);

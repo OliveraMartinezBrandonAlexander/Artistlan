@@ -17,6 +17,7 @@ public class TarjetaTextoServicioItem {
     private int likes;
     private boolean favorito;
     private boolean expandido = false;
+    private String fechaPublicacion;
 
     public TarjetaTextoServicioItem(Integer idServicio, String titulo, String descripcion, String contacto,
                                     String tecnicas, String autor, String categoria, String fotoPerfilAutor,
@@ -66,6 +67,8 @@ public class TarjetaTextoServicioItem {
     public void setFavorito(boolean favorito) { this.favorito = favorito; }
     public boolean isExpandido() { return expandido; }
     public void setExpandido(boolean expandido) { this.expandido = expandido; }
+    public String getFechaPublicacion() { return fechaPublicacion; }
+    public void setFechaPublicacion(String fechaPublicacion) { this.fechaPublicacion = fechaPublicacion; }
 
     public void setIdAutor(Integer idAutor) {
         this.idAutor = idAutor;

@@ -35,6 +35,7 @@ import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogThemeHelper;
 import com.example.artistlan.utils.PasswordPressVisibilityHelper;
 
 import java.text.SimpleDateFormat;
@@ -177,6 +178,9 @@ public class ActCrearCuenta extends AppCompatActivity implements View.OnClickLis
         ThemeApplier.applyTextPrimary(txtPassConfLbl, themeManager);
         ThemeApplier.applyTextPrimary(resultTitle, themeManager);
         ThemeApplier.applyTextSecondary(resultMessage, themeManager);
+        if (resultDialog != null) {
+            resultDialog.setBackground(DialogThemeHelper.createDialogBackground(this));
+        }
 
         ThemeApplier.applyInput(edtEmail, themeManager);
         ThemeApplier.applyInput(edtNombre, themeManager);

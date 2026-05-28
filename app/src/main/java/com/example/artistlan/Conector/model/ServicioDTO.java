@@ -1,5 +1,7 @@
 package com.example.artistlan.Conector.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class ServicioDTO {
 
     private Integer idServicio;
@@ -17,6 +19,8 @@ public class ServicioDTO {
     private String fotoPerfilAutor;
     private Integer likes;
     private Boolean esFavorito;
+    @SerializedName(value = "fechaPublicacion", alternate = {"fecha_publicacion"})
+    private String fechaPublicacion;
 
 
     public Integer getIdServicio() {
@@ -33,6 +37,14 @@ public class ServicioDTO {
 
     public void setTitulo(String titulo) {
         this.titulo = titulo;
+    }
+
+    public String getFechaPublicacion() {
+        return fechaPublicacion;
+    }
+
+    public void setFechaPublicacion(String fechaPublicacion) {
+        this.fechaPublicacion = fechaPublicacion;
     }
 
     public String getDescripcion() {

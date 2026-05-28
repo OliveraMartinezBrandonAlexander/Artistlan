@@ -31,6 +31,7 @@ import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.adapter.ReportesModeracionAdapter;
 import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogThemeHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -189,13 +190,9 @@ public class FragModeracionReportes extends Fragment {
     }
 
     private void configurarSpinner(@NonNull Spinner spinner, @NonNull List<FilterOption> valores) {
-        ArrayAdapter<FilterOption> adapterSpinner = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                valores
-        );
-        adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<FilterOption> adapterSpinner = DialogThemeHelper.createDialogComboAdapter(requireContext(), valores);
         spinner.setAdapter(adapterSpinner);
+        DialogThemeHelper.applyDialogComboStyle(spinner, requireContext());
     }
 
     private void aplicarTemaVisual(@NonNull View root) {
@@ -207,9 +204,9 @@ public class FragModeracionReportes extends Fragment {
         ThemeApplier.applyTextSecondary(tvVacio, themeManager);
         CardThemeHelper.applyFilterTextButton(btnToggleFiltros, themeManager);
         CardThemeHelper.applyThemedSurface(contenedorFiltros, themeManager, 18);
-        CardThemeHelper.applyFilterSurface(spinnerEstado, themeManager);
-        CardThemeHelper.applyFilterSurface(spinnerTipo, themeManager);
-        CardThemeHelper.applyFilterSurface(spinnerPrioridad, themeManager);
+        DialogThemeHelper.applyDialogComboStyle(spinnerEstado, requireContext());
+        DialogThemeHelper.applyDialogComboStyle(spinnerTipo, requireContext());
+        DialogThemeHelper.applyDialogComboStyle(spinnerPrioridad, requireContext());
         CardThemeHelper.tintProgress(progressBar, themeManager);
         if (checkSoloMios != null) {
             checkSoloMios.setTextColor(themeManager.color(ThemeKeys.TEXT_PRIMARY));

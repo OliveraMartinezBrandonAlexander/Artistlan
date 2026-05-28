@@ -33,6 +33,7 @@ import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.TarjetaTextoServicio.model.TarjetaTextoServicioItem;
 import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.LikeUiHelper;
+import com.example.artistlan.utils.PublicationDateFormatter;
 import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.util.ArrayList;
@@ -115,6 +116,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
         ThemeApplier.applyTextPrimary(holder.precioRango, tm);
         ThemeApplier.applyTextSecondary(holder.categoria, tm);
         ThemeApplier.applyTextPrimary(holder.tvPublicationTitle, tm);
+        ThemeApplier.applyTextSecondary(holder.tvPublicationDate, tm);
         CardThemeHelper.applyPrimaryBubbleButton(holder.btnContactar, tm);
         CardThemeHelper.applySecondaryBubbleButton(holder.btnReportarServicio, tm);
         CardThemeHelper.applyFlatCard(holder.layoutServicioCard, tm);
@@ -390,6 +392,14 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
     private void configurarEncabezadoPublicacion(@NonNull ViewHolder holder, @NonNull TarjetaTextoServicioItem servicio) {
         holder.publicationHeader.setVisibility(portfolioHeaderEnabled ? View.VISIBLE : View.GONE);
         holder.tvPublicationTitle.setText("Editar: " + safe(servicio.getTitulo(), "Sin título"));
+        String fechaPublicacion = PublicationDateFormatter.formatear(servicio.getFechaPublicacion());
+        if (fechaPublicacion == null || fechaPublicacion.isEmpty()) {
+            holder.tvPublicationDate.setVisibility(View.GONE);
+            holder.tvPublicationDate.setText("");
+        } else {
+            holder.tvPublicationDate.setVisibility(View.VISIBLE);
+            holder.tvPublicationDate.setText("Publicado: " + fechaPublicacion);
+        }
     }
 
     private interface OpcionMenuCallback {
@@ -585,7 +595,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView titulo, descripcion, contacto, tipoContacto, tecnicas, autor, categoria, precioRango, likes, tvBadgeServicio, tvPublicationTitle;
+        TextView titulo, descripcion, contacto, tipoContacto, tecnicas, autor, categoria, precioRango, likes, tvBadgeServicio, tvPublicationTitle, tvPublicationDate;
         ImageView imgAutor;
         ImageButton btnLike;
         ImageButton btnMoreOptions;
@@ -605,6 +615,7 @@ public class TarjetaTextoServicioAdapter extends RecyclerView.Adapter<TarjetaTex
             precioRango = itemView.findViewById(R.id.precioRango);
             tvBadgeServicio = itemView.findViewById(R.id.tvBadgeServicio);
             tvPublicationTitle = itemView.findViewById(R.id.tvPublicationTitle);
+            tvPublicationDate = itemView.findViewById(R.id.tvPublicationDate);
             imgAutor = itemView.findViewById(R.id.imgAutor);
             likes = itemView.findViewById(R.id.likes);
             btnLike = itemView.findViewById(R.id.btnLike);

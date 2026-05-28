@@ -126,15 +126,21 @@ public final class DialogThemeHelper {
                 }
                 ThemeManager tm = new ThemeManager(context);
                 TextView textView = (TextView) view;
-                textView.setTextColor(dropdown ? tm.color(ThemeKeys.TEXT_PRIMARY) : tm.color(ThemeKeys.FILTER_BUTTON_STROKE));
+                int background = dropdown ? tm.color(ThemeKeys.DIALOG_BG) : tm.color(ThemeKeys.FILTER_BUTTON_BG);
+                textView.setTextColor(resolveReadableTextColor(
+                        background,
+                        tm.color(ThemeKeys.TEXT_PRIMARY),
+                        tm.color(ThemeKeys.TEXT_SECONDARY),
+                        tm.color(ThemeKeys.MENU_TITLE),
+                        Color.WHITE,
+                        Color.BLACK
+                ));
                 textView.setTextSize(dropdown ? 14f : 15f);
                 textView.setSingleLine(false);
                 int horizontal = dpToPx(context, dropdown ? 14 : 16);
                 int vertical = dpToPx(context, dropdown ? 12 : 10);
                 textView.setPadding(horizontal, vertical, horizontal, vertical);
-                if (dropdown) {
-                    textView.setBackground(createComboDropdownBackground(context));
-                }
+                textView.setBackgroundColor(Color.TRANSPARENT);
             }
         };
     }
@@ -192,8 +198,9 @@ public final class DialogThemeHelper {
     ) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setShape(GradientDrawable.RECTANGLE);
-        drawable.setCornerRadius(dpToPx(context, 18));
-        drawable.setColor(ColorUtils.setAlphaComponent(tm.color(ThemeKeys.FILTER_BUTTON_BG), Math.round(255 * fillAlpha)));
+        drawable.setCornerRadius(dpToPx(context, 16));
+        int cleanFill = ColorUtils.blendARGB(tm.color(ThemeKeys.FILTER_BUTTON_BG), Color.WHITE, 0.10f);
+        drawable.setColor(ColorUtils.setAlphaComponent(cleanFill, Math.round(255 * fillAlpha)));
         drawable.setStroke(
                 dpToPx(context, 1),
                 ColorUtils.setAlphaComponent(tm.color(ThemeKeys.FILTER_BUTTON_STROKE), Math.round(255 * strokeAlpha))
@@ -235,12 +242,25 @@ public final class DialogThemeHelper {
         button.setTextColor(resolveReadableTextColor(backgroundColor, preferredTextColor));
     }
 
-    private static int resolveReadableTextColor(int backgroundColor, int preferredTextColor) {
-        if (ColorUtils.calculateContrast(preferredTextColor, backgroundColor) >= 4.5d) {
+    private static int resolveReadableTextColor(int backgroundColor, int preferredTextColor, int... candidates) {
+        int opaqueBackground = ColorUtils.setAlphaComponent(backgroundColor, 255);
+        if (ColorUtils.calculateContrast(preferredTextColor, opaqueBackground) >= 4.5d) {
             return preferredTextColor;
         }
-        double contrastWhite = ColorUtils.calculateContrast(Color.WHITE, backgroundColor);
-        double contrastBlack = ColorUtils.calculateContrast(Color.BLACK, backgroundColor);
+        int selected = preferredTextColor;
+        double bestContrast = ColorUtils.calculateContrast(preferredTextColor, opaqueBackground);
+        for (int candidate : candidates) {
+            double contrast = ColorUtils.calculateContrast(candidate, opaqueBackground);
+            if (contrast > bestContrast) {
+                bestContrast = contrast;
+                selected = candidate;
+            }
+        }
+        if (bestContrast >= 4.5d) {
+            return selected;
+        }
+        double contrastWhite = ColorUtils.calculateContrast(Color.WHITE, opaqueBackground);
+        double contrastBlack = ColorUtils.calculateContrast(Color.BLACK, opaqueBackground);
         return contrastWhite >= contrastBlack ? Color.WHITE : Color.BLACK;
     }
 }

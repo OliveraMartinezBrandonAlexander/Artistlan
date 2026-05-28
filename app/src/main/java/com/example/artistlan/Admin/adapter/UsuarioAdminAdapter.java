@@ -29,11 +29,21 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
         void onCambiarRol(UsuariosDTO usuario);
     }
 
+    public interface OnAbrirPerfilListener {
+        void onAbrirPerfil(UsuariosDTO usuario);
+    }
+
     private final List<UsuariosDTO> items = new ArrayList<>();
     private final OnCambiarRolListener listener;
+    private final OnAbrirPerfilListener perfilListener;
 
     public UsuarioAdminAdapter(OnCambiarRolListener listener) {
+        this(listener, null);
+    }
+
+    public UsuarioAdminAdapter(OnCambiarRolListener listener, OnAbrirPerfilListener perfilListener) {
         this.listener = listener;
+        this.perfilListener = perfilListener;
     }
 
     public void actualizar(List<UsuariosDTO> nuevos) {
@@ -88,6 +98,11 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
         CardThemeHelper.applyMessageCard(holder.cardUsuario, tm, false);
 
         holder.btnCambiarRol.setOnClickListener(v -> listener.onCambiarRol(item));
+        holder.imgUsuario.setOnClickListener(v -> {
+            if (perfilListener != null) {
+                perfilListener.onAbrirPerfil(item);
+            }
+        });
 
         String fotoPerfil = item.getFotoPerfil();
         if (TextUtils.isEmpty(fotoPerfil)) {
@@ -128,6 +143,8 @@ public class UsuarioAdminAdapter extends RecyclerView.Adapter<UsuarioAdminAdapte
             super(itemView);
             cardUsuario = (com.google.android.material.card.MaterialCardView) itemView;
             imgUsuario = itemView.findViewById(R.id.imgUsuarioAdmin);
+            imgUsuario.setClickable(true);
+            imgUsuario.setFocusable(true);
             tvNombre = itemView.findViewById(R.id.tvNombreUsuarioAdmin);
             tvUsuario = itemView.findViewById(R.id.tvUsuarioAdmin);
             tvRol = itemView.findViewById(R.id.tvRolUsuarioAdmin);

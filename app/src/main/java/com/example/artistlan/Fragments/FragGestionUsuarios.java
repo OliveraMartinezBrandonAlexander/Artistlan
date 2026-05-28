@@ -36,7 +36,7 @@ import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.utils.CardThemeHelper;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.example.artistlan.utils.DialogThemeHelper;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
@@ -52,6 +52,7 @@ public class FragGestionUsuarios extends Fragment {
     private static final int PAGE_SIZE = 10;
     private static final String SORT_DEFAULT = "idUsuario,desc";
     private static final long SEARCH_DEBOUNCE_MS = 400L;
+    private static final long PROFILE_CLICK_THROTTLE_MS = 700L;
 
     private UsuarioApi usuarioApi;
     private UsuarioAdminAdapter adapter;
@@ -78,6 +79,7 @@ public class FragGestionUsuarios extends Fragment {
     private boolean isLoading = false;
     private boolean isLastPage = false;
     private int requestToken = 0;
+    private long ultimoClickPerfilMs = 0L;
 
     @Nullable
     @Override
@@ -121,7 +123,7 @@ public class FragGestionUsuarios extends Fragment {
             }
         });
 
-        adapter = new UsuarioAdminAdapter(this::mostrarDialogoRoles);
+        adapter = new UsuarioAdminAdapter(this::mostrarDialogoRoles, this::abrirPerfilUsuario);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
 
@@ -314,6 +316,32 @@ public class FragGestionUsuarios extends Fragment {
         }
     }
 
+    private void abrirPerfilUsuario(@Nullable UsuariosDTO usuario) {
+        if (!isAdded() || usuario == null || usuario.getIdUsuario() == null || usuario.getIdUsuario() <= 0) {
+            return;
+        }
+        long ahora = System.currentTimeMillis();
+        if (ahora - ultimoClickPerfilMs < PROFILE_CLICK_THROTTLE_MS) {
+            return;
+        }
+        ultimoClickPerfilMs = ahora;
+
+        int idUsuarioSeleccionado = usuario.getIdUsuario();
+        NavController navController = NavHostFragment.findNavController(this);
+        if (idUsuarioSeleccionado == obtenerUsuarioSesionId()) {
+            navController.navigate(R.id.fragVerPerfil);
+            return;
+        }
+        Bundle args = new Bundle();
+        args.putInt("idArtista", idUsuarioSeleccionado);
+        navController.navigate(R.id.fragVerPerfilPublico, args);
+    }
+
+    private int obtenerUsuarioSesionId() {
+        SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
+        return prefs.getInt("idUsuario", prefs.getInt("id", -1));
+    }
+
     private void actualizarBusqueda(String texto, boolean conDebounce) {
         String nuevoTexto = texto != null ? texto.trim() : "";
         if (nuevoTexto.equals(textoBusquedaActual)) {
@@ -334,20 +362,22 @@ public class FragGestionUsuarios extends Fragment {
     }
 
     private void mostrarDialogoRoles(UsuariosDTO usuario) {
-        new MaterialAlertDialogBuilder(requireContext())
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                 .setTitle("Cambiar rol")
-                .setItems(ROLES, (dialog, which) -> confirmarCambioRol(usuario, ROLES[which]))
+                .setItems(ROLES, (dialogInterface, which) -> confirmarCambioRol(usuario, ROLES[which]))
                 .setNegativeButton("Cancelar", null)
                 .show();
+        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
     }
 
     private void confirmarCambioRol(UsuariosDTO usuario, String rolNuevo) {
-        new MaterialAlertDialogBuilder(requireContext())
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                 .setTitle("Confirmar cambio")
                 .setMessage("\u00BFCambiar rol de este usuario?")
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Confirmar", (dialog, which) -> cambiarRol(usuario, rolNuevo))
+                .setPositiveButton("Confirmar", (dialogInterface, which) -> cambiarRol(usuario, rolNuevo))
                 .show();
+        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
     }
 
     private void cambiarRol(UsuariosDTO usuario, String rolNuevo) {

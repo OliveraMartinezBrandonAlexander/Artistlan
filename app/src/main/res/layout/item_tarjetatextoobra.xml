@@ -12,23 +12,43 @@
     <LinearLayout
         android:id="@+id/publicationHeader"
         android:layout_width="match_parent"
-        android:layout_height="42dp"
+        android:layout_height="wrap_content"
+        android:minHeight="42dp"
         android:layout_marginBottom="6dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
+        android:paddingTop="6dp"
         android:paddingStart="12dp"
+        android:paddingBottom="6dp"
         android:paddingEnd="6dp">
 
-        <TextView
-            android:id="@+id/tvPublicationTitle"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="Sin t&#237;tulo"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvPublicationTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Sin t&#237;tulo"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPublicationDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/artistlan_text_secondary"
+                android:textSize="11sp"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <ImageButton
             android:id="@+id/btnMoreOptions"
@@ -177,7 +197,7 @@
 
             <LinearLayout
                 android:id="@+id/obraMetaChipsRow"
-                android:layout_width="150dp"
+                android:layout_width="176dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
                 android:baselineAligned="false"
@@ -200,11 +220,11 @@
                     android:maxLines="1"
                     android:paddingStart="7dp"
                     android:paddingTop="3dp"
-                    android:paddingEnd="7dp"
+                    android:paddingEnd="6dp"
                     android:paddingBottom="3dp"
                     android:text="Categor&#237;a"
                     android:textColor="@color/artistlan_text_primary"
-                    android:textSize="11sp"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -212,18 +232,19 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
-                    android:layout_weight="1"
+                    android:layout_weight="1.35"
                     android:background="@drawable/bg_chip_glass"
                     android:ellipsize="end"
                     android:gravity="center"
+                    android:minWidth="88dp"
                     android:maxLines="1"
-                    android:paddingStart="7dp"
+                    android:paddingStart="8dp"
                     android:paddingTop="3dp"
-                    android:paddingEnd="7dp"
+                    android:paddingEnd="8dp"
                     android:paddingBottom="3dp"
                     android:text="Estado"
                     android:textColor="@color/artistlan_text_primary"
-                    android:textSize="11sp"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
 
             </LinearLayout>

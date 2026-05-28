@@ -252,6 +252,7 @@ public class FragMiArte extends Fragment {
             item.setEditable(!Boolean.FALSE.equals(dto.getEditable()));
             item.setEliminable(!Boolean.FALSE.equals(dto.getEliminable()));
             item.setPuedeSolicitarCompra(Boolean.TRUE.equals(dto.getPuedeSolicitarCompra()));
+            item.setFechaPublicacion(dto.getFechaPublicacion());
             items.add(item);
         }
 

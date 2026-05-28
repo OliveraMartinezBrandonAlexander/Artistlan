@@ -226,7 +226,7 @@ public class FragMisServicios extends Fragment {
         for (ServicioDTO dto : ordenados) {
             Integer idServicio = dto.getIdServicio();
             boolean esFavoritoReal = idServicio != null && serviciosFavoritos.contains(idServicio);
-            items.add(new TarjetaTextoServicioItem(
+            TarjetaTextoServicioItem item = new TarjetaTextoServicioItem(
                     idServicio,
                     dto.getIdUsuario(),
                     dto.getTitulo(),
@@ -242,7 +242,9 @@ public class FragMisServicios extends Fragment {
                     dto.getLikes() != null ? dto.getLikes() : 0,
                     esFavoritoReal,
                     false
-            ));
+            );
+            item.setFechaPublicacion(dto.getFechaPublicacion());
+            items.add(item);
         }
 
         return items;

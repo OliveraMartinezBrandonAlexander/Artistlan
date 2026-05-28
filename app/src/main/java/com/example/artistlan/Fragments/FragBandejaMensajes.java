@@ -49,9 +49,6 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
     private View emptyState;
     private TextView emptyTitle;
     private TextView emptySubtitle;
-    private TextView btnMarcarTodasLeidas;
-    private TextView btnRecargar;
-    private View layoutAccionesLocal;
     private TextView btnCargarMasNotificaciones;
     private View layoutLoaderMasNotificaciones;
 
@@ -85,9 +82,6 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
         emptyState = view.findViewById(R.id.layoutBandejaVacia);
         emptyTitle = view.findViewById(R.id.tvBandejaVaciaTitulo);
         emptySubtitle = view.findViewById(R.id.tvBandejaVaciaSubtitulo);
-        btnMarcarTodasLeidas = view.findViewById(R.id.btnBandejaMarcarTodasLeidas);
-        btnRecargar = view.findViewById(R.id.btnBandejaRecargar);
-        layoutAccionesLocal = view.findViewById(R.id.layoutBandejaAccionesLocal);
         btnCargarMasNotificaciones = view.findViewById(R.id.btnCargarMasNotificaciones);
         layoutLoaderMasNotificaciones = view.findViewById(R.id.layoutLoaderMasNotificaciones);
         aplicarTemaVisual(view);
@@ -96,12 +90,6 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
         adapter = new NotificacionesAdapter(this);
         recyclerMensajes.setAdapter(adapter);
 
-        if (layoutAccionesLocal != null) {
-            layoutAccionesLocal.setVisibility(View.GONE);
-        }
-
-        btnMarcarTodasLeidas.setOnClickListener(v -> confirmarMarcarTodas());
-        btnRecargar.setOnClickListener(v -> cargarNotificaciones());
         if (btnCargarMasNotificaciones != null) {
             btnCargarMasNotificaciones.setOnClickListener(v -> {
                 if (isLoading || isLastPage) {
@@ -294,8 +282,6 @@ public class FragBandejaMensajes extends Fragment implements NotificacionesAdapt
 
     private void aplicarTemaVisual(@NonNull View root) {
         ThemeManager tm = new ThemeManager(requireContext());
-        CardThemeHelper.applySecondaryBubbleSurface(btnMarcarTodasLeidas, btnMarcarTodasLeidas, tm);
-        CardThemeHelper.applySecondaryBubbleSurface(btnRecargar, btnRecargar, tm);
         CardThemeHelper.applySecondaryBubbleSurface(btnCargarMasNotificaciones, btnCargarMasNotificaciones, tm);
         CardThemeHelper.applyThemedSurface(emptyState, tm, 24);
         ThemeApplier.applyTextPrimary(emptyTitle, tm);

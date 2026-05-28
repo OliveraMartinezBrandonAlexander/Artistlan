@@ -31,7 +31,9 @@ import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
+import com.example.artistlan.utils.ArtistlanDialogFactory;
 import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogConfig;
 import com.example.artistlan.utils.DialogThemeHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -165,6 +167,7 @@ public class FragGestionConvocatorias extends Fragment {
         TextInputEditText etDescripcion = form.findViewById(R.id.etDescripcionConvocatoria);
         TextInputEditText etFecha = form.findViewById(R.id.etFechaConvocatoria);
         TextInputEditText etEnlace = form.findViewById(R.id.etEnlaceConvocatoria);
+        form.setBackground(DialogThemeHelper.createFieldDialogBackground(requireContext()));
 
         boolean editando = actual != null;
         if (editando) {
@@ -213,6 +216,7 @@ public class FragGestionConvocatorias extends Fragment {
 
         dialog.show();
         DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+        DialogThemeHelper.applyFieldDialogWindowSize(dialog, requireContext());
         ThemeApplier.applyInput(etTitulo, tm);
         ThemeApplier.applyInput(etDescripcion, tm);
         ThemeApplier.applyInput(etFecha, tm);
@@ -229,6 +233,7 @@ public class FragGestionConvocatorias extends Fragment {
                 calendar.get(Calendar.DAY_OF_MONTH)
         );
         datePickerDialog.show();
+        DialogThemeHelper.styleDialogWindow(datePickerDialog, requireContext());
     }
 
     private String obtenerTexto(@Nullable TextInputEditText input) {
@@ -333,17 +338,18 @@ public class FragGestionConvocatorias extends Fragment {
     }
 
     private void confirmarEliminar(ConvocatoriaDTO item) {
-        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+        ArtistlanDialogFactory.show(this, DialogConfig.builder()
                 .setTitle("Eliminar convocatoria")
                 .setMessage("¿Seguro que deseas eliminar?")
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Eliminar", (dialogInterface, which) -> {
+                .setType(DialogConfig.Type.DANGER)
+                .setNegativeText("Cancelar")
+                .setPositiveText("Eliminar")
+                .setOnPositive(() -> {
                     if (item.getIdConvocatoria() != null) {
                         eliminarConvocatoria(item.getIdConvocatoria());
                     }
                 })
-                .show();
-        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+                .build());
     }
 
     private void eliminarConvocatoria(int id) {
@@ -388,12 +394,12 @@ public class FragGestionConvocatorias extends Fragment {
         if (!isAdded()) {
             return;
         }
-        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+        ArtistlanDialogFactory.show(this, DialogConfig.builder()
                 .setTitle(titulo)
                 .setMessage(mensaje)
-                .setPositiveButton("Entendido", null)
-                .show();
-        DialogThemeHelper.styleAlertDialog(dialog, requireContext());
+                .setType(DialogConfig.Type.INFO)
+                .setPositiveText("Entendido")
+                .build());
     }
 
     private void aplicarFabTema(@Nullable FloatingActionButton fab, @NonNull ThemeManager tm) {

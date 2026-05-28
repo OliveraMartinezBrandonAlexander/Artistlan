@@ -63,6 +63,7 @@ import com.example.artistlan.utils.ArtistlanDialogFactory;
 import com.example.artistlan.utils.ArtistlanLoadingDialog;
 import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.DialogConfig;
+import com.example.artistlan.utils.DialogThemeHelper;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -336,11 +337,8 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         ThemeApplier.applyInput(etFecha, themeManager);
         ThemeApplier.applyInput(etUbicacion, themeManager);
 
-        if (spinnerCategoriaUsuario != null && spinnerCategoriaUsuario.getBackground() != null) {
-            spinnerCategoriaUsuario.getBackground().setColorFilter(
-                    themeManager.color(ThemeKeys.INPUT_BG),
-                    PorterDuff.Mode.SRC_ATOP
-            );
+        if (spinnerCategoriaUsuario != null) {
+            DialogThemeHelper.applyDialogComboStyle(spinnerCategoriaUsuario, this);
         }
 
         aplicarBotonPrincipal(btnActualizarDatos, themeManager);
@@ -618,6 +616,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         );
         datePickerDialog.getDatePicker().setMaxDate(fechaMaxima.getTimeInMillis());
         datePickerDialog.show();
+        DialogThemeHelper.styleDialogWindow(datePickerDialog, this);
     }
 
     private Calendar obtenerFechaMaximaMayorEdad() {
@@ -669,13 +668,12 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                         }
                     }
 
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                    ArrayAdapter<String> adapter = DialogThemeHelper.createDialogComboAdapter(
                             ActActualizarDatos.this,
-                            android.R.layout.simple_spinner_item,
                             nombresCategorias
                     );
-                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                     spinnerCategoriaUsuario.setAdapter(adapter);
+                    DialogThemeHelper.applyDialogComboStyle(spinnerCategoriaUsuario, ActActualizarDatos.this);
 
                     SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
                     String categoriaActual = prefs.getString("ocupacion", prefs.getString("categoria", "Ninguna"));

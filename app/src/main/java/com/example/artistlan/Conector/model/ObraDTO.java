@@ -1,5 +1,7 @@
 package com.example.artistlan.Conector.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class ObraDTO
 {
     private Integer idObra;
@@ -22,6 +24,8 @@ public class ObraDTO
     private Boolean puedeSolicitarCompra;
     private Boolean editable;
     private Boolean eliminable;
+    @SerializedName(value = "fechaPublicacion", alternate = {"fecha_publicacion"})
+    private String fechaPublicacion;
 
 
     public String getNombreCategoria() {
@@ -50,6 +54,14 @@ public class ObraDTO
 
     public void setEliminable(Boolean eliminable) {
         this.eliminable = eliminable;
+    }
+
+    public String getFechaPublicacion() {
+        return fechaPublicacion;
+    }
+
+    public void setFechaPublicacion(String fechaPublicacion) {
+        this.fechaPublicacion = fechaPublicacion;
     }
 
     public void setNombreCategoria(String nombreCategoria) {

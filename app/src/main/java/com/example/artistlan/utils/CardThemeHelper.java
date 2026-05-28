@@ -111,6 +111,26 @@ public final class CardThemeHelper {
         ));
     }
 
+    public static void applySolidHeader(@Nullable View view, @Nullable TextView label, @NonNull ThemeManager tm) {
+        if (view == null) {
+            return;
+        }
+        int fill = tm.color(ThemeKeys.BUTTON_PRIMARY_BG);
+        int text = chooseTextColor(
+                tm,
+                fill,
+                tm.color(ThemeKeys.BUTTON_TEXT_DARK),
+                tm.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                tm.color(ThemeKeys.TEXT_PRIMARY),
+                tm.color(ThemeKeys.TEXT_SECONDARY)
+        );
+        view.setBackground(roundedDrawable(fill, fill, 0, dp(view, 14)));
+        if (label != null) {
+            label.setTextColor(text);
+            label.setTypeface(Typeface.create("sans-serif-black", Typeface.BOLD));
+        }
+    }
+
     public static void applyAccentDot(@Nullable View view, @NonNull ThemeManager tm) {
         if (view == null) {
             return;

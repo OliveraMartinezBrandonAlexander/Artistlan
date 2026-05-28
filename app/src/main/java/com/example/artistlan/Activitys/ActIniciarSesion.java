@@ -43,6 +43,7 @@ import com.example.artistlan.Theme.ThemeEffectsApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogThemeHelper;
 import com.example.artistlan.utils.PasswordPressVisibilityHelper;
 
 import retrofit2.Call;
@@ -170,6 +171,9 @@ public class ActIniciarSesion extends AppCompatActivity implements View.OnClickL
         ThemeApplier.applyTextPrimary(txtPassLbl, themeManager);
         ThemeApplier.applyTextPrimary(resultTitle, themeManager);
         ThemeApplier.applyTextSecondary(resultMessage, themeManager);
+        if (resultDialog != null) {
+            resultDialog.setBackground(DialogThemeHelper.createDialogBackground(this));
+        }
         if (txtForgotPassword != null) {
             txtForgotPassword.setTextColor(themeManager.color(ThemeKeys.ICON_ACTIVE));
         }

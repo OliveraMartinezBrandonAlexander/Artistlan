@@ -22,6 +22,7 @@ public class TarjetaTextoObraItem {
     private boolean editable = true;
     private boolean eliminable = true;
     private boolean puedeSolicitarCompra = false;
+    private String fechaPublicacion;
 
 
     public TarjetaTextoObraItem(int idObra, String titulo, String descripcion, String estado, Double precio, String imagen1, String imagen2, String imagen3, String tecnicas, String medidas, int likes, String nombreAutor, String nombreCategoria,String fotoPerfilAutor, boolean userLiked, boolean expandido) {
@@ -152,5 +153,13 @@ public class TarjetaTextoObraItem {
 
     public void setPuedeSolicitarCompra(boolean puedeSolicitarCompra) {
         this.puedeSolicitarCompra = puedeSolicitarCompra;
+    }
+
+    public String getFechaPublicacion() {
+        return fechaPublicacion;
+    }
+
+    public void setFechaPublicacion(String fechaPublicacion) {
+        this.fechaPublicacion = fechaPublicacion;
     }
 }

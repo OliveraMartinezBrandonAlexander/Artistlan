@@ -57,8 +57,9 @@ public class ConvocatoriaAdminAdapter extends RecyclerView.Adapter<ConvocatoriaA
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
 
         CardThemeHelper.applyFlatCard(holder.card, tm);
+        CardThemeHelper.applyThemedSurface(holder.layoutBody, tm, 14);
         CardThemeHelper.applyChip(holder.tvFecha, tm);
-        CardThemeHelper.applyChip(holder.tvTitulo, tm);
+        CardThemeHelper.applySolidHeader(holder.tvTitulo, holder.tvTitulo, tm);
         ThemeApplier.applyTextSecondary(holder.tvDescripcionLabel, tm);
         ThemeApplier.applyTextSecondary(holder.tvDescripcion, tm);
         CardThemeHelper.applyPrimaryBubbleButton(holder.btnEditar, tm);
@@ -100,11 +101,13 @@ public class ConvocatoriaAdminAdapter extends RecyclerView.Adapter<ConvocatoriaA
         final Button btnEditar;
         final Button btnEliminar;
         final MaterialCardView card;
+        final View layoutBody;
         final TextView tvDescripcionLabel;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             card = itemView.findViewById(R.id.cardAdminConvocatoria);
+            layoutBody = itemView.findViewById(R.id.layoutAdminConvocatoriaBody);
             tvTitulo = itemView.findViewById(R.id.tvTituloConvocatoria);
             tvDescripcionLabel = itemView.findViewById(R.id.tvDescripcionAdminLabelConvocatoria);
             tvDescripcion = itemView.findViewById(R.id.tvDescripcionConvocatoria);

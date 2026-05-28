@@ -39,6 +39,7 @@ import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.LikeUiHelper;
 import com.example.artistlan.utils.LikeStateManager;
+import com.example.artistlan.utils.PublicationDateFormatter;
 import com.example.artistlan.utils.ReporteUiPermissions;
 
 import java.text.Normalizer;
@@ -247,6 +248,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         ThemeApplier.applyTextSecondary(holder.medidas, tm);
         ThemeApplier.applyTextPrimary(holder.precio, tm);
         ThemeApplier.applyTextPrimary(holder.tvPublicationTitle, tm);
+        ThemeApplier.applyTextSecondary(holder.tvPublicationDate, tm);
         CardThemeHelper.applyPrimaryBubbleButton(holder.btnAccionPrincipal, tm);
         CardThemeHelper.applySecondaryBubbleButton(holder.btnAccionSecundaria, tm);
         CardThemeHelper.applySecondaryBubbleButton(holder.btnReportarObra, tm);
@@ -639,6 +641,14 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         boolean mostrarEncabezado = modoTarjeta == ModoTarjetaObra.MIS_OBRAS;
         holder.publicationHeader.setVisibility(mostrarEncabezado ? View.VISIBLE : View.GONE);
         holder.tvPublicationTitle.setText("Editar: " + safeText(obra.getTitulo(), "Sin título"));
+        String fechaPublicacion = PublicationDateFormatter.formatear(obra.getFechaPublicacion());
+        if (fechaPublicacion == null || fechaPublicacion.isEmpty()) {
+            holder.tvPublicationDate.setVisibility(View.GONE);
+            holder.tvPublicationDate.setText("");
+        } else {
+            holder.tvPublicationDate.setVisibility(View.VISIBLE);
+            holder.tvPublicationDate.setText("Publicado: " + fechaPublicacion);
+        }
     }
 
     private interface OpcionMenuCallback {
@@ -1138,6 +1148,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
         TextView autor;
         TextView tvBadgeObra;
         TextView tvPublicationTitle;
+        TextView tvPublicationDate;
 
         ImageView imgAutor;
         ImageView imgObra;
@@ -1174,6 +1185,7 @@ public class TarjetaTextoObraAdapter extends RecyclerView.Adapter<TarjetaTextoOb
             categoria = itemView.findViewById(R.id.categoria);
             likes = itemView.findViewById(R.id.likes);
             tvPublicationTitle = itemView.findViewById(R.id.tvPublicationTitle);
+            tvPublicationDate = itemView.findViewById(R.id.tvPublicationDate);
 
             btnLike = itemView.findViewById(R.id.btnLike);
             btnMoreOptions = itemView.findViewById(R.id.btnMoreOptions);

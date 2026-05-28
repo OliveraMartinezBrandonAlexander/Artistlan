@@ -46,6 +46,7 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.DialogThemeHelper;
 import com.example.artistlan.utils.ModeracionUiMapper;
 
 import java.text.Normalizer;
@@ -208,7 +209,7 @@ public class FragDetalleReporteModeracion extends Fragment {
         CardThemeHelper.applyThemedSurface(cardResolverReporte, themeManager, 18);
         CardThemeHelper.applyPrimaryBubbleButton(btnTomarReporte, themeManager);
         CardThemeHelper.applyPrimaryBubbleButton(btnResolverReporte, themeManager);
-        CardThemeHelper.applyFilterSurface(spinnerAccionResolver, themeManager);
+        DialogThemeHelper.applyDialogComboStyle(spinnerAccionResolver, requireContext());
         ThemeApplier.applyInput(etMensajeRespuesta, themeManager);
         ThemeApplier.applyInput(etMotivoAccion, themeManager);
         ThemeApplier.applyInput(etFechaFinSuspension, themeManager);
@@ -570,13 +571,9 @@ public class FragDetalleReporteModeracion extends Fragment {
             labels.add(option.visibleLabel);
         }
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                labels
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> adapter = DialogThemeHelper.createDialogComboAdapter(requireContext(), labels);
         spinnerAccionResolver.setAdapter(adapter);
+        DialogThemeHelper.applyDialogComboStyle(spinnerAccionResolver, requireContext());
     }
 
     @Nullable
@@ -715,6 +712,9 @@ public class FragDetalleReporteModeracion extends Fragment {
     private void setEstadoTomarReporte(boolean tomando) {
         btnTomarReporte.setEnabled(!tomando);
         btnTomarReporte.setText(tomando ? "Tomando..." : "Tomar reporte");
+        if (themeManager != null) {
+            CardThemeHelper.applyPrimaryBubbleButton(btnTomarReporte, themeManager);
+        }
     }
 
     private void setEstadoResolverReporte(boolean resolviendo) {
@@ -745,6 +745,7 @@ public class FragDetalleReporteModeracion extends Fragment {
                 baseCalendar.get(Calendar.DAY_OF_MONTH)
         );
         datePickerDialog.show();
+        DialogThemeHelper.styleDialogWindow(datePickerDialog, requireContext());
     }
 
     private void abrirSelectorHoraFinSuspension(@NonNull Calendar calendar) {
@@ -762,6 +763,7 @@ public class FragDetalleReporteModeracion extends Fragment {
                 true
         );
         timePickerDialog.show();
+        DialogThemeHelper.styleDialogWindow(timePickerDialog, requireContext());
     }
 
     @NonNull

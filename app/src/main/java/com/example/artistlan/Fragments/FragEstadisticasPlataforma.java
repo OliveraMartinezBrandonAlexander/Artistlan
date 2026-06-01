@@ -73,6 +73,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -139,6 +140,7 @@ public class FragEstadisticasPlataforma extends Fragment {
     private Call<Void> observacionDeleteCall;
     @Nullable
     private AdminCrecimientoDTO ultimoCrecimiento;
+    private int ultimoIndiceRealCrecimiento = -1;
     @Nullable
     private AdminObservacionDTO observacionActual;
     @Nullable
@@ -1352,6 +1354,7 @@ public class FragEstadisticasPlataforma extends Fragment {
         crecimientoActual.clear();
         crecimientoAnterior.clear();
         ultimoCrecimiento = null;
+        ultimoIndiceRealCrecimiento = -1;
         viewGraficaCrecimiento.setVisibility(View.GONE);
         containerResumenCrecimiento.setVisibility(View.GONE);
         tvMensajeCrecimiento.setVisibility(View.GONE);
@@ -1393,6 +1396,7 @@ public class FragEstadisticasPlataforma extends Fragment {
                 crecimiento.getSerieSemanaAnterior(),
                 inicioSemanaAnterior
         );
+        ultimoIndiceRealCrecimiento = resolverUltimoIndiceRealCrecimiento(inicioSemanaActual, finSemanaActual);
         crecimientoActual.clear();
         crecimientoAnterior.clear();
         crecimientoActual.addAll(puntosActuales);
@@ -1403,6 +1407,7 @@ public class FragEstadisticasPlataforma extends Fragment {
                 viewGraficaCrecimiento,
                 puntosActuales,
                 puntosAnteriores,
+                ultimoIndiceRealCrecimiento,
                 themeManager
         );
 
@@ -2211,6 +2216,16 @@ public class FragEstadisticasPlataforma extends Fragment {
         return desdeSerie > 0 ? desdeSerie : 7;
     }
 
+    private int resolverUltimoIndiceRealCrecimiento(@NonNull LocalDate inicioSemana,
+                                                    @NonNull LocalDate finSemana) {
+        LocalDate hoy = LocalDate.now();
+        if (hoy.isBefore(inicioSemana) || hoy.isAfter(finSemana)) {
+            return -1;
+        }
+        int indice = (int) ChronoUnit.DAYS.between(inicioSemana, hoy);
+        return Math.max(0, Math.min(6, indice));
+    }
+
     @Nullable
     private AdminPuntoSerieDTO buscarPuntoPorFecha(@Nullable List<AdminPuntoSerieDTO> puntos,
                                                    @NonNull LocalDate fechaObjetivo) {
@@ -2404,6 +2419,7 @@ public class FragEstadisticasPlataforma extends Fragment {
                     viewGraficaCrecimiento,
                     new ArrayList<>(crecimientoActual),
                     new ArrayList<>(crecimientoAnterior),
+                    ultimoIndiceRealCrecimiento,
                     themeManager
             );
         }

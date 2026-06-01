@@ -37,6 +37,7 @@ import com.example.artistlan.utils.ArtistlanDialogFactory;
 import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.DialogConfig;
 import com.example.artistlan.utils.DialogThemeHelper;
+import com.example.artistlan.utils.MenuInsetSyncHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -68,6 +69,7 @@ public class FragGestionConvocatorias extends Fragment {
     private TextView tvTitulo;
     private FloatingActionButton btnNueva;
     private View menuInferior;
+    @Nullable private MenuInsetSyncHelper menuInsetSyncHelper;
 
     @Nullable
     @Override
@@ -90,6 +92,7 @@ public class FragGestionConvocatorias extends Fragment {
         tvEstado = view.findViewById(R.id.tvEstadoConvocatorias);
         btnNueva = view.findViewById(R.id.fabNuevaConvocatoria);
         aplicarTemaVisual(view);
+        menuInsetSyncHelper = MenuInsetSyncHelper.attach(this, view, true, false);
 
         menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) menuInferior.setVisibility(View.GONE);
@@ -121,6 +124,10 @@ public class FragGestionConvocatorias extends Fragment {
 
     @Override
     public void onDestroyView() {
+        if (menuInsetSyncHelper != null) {
+            menuInsetSyncHelper.detach();
+            menuInsetSyncHelper = null;
+        }
         super.onDestroyView();
         if (menuInferior != null) menuInferior.setVisibility(View.VISIBLE);
     }

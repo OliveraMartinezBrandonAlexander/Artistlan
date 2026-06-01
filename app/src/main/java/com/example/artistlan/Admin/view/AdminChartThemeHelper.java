@@ -30,6 +30,7 @@ import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.model.GradientColor;
 
 import java.time.DayOfWeek;
@@ -466,6 +467,7 @@ public final class AdminChartThemeHelper {
     public static void renderCrecimientoChart(@NonNull LineChart chart,
                                               @NonNull List<AdminPuntoSerieDTO> puntosActuales,
                                               @NonNull List<AdminPuntoSerieDTO> puntosAnteriores,
+                                              int ultimoIndiceRealActual,
                                               @NonNull ThemeManager tm) {
         prepareCrecimientoChart(chart, tm);
 
@@ -499,20 +501,29 @@ public final class AdminChartThemeHelper {
         int accentSecondary = tm.color(ThemeKeys.ACCENT_SECONDARY);
         int comparison = ColorUtils.blendARGB(accentSecondary, Color.WHITE, 0.12f);
 
-        LineDataSet actualDataSet = new LineDataSet(entriesActuales, "Actual acum.");
-        actualDataSet.setColor(accentPrimary);
-        actualDataSet.setCircleColor(accentPrimary);
-        actualDataSet.setCircleHoleColor(tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL));
-        actualDataSet.setCircleRadius(4.4f);
-        actualDataSet.setCircleHoleRadius(2.2f);
-        actualDataSet.setLineWidth(3f);
-        actualDataSet.setMode(LineDataSet.Mode.LINEAR);
-        actualDataSet.setDrawFilled(false);
-        actualDataSet.setDrawValues(true);
-        actualDataSet.setValueTextColor(tm.color(ThemeKeys.TEXT_PRIMARY));
-        actualDataSet.setValueTextSize(10f);
-        actualDataSet.setValueFormatter(new IntegerValueFormatter());
-        actualDataSet.setHighLightColor(ColorUtils.setAlphaComponent(accentPrimary, 180));
+        List<ILineDataSet> dataSets = new ArrayList<>();
+        boolean tieneContinuidadFutura = ultimoIndiceRealActual >= 0
+                && ultimoIndiceRealActual < totalPuntos - 1;
+
+        if (tieneContinuidadFutura) {
+            LineDataSet actualRealDataSet = crearActualDataSet(
+                    new ArrayList<>(entriesActuales.subList(0, ultimoIndiceRealActual + 1)),
+                    "Actual acum.",
+                    accentPrimary,
+                    tm,
+                    true
+            );
+            dataSets.add(actualRealDataSet);
+
+            LineDataSet actualFuturoDataSet = crearContinuidadFuturaDataSet(
+                    new ArrayList<>(entriesActuales.subList(ultimoIndiceRealActual, totalPuntos)),
+                    accentPrimary,
+                    tm
+            );
+            dataSets.add(actualFuturoDataSet);
+        } else {
+            dataSets.add(crearActualDataSet(entriesActuales, "Actual acum.", accentPrimary, tm, true));
+        }
 
         LineDataSet referenciaDataSet = new LineDataSet(entriesReferencia, "Anterior acum.");
         referenciaDataSet.setColor(comparison);
@@ -527,8 +538,9 @@ public final class AdminChartThemeHelper {
         referenciaDataSet.setDrawFilled(false);
         referenciaDataSet.setDrawValues(false);
         referenciaDataSet.setHighLightColor(ColorUtils.setAlphaComponent(comparison, 160));
+        dataSets.add(referenciaDataSet);
 
-        LineData data = new LineData(actualDataSet, referenciaDataSet);
+        LineData data = new LineData(dataSets);
 
         XAxis xAxis = chart.getXAxis();
         xAxis.setValueFormatter(new SemanaAxisValueFormatter(labels));
@@ -543,6 +555,50 @@ public final class AdminChartThemeHelper {
         chart.setData(data);
         chart.animateX(520);
         chart.invalidate();
+    }
+
+    @NonNull
+    private static LineDataSet crearActualDataSet(@NonNull List<Entry> entries,
+                                                  @NonNull String label,
+                                                  int color,
+                                                  @NonNull ThemeManager tm,
+                                                  boolean drawValues) {
+        LineDataSet dataSet = new LineDataSet(entries, label);
+        dataSet.setColor(color);
+        dataSet.setCircleColor(color);
+        dataSet.setCircleHoleColor(tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL));
+        dataSet.setCircleRadius(4.4f);
+        dataSet.setCircleHoleRadius(2.2f);
+        dataSet.setLineWidth(3f);
+        dataSet.setMode(LineDataSet.Mode.LINEAR);
+        dataSet.setDrawFilled(false);
+        dataSet.setDrawValues(drawValues);
+        dataSet.setValueTextColor(tm.color(ThemeKeys.TEXT_PRIMARY));
+        dataSet.setValueTextSize(10f);
+        dataSet.setValueFormatter(new IntegerValueFormatter());
+        dataSet.setHighLightColor(ColorUtils.setAlphaComponent(color, 180));
+        return dataSet;
+    }
+
+    @NonNull
+    private static LineDataSet crearContinuidadFuturaDataSet(@NonNull List<Entry> entries,
+                                                             int baseColor,
+                                                             @NonNull ThemeManager tm) {
+        int futureColor = ColorUtils.setAlphaComponent(baseColor, 120);
+        LineDataSet dataSet = new LineDataSet(entries, "");
+        dataSet.setColor(futureColor);
+        dataSet.setCircleColor(futureColor);
+        dataSet.setCircleHoleColor(tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL));
+        dataSet.setCircleRadius(2.8f);
+        dataSet.setCircleHoleRadius(1.4f);
+        dataSet.setLineWidth(2.4f);
+        dataSet.enableDashedLine(12f, 8f, 0f);
+        dataSet.setMode(LineDataSet.Mode.LINEAR);
+        dataSet.setDrawFilled(false);
+        dataSet.setDrawValues(false);
+        dataSet.setHighlightEnabled(false);
+        dataSet.setForm(Legend.LegendForm.NONE);
+        return dataSet;
     }
 
     @NonNull

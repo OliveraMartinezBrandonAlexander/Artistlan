@@ -38,6 +38,7 @@ import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.DialogThemeHelper;
+import com.example.artistlan.utils.MenuInsetSyncHelper;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
@@ -71,6 +72,7 @@ public class FragGestionUsuarios extends Fragment {
     private TextView txtCargandoMas;
     private ProgressBar progressMasUsuarios;
     private ThemeManager themeManager;
+    @Nullable private MenuInsetSyncHelper menuInsetSyncHelper;
 
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable pendingSearchRunnable;
@@ -107,6 +109,7 @@ public class FragGestionUsuarios extends Fragment {
         tvTitulo = view.findViewById(R.id.tvTituloGestionUsuarios);
         txtCargandoMas = view.findViewById(R.id.txtCargandoMasUsuarios);
         progressMasUsuarios = view.findViewById(R.id.progressMasUsuarios);
+        menuInsetSyncHelper = MenuInsetSyncHelper.attach(this, view, true, false);
 
         menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) {
@@ -145,6 +148,10 @@ public class FragGestionUsuarios extends Fragment {
 
     @Override
     public void onDestroyView() {
+        if (menuInsetSyncHelper != null) {
+            menuInsetSyncHelper.detach();
+            menuInsetSyncHelper = null;
+        }
         super.onDestroyView();
         if (menuInferior != null) {
             menuInferior.setVisibility(View.VISIBLE);

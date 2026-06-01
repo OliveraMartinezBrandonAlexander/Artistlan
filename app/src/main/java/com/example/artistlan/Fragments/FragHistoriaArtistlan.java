@@ -25,6 +25,7 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeKeys;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.utils.CardThemeHelper;
+import com.example.artistlan.utils.MenuInsetSyncHelper;
 
 public class FragHistoriaArtistlan extends Fragment {
 
@@ -32,6 +33,7 @@ public class FragHistoriaArtistlan extends Fragment {
     private View rootHistoriaArtistlan;
     private ObjectAnimator autoScrollAnimator;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    @Nullable private MenuInsetSyncHelper menuInsetSyncHelper;
 
     private boolean usuarioTocando = false;
 
@@ -44,6 +46,9 @@ public class FragHistoriaArtistlan extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         rootHistoriaArtistlan = view;
         scrollHistoriaArtistlan = view.findViewById(R.id.scrollHistoriaArtistlan);
+        if (scrollHistoriaArtistlan != null) {
+            menuInsetSyncHelper = MenuInsetSyncHelper.attach(this, scrollHistoriaArtistlan, true, true);
+        }
 
         aplicarTemaRapido();
         configurarScrollAutomatico();
@@ -258,6 +263,10 @@ public class FragHistoriaArtistlan extends Fragment {
     public void onDestroyView() {
         pausarScrollAutomatico();
         autoScrollAnimator = null;
+        if (menuInsetSyncHelper != null) {
+            menuInsetSyncHelper.detach();
+            menuInsetSyncHelper = null;
+        }
         scrollHistoriaArtistlan = null;
         rootHistoriaArtistlan = null;
         super.onDestroyView();

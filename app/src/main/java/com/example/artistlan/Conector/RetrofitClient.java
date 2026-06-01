@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 import com.example.artistlan.Activitys.MainActivity;
 import com.example.artistlan.ArtistlanApp;
+import com.example.artistlan.BuildConfig;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -26,8 +27,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
 
-    private static final String BASE_URL = "http://10.0.2.2:8080/api/";
-    // "http://10.0.2.2:8080/api/"
+    private static final String BASE_URL = BuildConfig.BASE_API_URL;
     private static final long UI_NOTICE_THROTTLE_MS = 2000L;
     private static final String TAG_MODERACION_DEBUG = "ModeracionErrorDebug";
     private static final boolean ENABLE_MODERACION_DEBUG_LOGS = false;

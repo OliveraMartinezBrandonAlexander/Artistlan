@@ -587,10 +587,9 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
                     Toast.makeText(requireContext(), "No se pudo aceptar la solicitud.", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                item.marcarComoAtendida(true);
-                adapter.notificarCambioPorId(item.getIdSolicitud());
-                Toast.makeText(requireContext(), "Solicitud aceptada.", Toast.LENGTH_SHORT).show();
-                refrescarBadge();
+                notificarRefreshPortafolioObras();
+                refrescarBadge(true);
+                recargarSolicitudesRecibidasRelacionadas();
             }
 
             @Override
@@ -655,12 +654,38 @@ public class FragSolicitudesMensajes extends Fragment implements SolicitudesAdap
         });
     }
 
+    private void recargarSolicitudesRecibidasRelacionadas() {
+        if (modoActual != ModoSolicitudes.RECIBIDAS) {
+            return;
+        }
+        cargarSolicitudes();
+    }
+
+    private void notificarRefreshPortafolioObras() {
+        FragPortafolio.marcarRefreshPendiente(FragPortafolio.TARGET_OBRAS);
+        if (idUsuario > 0) {
+            FragMiArte.invalidarCacheUsuario(idUsuario);
+        }
+    }
+
     private void refrescarBadge() {
+        refrescarBadge(false);
+    }
+
+    private void refrescarBadge(boolean inmediato) {
         if (getActivity() instanceof ActFragmentoPrincipal) {
-            ((ActFragmentoPrincipal) getActivity()).refrescarBadgeMensajes();
+            if (inmediato) {
+                ((ActFragmentoPrincipal) getActivity()).refrescarBadgeMensajesInmediato();
+            } else {
+                ((ActFragmentoPrincipal) getActivity()).refrescarBadgeMensajes();
+            }
         }
         if (getParentFragment() instanceof FragCentroMensajes) {
-            ((FragCentroMensajes) getParentFragment()).refrescarResumenContadores();
+            if (inmediato) {
+                ((FragCentroMensajes) getParentFragment()).refrescarResumenContadores(true);
+            } else {
+                ((FragCentroMensajes) getParentFragment()).refrescarResumenContadores();
+            }
         }
     }
 

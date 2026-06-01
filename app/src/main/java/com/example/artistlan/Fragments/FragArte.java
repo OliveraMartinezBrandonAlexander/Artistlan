@@ -127,6 +127,10 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
     public void onResume() {
         super.onResume();
         refreshThemeOnly();
+        if (ObrasUiRefreshCoordinator.isRefreshExplorarObrasPending() && !isLoading) {
+            reiniciarYCargarPrimeraPagina();
+            return;
+        }
         ensureDataLoadedForCurrentState();
     }
 
@@ -265,6 +269,10 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
 
     public void ensureDataLoadedForCurrentState() {
         if (!isAdded() || recyclerViewObras == null || adapter == null) {
+            return;
+        }
+        if (ObrasUiRefreshCoordinator.isRefreshExplorarObrasPending() && !isLoading) {
+            reiniciarYCargarPrimeraPagina();
             return;
         }
         if (recyclerViewObras.getAdapter() != adapter) {
@@ -481,6 +489,7 @@ public class FragArte extends Fragment implements FilterableExplorarFragment {
                 int recibidas = obras.size();
                 List<TarjetaTextoObraItem> nuevosItems = new ArrayList<>();
                 if (pageObjetivo == 0) {
+                    ObrasUiRefreshCoordinator.clearRefreshExplorarObrasPending();
                     obrasAcumuladas.clear();
                     ownedObraIds.clear();
                 }

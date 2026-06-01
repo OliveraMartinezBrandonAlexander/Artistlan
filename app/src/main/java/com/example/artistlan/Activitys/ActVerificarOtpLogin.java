@@ -120,7 +120,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
         if (MODE_LOGIN.equals(mode)) {
             if (temporaryToken == null || temporaryToken.trim().isEmpty()) {
-                finishWithError("Token temporal inválido. Inicia sesión nuevamente.");
+                finishWithError("No se pudo continuar con la verificación. Inicia sesión nuevamente.");
                 return;
             }
         } else if (MODE_ACTIVATION.equals(mode)) {
@@ -208,13 +208,13 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
                 UsuariosDTO user = body.getUser();
                 if (user == null || user.getIdUsuario() == null || user.getIdUsuario() <= 0) {
-                    feedbackDialog.showError("Respuesta inválida del servidor");
+                    feedbackDialog.showError("No pudimos validar tu cuenta. Intenta de nuevo.");
                     return;
                 }
 
                 String token = body.getToken();
                 if (token == null || token.trim().isEmpty() || "null".equalsIgnoreCase(token.trim())) {
-                    feedbackDialog.showError("No se recibió token de sesión válido");
+                    feedbackDialog.showError("No pudimos confirmar tu sesión. Inicia sesión nuevamente.");
                     return;
                 }
 
@@ -342,7 +342,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
                 }
 
                 sessionManager.updateTwoFactorEnabled(true);
-                feedbackDialog.showSuccess("2FA activado correctamente", ActVerificarOtpLogin.this::finish);
+                feedbackDialog.showSuccess("La verificación en dos pasos se activó correctamente.", ActVerificarOtpLogin.this::finish);
             }
 
             @Override
@@ -366,7 +366,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
     private void resendLoginCode() {
         if (temporaryToken == null || temporaryToken.trim().isEmpty()) {
-            feedbackDialog.showError("Token temporal inválido");
+            feedbackDialog.showError("No se pudo continuar con la verificación. Inicia sesión nuevamente.");
             return;
         }
 
@@ -480,7 +480,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
 
                 String categoria = response.body().getCategoria();
                 if (categoria == null || categoria.trim().isEmpty()) {
-                    categoria = "Sin categoria";
+                    categoria = "Sin categoría";
                 }
 
                 SharedPreferences prefs = getSharedPreferences(SessionManager.PREF_NAME, MODE_PRIVATE);
@@ -494,8 +494,8 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
             public void onFailure(Call<UsuariosDTO> call, Throwable t) {
                 SharedPreferences prefs = getSharedPreferences(SessionManager.PREF_NAME, MODE_PRIVATE);
                 prefs.edit()
-                        .putString("categoria", "Sin categoria")
-                        .putString("ocupacion", "Sin categoria")
+                        .putString("categoria", "Sin categoría")
+                        .putString("ocupacion", "Sin categoría")
                         .apply();
             }
         });
@@ -562,7 +562,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
         resendCooldownActive = true;
         btnResend.setEnabled(false);
         tvResendCooldown.setVisibility(View.VISIBLE);
-        tvResendCooldown.setText("Puedes reenviar el código en 120s");
+        tvResendCooldown.setText("Puedes reenviar el código en 120 s");
 
         if (resendCountDownTimer != null) {
             resendCountDownTimer.cancel();
@@ -572,7 +572,7 @@ public class ActVerificarOtpLogin extends AppCompatActivity {
             @Override
             public void onTick(long millisUntilFinished) {
                 long seconds = (millisUntilFinished + 999L) / 1000L;
-                tvResendCooldown.setText("Puedes reenviar el código en " + seconds + "s");
+                tvResendCooldown.setText("Puedes reenviar el código en " + seconds + " s");
             }
 
             @Override

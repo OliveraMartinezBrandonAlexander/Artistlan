@@ -161,6 +161,18 @@ public class FragGestionUsuarios extends Fragment {
         if (menuInferior != null) {
             menuInferior.setVisibility(View.GONE);
         }
+        View view = getView();
+        if (view != null) {
+            ThemeModuleStyler.styleFragment(this, view);
+        }
+        if (!isAdded()) {
+            return;
+        }
+        themeManager = new ThemeManager(requireContext());
+        aplicarTemaVisual();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
     }
 
     private void reiniciarYCargarPrimeraPagina() {

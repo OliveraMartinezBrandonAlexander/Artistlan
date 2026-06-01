@@ -378,6 +378,7 @@ public class FragCarrito extends Fragment {
                     }
                     return;
                 }
+                notificarObrasActualizadasTrasLiberarReserva();
                 if (feedbackDialog != null) {
                     feedbackDialog.showSuccess("Obra eliminada del carrito", FragCarrito.this::cargarCarrito);
                 } else {
@@ -396,6 +397,10 @@ public class FragCarrito extends Fragment {
                 }
             }
         });
+    }
+
+    private void notificarObrasActualizadasTrasLiberarReserva() {
+        ObrasUiRefreshCoordinator.notificarReservaLiberadaDesdeCarrito();
     }
 
     private void consultarContactoVendedor(CarritoDTO item, int position) {

@@ -1236,7 +1236,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
         }
 
         btnDesactivar2FA = new Button(requireContext());
-        btnDesactivar2FA.setText("Desactivar verificacion en dos pasos");
+        btnDesactivar2FA.setText("Desactivar verificación en dos pasos");
         btnDesactivar2FA.setAllCaps(false);
 
         LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
@@ -1348,7 +1348,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
 
     private void desactivar2FA() {
         if (auth2FAApi == null || sessionManager == null) {
-            Toast.makeText(requireContext(), "No se pudo desactivar 2FA", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), "No se pudo desactivar la verificación en dos pasos", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -1377,7 +1377,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                     String backendMessage = ApiErrorParser.extractMessage(response);
                     Toast.makeText(
                             requireContext(),
-                            backendMessage != null ? backendMessage : "No se pudo desactivar 2FA",
+                            backendMessage != null ? backendMessage : "No se pudo desactivar la verificación en dos pasos",
                             Toast.LENGTH_LONG
                     ).show();
                     return;
@@ -1387,7 +1387,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 if (!Boolean.TRUE.equals(body.getSuccess())) {
                     Toast.makeText(
                             requireContext(),
-                            body.getMessage() != null ? body.getMessage() : "No se pudo desactivar 2FA",
+                            body.getMessage() != null ? body.getMessage() : "No se pudo desactivar la verificación en dos pasos",
                             Toast.LENGTH_LONG
                     ).show();
                     return;
@@ -1398,7 +1398,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 SharedPreferences prefs = requireActivity().getSharedPreferences("usuario_prefs", Context.MODE_PRIVATE);
                 prefs.edit().putBoolean("twoFactorEnabled", false).apply();
                 actualizarEstadoBoton2FA();
-                Toast.makeText(requireContext(), "2FA desactivado", Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), "La verificación en dos pasos fue desactivada.", Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -1409,7 +1409,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 if (btnDesactivar2FA != null) {
                     btnDesactivar2FA.setEnabled(true);
                 }
-                Toast.makeText(requireContext(), "Error de conexión al desactivar 2FA", Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), "Error de conexión al desactivar la verificación en dos pasos.", Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -1726,7 +1726,11 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                 public void onResponse(@NonNull Call<com.example.artistlan.Conector.model.UsuariosDTO> call, @NonNull Response<com.example.artistlan.Conector.model.UsuariosDTO> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         com.example.artistlan.Conector.model.UsuariosDTO dto = response.body();
-                        ArtistaMiniObrasLoader.cargarMiniObrasPorUsuario(obraApi, dto.getIdUsuario(), miniObras -> {
+                        ArtistaMiniObrasLoader.cargarMiniObrasPorUsuario(
+                                usuarioApi,
+                                idUsuarioLogueado > 0 ? idUsuarioLogueado : null,
+                                dto.getIdUsuario(),
+                                miniObras -> {
                             items.add(new TarjetaTextoArtistaItem(
                                     dto.getIdUsuario(),
                                     dto.getUsuario(),
@@ -1744,7 +1748,7 @@ public class FragVerPerfil extends Fragment implements View.OnClickListener {
                                 animarEntradaContenidoFavoritos();
                                 tvFavoritosVacio.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
                             }
-                        });
+                                });
                         return;
                     }
                     done[0]++;

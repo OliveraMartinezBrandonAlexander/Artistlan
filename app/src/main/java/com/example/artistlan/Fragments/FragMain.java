@@ -66,6 +66,7 @@ public class FragMain extends Fragment {
     private static final int CARRUSEL_HEIGHT_COLLAPSED_DP = 410;
     private static final int CARRUSEL_HEIGHT_EXPANDED_DP = 610;
     private static final int CARRUSEL_MAX_OBRAS = 15;
+    private static final int CARRUSEL_POPULARES_LIMIT = 10;
 
     private NestedScrollView scrollContenido;
     private ViewPager2 viewPager;
@@ -95,6 +96,9 @@ public class FragMain extends Fragment {
     private Call<List<ObraDTO>> obrasCarruselCall;
     private FavoritosApi favoritosApi;
     private SolicitudesApi solicitudesApi;
+    private boolean refreshHomePorObrasEnCurso = false;
+    private boolean refreshHomeFeedListo = false;
+    private boolean refreshHomeCarruselListo = false;
     private final Map<Integer, Long> ultimoToqueLikePorObra = new HashMap<>();
     private final Set<Integer> likesObraEnVuelo = new HashSet<>();
     private final Map<Integer, Long> ultimoToqueLikePorServicio = new HashMap<>();
@@ -451,8 +455,11 @@ public class FragMain extends Fragment {
                 List<TarjetaTextoObraItem> obras = obraResponse.isSuccessful()
                         ? mapObras(obraResponse.body())
                         : new ArrayList<>();
+                if (!obraResponse.isSuccessful()) {
+                    marcarRefreshHomeReintentoNecesario();
+                }
 
-                cargarServiciosParaFeed(obras);
+                cargarServiciosParaFeed(obras, obraResponse.isSuccessful());
             }
 
             @Override
@@ -464,15 +471,17 @@ public class FragMain extends Fragment {
                     return;
                 }
 
-                cargarServiciosParaFeed(new ArrayList<>());
+                marcarRefreshHomeReintentoNecesario();
+                cargarServiciosParaFeed(new ArrayList<>(), false);
             }
         });
     }
 
-    private void cargarServiciosParaFeed(@NonNull List<TarjetaTextoObraItem> obras) {
+    private void cargarServiciosParaFeed(@NonNull List<TarjetaTextoObraItem> obras, boolean obrasActualizadasDesdeBackend) {
         ServicioApi servicioApi = RetrofitClient.getClient().create(ServicioApi.class);
+        Integer usuarioId = ReporteUiPermissions.resolveCurrentUserId(requireContext());
 
-        serviciosFeedCall = servicioApi.obtenerTodos();
+        serviciosFeedCall = servicioApi.obtenerTodos(usuarioId != null && usuarioId > 0 ? usuarioId : null);
         serviciosFeedCall.enqueue(new Callback<List<ServicioDTO>>() {
             @Override
             public void onResponse(
@@ -490,6 +499,9 @@ public class FragMain extends Fragment {
                         : new ArrayList<>();
 
                 aplicarFeedMixto(obras, servicios);
+                if (obrasActualizadasDesdeBackend) {
+                    marcarRefreshHomeFeedCompletado();
+                }
             }
 
             @Override
@@ -503,6 +515,9 @@ public class FragMain extends Fragment {
 
                 mostrarLoadingFeed(false);
                 aplicarFeedMixto(obras, new ArrayList<>());
+                if (obrasActualizadasDesdeBackend) {
+                    marcarRefreshHomeFeedCompletado();
+                }
             }
         });
     }
@@ -770,7 +785,10 @@ public class FragMain extends Fragment {
         ObraApi api = RetrofitClient.getClient().create(ObraApi.class);
 
         Integer usuarioId = ReporteUiPermissions.resolveCurrentUserId(requireContext());
-        obrasCarruselCall = api.obtenerTodasLasObras(usuarioId != null && usuarioId > 0 ? usuarioId : null);
+        obrasCarruselCall = api.obtenerObrasPopulares(
+                usuarioId != null && usuarioId > 0 ? usuarioId : null,
+                CARRUSEL_POPULARES_LIMIT
+        );
         obrasCarruselCall.enqueue(new Callback<List<ObraDTO>>() {
             @Override
             public void onResponse(
@@ -781,11 +799,11 @@ public class FragMain extends Fragment {
                         || !response.isSuccessful()
                         || response.body() == null
                         || response.body().isEmpty()) {
+                    marcarRefreshHomeReintentoNecesario();
                     return;
                 }
 
                 List<ObraDTO> copia = new ArrayList<>(response.body());
-                copia.sort((a, b) -> Integer.compare(resolveLikeState(b).getLikesCount(), resolveLikeState(a).getLikesCount()));
 
                 int totalCarrusel = Math.min(CARRUSEL_MAX_OBRAS, copia.size());
                 obras.clear();
@@ -821,6 +839,7 @@ public class FragMain extends Fragment {
                     viewPager.setCurrentItem(0, false);
                 }
                 iniciarAutoCarrusel(obras.size());
+                marcarRefreshHomeCarruselCompletado();
             }
 
             @Override
@@ -828,6 +847,9 @@ public class FragMain extends Fragment {
                     @NonNull Call<List<ObraDTO>> call,
                     @NonNull Throwable t
             ) {
+                if (!call.isCanceled()) {
+                    marcarRefreshHomeReintentoNecesario();
+                }
                 // Se mantiene carrusel local de respaldo.
             }
         });
@@ -1214,6 +1236,70 @@ public class FragMain extends Fragment {
     public void onResume() {
         super.onResume();
         applyCurrentTheme(false);
+        if (ObrasUiRefreshCoordinator.isRefreshHomePending()) {
+            recargarHomeTrasLiberarReserva();
+        }
+    }
+
+    private void recargarHomeTrasLiberarReserva() {
+        if (refreshHomePorObrasEnCurso) {
+            return;
+        }
+        refreshHomePorObrasEnCurso = true;
+        refreshHomeFeedListo = false;
+        refreshHomeCarruselListo = false;
+        detenerAutoCarrusel();
+
+        if (obrasFeedCall != null) {
+            obrasFeedCall.cancel();
+            obrasFeedCall = null;
+        }
+        if (serviciosFeedCall != null) {
+            serviciosFeedCall.cancel();
+            serviciosFeedCall = null;
+        }
+        if (obrasCarruselCall != null) {
+            obrasCarruselCall.cancel();
+            obrasCarruselCall = null;
+        }
+
+        cargarFeedMixto();
+        if (carruselItems != null && carruselAdapter != null) {
+            cargarObrasCarrusel(carruselItems, carruselAdapter);
+        }
+    }
+
+    private void marcarRefreshHomeFeedCompletado() {
+        if (!refreshHomePorObrasEnCurso) {
+            return;
+        }
+        refreshHomeFeedListo = true;
+        cerrarRefreshHomeSiCorresponde();
+    }
+
+    private void marcarRefreshHomeCarruselCompletado() {
+        if (!refreshHomePorObrasEnCurso) {
+            return;
+        }
+        refreshHomeCarruselListo = true;
+        cerrarRefreshHomeSiCorresponde();
+    }
+
+    private void cerrarRefreshHomeSiCorresponde() {
+        if (!refreshHomePorObrasEnCurso || !refreshHomeFeedListo || !refreshHomeCarruselListo) {
+            return;
+        }
+        refreshHomePorObrasEnCurso = false;
+        ObrasUiRefreshCoordinator.clearRefreshHomePending();
+    }
+
+    private void marcarRefreshHomeReintentoNecesario() {
+        if (!refreshHomePorObrasEnCurso) {
+            return;
+        }
+        refreshHomePorObrasEnCurso = false;
+        refreshHomeFeedListo = false;
+        refreshHomeCarruselListo = false;
     }
 
     @Override

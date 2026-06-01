@@ -148,40 +148,10 @@
                             android:textSize="14sp" />
 
                         <TextView
-                            android:id="@+id/tvUbicacionPublico"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="Ubicación: ---"
-                            android:textSize="14sp" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="14dp"
-                            android:text="Detalles"
-                            android:textStyle="bold"
-                            android:textSize="13sp"/>
-
-                        <View
-                            android:id="@+id/dividerPublicoDetalles"
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginTop="10dp"
-                            android:layout_marginBottom="10dp"/>
-
-                        <TextView
-                            android:id="@+id/tvFecNacPublico"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Fecha: ---"
-                            android:textSize="14sp" />
-
-                        <TextView
                             android:id="@+id/tvCategoriaPublico"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="8dp"
                             android:text="Ocupación: ---"
                             android:textSize="14sp" />
 

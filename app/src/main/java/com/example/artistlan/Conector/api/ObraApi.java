@@ -20,6 +20,12 @@ public interface ObraApi {
     @GET("obras")
     Call<List<ObraDTO>> obtenerTodasLasObras(@Query("usuarioId") Integer usuarioId);
 
+    @GET("obras/populares")
+    Call<List<ObraDTO>> obtenerObrasPopulares(
+            @Query("usuarioId") Integer usuarioId,
+            @Query("limit") Integer limit
+    );
+
     @GET("obras/paginado")
     Call<PageResponseObraDTO> obtenerObrasPaginadas(
             @Query("usuarioId") Integer usuarioId,

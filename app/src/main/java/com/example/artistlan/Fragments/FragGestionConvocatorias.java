@@ -59,10 +59,14 @@ public class FragGestionConvocatorias extends Fragment {
 
     private ConvocatoriaApi convocatoriaApi;
     private ConvocatoriaAdminAdapter adapter;
+    private ThemeManager themeManager;
 
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private TextView tvEstado;
+    private ImageButton btnRegresar;
+    private TextView tvTitulo;
+    private FloatingActionButton btnNueva;
     private View menuInferior;
 
     @Nullable
@@ -75,20 +79,17 @@ public class FragGestionConvocatorias extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ThemeModuleStyler.styleFragment(this, view);
+        themeManager = new ThemeManager(requireContext());
 
         convocatoriaApi = RetrofitClient.getClient().create(ConvocatoriaApi.class);
 
-        ImageButton btnRegresar = view.findViewById(R.id.btnRegresarAdminConvocatorias);
-        TextView tvTitulo = view.findViewById(R.id.tvTituloGestionConvocatorias);
+        btnRegresar = view.findViewById(R.id.btnRegresarAdminConvocatorias);
+        tvTitulo = view.findViewById(R.id.tvTituloGestionConvocatorias);
         recyclerView = view.findViewById(R.id.rvConvocatoriasAdmin);
         progressBar = view.findViewById(R.id.pbConvocatorias);
         tvEstado = view.findViewById(R.id.tvEstadoConvocatorias);
-        FloatingActionButton btnNueva = view.findViewById(R.id.fabNuevaConvocatoria);
-        ThemeManager tm = new ThemeManager(requireContext());
-        CardThemeHelper.applyFilterButton(btnRegresar, tm);
-        ThemeApplier.applyTextPrimary(tvTitulo, tm);
-        ThemeApplier.applyTextSecondary(tvEstado, tm);
-        aplicarFabTema(btnNueva, tm);
+        btnNueva = view.findViewById(R.id.fabNuevaConvocatoria);
+        aplicarTemaVisual(view);
 
         menuInferior = requireActivity().findViewById(R.id.MenuInferiorFrame);
         if (menuInferior != null) menuInferior.setVisibility(View.GONE);
@@ -130,6 +131,32 @@ public class FragGestionConvocatorias extends Fragment {
         if (menuInferior != null) {
             menuInferior.setVisibility(View.GONE);
         }
+        View view = getView();
+        if (view != null) {
+            ThemeModuleStyler.styleFragment(this, view);
+        }
+        if (!isAdded()) {
+            return;
+        }
+        themeManager = new ThemeManager(requireContext());
+        aplicarTemaVisual(view);
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    private void aplicarTemaVisual(@Nullable View root) {
+        if (themeManager == null) {
+            return;
+        }
+        if (root != null) {
+            ThemeModuleStyler.styleFragment(this, root);
+        }
+        CardThemeHelper.applyFilterButton(btnRegresar, themeManager);
+        ThemeApplier.applyTextPrimary(tvTitulo, themeManager);
+        ThemeApplier.applyTextSecondary(tvEstado, themeManager);
+        CardThemeHelper.tintProgress(progressBar, themeManager);
+        aplicarFabTema(btnNueva, themeManager);
     }
 
     private void cargarConvocatorias() {

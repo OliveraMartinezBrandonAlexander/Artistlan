@@ -93,6 +93,15 @@
     </fragment>
 
     <fragment
+        android:id="@+id/fragMisMetas"
+        android:name="com.example.artistlan.Fragments.FragMisMetas"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_mis_metas" />
+
+    <fragment
         android:id="@+id/fragArtistas"
         android:name="com.example.artistlan.Fragments.FragArtistas"
         app:enterAnim="@anim/nav_enter"
@@ -201,6 +210,15 @@
         app:popEnterAnim="@anim/nav_pop_enter"
         app:popExitAnim="@anim/nav_pop_exit"
         tools:layout="@layout/fragment_frag_admin_convocatorias" />
+
+    <fragment
+        android:id="@+id/fragEstadisticasPlataforma"
+        android:name="com.example.artistlan.Fragments.FragEstadisticasPlataforma"
+        app:enterAnim="@anim/nav_enter"
+        app:exitAnim="@anim/nav_exit"
+        app:popEnterAnim="@anim/nav_pop_enter"
+        app:popExitAnim="@anim/nav_pop_exit"
+        tools:layout="@layout/fragment_frag_estadisticas_plataforma" />
 
     <fragment
         android:id="@+id/fragModeracionReportes"

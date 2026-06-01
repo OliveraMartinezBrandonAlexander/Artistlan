@@ -79,9 +79,7 @@ public class FragVerPerfilPublico extends Fragment {
     private TextView tvDescripcion;
     private TextView tvNombreCompleto;
     private TextView tvRedes;
-    private TextView tvFecha;
     private TextView tvCategorias;
-    private TextView tvUbicacion;
     private TextView tvVacio;
     private TextView btnTabObras;
     private TextView btnTabServicios;
@@ -159,9 +157,7 @@ public class FragVerPerfilPublico extends Fragment {
         tvDescripcion = root.findViewById(R.id.tvDescripcionPublico);
         tvNombreCompleto = root.findViewById(R.id.tvNombreCompletoPublico);
         tvRedes = root.findViewById(R.id.tvRedesPublico);
-        tvFecha = root.findViewById(R.id.tvFecNacPublico);
         tvCategorias = root.findViewById(R.id.tvCategoriaPublico);
-        tvUbicacion = root.findViewById(R.id.tvUbicacionPublico);
         tabsContainer = root.findViewById(R.id.tabsContainer);
         indicator = root.findViewById(R.id.tabIndicator);
         btnTabObras = root.findViewById(R.id.btnTabObras);
@@ -208,16 +204,13 @@ public class FragVerPerfilPublico extends Fragment {
         ThemeApplier.applyTextPrimary(tvUsuario, themeManager);
         ThemeApplier.applyTextSecondary(tvDescripcion, themeManager);
         ThemeApplier.applyTextSecondary(tvNombreCompleto, themeManager);
-        ThemeApplier.applyTextSecondary(tvFecha, themeManager);
         ThemeApplier.applyTextSecondary(tvCategorias, themeManager);
-        ThemeApplier.applyTextSecondary(tvUbicacion, themeManager);
         ThemeApplier.applyTextSecondary(tvRedes, themeManager);
         ThemeApplier.applyTextSecondary(tvVacio, themeManager);
         aplicarTemaBotonReportar();
         aplicarTemaTabsPublicos();
         actualizarDivisor(R.id.dividerPublicoTop);
         actualizarDivisor(R.id.dividerPublicoInfo);
-        actualizarDivisor(R.id.dividerPublicoDetalles);
         actualizarPresentacionRedes(redesPublicoActual);
     }
 
@@ -633,8 +626,6 @@ public class FragVerPerfilPublico extends Fragment {
         tvRedes.setText("Redes: " + safe(perfil.getRedesSociales(), "Sin redes"));
         redesExpandidas = false;
         actualizarPresentacionRedes(perfil.getRedesSociales());
-        tvFecha.setText("Fecha nac.: " + safe(perfil.getFechaNacimiento(), "No disponible"));
-        tvUbicacion.setText("Ubicación: " + safe(perfil.getUbicacion(), "No especificada"));
         tvCategorias.setText("Ocupación: " + safe(perfil.getOcupacion(), "Sin ocupación"));
         cargarOcupacionUsuarioConsultado();
         configurarBotonReportarUsuario(safe(perfil.getUsuario(), "usuario"));

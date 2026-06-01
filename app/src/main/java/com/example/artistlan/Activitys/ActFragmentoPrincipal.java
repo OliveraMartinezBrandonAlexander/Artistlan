@@ -84,6 +84,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
     private ImageButton btnMenuLateral;
     private ImageButton btnCarrito;
+    private ImageButton btnChatbotTopbar;
     private ImageButton btnNotificaciones;
     private ImageView ivLogo;
     private TextView txtTituloTopBar;
@@ -178,6 +179,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
         btnMenuLateral = findViewById(R.id.btnMenuLateral);
         btnCarrito = findViewById(R.id.btnCarrito);
+        btnChatbotTopbar = findViewById(R.id.btnChatbotTopbar);
         btnNotificaciones = findViewById(R.id.btnNotificaciones);
         ivLogo = findViewById(R.id.ivLogo);
         txtTituloTopBar = findViewById(R.id.txtTituloTopBar);
@@ -296,6 +298,10 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             btnCarrito.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_ATOP);
         }
 
+        if (btnChatbotTopbar != null) {
+            btnChatbotTopbar.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_ATOP);
+        }
+
         if (btnNotificaciones != null) {
             btnNotificaciones.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_ATOP);
         }
@@ -381,10 +387,22 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         String rol = prefs.getString("rol", "USER");
         boolean esAdmin = "ADMIN".equalsIgnoreCase(rol);
         boolean esModerador = "MODERADOR".equalsIgnoreCase(rol);
+        boolean mostrarAdministracion = esAdmin || esModerador;
 
         navigationView.getMenu().setGroupVisible(R.id.admin_group, esAdmin);
-        navigationView.getMenu().findItem(R.id.navAdminSection).setVisible(esAdmin);
-        navigationView.getMenu().findItem(R.id.navModeracionReportes).setVisible(esAdmin || esModerador);
+        android.view.MenuItem adminSection = navigationView.getMenu().findItem(R.id.navAdminSection);
+        android.view.MenuItem moderacionItem = navigationView.getMenu().findItem(R.id.navModeracionReportes);
+        android.view.MenuItem estadisticasItem = navigationView.getMenu().findItem(R.id.navAdminEstadisticasPlataforma);
+
+        if (adminSection != null) {
+            adminSection.setVisible(mostrarAdministracion);
+        }
+        if (moderacionItem != null) {
+            moderacionItem.setVisible(mostrarAdministracion);
+        }
+        if (estadisticasItem != null) {
+            estadisticasItem.setVisible(esAdmin);
+        }
     }
 
     private void configurarNavegacion() {
@@ -505,11 +523,22 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             btnCarrito.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_ATOP);
         }
 
+        if (btnChatbotTopbar != null) {
+            btnChatbotTopbar.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_ATOP);
+        }
+
         if (btnNotificaciones != null) {
             btnNotificaciones.setOnClickListener(v -> {
                 if (!puedeEjecutarNavegacion()) return;
                 animarCampanaNotificaciones();
                 abrirCentroMensajes(0);
+            });
+        }
+
+        if (btnChatbotTopbar != null) {
+            btnChatbotTopbar.setOnClickListener(v -> {
+                if (!puedeEjecutarNavegacion()) return;
+                abrirChatbotAsistencia();
             });
         }
 
@@ -537,11 +566,12 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                     return true;
                 }
 
-                if (itemId == R.id.navAdminModuloInformativo) {
-                    restaurarDrawerSelectionActual();
+                if (itemId == R.id.navAdminEstadisticasPlataforma) {
+                    if (navController != null) navegarSinDuplicar(R.id.fragEstadisticasPlataforma);
                     drawerLayout.closeDrawer(GravityCompat.START);
                     return true;
                 }
+
                 if (itemId == R.id.navCalendario) {
                     if (navController != null) navegarSinDuplicar(R.id.navCalendario);
                     drawerLayout.closeDrawer(GravityCompat.START);
@@ -637,6 +667,9 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         if (destinationId == R.id.fragAdminConvocatorias) {
             return R.id.navAdminEditarConvocatorias;
         }
+        if (destinationId == R.id.fragEstadisticasPlataforma) {
+            return R.id.navAdminEstadisticasPlataforma;
+        }
         if (destinationId == R.id.fragModeracionReportes) {
             return R.id.navModeracionReportes;
         }
@@ -677,6 +710,11 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 .build();
 
         navController.navigate(R.id.fragCarrito, null, navOptions);
+    }
+
+    private void abrirChatbotAsistencia() {
+        if (navController == null) return;
+        navegarSinDuplicar(R.id.fragAyuda);
     }
 
     public void abrirCentroMensajes(int tabInicial) {
@@ -752,6 +790,10 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
 
     public void refrescarBadgeMensajes() {
         refrescarBadgeMensajes(false);
+    }
+
+    public void refrescarBadgeMensajesInmediato() {
+        refrescarBadgeMensajes(true);
     }
 
     private void refrescarBadgeMensajes(boolean force) {
@@ -845,73 +887,19 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     }
 
     private void animarCampanaNotificaciones() {
-        if (isBellAnimating || btnNotificaciones == null) return;
-        if (isFinishing() || isDestroyed() || !btnNotificaciones.isAttachedToWindow()) return;
-
-        if (btnNotificaciones.getWidth() == 0 || btnNotificaciones.getHeight() == 0) {
-            btnNotificaciones.post(this::animarCampanaNotificaciones);
-            return;
-        }
-
         cancelAnimator(bellAnimator);
-        isBellAnimating = true;
-
-        btnNotificaciones.animate().cancel();
-        btnNotificaciones.setPivotX(btnNotificaciones.getWidth() / 2f);
-        btnNotificaciones.setPivotY(0f);
-
-        bellAnimator = ObjectAnimator.ofFloat(
-                btnNotificaciones,
-                View.ROTATION,
-                0f, -34f, 30f, -24f, 18f, -12f, 7f, -3f, 0f
-        );
-        bellAnimator.setDuration(820);
-        bellAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-        bellAnimator.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                finalizarAnimacionCampana();
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                finalizarAnimacionCampana();
-            }
-        });
-        bellAnimator.start();
-
-        btnNotificaciones.animate()
-                .scaleX(1.12f)
-                .scaleY(1.12f)
-                .setDuration(120)
-                .withEndAction(() -> {
-                    if (btnNotificaciones != null && btnNotificaciones.isAttachedToWindow()) {
-                        btnNotificaciones.animate()
-                                .scaleX(1f)
-                                .scaleY(1f)
-                                .setDuration(240)
-                                .start();
-                    }
-                })
-                .start();
-
-        if (notiBadge != null && notiBadge.getVisibility() == View.VISIBLE && notiBadge.isAttachedToWindow()) {
-            notiBadge.animate().cancel();
-            notiBadge.animate()
-                    .scaleX(1.18f)
-                    .scaleY(1.18f)
-                    .setDuration(120)
-                    .withEndAction(() -> {
-                        if (notiBadge != null && notiBadge.isAttachedToWindow()) {
-                            notiBadge.animate()
-                                    .scaleX(1f)
-                                    .scaleY(1f)
-                                    .setDuration(180)
-                                    .start();
-                        }
-                    })
-                    .start();
+        if (btnNotificaciones != null) {
+            btnNotificaciones.animate().cancel();
+            btnNotificaciones.setScaleX(1f);
+            btnNotificaciones.setScaleY(1f);
         }
+        if (notiBadge != null) {
+            notiBadge.animate().cancel();
+            notiBadge.setAlpha(1f);
+            notiBadge.setScaleX(1f);
+            notiBadge.setScaleY(1f);
+        }
+        finalizarAnimacionCampana();
     }
 
     private void finalizarAnimacionCampana() {
@@ -924,16 +912,8 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
     private void actualizarBadgeMensajes(@NonNull MensajesBadgeManager.BadgeDetalle detalle) {
         int conteoNotificaciones = detalle.getNotificacionesNoLeidas();
         int totalPendientes = detalle.getTotalPendientes();
-        boolean aumentoNotificaciones = ultimoConteoNotificaciones != -1
-                && conteoNotificaciones > ultimoConteoNotificaciones;
-        boolean aumentoTotalVisible = ultimoTotalBadgeMensajes != -1
-                && totalPendientes > ultimoTotalBadgeMensajes;
 
         actualizarBadgeMensajesVisual(totalPendientes);
-
-        if (aumentoNotificaciones || aumentoTotalVisible) {
-            animarCampanaNotificaciones();
-        }
 
         ultimoConteoNotificaciones = conteoNotificaciones;
         ultimoTotalBadgeMensajes = totalPendientes;
@@ -950,22 +930,12 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         }
 
         String badgeText = totalPendientes > 99 ? "99+" : String.valueOf(totalPendientes);
-        boolean animarEntrada = notiBadge.getVisibility() != View.VISIBLE;
+        notiBadge.animate().cancel();
         notiBadge.setText(badgeText);
         notiBadge.setVisibility(View.VISIBLE);
-
-        if (animarEntrada) {
-            notiBadge.setScaleX(0.7f);
-            notiBadge.setScaleY(0.7f);
-            notiBadge.setAlpha(0f);
-
-            notiBadge.animate()
-                    .alpha(1f)
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(220)
-                    .start();
-        }
+        notiBadge.setAlpha(1f);
+        notiBadge.setScaleX(1f);
+        notiBadge.setScaleY(1f);
     }
 
     private void animarBottomNavTap(BottomNavigationView bottomBar) {
@@ -1234,7 +1204,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                     String backendMessage = ApiErrorParser.extractMessage(response);
                     Toast.makeText(
                             ActFragmentoPrincipal.this,
-                            backendMessage != null ? backendMessage : "No se pudo solicitar el codigo de activacion",
+                            backendMessage != null ? backendMessage : "No se pudo solicitar el código de activación",
                             Toast.LENGTH_LONG
                     ).show();
                     return;
@@ -1244,7 +1214,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 if (!Boolean.TRUE.equals(body.getSuccess())) {
                     Toast.makeText(
                             ActFragmentoPrincipal.this,
-                            body.getMessage() != null ? body.getMessage() : "No se pudo solicitar el codigo de activacion",
+                            body.getMessage() != null ? body.getMessage() : "No se pudo solicitar el código de activación",
                             Toast.LENGTH_LONG
                     ).show();
                     return;
@@ -1259,7 +1229,7 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
             public void onFailure(retrofit2.Call<TwoFactorResponse> call, Throwable t) {
                 activationRequestInProgress = false;
                 ocultarLoadingActivacion();
-                Toast.makeText(ActFragmentoPrincipal.this, "Error de conexión al solicitar activación 2FA", Toast.LENGTH_LONG).show();
+                Toast.makeText(ActFragmentoPrincipal.this, "Error de conexión al solicitar la verificación en dos pasos.", Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -1450,7 +1420,9 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
                 boolean esAdmin = "ADMIN".equalsIgnoreCase(rol);
                 boolean esModerador = "MODERADOR".equalsIgnoreCase(rol);
 
-                if (currentId == R.id.fragAdminGestionUsuarios || currentId == R.id.fragAdminConvocatorias) {
+                if (currentId == R.id.fragAdminGestionUsuarios
+                        || currentId == R.id.fragAdminConvocatorias
+                        || currentId == R.id.fragEstadisticasPlataforma) {
                     if (!esAdmin) {
                         navController.navigate(R.id.fragMain);
                     }
@@ -1629,4 +1601,6 @@ public class ActFragmentoPrincipal extends AppCompatActivity {
         return "No se pudo capturar el pago (" + statusCode + ")";
     }
 }
+
+
 

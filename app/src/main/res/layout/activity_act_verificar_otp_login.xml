@@ -71,7 +71,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:gravity="center"
-            android:text="Ingresa el codigo que enviamos a tu correo"
+            android:text="Ingresa el código que enviamos a tu correo"
             android:textColor="@color/artistlan_text_secondary"
             android:textSize="14sp" />
 
@@ -118,7 +118,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
-            android:text="Puedes reenviar el código en 60s"
+            android:text="Puedes reenviar el código en 60 s"
             android:textColor="@color/artistlan_text_secondary"
             android:textSize="13sp"
             android:visibility="gone" />

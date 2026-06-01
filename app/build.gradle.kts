@@ -7,6 +7,8 @@ android {
     namespace = "com.example.artistlan"
     compileSdk = 35
 
+    val localBaseApiUrl = "http://192.168.100.21:8080/api/"
+
     defaultConfig {
         applicationId = "com.example.artistlan"
         minSdk = 24
@@ -15,6 +17,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "BASE_API_URL", "\"$localBaseApiUrl\"")
     }
 
     buildTypes {
@@ -29,8 +32,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
+        buildConfig = true
         viewBinding = true
     }
 }
@@ -65,6 +70,8 @@ dependencies {
 
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     implementation ("com.getbase:floatingactionbutton:1.10.1")
     implementation ("com.airbnb.android:lottie:6.4.0")

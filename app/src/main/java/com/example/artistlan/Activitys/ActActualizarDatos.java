@@ -89,7 +89,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
     private ImageView btnCambiarFoto, imgFotoPerfil;
     private Spinner spinnerCategoriaUsuario;
     private View contenedorCambiarFoto, topBar, topBarLight, notiBadge;
-    private ImageButton btnMenuLateral, btnCarrito, btnNotificaciones;
+    private ImageButton btnMenuLateral, btnCarrito, btnChatbotTopbar, btnNotificaciones;
     private ImageView ivLogo;
 
     private UsuarioApi api;
@@ -130,6 +130,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         topBarLight = findViewById(R.id.topBarLight);
         btnMenuLateral = findViewById(R.id.btnMenuLateral);
         btnCarrito = findViewById(R.id.btnCarrito);
+        btnChatbotTopbar = findViewById(R.id.btnChatbotTopbar);
         btnNotificaciones = findViewById(R.id.btnNotificaciones);
         ivLogo = findViewById(R.id.ivLogo);
         txtTituloTopBar = findViewById(R.id.txtTituloTopBar);
@@ -255,6 +256,19 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
                 finish();
             });
         }
+        if (btnChatbotTopbar != null) {
+            btnChatbotTopbar.setEnabled(true);
+            btnChatbotTopbar.setClickable(true);
+            btnChatbotTopbar.setOnClickListener(v -> {
+                if (!puedeEjecutarAccionTopbar()) return;
+                v.animate()
+                        .rotationBy(10f)
+                        .setDuration(90)
+                        .withEndAction(() -> v.animate().rotation(0f).setDuration(120).start())
+                        .start();
+                abrirChatbotAsistenciaDesdeTopbar();
+            });
+        }
         if (btnNotificaciones != null) {
             btnNotificaciones.setEnabled(true);
             btnNotificaciones.setClickable(true);
@@ -293,7 +307,21 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             pendingIntent.send();
             finish();
         } catch (PendingIntent.CanceledException e) {
-            Toast.makeText(this, "No se pudo abrir notificaciones", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "No se pudieron abrir las notificaciones.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void abrirChatbotAsistenciaDesdeTopbar() {
+        try {
+            PendingIntent pendingIntent = new NavDeepLinkBuilder(this)
+                    .setComponentName(ActFragmentoPrincipal.class)
+                    .setGraph(R.navigation.navegador)
+                    .setDestination(R.id.fragAyuda)
+                    .createPendingIntent();
+            pendingIntent.send();
+            finish();
+        } catch (PendingIntent.CanceledException e) {
+            Toast.makeText(this, "No se pudo abrir el chatbot de asistencia.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -387,6 +415,9 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         }
         if (btnCarrito != null) {
             btnCarrito.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_IN);
+        }
+        if (btnChatbotTopbar != null) {
+            btnChatbotTopbar.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_IN);
         }
         if (btnNotificaciones != null) {
             btnNotificaciones.setColorFilter(themeManager.color(ThemeKeys.ICON_TOPBAR), PorterDuff.Mode.SRC_IN);
@@ -728,13 +759,13 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
 
         if (idUsuario == -1) {
-            Toast.makeText(this, "Error: sesión no válida", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Tu sesión no es válida. Inicia sesión nuevamente.", Toast.LENGTH_SHORT).show();
             return;
         }
 
         DesactivarCuentaRequestDTO request = new DesactivarCuentaRequestDTO();
         request.setIdUsuarioSolicitante(idUsuario);
-        request.setMotivo("Cuenta desactivada desde Android por solicitud del usuario");
+        request.setMotivo("Cuenta desactivada desde la aplicación por solicitud del usuario");
         request.setConfirmacion(true);
 
         api.desactivarCuenta(idUsuario, request).enqueue(new Callback<RespuestaModeracionDTO>() {
@@ -756,7 +787,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             @Override
             public void onFailure(Call<RespuestaModeracionDTO> call, Throwable t) {
                 Toast.makeText(ActActualizarDatos.this,
-                        "Error de conexión: " + t.getMessage(),
+                        "No pudimos desactivar la cuenta. Revisa tu conexión e inténtalo de nuevo.",
                         Toast.LENGTH_LONG).show();
             }
         });
@@ -783,14 +814,14 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
 
         if (idUsuario == -1) {
-            handle.showError("Error: sesión no válida");
+            handle.showError("Tu sesión no es válida. Inicia sesión nuevamente.");
             return;
         }
 
         DesactivarCuentaRequestDTO request = new DesactivarCuentaRequestDTO();
         request.setIdUsuarioSolicitante(idUsuario);
         request.setContrasenaActual(contrasenaActual);
-        request.setMotivo("Cuenta desactivada desde Android por solicitud del usuario");
+        request.setMotivo("Cuenta desactivada desde la aplicación por solicitud del usuario");
         request.setConfirmacion(true);
 
         api.desactivarCuenta(idUsuario, request).enqueue(new Callback<RespuestaModeracionDTO>() {
@@ -856,7 +887,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
         SharedPreferences prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE);
         int idUsuario = prefs.getInt("idUsuario", prefs.getInt("id", -1));
         if (idUsuario == -1) {
-            Toast.makeText(this, "Error: No se encontró sesión activa", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "No se encontró una sesión activa.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -988,7 +1019,7 @@ public class ActActualizarDatos extends AppCompatActivity implements View.OnClic
             @Override
             public void onFailure(Call<UsuariosDTO> call, Throwable t) {
                 finalizarFeedbackErrorPerfil("No se pudo actualizar el perfil");
-                Toast.makeText(ActActualizarDatos.this, "Fallo de conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(ActActualizarDatos.this, "No pudimos actualizar el perfil. Revisa tu conexión e inténtalo de nuevo.", Toast.LENGTH_LONG).show();
             }
         });
     }

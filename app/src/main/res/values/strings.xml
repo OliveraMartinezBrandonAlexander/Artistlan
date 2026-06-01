@@ -1,12 +1,10 @@
 <resources>
     <string name="app_name">Artistlan</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
+    <string name="hello_blank_fragment">Fragmento de ejemplo</string>
+    <string name="first_fragment_label">Primer fragmento</string>
+    <string name="second_fragment_label">Segundo fragmento</string>
+    <string name="next">Siguiente</string>
+    <string name="previous">Anterior</string>
     <string name="menu_mis_transacciones">Mis transacciones</string>
     <string name="tab_mis_compras">MIS COMPRAS</string>
     <string name="tab_mis_ventas">MIS VENTAS</string>

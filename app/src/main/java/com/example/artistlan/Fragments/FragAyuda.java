@@ -37,11 +37,11 @@ import com.example.artistlan.Theme.ThemeApplier;
 import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.adapter.ChatbotMessageAdapter;
+import com.example.artistlan.chatbot.ChatbotSessionCache;
 import com.example.artistlan.model.ChatbotMessageUi;
 import com.example.artistlan.utils.CardThemeHelper;
 
 import java.util.List;
-import java.util.UUID;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -49,8 +49,6 @@ import retrofit2.Response;
 
 public class FragAyuda extends Fragment {
 
-    private static final String CHATBOT_PREFS = "artistlan_chatbot_prefs";
-    private static final String KEY_CHATBOT_SESSION_ID = "artistlan_chatbot_session_id";
     private static final String INITIAL_MESSAGE = "Hola, soy el asistente de Artistlan. Puedo ayudarte con publicaciones, búsqueda, carrito, solicitudes, transacciones, reportes y seguridad de cuenta.";
     private static final long ACTION_NAVIGATION_DEBOUNCE_MS = 650L;
     private static final List<String> INITIAL_QUICK_REPLIES = List.of(
@@ -96,12 +94,12 @@ public class FragAyuda extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         chatbotApi = RetrofitClient.getClient().create(ChatbotApi.class);
-        sessionId = getOrCreateSessionId();
+        sessionId = ChatbotSessionCache.getOrCreateSessionId();
         initViews(view);
         setupChat();
         applyChatTheme();
         setupMenuAwareInsets();
-        addInitialMessage();
+        restoreChatHistory();
     }
 
     @Override
@@ -266,10 +264,6 @@ public class FragAyuda extends Fragment {
             return;
         }
 
-        if (isUserLoggedIn()) {
-            addBotError("Puedes gestionar la seguridad de tu cuenta desde tu perfil.");
-            return;
-        }
         startActivity(new Intent(requireContext(), ActRecuperarContrasena.class));
     }
 
@@ -295,7 +289,9 @@ public class FragAyuda extends Fragment {
         if ("NAV_MODERACION".equals(cleanType)) {
             return isAdmin() || isModerator();
         }
-        if ("NAV_GESTION_USUARIOS".equals(cleanType)) {
+        if ("NAV_GESTION_USUARIOS".equals(cleanType)
+                || "NAV_ESTADISTICAS_PLATAFORMA".equals(cleanType)
+                || "NAV_GESTION_CONVOCATORIAS".equals(cleanType)) {
             return isAdmin();
         }
         if ("NAV_LOGIN".equals(cleanType)) {
@@ -334,6 +330,8 @@ public class FragAyuda extends Fragment {
                 return R.id.fragSubirObra;
             case "NAV_SUBIR_SERVICIO":
                 return R.id.fragSubirServicio;
+            case "NAV_MIS_METAS":
+                return R.id.fragMisMetas;
             case "NAV_PORTAFOLIO":
                 return R.id.fragPortafolio;
             case "NAV_EXPLORAR":
@@ -344,12 +342,16 @@ public class FragAyuda extends Fragment {
                 return R.id.fragTransacciones;
             case "NAV_CONVOCATORIAS":
                 return R.id.navCalendario;
+            case "NAV_GESTION_CONVOCATORIAS":
+                return R.id.fragAdminConvocatorias;
             case "NAV_PERFIL":
                 return R.id.fragVerPerfil;
             case "NAV_MODERACION":
                 return R.id.fragModeracionReportes;
             case "NAV_GESTION_USUARIOS":
                 return R.id.fragAdminGestionUsuarios;
+            case "NAV_ESTADISTICAS_PLATAFORMA":
+                return R.id.fragEstadisticasPlataforma;
             default:
                 return View.NO_ID;
         }
@@ -437,14 +439,30 @@ public class FragAyuda extends Fragment {
         return Math.max(0, Math.round(visible));
     }
 
+    private void restoreChatHistory() {
+        if (adapter == null) {
+            return;
+        }
+        if (ChatbotSessionCache.hasMessages()) {
+            for (ChatbotMessageUi message : ChatbotSessionCache.getMessagesSnapshot()) {
+                adapter.addMessage(message);
+            }
+            scrollToBottom();
+            return;
+        }
+        addInitialMessage();
+    }
+
     private void addInitialMessage() {
-        adapter.addMessage(ChatbotMessageUi.bot(
+        ChatbotMessageUi initialMessage = ChatbotMessageUi.bot(
                 INITIAL_MESSAGE,
                 "DEFAULT_WELCOME",
                 "LOCAL_UI",
                 INITIAL_QUICK_REPLIES,
                 null
-        ));
+        );
+        adapter.addMessage(initialMessage);
+        ChatbotSessionCache.addMessage(initialMessage);
         scrollToBottom();
     }
 
@@ -466,7 +484,9 @@ public class FragAyuda extends Fragment {
             return;
         }
 
-        adapter.addMessage(ChatbotMessageUi.user(cleanText));
+        ChatbotMessageUi userMessage = ChatbotMessageUi.user(cleanText);
+        adapter.addMessage(userMessage);
+        ChatbotSessionCache.addMessage(userMessage);
         showLoadingMessage();
         scrollToBottom();
         setComposerEnabled(false);
@@ -495,13 +515,15 @@ public class FragAyuda extends Fragment {
                     return;
                 }
 
-                adapter.addMessage(ChatbotMessageUi.bot(
+                ChatbotMessageUi botMessage = ChatbotMessageUi.bot(
                         reply,
                         body.getIntent(),
                         body.getSource(),
                         body.getQuickReplies(),
                         body.getActions()
-                ));
+                );
+                adapter.addMessage(botMessage);
+                ChatbotSessionCache.addMessage(botMessage);
                 scrollToBottom();
             }
 
@@ -536,7 +558,9 @@ public class FragAyuda extends Fragment {
         if (adapter == null) {
             return;
         }
-        adapter.addMessage(ChatbotMessageUi.bot(message, "LOCAL_ERROR", "LOCAL_UI", null, null));
+        ChatbotMessageUi errorMessage = ChatbotMessageUi.bot(message, "LOCAL_ERROR", "LOCAL_UI", null, null);
+        adapter.addMessage(errorMessage);
+        ChatbotSessionCache.addMessage(errorMessage);
         scrollToBottom();
     }
 
@@ -576,18 +600,6 @@ public class FragAyuda extends Fragment {
             return value;
         }
         return Math.round(value * context.getResources().getDisplayMetrics().density);
-    }
-
-    private String getOrCreateSessionId() {
-        SharedPreferences prefs = requireContext().getSharedPreferences(CHATBOT_PREFS, Context.MODE_PRIVATE);
-        String stored = prefs.getString(KEY_CHATBOT_SESSION_ID, null);
-        if (stored != null && !stored.trim().isEmpty()) {
-            return stored.trim();
-        }
-
-        String generated = UUID.randomUUID().toString();
-        prefs.edit().putString(KEY_CHATBOT_SESSION_ID, generated).apply();
-        return generated;
     }
 
     @Nullable

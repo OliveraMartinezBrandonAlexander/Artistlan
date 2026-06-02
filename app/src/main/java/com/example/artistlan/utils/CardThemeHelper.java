@@ -129,14 +129,14 @@ public final class CardThemeHelper {
         if (textView == null) {
             return;
         }
-        String normalized = normalizar(estado);
-        boolean important = normalized.contains("pend") || normalized.contains("no leid") || normalized.contains("nuevo");
-        int fill = important ? tm.color(ThemeKeys.BUTTON_SECONDARY_BG) : tm.color(ThemeKeys.CARD_CHIP_BG);
+        int semantic = colorForEstado(estado);
+        int fill = semantic;
+        int stroke = ColorUtils.blendARGB(semantic, Color.BLACK, 0.16f);
         int text = chooseTextColor(
                 tm,
                 fill,
-                important ? tm.color(ThemeKeys.BUTTON_TEXT_LIGHT) : tm.color(ThemeKeys.CARD_CHIP_TEXT),
-                tm.color(ThemeKeys.TEXT_PRIMARY),
+                tm.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                tm.color(ThemeKeys.BUTTON_TEXT_DARK),
                 tm.color(ThemeKeys.TEXT_SECONDARY),
                 Color.WHITE,
                 Color.BLACK
@@ -144,7 +144,7 @@ public final class CardThemeHelper {
         textView.setTextColor(text);
         textView.setBackground(roundedDrawable(
                 fill,
-                ColorUtils.setAlphaComponent(tm.color(ThemeKeys.CARD_BORDER), 190),
+                ColorUtils.setAlphaComponent(stroke, 255),
                 1,
                 dp(textView, 12)
         ));
@@ -463,6 +463,21 @@ public final class CardThemeHelper {
 
     private static int colorForEstado(@Nullable String estadoRaw) {
         String estado = normalizar(estadoRaw);
+        if (estado.contains("pagad")) {
+            return Color.parseColor("#2563EB");
+        }
+        if (estado.contains("cancel")) {
+            return Color.parseColor("#8C96A4");
+        }
+        if (estado.contains("acept")) {
+            return Color.parseColor("#16A34A");
+        }
+        if (estado.contains("pend")) {
+            return Color.parseColor("#F59E0B");
+        }
+        if (estado.contains("rechaz")) {
+            return Color.parseColor("#DC2626");
+        }
         if (estado.contains("vendid")) {
             return Color.parseColor("#2563EB");
         }

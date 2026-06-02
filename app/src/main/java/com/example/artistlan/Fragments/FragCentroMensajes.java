@@ -33,6 +33,7 @@ import com.example.artistlan.Theme.ThemeManager;
 import com.example.artistlan.Theme.ThemeModuleStyler;
 import com.example.artistlan.utils.CardThemeHelper;
 import com.example.artistlan.utils.DialogThemeHelper;
+import com.example.artistlan.utils.MenuInsetSyncHelper;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -59,6 +60,7 @@ public class FragCentroMensajes extends Fragment {
     private CentroMensajesPagerAdapter pagerAdapter;
     private int modoSolicitudesPendiente = FragSolicitudesMensajes.MODO_RECIBIDAS;
     private ViewPager2.OnPageChangeCallback pageChangeCallback;
+    @Nullable private MenuInsetSyncHelper headerInsetSyncHelper;
 
     @Nullable
     @Override
@@ -86,8 +88,12 @@ public class FragCentroMensajes extends Fragment {
         btnMenuOpciones = view.findViewById(R.id.btnCentroMensajesMenu);
         tvResumenContador = view.findViewById(R.id.tvCentroMensajesResumenContador);
         tvTituloCentroMensajes = view.findViewById(R.id.tvTituloCentroMensajes);
+        View headerCentroMensajes = view.findViewById(R.id.headerCentroMensajes);
         btnAtras.setOnClickListener(v -> navegarAtrasSeguro());
         btnMenuOpciones.setOnClickListener(this::mostrarMenuAcciones);
+        if (headerCentroMensajes != null) {
+            headerInsetSyncHelper = MenuInsetSyncHelper.attach(this, headerCentroMensajes, true, false);
+        }
 
         pagerAdapter = new CentroMensajesPagerAdapter(this);
         viewPager.setAdapter(pagerAdapter);
@@ -159,6 +165,10 @@ public class FragCentroMensajes extends Fragment {
         layoutTabs = null;
         themeManager = null;
         tabsThemeListenerAttached = false;
+        if (headerInsetSyncHelper != null) {
+            headerInsetSyncHelper.detach();
+            headerInsetSyncHelper = null;
+        }
         if (menuInferior != null) {
             menuInferior.setVisibility(View.VISIBLE);
         }

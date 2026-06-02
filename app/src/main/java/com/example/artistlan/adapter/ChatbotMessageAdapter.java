@@ -2,6 +2,7 @@ package com.example.artistlan.adapter;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -98,17 +99,12 @@ public class ChatbotMessageAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private void bindUser(@NonNull UserViewHolder holder, @NonNull ChatbotMessageUi item) {
         ThemeManager tm = new ThemeManager(holder.itemView.getContext());
         holder.tvMessage.setText(item.getText());
-        int background = solidUserBubbleColor(tm);
-        int text = userBubbleTextColor(
-                background,
-                tm.color(ThemeKeys.BUTTON_TEXT_LIGHT),
-                Color.WHITE
-        );
-        holder.tvMessage.setTextColor(ColorUtils.setAlphaComponent(text, 255));
+        UserBubbleStyle bubbleStyle = resolveUserBubbleStyle(tm);
+        holder.tvMessage.setTextColor(ColorUtils.setAlphaComponent(bubbleStyle.textColor, 255));
         holder.tvMessage.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
         holder.tvMessage.setAlpha(1f);
         holder.cardBubble.setAlpha(1f);
-        styleBubbleCard(holder.cardBubble, background, ColorUtils.setAlphaComponent(text, 110), 20, 2);
+        applyUserBubble(holder, bubbleStyle);
     }
 
     private void bindBot(@NonNull BotViewHolder holder, @NonNull ChatbotMessageUi item) {
@@ -248,17 +244,20 @@ public class ChatbotMessageAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         switch (type) {
             case "NAV_SUBIR_OBRA":
             case "NAV_SUBIR_SERVICIO":
+            case "NAV_MIS_METAS":
             case "NAV_PORTAFOLIO":
             case "NAV_EXPLORAR":
             case "NAV_CARRITO":
             case "NAV_TRANSACCIONES":
             case "NAV_CONVOCATORIAS":
+            case "NAV_GESTION_CONVOCATORIAS":
             case "NAV_PERFIL":
             case "NAV_MENSAJES":
             case "NAV_SOLICITUDES":
             case "NAV_NOTIFICACIONES":
             case "NAV_MODERACION":
             case "NAV_GESTION_USUARIOS":
+            case "NAV_ESTADISTICAS_PLATAFORMA":
             case "NAV_LOGIN":
             case "NAV_RECUPERAR_CONTRASENA":
                 return true;
@@ -282,6 +281,9 @@ public class ChatbotMessageAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
         if (normalized.contains("subir servicio")) {
             return "subir_servicio";
+        }
+        if (normalized.contains("mis metas") || normalized.contains("crear meta") || normalized.contains("meta")) {
+            return "mis_metas";
         }
         if (normalized.contains("portafolio")) {
             return "portafolio";
@@ -309,6 +311,12 @@ public class ChatbotMessageAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
         if (normalized.contains("gestion usuarios") || normalized.contains("usuarios")) {
             return "gestion_usuarios";
+        }
+        if (normalized.contains("editar convocatorias")) {
+            return "gestion_convocatorias";
+        }
+        if (normalized.contains("estadisticas")) {
+            return "estadisticas";
         }
         if (normalized.contains("login") || normalized.contains("iniciar sesion") || normalized.contains("entrar cuenta")) {
             return "login";
@@ -407,19 +415,77 @@ public class ChatbotMessageAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         card.setPreventCornerOverlap(false);
     }
 
-    private int solidUserBubbleColor(@NonNull ThemeManager tm) {
-        int baseSurface = ColorUtils.setAlphaComponent(tm.color(ThemeKeys.BG_MID), 255);
-        int primary = ColorUtils.compositeColors(tm.color(ThemeKeys.BUTTON_PRIMARY_BG), baseSurface);
-        int accent = ColorUtils.compositeColors(tm.color(ThemeKeys.ACCENT_PRIMARY), baseSurface);
-        int blended = ColorUtils.blendARGB(primary, accent, 0.22f);
-        return ColorUtils.setAlphaComponent(blended, 255);
+    private void applyUserBubble(@NonNull UserViewHolder holder, @NonNull UserBubbleStyle bubbleStyle) {
+        holder.cardBubble.setBackgroundColor(Color.TRANSPARENT);
+        holder.cardBubble.setCardBackgroundColor(Color.TRANSPARENT);
+        holder.cardBubble.setStrokeWidth(0);
+        holder.cardBubble.setCardElevation(0f);
+        holder.cardBubble.setRadius(dp(holder.cardBubble, 22));
+        holder.cardBubble.setUseCompatPadding(false);
+        holder.cardBubble.setPreventCornerOverlap(false);
+
+        GradientDrawable bubbleDrawable = new GradientDrawable();
+        bubbleDrawable.setShape(GradientDrawable.RECTANGLE);
+        bubbleDrawable.setColor(ColorUtils.setAlphaComponent(bubbleStyle.backgroundColor, 255));
+        bubbleDrawable.setCornerRadius(dp(holder.tvMessage, 22));
+        bubbleDrawable.setStroke(Math.max(1, dp(holder.tvMessage, 1)), bubbleStyle.strokeColor);
+        holder.tvMessage.setBackground(bubbleDrawable);
     }
 
-    private int userBubbleTextColor(int background, int... lightCandidates) {
+    @NonNull
+    private UserBubbleStyle resolveUserBubbleStyle(@NonNull ThemeManager tm) {
+        int panelSurface = compositeToOpaque(tm.color(ThemeKeys.ACCOUNT_GLASS_PANEL), tm.color(ThemeKeys.BUTTON_SECONDARY_BG));
+        int chipSurface = compositeToOpaque(tm.color(ThemeKeys.CARD_CHIP_BG), panelSurface);
+        int accentBase = compositeToOpaque(tm.color(ThemeKeys.ACCENT_PRIMARY), chipSurface);
+        int accentSoft = compositeToOpaque(ColorUtils.setAlphaComponent(tm.color(ThemeKeys.ACCENT_PRIMARY), 92), chipSurface);
+        int accentLight = compositeToOpaque(ColorUtils.setAlphaComponent(tm.color(ThemeKeys.ACCENT_PRIMARY_LIGHT), 116), chipSurface);
+
+        int background = ColorUtils.blendARGB(chipSurface, accentBase, 0.22f);
+        background = ColorUtils.blendARGB(background, accentLight, 0.18f);
+        background = ColorUtils.blendARGB(background, accentSoft, 0.12f);
+        background = ColorUtils.blendARGB(background, panelSurface, 0.20f);
+
+        double luminance = ColorUtils.calculateLuminance(ColorUtils.setAlphaComponent(background, 255));
+        if (luminance < 0.24) {
+            background = ColorUtils.blendARGB(background, ColorUtils.setAlphaComponent(tm.color(ThemeKeys.BUTTON_TEXT_LIGHT), 255), 0.12f);
+        } else if (luminance > 0.84) {
+            background = ColorUtils.blendARGB(background, ColorUtils.setAlphaComponent(tm.color(ThemeKeys.TEXT_PRIMARY), 255), 0.05f);
+        }
+
+        int stroke = ColorUtils.blendARGB(
+                ColorUtils.setAlphaComponent(tm.color(ThemeKeys.CARD_BORDER), 255),
+                accentBase,
+                0.34f
+        );
+        stroke = ColorUtils.setAlphaComponent(stroke, 190);
+
+        int text = userBubbleTextColor(
+                background,
+                tm.color(ThemeKeys.BUTTON_TEXT_DARK),
+                tm.color(ThemeKeys.BUTTON_TEXT_LIGHT),
+                tm.color(ThemeKeys.CARD_CHIP_TEXT),
+                tm.color(ThemeKeys.TEXT_PRIMARY),
+                tm.color(ThemeKeys.TEXT_SECONDARY)
+        );
+        return new UserBubbleStyle(
+                ColorUtils.setAlphaComponent(background, 255),
+                ColorUtils.setAlphaComponent(stroke, 255),
+                ColorUtils.setAlphaComponent(text, 255)
+        );
+    }
+
+    private int compositeToOpaque(int foreground, int background) {
+        return ColorUtils.compositeColors(
+                foreground,
+                ColorUtils.setAlphaComponent(background, 255)
+        );
+    }
+
+    private int userBubbleTextColor(int background, int... candidates) {
         int opaqueBackground = ColorUtils.setAlphaComponent(background, 255);
         int best = Color.WHITE;
         double bestContrast = contrast(opaqueBackground, best);
-        for (int candidate : lightCandidates) {
+        for (int candidate : candidates) {
             int opaqueCandidate = ColorUtils.setAlphaComponent(candidate, 255);
             double candidateContrast = contrast(opaqueBackground, opaqueCandidate);
             if (candidateContrast > bestContrast) {
@@ -427,10 +493,12 @@ public class ChatbotMessageAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 bestContrast = candidateContrast;
             }
         }
-        if (bestContrast >= 3.0) {
+        if (bestContrast >= 4.0) {
             return best;
         }
-        return Color.WHITE;
+        return contrast(opaqueBackground, Color.WHITE) >= contrast(opaqueBackground, Color.BLACK)
+                ? Color.WHITE
+                : Color.BLACK;
     }
 
     private double contrast(int color1, int color2) {
@@ -439,6 +507,18 @@ public class ChatbotMessageAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     private int dp(@NonNull View view, int value) {
         return Math.round(value * view.getResources().getDisplayMetrics().density);
+    }
+
+    private static class UserBubbleStyle {
+        private final int backgroundColor;
+        private final int strokeColor;
+        private final int textColor;
+
+        private UserBubbleStyle(int backgroundColor, int strokeColor, int textColor) {
+            this.backgroundColor = backgroundColor;
+            this.strokeColor = strokeColor;
+            this.textColor = textColor;
+        }
     }
 
     static class UserViewHolder extends RecyclerView.ViewHolder {

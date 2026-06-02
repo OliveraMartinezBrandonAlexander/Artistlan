@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Base64;
 
+import com.example.artistlan.chatbot.ChatbotSessionCache;
 import com.example.artistlan.Conector.model.UsuariosDTO;
 
 import org.json.JSONObject;
@@ -202,6 +203,7 @@ public class SessionManager {
         String lastUsuario = getLastUsuario();
         String lastIdentifier = getLastLoginIdentifier();
         String lastIdentifierType = getLastLoginIdentifierType();
+        ChatbotSessionCache.clear();
 
         SharedPreferences.Editor editor = prefs.edit().clear();
         if (!lastCorreo.isEmpty()) {

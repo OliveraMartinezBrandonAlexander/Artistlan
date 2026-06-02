@@ -1396,7 +1396,11 @@ public class FragEstadisticasPlataforma extends Fragment {
                 crecimiento.getSerieSemanaAnterior(),
                 inicioSemanaAnterior
         );
-        ultimoIndiceRealCrecimiento = resolverUltimoIndiceRealCrecimiento(inicioSemanaActual, finSemanaActual);
+        ultimoIndiceRealCrecimiento = resolverUltimoIndiceRealCrecimiento(
+                crecimiento,
+                inicioSemanaActual,
+                finSemanaActual
+        );
         crecimientoActual.clear();
         crecimientoAnterior.clear();
         crecimientoActual.addAll(puntosActuales);
@@ -2216,14 +2220,12 @@ public class FragEstadisticasPlataforma extends Fragment {
         return desdeSerie > 0 ? desdeSerie : 7;
     }
 
-    private int resolverUltimoIndiceRealCrecimiento(@NonNull LocalDate inicioSemana,
+    private int resolverUltimoIndiceRealCrecimiento(@NonNull AdminCrecimientoDTO crecimiento,
+                                                    @NonNull LocalDate inicioSemana,
                                                     @NonNull LocalDate finSemana) {
-        LocalDate hoy = LocalDate.now();
-        if (hoy.isBefore(inicioSemana) || hoy.isAfter(finSemana)) {
-            return -1;
-        }
-        int indice = (int) ChronoUnit.DAYS.between(inicioSemana, hoy);
-        return Math.max(0, Math.min(6, indice));
+        int diasComparados = resolverDiasComparadosCrecimiento(crecimiento);
+        int indiceMaximo = (int) ChronoUnit.DAYS.between(inicioSemana, finSemana);
+        return Math.max(0, Math.min(indiceMaximo, diasComparados - 1));
     }
 
     @Nullable

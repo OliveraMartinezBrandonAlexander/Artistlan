@@ -7,7 +7,7 @@ android {
     namespace = "com.example.artistlan"
     compileSdk = 35
 
-    val localBaseApiUrl = "http://192.168.100.21:8080/api/"
+    val baseApiUrl = "https://alex-des.centralus.cloudapp.azure.com/"
 
     defaultConfig {
         applicationId = "com.example.artistlan"
@@ -17,7 +17,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "BASE_API_URL", "\"$localBaseApiUrl\"")
+        buildConfigField("String", "BASE_API_URL", "\"$baseApiUrl\"")
     }
 
     buildTypes {

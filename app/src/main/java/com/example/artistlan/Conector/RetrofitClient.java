@@ -28,6 +28,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class RetrofitClient {
 
     private static final String BASE_URL = BuildConfig.BASE_API_URL;
+    private static final String API_BASE_URL = BASE_URL.endsWith("/") ? BASE_URL + "api/" : BASE_URL + "/api/";
     private static final long UI_NOTICE_THROTTLE_MS = 2000L;
     private static final String TAG_MODERACION_DEBUG = "ModeracionErrorDebug";
     private static final boolean ENABLE_MODERACION_DEBUG_LOGS = false;
@@ -79,7 +80,7 @@ public class RetrofitClient {
                     .create();
 
             retrofit = new Retrofit.Builder()
-                    .baseUrl(BASE_URL)
+                    .baseUrl(API_BASE_URL)
                     .client(client)
                     .addConverterFactory(GsonConverterFactory.create(gson))
                     .build();
